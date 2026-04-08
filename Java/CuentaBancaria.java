@@ -4,16 +4,16 @@ class CuentaBancaria {
     private String nombreBanco;
     private String numeroBancario;
     private String cci;
-    //private Empleado duenho; //set y get , c copia
+    private Empleado administrador; //set y get , c copia
 
 
     //Constructores
-    public CuentaBancaria(String nombreBanco, String numeroBancario, String cci) {
+    public CuentaBancaria(String nombreBanco, String numeroBancario, String cci, Empleado administrador) {
         this.idCuenta = this.correlativoID++;
         this.nombreBanco = nombreBanco;
         this.numeroBancario = numeroBancario;
         this.cci = cci;
-        
+        this.administrador = administrador;
     }
     //Selectores
     public int getIdCuenta() {
@@ -28,6 +28,9 @@ class CuentaBancaria {
     public String getCci() {
         return cci;
     }
+    public Empleado getAdministrador(){
+        return this.administrador;
+    }
     public void setIdCuenta(int idCuenta) {
         this.idCuenta = idCuenta;
     }
@@ -40,7 +43,9 @@ class CuentaBancaria {
     public void setCci(String cci) {
         this.cci = cci;
     }
-
+    public void setAdministrador(Empleado admin){
+        this.administrador = admin;
+    }
     //Metodos
     
 }
