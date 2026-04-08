@@ -1,9 +1,10 @@
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.ArrayList;
 
 
 class CicloCajaChica{
+	private static int correlativoID = 1;
 	private int idCicloCaja;
 	private int numeroSemana;
 	private Date fechaApertura;
@@ -11,77 +12,71 @@ class CicloCajaChica{
 	private double saldoInicial;
 	private double totalGastado;
 	private EstadoCicloCaja estado;
-	
-	// aqui va un private cajachica ????? checarlo plis :v, lo digo pq hay que saber el montoTecho
-	private List<SolicitudGasto> solicitudes; // set, get, inicializar
+	private CajaChica cajaChica;
+	private List<SolicitudGasto> solicitudes;
 
-
-
-	public CicloCajaChica(int idCicloCaja,int numeroSemana,Date fechaApertura,Date fechaCierre, double saldoInicial,
-	double totalGastado, EstadoCicloCaja estado){
-		this.idCicloCaja=idCicloCaja;
+	//Constructores
+	public CicloCajaChica(int numeroSemana,Date fechaApertura,Date fechaCierre, double saldoInicial, CajaChica cajaChica){
+		this.idCicloCaja=this.correlativoID++;
 		this.numeroSemana=numeroSemana;
 		this.fechaApertura=fechaApertura;
 		this.fechaCierre=fechaCierre;
 		this.saldoInicial=saldoInicial;
-		this.totalGastado=totalGastado;
-		this.estado=estado;
+		this.totalGastado=0;
+		this.estado=EstadoCicloCaja.Activo;
+		this.cajaChica = cajaChica;
 		this.solicitudes=new ArrayList<>();
 	}
 	
+	//Selectores
 	public int getIdCicloCaja() {
 		return idCicloCaja;
 	}
-
 	public void setIdCicloCaja(int idCicloCaja) {
 		this.idCicloCaja = idCicloCaja;
 	}
-
 	public int getNumeroSemana() {
 		return numeroSemana;
 	}
-
 	public void setNumeroSemana(int numeroSemana) {
 		this.numeroSemana = numeroSemana;
 	}
-
 	public Date getFechaApertura() {
 		return fechaApertura;
 	}
-
 	public void setFechaApertura(Date fechaApertura) {
 		this.fechaApertura = fechaApertura;
 	}
-
 	public Date getFechaCierre() {
 		return fechaCierre;
 	}
-
 	public void setFechaCierre(Date fechaCierre) {
 		this.fechaCierre = fechaCierre;
 	}
-
 	public double getSaldoInicial() {
 		return saldoInicial;
 	}
-
 	public void setSaldoInicial(double saldoInicial) {
 		this.saldoInicial = saldoInicial;
 	}
-
 	public double getTotalGastado() {
 		return totalGastado;
 	}
-
 	public void setTotalGastado(double totalGastado) {
 		this.totalGastado = totalGastado;
 	}
-
 	public EstadoCicloCaja getEstado() {
 		return estado;
 	}
-
 	public void setEstado(EstadoCicloCaja estado) {
+		
 		this.estado = estado;
 	}
+	public CajaChica getCajaChica(){
+		return this.cajaChica;
+	}
+	public void setCajaChica(CajaChica cajaChica){
+		this.cajaChica = cajaChica;
+	}
+	
 }

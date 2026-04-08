@@ -1,7 +1,8 @@
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 class Empleado extends Usuario {
+    private static int correlativoID = 1;
     private int empleadoID;
     private String correoInstitucional;
     private String numeroCelular;
@@ -11,28 +12,27 @@ class Empleado extends Usuario {
 
     private List<SolicitudGasto> solicitudes; //inicializado
 
-
+    //Constructror
 	public Empleado(int usuarioID, String nombre, String apellido_paterno,
 					String apellido_materno, String password,EstadoUsuario estado,
-						int empleadoID, String correoInstitucional, String numeroCelular){
-		super(usuarioID, nombre,  apellido_paterno,
-				 apellido_materno,  password, estado);
-		this.empleadoID=empleadoID;
+                    String correoInstitucional, String numeroCelular){
+
+		super(nombre,  apellido_paterno, apellido_materno,  password, estado);
+
+		this.empleadoID=this.correlativoID++;
 		this.correoInstitucional=correoInstitucional;
 		this.numeroCelular=numeroCelular;
 		this.cuentas= new ArrayList<>();
 		this.solicitudes= new ArrayList<>();
 	}  
 
-
+    //Selectores
 	public void setRol(Rol rol){
 		this.rol=rol;
 	}  
 	public Rol getRol(){
-		Rol rolito= new Rol(rol);
-		return rolito;
+		return new Rol(this.rol);
 	}
-    // Getters
     public int getEmpleadoID() {
         return empleadoID;
     }
@@ -44,8 +44,6 @@ class Empleado extends Usuario {
     public String getNumeroCelular() {
         return numeroCelular;
     }
-
-    // Setters
     public void setEmpleadoID(int empleadoID) {
         this.empleadoID = empleadoID;
     }
@@ -57,4 +55,7 @@ class Empleado extends Usuario {
     public void setNumeroCelular(String numeroCelular) {
         this.numeroCelular = numeroCelular;
     }
+    
+    //Metodos
+    
 }

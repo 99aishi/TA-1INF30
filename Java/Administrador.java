@@ -1,18 +1,20 @@
 class Administrador extends Usuario{
-	private int adminID;
+    private static int correlativoID = 1;
+    private int adminID;
 	private String correoSoporte;
 
-	public Administrador(int usuarioID, String nombre, String apellido_paterno,
-					String apellido_materno, String password,EstadoUsuario estado,
-						int adminID, String correoSoporte){
-		super(usuarioID, nombre,  apellido_paterno,
-				 apellido_materno,  password, estado);
-		this.adminID=adminID;
+    //Constructores
+	public Administrador(String nombre, String apellido_paterno,
+					String apellido_materno, String password, EstadoUsuario estado,
+                     String correoSoporte){
+		super(nombre,  apellido_paterno, apellido_materno,  password, estado);
+
+		this.adminID=this.correlativoID++;
 		this.correoSoporte=correoSoporte;
 	}
 
 
-    // Getters
+    //Selectores
     public int getAdminID() {
         return adminID;
     }
@@ -20,8 +22,6 @@ class Administrador extends Usuario{
     public String getCorreoSoporte() {
         return correoSoporte;
     }
-
-    // Setters
     public void setAdminID(int adminID) {
         this.adminID = adminID;
     }

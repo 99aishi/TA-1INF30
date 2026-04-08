@@ -1,62 +1,67 @@
 import java.util.Date;
 
 class Fondo {
+    private static int correlativoID = 1;
     private int idFondo;
     private String nombre;
     private double saldoActual;
     private EstadoFondo estado;
     private Date fechaCreacion;
-
-    private CuentaBancaria cuenta_banco; //crear set y get
+    private CuentaBancaria cuentaBancaria; //crear set y get
     private Moneda moneda; // crear set y get
-    // Constructor
-    public Fondo(int idFondo, String nombre, double saldoActual, EstadoFondo estado, Date fechaCreacion) {
-        this.idFondo = idFondo;
+    
+    // Constructores
+    public Fondo(String nombre, double saldoActual, EstadoFondo estado, Date fechaCreacion) {
+        this.idFondo = this.correlativoID++;
         this.nombre = nombre;
         this.saldoActual = saldoActual;
         this.estado = estado;
         this.fechaCreacion = fechaCreacion;
     }
 
-    // Getters
+    // Selectores
     public int getIdFondo() {
         return idFondo;
     }
-
     public String getNombre() {
         return nombre;
     }
-
     public double getSaldoActual() {
         return saldoActual;
     }
-
     public EstadoFondo getEstado() {
         return estado;
     }
-
     public Date getFechaCreacion() {
         return fechaCreacion;
     }
-
-    // Setters
+    public CuentaBancaria getCuentaBancaria(){
+        return this.cuentaBancaria;
+    }
+    public Moneda getMoneda(){
+        return this.moneda;
+    }
     public void setIdFondo(int idFondo) {
         this.idFondo = idFondo;
     }
-
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
-
     public void setSaldoActual(double saldoActual) {
         this.saldoActual = saldoActual;
     }
-
     public void setEstado(EstadoFondo estado) {
         this.estado = estado;
     }
-
     public void setFechaCreacion(Date fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
     }
+    public void setCuentaBancaria(CuentaBancaria cuenta){
+        this.cuentaBancaria = cuenta;
+    }
+    public void setMoneda(Moneda moneda){
+        this.moneda = moneda;
+    }
+
+    //Metodos
 }
