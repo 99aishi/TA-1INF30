@@ -64,4 +64,13 @@ abstract class Usuario{
 			}
 		return false;
 	}
+		public String cifrarPassword(String passwordPlano) {
+		// TODO: Implementar algoritmo Argon2id con salt de 16 bytes (RNF_01)
+		return "";
+	}
+
+	public boolean validarAccesoPorEstado() {
+		// TODO: Restringir acceso exclusivamente a "Activos" (RF_05)
+		return false;
+	}
 }

@@ -63,5 +63,12 @@ class SolicitudGasto{
 	}
 
 	//Metodos
+	public void evaluarSolicitud(Empleado jefe, boolean aprobado, String comentario) {
+		// TODO: Registro obligatorio de fecha y sustento (RF_07)
+	}
+
+	public void registrarDesembolso(String nroOperacion, CuentaBancaria destino) {
+		// TODO: Cambiar estado a "desembolsado" y vincular transacción (RF_08)
+	}
 	
 }

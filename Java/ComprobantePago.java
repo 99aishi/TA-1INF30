@@ -92,4 +92,15 @@ class ComprobantePago {
     public void setTotal(double total) {
         this.total = total;
     }
+
+    //Metodos
+    public boolean validarConsistenciaMontos() {
+        // TODO: Verificar que subtotal + igv == total (RF_09)
+        return false;
+    }
+
+    public boolean esFechaValida() {
+        // TODO: Validar que la fecha de emisión no sea futura ni exceda límites (RF_09)
+        return false;
+    }
 }

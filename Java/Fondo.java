@@ -64,4 +64,16 @@ class Fondo {
     }
 
     //Metodos
+    public void actualizarSaldo(double monto, TipoTransaccion tipo) {
+        // TODO: Lógica para sumar (Reposición) o restar (Desembolso) al saldoActual
+    }
+
+    public boolean validarDisponibilidad(double montoRequerido) {
+        // TODO: Verificar si el saldoActual es suficiente antes de proceder
+        return false;
+    }
+
+    public void vincularCuentaBancaria(CuentaBancaria cuenta) {
+        // TODO: Asignar la cuenta de origen del fondo (RF_11)
+    }
 }

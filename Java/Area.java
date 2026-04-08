@@ -36,6 +36,15 @@ class Area{
 	public void setDescripcion(String descripcion) {
 		this.descripcion = descripcion;
 	}
-	//Metodos
 	
+	//Metodos
+	public List<SolicitudGasto> obtenerGastosConsolidados() {
+		// TODO: Retornar lista de gastos de todos los empleados del área (RF_22)
+		return new java.util.ArrayList<>();
+	}
+
+	public double calcularPresupuestoEjecutado() {
+		// TODO: Sumar todos los desembolsos confirmados del área (RF_21)
+		return 0.0;
+	}
 }

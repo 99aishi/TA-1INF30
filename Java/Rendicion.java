@@ -1,4 +1,5 @@
 import java.util.Date;
+import java.util.List;
 
 class Rendicion {
     private static int correlativoID = 1;
@@ -76,4 +77,16 @@ class Rendicion {
     }
 
     //Metodos
+    public void cargarComprobanteDigital(ComprobantePago comprobante) {
+        // TODO: Aplicar validaciones automáticas de coherencia (RF_09)
+    }
+
+    public void formalizarSaldoFinal(double montoReal) {
+        // TODO: Calcular reembolso o devolución para cierre (RF_10)
+    }
+
+    public List<Rendicion> consultarAuditoria(java.util.Date inicio, java.util.Date fin) {
+        // TODO: Retornar detalle consolidado para Gerencia de Finanzas (RF_17)
+        return new java.util.ArrayList<>();
+    }
 }

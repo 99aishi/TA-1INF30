@@ -27,5 +27,8 @@ class CajaChica extends Fondo{
 	}
 
 	//Métodos
+	public void configurarCajaChica(double montoTecho, CuentaBancaria origen, Empleado responsable) {
+		// TODO: Asignar responsable y límites financieros (RF_11)
+	}
 
 }

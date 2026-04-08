@@ -30,11 +30,18 @@ class Administrador extends Usuario{
         this.correoSoporte = correoSoporte;
     }
 
-	//crearUsuario(int usuarioID, String nombre, String apellido_paterno,
-	//String apellido_materno, String password,EstadoUsuario estado)
+	// Métodos
+    public void crearUsuario(String nombre, String apellidoP, String apellidoM, String pass, EstadoUsuario estado) {
+        // TODO: Implementar creación de registro en BD (RF_04)
+    }
 
-	//asignarRol(usuario,rol)
-	//cambiarEstadoUsuario
+    public void asignarRol(Usuario usuario, Rol rol) {
+        // TODO: Lógica para obligar asignación de rol único (RF_02)
+    }
+
+    public void cambiarEstadoUsuario(Usuario usuario, EstadoUsuario nuevoEstado) {
+        // TODO: Implementar desactivación/activación de cuentas (RF_04)
+    }
 
 
 }

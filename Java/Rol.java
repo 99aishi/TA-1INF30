@@ -11,7 +11,6 @@ class Rol {
         this.titulo = titulo;
         this.descripcion = descripcion;
     }
-
     public Rol(Rol copia){
     	this.rolID= copia.rolID;
     	this.titulo=copia.titulo;

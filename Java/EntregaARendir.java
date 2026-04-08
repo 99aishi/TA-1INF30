@@ -60,4 +60,16 @@ class EntregaARendir extends Fondo{
 	}
 	
 	//Metodos
+	public void aperturarEntrega(double montoAprobado) {
+		// TODO: Registrar fechaApertura y cambiar estado a "Activo" (RF_06)
+	}
+
+	public void cerrarEntrega() {
+		// TODO: Bloquear nuevos gastos y proceder a la liquidación final (RF_10)
+	}
+
+	public boolean verificarPlazoVencido() {
+		// TODO: Validar si la fecha actual supera la fechaCierreEntrega
+		return false;
+	}
 }

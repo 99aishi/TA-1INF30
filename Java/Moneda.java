@@ -32,4 +32,13 @@ class Moneda{
 	}
 
 	//Metodos
+	public double convertirA(double monto, Moneda monedaDestino, double factorCambio) {
+		// TODO: Aplicar el factor de cambio para reportes consolidados (RF_21)
+		return 0.0;
+	}
+
+	public String formatearMonto(double monto) {
+		// TODO: Retornar el monto con el símbolo correspondiente (ej: "S/ 100.00")
+		return "";
+	}
 }

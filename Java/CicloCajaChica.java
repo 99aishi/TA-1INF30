@@ -79,4 +79,13 @@ class CicloCajaChica{
 		this.cajaChica = cajaChica;
 	}
 	
+	//Metodos
+	public void abrirCiclo() {
+		// TODO: Heredar saldo anterior y congelar monto techo (RF_12)
+	}
+
+	public double cerrarYConsolidarCiclo() {
+		// TODO: Inhabilitar nuevos registros y calcular total rendido (RF_16)
+		return 0.0;
+	}
 }
