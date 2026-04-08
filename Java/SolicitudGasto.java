@@ -6,6 +6,8 @@ class SolicitudGasto{
 	private String motivoSolicitud;
 	private EstadoSolicitudGasto estado;
 	
+	private Empleado solicitante; // hacer set get
+
 	public SolicitudGasto(int idSolicitudGasto, Date fechaSolicitud, double montoSolicitado, String motivoSolicitud, 
 	EstadoSolicitudGasto estado){
 	    this.idSolicitudGasto=idSolicitudGasto;

@@ -9,6 +9,10 @@ class Transaccion{
 	private MedioPago medioPago;
 	private double tipoCambio;
 
+    private CuentaBancaria cuentaOrigen;
+    private CuentaBancaria cuentaDestino;
+    private Moneda moneda;
+
 	public Transaccion(int idTransaccion, TipoTransaccion tipo,Date fecha,double monto, 
 		String numeroOperacionBancaria, MedioPago medioPago, double tipoCambio){
 		this.idTransaccion=idTransaccion;

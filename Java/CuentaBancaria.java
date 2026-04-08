@@ -3,6 +3,10 @@ class CuentaBancaria {
     private String nombreBanco;
     private String numeroBancario;
     private String cci;
+    private Empleado duenho; //set y get
+
+    private Fondo fondo;
+    
 
     // Constructor vacío
     public CuentaBancaria() {
@@ -14,9 +18,33 @@ class CuentaBancaria {
         this.nombreBanco = nombreBanco;
         this.numeroBancario = numeroBancario;
         this.cci = cci;
+        
     }
 
+    //Constructor copia
+    public CuentaBancaria(CuentaBancaria cb){
+        this.idCuenta=cb.CuentaBancaria;
+        this.nombreBanco=cb.nombreBanco;
+        this.numeroBancario=cb.numeroBancario;
+        this.cci=cb.cci;
+        this.duenho= new Empleado(cb.duenho);
+    }
+
+
+
+
+    //this.duenho=new Empleado(duenho);
+
     // Getters
+    public Empleado getDueno(){
+        Empleado duenho= new Empleado(this.duenho);
+        return duenho;
+    }
+    public void setDueno(Empleado duenho){
+        this.duenho=new Empleado(duenho);
+    }
+
+
     public int getIdCuenta() {
         return idCuenta;
     }

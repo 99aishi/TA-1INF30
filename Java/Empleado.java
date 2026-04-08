@@ -1,8 +1,16 @@
+import java.util.List;
+import java.util.ArrayList;
+
 class Empleado extends Usuario {
     private int empleadoID;
     private String correoInstitucional;
     private String numeroCelular;
-    //private Rol rol;
+    private Rol rol;
+    private Area area;
+    private List<CuentaBancaria> cuentas; //inicializado
+
+    private List<SolicitudGasto> solicitudes; //inicializado
+
 
 	public Empleado(int usuarioID, String nombre, String apellido_paterno,
 					String apellido_materno, String password,EstadoUsuario estado,
@@ -12,7 +20,17 @@ class Empleado extends Usuario {
 		this.empleadoID=empleadoID;
 		this.correoInstitucional=correoInstitucional;
 		this.numeroCelular=numeroCelular;
-	}    
+		this.cuentas= new ArrayList<>();
+		this.solicitudes= new ArrayList<>();
+	}  
+
+	public void setRol(Rol rol){
+		this.rol=rol;
+	}  
+	public Rol getRol(){
+		Rol rolito= new Rol(rol);
+		return rolito;
+	}
     // Getters
     public int getEmpleadoID() {
         return empleadoID;

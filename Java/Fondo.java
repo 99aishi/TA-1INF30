@@ -7,6 +7,8 @@ class Fondo {
     private EstadoFondo estado;
     private Date fechaCreacion;
 
+    private CuentaBancaria cuenta_banco; //
+
     // Constructor
     public Fondo(int idFondo, String nombre, double saldoActual, EstadoFondo estado, Date fechaCreacion) {
         this.idFondo = idFondo;

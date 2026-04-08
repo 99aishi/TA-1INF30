@@ -33,7 +33,7 @@ class Administrador extends Usuario{
 	//crearUsuario(int usuarioID, String nombre, String apellido_paterno,
 	//String apellido_materno, String password,EstadoUsuario estado)
 
-	//asignarRol
+	//asignarRol(usuario,rol)
 	//cambiarEstadoUsuario
 
 
