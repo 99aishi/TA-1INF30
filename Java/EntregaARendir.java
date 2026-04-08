@@ -7,8 +7,10 @@ class EntregaARendir extends Fondo{
 	private Date fechaCierreEntrega;
 	private EstadoEntregaARendir estado;
 	
-	public EntregaARendir(String motivo, double montoSolicitado, Date fechaSolicitud, Date fechaAperturaEntrega, Date fechaCierreEntrega, 
+	public EntregaARendir(int idFondo, String nombre, double saldoActual, EstadoFondo estadoFondo, Date fechaCreacion,
+			String motivo, double montoSolicitado, Date fechaSolicitud, Date fechaAperturaEntrega, Date fechaCierreEntrega, 
 	EstadoEntregaARendir estado) {
+		super(idFondo,nombre,saldoActual,estadoFondo,fechaCreacion);
 		this.motivo = motivo;
 		this.montoSolicitado = montoSolicitado;
 		this.fechaSolicitud = fechaSolicitud;
@@ -57,7 +59,7 @@ class EntregaARendir extends Fondo{
 		this.fechaCierreEntrega = fechaCierreEntrega;
 	}
 
-	public EstadoEntregaARendir getEstado() {
+	public EstadoEntregaARendir getEstadoEntrega() {
 		return estado;
 	}
 

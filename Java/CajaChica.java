@@ -1,5 +1,6 @@
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Date;
 
 class CajaChica extends Fondo{
 	private double montoTecho;
@@ -8,7 +9,8 @@ class CajaChica extends Fondo{
 
 
 	
-	public CajaChica(double montoTecho){
+	public CajaChica(int idFondo, String nombre, double saldoActual, EstadoFondo estado, Date fechaCreacion,double montoTecho){
+		super(idFondo,nombre,saldoActual,estado,fechaCreacion);
 		this.montoTecho=montoTecho;
 		this.ciclos=new ArrayList<>();
 	}
