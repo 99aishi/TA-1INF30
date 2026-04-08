@@ -12,6 +12,8 @@ class ComprobantePago {
     private double igv;
     private double total;
 
+    private SolicitudGasto solicitud; // get set y copia
+
     // Constructor
     public ComprobantePago(int idComprobante, TipoComprobante tipoDocumento, String ruc,
                            String razonSocial, String numeroSerial, Date fechaEmision,

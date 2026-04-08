@@ -7,8 +7,8 @@ class Fondo {
     private EstadoFondo estado;
     private Date fechaCreacion;
 
-    private CuentaBancaria cuenta_banco; //
-
+    private CuentaBancaria cuenta_banco; //crear set y get
+    private Moneda moneda; // crear set y get
     // Constructor
     public Fondo(int idFondo, String nombre, double saldoActual, EstadoFondo estado, Date fechaCreacion) {
         this.idFondo = idFondo;

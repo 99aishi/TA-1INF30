@@ -1,4 +1,8 @@
 import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
+
+
 class SolicitudGasto{
 	private int idSolicitudGasto;
 	private Date fechaSolicitud;
@@ -8,6 +12,10 @@ class SolicitudGasto{
 	
 	private Empleado solicitante; // hacer set get
 
+	private List<ComprobantePago> comprobantes;// inicializar, set ,get 
+
+	private CicloCajaChica ciclo; // get set 26-1
+
 	public SolicitudGasto(int idSolicitudGasto, Date fechaSolicitud, double montoSolicitado, String motivoSolicitud, 
 	EstadoSolicitudGasto estado){
 	    this.idSolicitudGasto=idSolicitudGasto;
@@ -15,6 +23,7 @@ class SolicitudGasto{
 		this.montoSolicitado=montoSolicitado;
 		this.motivoSolicitud=motivoSolicitud;
 		this.estado=estado;
+		this.comprobantes=new ArrayList<>();
 	}
 	
 	public int getIdSolicitudGasto() {

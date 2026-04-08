@@ -24,6 +24,7 @@ class Empleado extends Usuario {
 		this.solicitudes= new ArrayList<>();
 	}  
 
+
 	public void setRol(Rol rol){
 		this.rol=rol;
 	}  

@@ -1,5 +1,5 @@
 import java.util.Date;
-class EntregaARendir{
+class EntregaARendir extends Fondo{
 	private String motivo;
 	private double montoSolicitado;
 	private Date fechaSolicitud;

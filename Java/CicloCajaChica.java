@@ -1,4 +1,8 @@
 import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
+
+
 class CicloCajaChica{
 	private int idCicloCaja;
 	private int numeroSemana;
@@ -8,6 +12,11 @@ class CicloCajaChica{
 	private double totalGastado;
 	private EstadoCicloCaja estado;
 	
+	// aqui va un private cajachica ????? checarlo plis :v, lo digo pq hay que saber el montoTecho
+	private List<SolicitudGasto> solicitudes; // set, get, inicializar
+
+
+
 	public CicloCajaChica(int idCicloCaja,int numeroSemana,Date fechaApertura,Date fechaCierre, double saldoInicial,
 	double totalGastado, EstadoCicloCaja estado){
 		this.idCicloCaja=idCicloCaja;
@@ -17,6 +26,7 @@ class CicloCajaChica{
 		this.saldoInicial=saldoInicial;
 		this.totalGastado=totalGastado;
 		this.estado=estado;
+		this.solicitudes=new ArrayList<>();
 	}
 	
 	public int getIdCicloCaja() {

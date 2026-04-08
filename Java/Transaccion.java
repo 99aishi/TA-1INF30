@@ -9,9 +9,9 @@ class Transaccion{
 	private MedioPago medioPago;
 	private double tipoCambio;
 
-    private CuentaBancaria cuentaOrigen;
-    private CuentaBancaria cuentaDestino;
-    private Moneda moneda;
+    private CuentaBancaria cuentaOrigen;// crear set y get
+    private CuentaBancaria cuentaDestino;// crear set y get
+    private Moneda moneda; // crear set y get
 
 	public Transaccion(int idTransaccion, TipoTransaccion tipo,Date fecha,double monto, 
 		String numeroOperacionBancaria, MedioPago medioPago, double tipoCambio){
