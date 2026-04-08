@@ -10,6 +10,9 @@ class Rendicion {
     private EstadoRendicion estado;
     private String comentario;
 
+
+
+
     public Rendicion(int idRendicion, Date fechaPresentacion, Date fechaAprobacion,
                      double totalDeclarado, double totalAprobado, double saldoFinal,
                      EstadoRendicion estado, String comentario) {
