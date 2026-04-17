@@ -1,3 +1,0 @@
-enum EstadoFondo{
-	Activo
-}
