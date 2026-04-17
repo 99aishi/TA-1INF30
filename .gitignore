@@ -1,0 +1,29 @@
+### --- .NET / VISUAL STUDIO --- ###
+bin/
+obj/
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+_ReSharper*/
+*.suo
+*.user
+*.pdb
+
+### --- WEB / FRONTEND (Bootstrap/JS) --- ###
+node_modules/
+.DS_Store
+dist/
+build/
+
+### --- DATABASE / OTROS --- ###
+*.log
+*.sqlite
+.env                # ¡MUY IMPORTANTE! Nunca subas tus contraseñas reales
+.env.local
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
