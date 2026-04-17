@@ -1,29 +1,65 @@
-### --- .NET / VISUAL STUDIO --- ###
-bin/
-obj/
+### --- SEGURIDAD Y ENTORNO ---
+# Nunca subir secretos ni configuraciones locales
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+Thumbs.db
+
+### --- JAVA (Maven / Gradle) ---
+# Ignorar compilados en cualquier nivel de profundidad
+**/target/
+**/build/
+**/out/
+*.class
+*.jar
+*.war
+*.ear
+
+# Excepción para el Maven Wrapper (SÍ debe subirse)
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### --- .NET (C# / ASP.NET Core) ---
+# Ignorar carpetas de salida de compilación
+**/bin/
+**/obj/
+# Archivos de usuario y caché de Visual Studio
+.vs/
 *.user
 *.userosscache
 *.sln.docstates
-.vs/
-_ReSharper*/
 *.suo
-*.user
 *.pdb
 
-### --- WEB / FRONTEND (Bootstrap/JS) --- ###
-node_modules/
-.DS_Store
-dist/
-build/
+### --- FRONTEND (Node / Bootstrap) ---
+# Dependencias y builds
+**/node_modules/
+**/dist/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-### --- DATABASE / OTROS --- ###
-*.log
-*.sqlite
-.env                # ¡MUY IMPORTANTE! Nunca subas tus contraseñas reales
-.env.local
-
-### VS Code ###
+### --- IDEs (IntelliJ, VS Code, Eclipse, NetBeans) ---
+.idea/
+*.iml
+*.iws
+*.ipr
 .vscode/
+.settings/
+.classpath
+.project
+.factorypath
+.springBeans
+.nbproject/
+nbbuild/
+nbdist/
 
-### Mac OS ###
-.DS_Store
+### --- BASE DE DATOS ---
+# Ignorar archivos de base de datos local (solo subir archivos .sql en /database/migrations)
+*.db
+*.sqlite
+*.sql.gz
