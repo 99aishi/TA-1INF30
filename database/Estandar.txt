@@ -1,0 +1,130 @@
+ESTÁNDAR DE NOMENCLATURA PARA DESARROLLO DE BASE DE DATOS
+
+Proyecto: Collab DB Scripts
+
+Versión: 2.0
+
+===============================================================================
+
+FILOSOFÍA Y REGLAS GENERALES
+===============================================================================
+
+Estilo base: snake_case puro (ejemplo: mi_nombre_de_objeto).
+
+Todo en MINÚSCULAS: Garantiza portabilidad entre sistemas Linux/Windows y evita problemas de "collation".
+
+Singularidad: Las tablas representan entidades, no colecciones. Usar usuario, no usuarios.
+
+Idioma: Español (técnico).
+
+Caracteres permitidos: [a-z0-9_]. Queda prohibido el uso de tildes, espacios o la letra 'ñ'.
+
+Claridad sobre brevedad: Es preferible fecha_ultima_conexion que f_ult_con.
+
+===============================================================================
+2. ESTRUCTURA DE TABLAS
+
+Patrón: [prefijo_modulo]_[nombre_entidad]
+
+Prefijos de Módulo: Obligatorios para organizar el esquema.
+
+seg: Seguridad y accesos.
+
+vta: Ventas y facturación.
+
+inv: Inventarios y almacenes.
+
+cfg: Configuraciones globales.
+
+log: Tablas de auditoría o históricos.
+
+Tablas Maestras:
+Ejemplo: seg_usuario, vta_cliente, inv_producto.
+
+Tablas de Relación (Muchos a Muchos):
+Patrón: Unir nombres de ambas entidades con el prefijo del módulo dominante.
+Ejemplo: seg_usuario_rol, inv_producto_proveedor.
+
+Tablas Temporales o de Interfaz:
+Patrón: tmp_[descripcion] o ext_[descripcion] (para cargas externas).
+
+===============================================================================
+3. DEFINICIÓN DE COLUMNAS (ATRIBUTOS)
+
+Llave Primaria (PK):
+Patrón: id_[nombre_entidad].
+Ejemplo: id_usuario, id_pedido.
+
+Llaves Foráneas (FK):
+Patrón: id_[entidad_referenciada].
+Ejemplo: id_perfil (en tabla usuario), id_categoria (en tabla producto).
+
+Campos Lógicos (Booleanos):
+Patrón: es_[estado], esta_[estado] o tiene_[propiedad].
+Ejemplo: es_activo, esta_bloqueado, tiene_permiso_escritura.
+
+Fechas y Tiempos:
+
+Solo fecha: fecha_[descripcion] (ej. fecha_nacimiento).
+
+Fecha y hora: momento_[descripcion] o [descripcion]_at (ej. creado_at).
+
+Columnas de Auditoría (Recomendadas para todas las tablas):
+
+creado_at (timestamp).
+
+actualizado_at (timestamp).
+
+id_usuario_auditoria (quién hizo el cambio).
+
+=============================================================================== 4. RESTRICCIONES (CONSTRAINTS) E ÍNDICES
+
+Para facilitar la depuración de errores de base de datos, las restricciones deben tener nombre propio:
+
+Primary Key: pk_[nombre_tabla]
+Ejemplo: pk_seg_usuario.
+
+Foreign Key: fk_[tabla_origen]_[tabla_destino]
+Ejemplo: fk_seg_usuario_id_perfil.
+
+Unique Key: uk_[tabla]_[columna]
+Ejemplo: uk_seg_usuario_correo_electronico.
+
+Index: idx_[tabla]_[columna]
+Ejemplo: idx_vta_pedido_fecha_creacion.
+
+===============================================================================
+5. OBJETOS DE LÓGICA (PROGRAMACIÓN)
+
+Store Procedures: pa_[accion]_[entidad]
+Ejemplo: pa_insertar_venta, pa_actualizar_stock.
+
+Funciones: fn_[descripcion]
+Ejemplo: fn_calcular_igv, fn_obtener_nombre_completo.
+
+Vistas: vi_[descripcion]
+Ejemplo: vi_reporte_mensual_ventas.
+
+Triggers: trg_[entidad][momento][accion]
+Ejemplo: trg_usuario_after_insert.
+
+===============================================================================
+        6. EJEMPLO DE SCRIPT INTEGRAL
+
+        CREATE TABLE vta_pedido (
+        id_pedido INT NOT NULL,
+        id_cliente INT NOT NULL,
+        fecha_emision DATE NOT NULL,
+        monto_subtotal DECIMAL(12,2),
+        monto_impuesto DECIMAL(12,2),
+        es_pagado BIT DEFAULT 0,
+        creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        CONSTRAINT pk_vta_pedido PRIMARY KEY (id_pedido),
+        CONSTRAINT fk_vta_pedido_cliente FOREIGN KEY (id_cliente) 
+            REFERENCES vta_cliente(id_cliente)
+
+
+        );
+
+        CREATE INDEX idx_vta_pedido_fecha ON vta_pedido(fecha_emision);
