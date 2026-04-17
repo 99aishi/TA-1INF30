@@ -10,6 +10,8 @@
     <packaging>pom</packaging>
     <modules>
         <module>Economix</module>
+        <module>EconomixPersistencia</module>
+        <module>EconomixDBManager</module>
     </modules>
 
     <properties>
