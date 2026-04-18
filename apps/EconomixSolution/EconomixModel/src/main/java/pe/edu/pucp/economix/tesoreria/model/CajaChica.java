@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-class CajaChica extends Fondo{
+public class CajaChica extends Fondo{
     private double montoTecho;
     private List<CicloCajaChica> ciclos;
 

@@ -1,6 +1,6 @@
 package pe.edu.pucp.economix.rrhh.model;
 
-class Rol {
+public class Rol {
     private static int correlativoID = 1;
     private int rolID;
     private String titulo;

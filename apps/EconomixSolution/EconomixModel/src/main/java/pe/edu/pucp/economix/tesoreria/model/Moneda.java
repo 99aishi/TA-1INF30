@@ -1,6 +1,6 @@
 package pe.edu.pucp.economix.tesoreria.model;
 
-class Moneda{
+public class Moneda{
     private static int correlativoID = 1;
     private int idMoneda;
     private String codigoISO;

@@ -1,6 +1,8 @@
 package pe.edu.pucp.economix.tesoreria.model;
 
-class EntregaARendir extends Fondo{
+import java.util.Date;
+
+public class EntregaARendir extends Fondo{
     private String motivo;
     private double montoSolicitado;
     private Date fechaSolicitud;
