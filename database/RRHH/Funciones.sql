@@ -1,4 +1,3 @@
-
 DELIMITER $$
 
 -- =========================================================
@@ -7,8 +6,7 @@ DELIMITER $$
 
 CREATE PROCEDURE sp_insertar_area(
     IN p_nombre_area VARCHAR(60),
-    IN p_descripcion_area VARCHAR(200),
-    IN p_id_usuario_accion INT
+    IN p_descripcion_area VARCHAR(200)
 )
 BEGIN
     IF p_nombre_area IS NULL OR TRIM(p_nombre_area) = '' THEN
@@ -18,23 +16,18 @@ BEGIN
 
     INSERT INTO rrhh_area(
         nombre_area,
-        descripcion_area,
-        id_usuario_creacion,
-        id_usuario_modificacion
+        descripcion_area
     )
     VALUES(
         TRIM(p_nombre_area),
-        p_descripcion_area,
-        p_id_usuario_accion,
-        p_id_usuario_accion
+        TRIM(p_descripcion_area)
     );
 END$$
 
 CREATE PROCEDURE sp_modificar_area(
     IN p_id_area INT,
     IN p_nombre_area VARCHAR(60),
-    IN p_descripcion_area VARCHAR(200),
-    IN p_id_usuario_accion INT
+    IN p_descripcion_area VARCHAR(200)
 )
 BEGIN
     IF p_id_area IS NULL OR p_id_area <= 0 THEN
@@ -44,8 +37,8 @@ BEGIN
 
     UPDATE rrhh_area
        SET nombre_area = TRIM(p_nombre_area),
-           descripcion_area = p_descripcion_area,
-           id_usuario_modificacion = p_id_usuario_accion
+           descripcion_area = TRIM(p_descripcion_area),
+           id_usuario_modificacion = NULL
      WHERE id_area = p_id_area;
 END$$
 
@@ -79,8 +72,7 @@ END$$
 
 CREATE PROCEDURE sp_insertar_rol(
     IN p_titulo_rol VARCHAR(50),
-    IN p_descripcion_rol VARCHAR(200),
-    IN p_id_usuario_accion INT
+    IN p_descripcion_rol VARCHAR(200)
 )
 BEGIN
     IF p_titulo_rol IS NULL OR TRIM(p_titulo_rol) = '' THEN
@@ -90,23 +82,18 @@ BEGIN
 
     INSERT INTO rrhh_rol(
         titulo_rol,
-        descripcion_rol,
-        id_usuario_creacion,
-        id_usuario_modificacion
+        descripcion_rol
     )
     VALUES(
         TRIM(p_titulo_rol),
-        p_descripcion_rol,
-        p_id_usuario_accion,
-        p_id_usuario_accion
+        TRIM(p_descripcion_rol)
     );
 END$$
 
 CREATE PROCEDURE sp_modificar_rol(
     IN p_id_rol INT,
     IN p_titulo_rol VARCHAR(50),
-    IN p_descripcion_rol VARCHAR(200),
-    IN p_id_usuario_accion INT
+    IN p_descripcion_rol VARCHAR(200)
 )
 BEGIN
     IF p_id_rol IS NULL OR p_id_rol <= 0 THEN
@@ -116,8 +103,8 @@ BEGIN
 
     UPDATE rrhh_rol
        SET titulo_rol = TRIM(p_titulo_rol),
-           descripcion_rol = p_descripcion_rol,
-           id_usuario_modificacion = p_id_usuario_accion
+           descripcion_rol = TRIM(p_descripcion_rol),
+           id_usuario_modificacion = NULL
      WHERE id_rol = p_id_rol;
 END$$
 
@@ -147,15 +134,13 @@ END$$
 
 -- =========================================================
 -- RRHH_USUARIO
--- Eliminación lógica porque esta tabla sí tiene esta_activo
 -- =========================================================
 
 CREATE PROCEDURE sp_insertar_usuario(
     IN p_nombres VARCHAR(60),
     IN p_apellido_paterno VARCHAR(40),
     IN p_apellido_materno VARCHAR(40),
-    IN p_password_hash VARCHAR(255),
-    IN p_id_usuario_accion INT
+    IN p_password_hash VARCHAR(255)
 )
 BEGIN
     IF p_nombres IS NULL OR TRIM(p_nombres) = '' THEN
@@ -178,18 +163,14 @@ BEGIN
         apellido_paterno,
         apellido_materno,
         password_hash,
-        esta_activo,
-        id_usuario_creacion,
-        id_usuario_modificacion
+        esta_activo
     )
     VALUES(
         TRIM(p_nombres),
         TRIM(p_apellido_paterno),
         TRIM(p_apellido_materno),
         TRIM(p_password_hash),
-        1,
-        p_id_usuario_accion,
-        p_id_usuario_accion
+        1
     );
 END$$
 
@@ -199,8 +180,7 @@ CREATE PROCEDURE sp_modificar_usuario(
     IN p_apellido_paterno VARCHAR(40),
     IN p_apellido_materno VARCHAR(40),
     IN p_password_hash VARCHAR(255),
-    IN p_esta_activo TINYINT,
-    IN p_id_usuario_accion INT
+    IN p_esta_activo TINYINT
 )
 BEGIN
     IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
@@ -214,33 +194,33 @@ BEGIN
            apellido_materno = TRIM(p_apellido_materno),
            password_hash = TRIM(p_password_hash),
            esta_activo = p_esta_activo,
-           id_usuario_modificacion = p_id_usuario_accion
+           id_usuario_modificacion = NULL
      WHERE id_usuario = p_id_usuario;
 END$$
 
 CREATE PROCEDURE sp_eliminar_usuario(
-    IN p_id_usuario INT,
-    IN p_id_usuario_accion INT
+    IN p_id_usuario INT
 )
 BEGIN
     UPDATE rrhh_usuario
-       SET esta_activo = 0,
-           id_usuario_modificacion = p_id_usuario_accion
-     WHERE id_usuario = p_id_usuario;
+       SET esta_activo = 0
+	WHERE id_usuario = p_id_usuario;
 END$$
 
 CREATE PROCEDURE sp_buscar_usuario_por_id(
     IN p_id_usuario INT
 )
 BEGIN
-    SELECT * FROM rrhh_usuario
-    WHERE id_usuario = p_id_usuario;
+    SELECT *
+      FROM rrhh_usuario
+     WHERE id_usuario = p_id_usuario;
 END$$
 
 CREATE PROCEDURE sp_listar_usuarios()
 BEGIN
-    SELECT * FROM rrhh_usuario
-    ORDER BY id_usuario;
+    SELECT *
+      FROM rrhh_usuario
+     ORDER BY id_usuario;
 END$$
 
 -- =========================================================
@@ -253,8 +233,7 @@ CREATE PROCEDURE sp_insertar_empleado(
     IN p_numero_celular VARCHAR(15),
     IN p_id_area INT,
     IN p_id_rol INT,
-    IN p_id_jefe_directo INT,
-    IN p_id_usuario_accion INT
+    IN p_id_jefe_directo INT
 )
 BEGIN
     IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
@@ -273,9 +252,7 @@ BEGIN
         numero_celular,
         id_area,
         id_rol,
-        id_jefe_directo,
-        id_usuario_creacion,
-        id_usuario_modificacion
+        id_jefe_directo
     )
     VALUES(
         p_id_usuario,
@@ -283,9 +260,7 @@ BEGIN
         TRIM(p_numero_celular),
         p_id_area,
         p_id_rol,
-        p_id_jefe_directo,
-        p_id_usuario_accion,
-        p_id_usuario_accion
+        p_id_jefe_directo
     );
 END$$
 
@@ -295,8 +270,7 @@ CREATE PROCEDURE sp_modificar_empleado(
     IN p_numero_celular VARCHAR(15),
     IN p_id_area INT,
     IN p_id_rol INT,
-    IN p_id_jefe_directo INT,
-    IN p_id_usuario_accion INT
+    IN p_id_jefe_directo INT
 )
 BEGIN
     IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
@@ -310,19 +284,17 @@ BEGIN
            id_area = p_id_area,
            id_rol = p_id_rol,
            id_jefe_directo = p_id_jefe_directo,
-           id_usuario_modificacion = p_id_usuario_accion
+           id_usuario_modificacion = NULL
      WHERE id_usuario = p_id_usuario;
 END$$
-
 
 CREATE PROCEDURE sp_eliminar_empleado(
     IN p_id_usuario INT
 )
 BEGIN
-	DELETE FROM rrhh_empleado
-    WHERE id_usuario = p_id_usuario;
+    DELETE FROM rrhh_empleado
+     WHERE id_usuario = p_id_usuario;
 END$$
-
 
 CREATE PROCEDURE sp_buscar_empleado_por_id(
     IN p_id_usuario INT
@@ -384,8 +356,7 @@ END$$
 
 CREATE PROCEDURE sp_insertar_administrador(
     IN p_id_usuario INT,
-    IN p_correo_soporte VARCHAR(100),
-    IN p_id_usuario_accion INT
+    IN p_correo_soporte VARCHAR(100)
 )
 BEGIN
     IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
@@ -395,27 +366,22 @@ BEGIN
 
     INSERT INTO rrhh_administrador(
         id_usuario,
-        correo_soporte,
-        id_usuario_creacion,
-        id_usuario_modificacion
+        correo_soporte
     )
     VALUES(
         p_id_usuario,
-        TRIM(p_correo_soporte),
-        p_id_usuario_accion,
-        p_id_usuario_accion
+        TRIM(p_correo_soporte)
     );
 END$$
 
 CREATE PROCEDURE sp_modificar_administrador(
     IN p_id_usuario INT,
-    IN p_correo_soporte VARCHAR(100),
-    IN p_id_usuario_accion INT
+    IN p_correo_soporte VARCHAR(100)
 )
 BEGIN
     UPDATE rrhh_administrador
        SET correo_soporte = TRIM(p_correo_soporte),
-           id_usuario_modificacion = p_id_usuario_accion
+           id_usuario_modificacion = NULL
      WHERE id_usuario = p_id_usuario;
 END$$
 
@@ -465,25 +431,20 @@ CREATE PROCEDURE sp_insertar_historial_jefatura(
     IN p_id_empleado INT,
     IN p_id_jefe INT,
     IN p_fecha_inicio DATE,
-    IN p_fecha_fin DATE,
-    IN p_id_usuario_accion INT
+    IN p_fecha_fin DATE
 )
 BEGIN
     INSERT INTO rrhh_historial_jefatura(
         id_empleado,
         id_jefe,
         fecha_inicio,
-        fecha_fin,
-        id_usuario_creacion,
-        id_usuario_modificacion
+        fecha_fin
     )
     VALUES(
         p_id_empleado,
         p_id_jefe,
         p_fecha_inicio,
-        p_fecha_fin,
-        p_id_usuario_accion,
-        p_id_usuario_accion
+        p_fecha_fin
     );
 END$$
 
@@ -492,8 +453,7 @@ CREATE PROCEDURE sp_modificar_historial_jefatura(
     IN p_id_empleado INT,
     IN p_id_jefe INT,
     IN p_fecha_inicio DATE,
-    IN p_fecha_fin DATE,
-    IN p_id_usuario_accion INT
+    IN p_fecha_fin DATE
 )
 BEGIN
     UPDATE rrhh_historial_jefatura
@@ -501,7 +461,7 @@ BEGIN
            id_jefe = p_id_jefe,
            fecha_inicio = p_fecha_inicio,
            fecha_fin = p_fecha_fin,
-           id_usuario_modificacion = p_id_usuario_accion
+           id_usuario_modificacion = NULL
      WHERE id_historial = p_id_historial;
 END$$
 
