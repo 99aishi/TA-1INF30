@@ -6,7 +6,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RolImplement implements IRolDAO {
+public class RolImplement  {
     private Connection con;
     private Statement st;
     private PreparedStatement pst;

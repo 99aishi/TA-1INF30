@@ -1,18 +1,23 @@
 package pe.edu.pucp.economix.tesoreria.model;
 
+import java.util.Date;
+
 public class Moneda{
     private static int correlativoID = 1;
     private int idMoneda;
     private String codigoISO;
     private String simbolo;
-
+    private Date fechaCreacion;
+    private Date fechaModificacion;
     //Constructores
-    public Moneda(String codigoISO, String simbolo) {
+    public Moneda(String codigoISO, String simbolo,Date fechaCreacion,Date fechaModificacion) {
         this.idMoneda = correlativoID++;
         this.codigoISO = codigoISO;
         this.simbolo = simbolo;
+        this.fechaCreacion=fechaCreacion;
+        this.fechaModificacion=fechaModificacion;
     }
-
+    public Moneda(){}
     //Selectores
     public int getIdMoneda() {
         return idMoneda;
@@ -32,7 +37,21 @@ public class Moneda{
     public void setSimbolo(String simbolo) {
         this.simbolo = simbolo;
     }
+    public Date getFechaCreacion() {
+        return fechaCreacion;
+    }
 
+    public void setFechaCreacion(Date fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
+
+    public Date getFechaModificacion() {
+        return fechaModificacion;
+    }
+
+    public void setFechaModificacion(Date fechaModificacion) {
+        this.fechaModificacion = fechaModificacion;
+    }
     //Metodos
     public double convertirA(double monto, Moneda monedaDestino, double factorCambio) {
         // TODO: Aplicar el factor de cambio para reportes consolidados (RF_21)
@@ -43,4 +62,9 @@ public class Moneda{
         // TODO: Retornar el monto con el símbolo correspondiente (ej: "S/ 100.00")
         return "";
     }
+    @Override
+    public String toString(){
+        return "MONEDA: "+idMoneda+ " - "+"CODIGO ISO: "+codigoISO+" - "+"SIMBOLO: "+simbolo;
+    }
+
 }
