@@ -37,8 +37,7 @@ BEGIN
 
     UPDATE rrhh_area
        SET nombre_area = TRIM(p_nombre_area),
-           descripcion_area = TRIM(p_descripcion_area),
-           id_usuario_modificacion = NULL
+           descripcion_area = TRIM(p_descripcion_area)
      WHERE id_area = p_id_area;
 END$$
 
@@ -103,8 +102,7 @@ BEGIN
 
     UPDATE rrhh_rol
        SET titulo_rol = TRIM(p_titulo_rol),
-           descripcion_rol = TRIM(p_descripcion_rol),
-           id_usuario_modificacion = NULL
+           descripcion_rol = TRIM(p_descripcion_rol)
      WHERE id_rol = p_id_rol;
 END$$
 
@@ -179,8 +177,7 @@ CREATE PROCEDURE sp_modificar_usuario(
     IN p_nombres VARCHAR(60),
     IN p_apellido_paterno VARCHAR(40),
     IN p_apellido_materno VARCHAR(40),
-    IN p_password_hash VARCHAR(255),
-    IN p_esta_activo TINYINT
+    IN p_password_hash VARCHAR(255)
 )
 BEGIN
     IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
@@ -192,9 +189,7 @@ BEGIN
        SET nombres = TRIM(p_nombres),
            apellido_paterno = TRIM(p_apellido_paterno),
            apellido_materno = TRIM(p_apellido_materno),
-           password_hash = TRIM(p_password_hash),
-           esta_activo = p_esta_activo,
-           id_usuario_modificacion = NULL
+           password_hash = TRIM(p_password_hash)
      WHERE id_usuario = p_id_usuario;
 END$$
 
@@ -283,8 +278,7 @@ BEGIN
            numero_celular = TRIM(p_numero_celular),
            id_area = p_id_area,
            id_rol = p_id_rol,
-           id_jefe_directo = p_id_jefe_directo,
-           id_usuario_modificacion = NULL
+           id_jefe_directo = p_id_jefe_directo
      WHERE id_usuario = p_id_usuario;
 END$$
 
@@ -380,8 +374,7 @@ CREATE PROCEDURE sp_modificar_administrador(
 )
 BEGIN
     UPDATE rrhh_administrador
-       SET correo_soporte = TRIM(p_correo_soporte),
-           id_usuario_modificacion = NULL
+       SET correo_soporte = TRIM(p_correo_soporte)
      WHERE id_usuario = p_id_usuario;
 END$$
 
@@ -460,8 +453,7 @@ BEGIN
        SET id_empleado = p_id_empleado,
            id_jefe = p_id_jefe,
            fecha_inicio = p_fecha_inicio,
-           fecha_fin = p_fecha_fin,
-           id_usuario_modificacion = NULL
+           fecha_fin = p_fecha_fin
      WHERE id_historial = p_id_historial;
 END$$
 
