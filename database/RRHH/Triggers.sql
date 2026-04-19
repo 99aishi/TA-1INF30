@@ -1,63 +1,109 @@
--- 1. USUARIOS (Padre)
-CREATE OR REPLACE TRIGGER TRG_AUDIT_USUARIO
-BEFORE INSERT OR UPDATE ON CC_USUARIO FOR EACH ROW
-BEGIN
-    IF INSERTING THEN
-        :NEW.USUARIO_CREACION := USER;
-        :NEW.FECHA_CREACION := SYSDATE;
-    END IF;
-    :NEW.USUARIO_MODIFICACION := USER;
-    :NEW.FECHA_MODIFICACION := SYSDATE;
-END;
-/
+ELIMITER //
 
--- 2. EMPLEADOS (Hijo)
-CREATE OR REPLACE TRIGGER TRG_AUDIT_EMPLEADO
-BEFORE INSERT OR UPDATE ON CC_EMPLEADO FOR EACH ROW
-BEGIN
-    IF INSERTING THEN
-        :NEW.USUARIO_CREACION := USER; 
-        :NEW.FECHA_CREACION := SYSDATE;
-    END IF;
-    :NEW.USUARIO_MODIFICACION := USER; 
-    :NEW.FECHA_MODIFICACION := SYSDATE;
-END;
-/
+-- ===============================================================================
+-- MÓDULO: rrhh (Recursos Humanos y Accesos)
+-- ===============================================================================
 
--- 3. ADMINISTRADORES (Hijo)
-CREATE OR REPLACE TRIGGER TRG_AUDIT_ADMIN
-BEFORE INSERT OR UPDATE ON CC_ADMINISTRADOR FOR EACH ROW
+-- TABLA: rrhh_area
+CREATE TRIGGER trg_rrhh_area_before_insert BEFORE INSERT ON rrhh_area FOR EACH ROW
 BEGIN
-    IF INSERTING THEN
-        :NEW.USUARIO_CREACION := USER; 
-        :NEW.FECHA_CREACION := SYSDATE;
-    END IF;
-    :NEW.USUARIO_MODIFICACION := USER; 
-    :NEW.FECHA_MODIFICACION := SYSDATE;
-END;
-/
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+    IF NEW.id_usuario_creacion IS NULL THEN SET NEW.id_usuario_creacion = @id_usuario_sesion; END IF;
+    SET NEW.id_usuario_modificacion = NEW.id_usuario_creacion;
+END //
 
--- 4. Area
-CREATE OR REPLACE TRIGGER TRG_AUDIT_AREA
-BEFORE INSERT OR UPDATE ON CC_AREA FOR EACH ROW
+CREATE TRIGGER trg_rrhh_area_before_update BEFORE UPDATE ON rrhh_area FOR EACH ROW
 BEGIN
-    IF INSERTING THEN
-        :NEW.USUARIO_CREACION := USER; 
-        :NEW.FECHA_CREACION := SYSDATE;
-    END IF;
-    :NEW.USUARIO_MODIFICACION := USER; 
-    :NEW.FECHA_MODIFICACION := SYSDATE;
-END;
-/
--- 5. Rol
-CREATE OR REPLACE TRIGGER TRG_AUDIT_ROL
-BEFORE INSERT OR UPDATE ON CC_ROL FOR EACH ROW
+    SET NEW.actualizado_at = NOW();
+    SET NEW.creado_at = OLD.creado_at; -- Inmutable
+    SET NEW.id_usuario_creacion = OLD.id_usuario_creacion; -- Inmutable
+    IF NEW.id_usuario_modificacion IS NULL OR NEW.id_usuario_modificacion = OLD.id_usuario_modificacion THEN SET NEW.id_usuario_modificacion = @id_usuario_sesion; END IF;
+END //
+
+-- TABLA: rrhh_rol
+CREATE TRIGGER trg_rrhh_rol_before_insert BEFORE INSERT ON rrhh_rol FOR EACH ROW
 BEGIN
-    IF INSERTING THEN
-        :NEW.USUARIO_CREACION := USER; 
-        :NEW.FECHA_CREACION := SYSDATE;
-    END IF;
-    :NEW.USUARIO_MODIFICACION := USER; 
-    :NEW.FECHA_MODIFICACION := SYSDATE;
-END;
-/
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+    IF NEW.id_usuario_creacion IS NULL THEN SET NEW.id_usuario_creacion = @id_usuario_sesion; END IF;
+    SET NEW.id_usuario_modificacion = NEW.id_usuario_creacion;
+END //
+
+CREATE TRIGGER trg_rrhh_rol_before_update BEFORE UPDATE ON rrhh_rol FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+    SET NEW.creado_at = OLD.creado_at;
+    SET NEW.id_usuario_creacion = OLD.id_usuario_creacion;
+    IF NEW.id_usuario_modificacion IS NULL OR NEW.id_usuario_modificacion = OLD.id_usuario_modificacion THEN SET NEW.id_usuario_modificacion = @id_usuario_sesion; END IF;
+END //
+
+-- TABLA: rrhh_usuario
+CREATE TRIGGER trg_rrhh_usuario_before_insert BEFORE INSERT ON rrhh_usuario FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+    IF NEW.id_usuario_creacion IS NULL THEN SET NEW.id_usuario_creacion = @id_usuario_sesion; END IF;
+    SET NEW.id_usuario_modificacion = NEW.id_usuario_creacion;
+END //
+
+CREATE TRIGGER trg_rrhh_usuario_before_update BEFORE UPDATE ON rrhh_usuario FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+    SET NEW.creado_at = OLD.creado_at;
+    SET NEW.id_usuario_creacion = OLD.id_usuario_creacion;
+    IF NEW.id_usuario_modificacion IS NULL OR NEW.id_usuario_modificacion = OLD.id_usuario_modificacion THEN SET NEW.id_usuario_modificacion = @id_usuario_sesion; END IF;
+END //
+
+-- TABLA: rrhh_empleado
+CREATE TRIGGER trg_rrhh_empleado_before_insert BEFORE INSERT ON rrhh_empleado FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+    IF NEW.id_usuario_creacion IS NULL THEN SET NEW.id_usuario_creacion = @id_usuario_sesion; END IF;
+    SET NEW.id_usuario_modificacion = NEW.id_usuario_creacion;
+END //
+
+CREATE TRIGGER trg_rrhh_empleado_before_update BEFORE UPDATE ON rrhh_empleado FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+    SET NEW.creado_at = OLD.creado_at;
+    SET NEW.id_usuario_creacion = OLD.id_usuario_creacion;
+    IF NEW.id_usuario_modificacion IS NULL OR NEW.id_usuario_modificacion = OLD.id_usuario_modificacion THEN SET NEW.id_usuario_modificacion = @id_usuario_sesion; END IF;
+END //
+
+-- TABLA: rrhh_administrador
+CREATE TRIGGER trg_rrhh_administrador_before_insert BEFORE INSERT ON rrhh_administrador FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+    IF NEW.id_usuario_creacion IS NULL THEN SET NEW.id_usuario_creacion = @id_usuario_sesion; END IF;
+    SET NEW.id_usuario_modificacion = NEW.id_usuario_creacion;
+END //
+
+CREATE TRIGGER trg_rrhh_administrador_before_update BEFORE UPDATE ON rrhh_administrador FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+    SET NEW.creado_at = OLD.creado_at;
+    SET NEW.id_usuario_creacion = OLD.id_usuario_creacion;
+    IF NEW.id_usuario_modificacion IS NULL OR NEW.id_usuario_modificacion = OLD.id_usuario_modificacion THEN SET NEW.id_usuario_modificacion = @id_usuario_sesion; END IF;
+END //
+
+-- TABLA: rrhh_historial_jefatura
+CREATE TRIGGER trg_rrhh_hist_jefatura_before_insert BEFORE INSERT ON rrhh_historial_jefatura FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+    IF NEW.id_usuario_creacion IS NULL THEN SET NEW.id_usuario_creacion = @id_usuario_sesion; END IF;
+    SET NEW.id_usuario_modificacion = NEW.id_usuario_creacion;
+END //
+
+CREATE TRIGGER trg_rrhh_hist_jefatura_before_update BEFORE UPDATE ON rrhh_historial_jefatura FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+    SET NEW.creado_at = OLD.creado_at;
+    SET NEW.id_usuario_creacion = OLD.id_usuario_creacion;
+    IF NEW.id_usuario_modificacion IS NULL OR NEW.id_usuario_modificacion = OLD.id_usuario_modificacion THEN SET NEW.id_usuario_modificacion = @id_usuario_sesion; END IF;
+END //
+
+DELIMITER ;
