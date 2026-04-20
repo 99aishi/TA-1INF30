@@ -14,7 +14,7 @@ public class Main {
 //        Date fechaCreacion=new Date();
 //        Date fechaModificacion=new Date();
 //        Moneda moneda=new Moneda("PEN","S./",fechaCreacion,fechaModificacion);
-        IMonedaDAO monedaDAO=new MonedaImplement();
+        IMonedaDAO monedaDAO = new MonedaImplement();
 //        int resultado=monedaDAO.insertar(moneda);
 //        if(resultado!=0){
 //            System.out.println("Se inserto correctamente");

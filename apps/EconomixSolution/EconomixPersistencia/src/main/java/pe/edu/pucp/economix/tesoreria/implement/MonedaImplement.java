@@ -85,6 +85,7 @@ public class MonedaImplement implements IMonedaDAO {
         Moneda moneda=null;
         try{
             con = DBManager.getDBManager().getConnection();
+
             String sql = "SELECT ID_MONEDA,CODIGO_ISO_MONEDA,SIMBOLO_MONEDA,FECHA_CREACION,FECHA_MODIFICACION " +
                     "FROM CC_MONEDA"+"\n"+"WHERE ID_MONEDA=?";
             pst = con.prepareStatement(sql);
