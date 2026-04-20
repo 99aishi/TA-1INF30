@@ -1,22 +1,8 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
--- ===============================================================================
+--- ===============================================================================
 -- 1. MÓDULO: rrhh (Recursos Humanos y Accesos)
 -- ===============================================================================
-
-CREATE TABLE IF NOT EXISTS rrhh_area (
-    id_area INT NOT NULL AUTO_INCREMENT,
-    nombre_area VARCHAR(60) NOT NULL,
-    descripcion_area VARCHAR(200),
-    
-    -- Auditoría (Gestionada por Triggers)
-    creado_at DATETIME,
-    actualizado_at DATETIME,
-    id_usuario_creacion INT,
-    id_usuario_modificacion INT,
-
-    CONSTRAINT pk_rrhh_area PRIMARY KEY (id_area)
-) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS rrhh_rol (
     id_rol INT NOT NULL AUTO_INCREMENT,
@@ -47,6 +33,25 @@ CREATE TABLE IF NOT EXISTS rrhh_usuario (
     id_usuario_modificacion INT,
     
     CONSTRAINT pk_rrhh_usuario PRIMARY KEY (id_usuario)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS rrhh_area (
+    id_area INT NOT NULL AUTO_INCREMENT,
+    nombre_area VARCHAR(60) NOT NULL UNIQUE,
+    descripcion_area VARCHAR(200),
+    id_jefe INT,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+
+    CONSTRAINT pk_rrhh_area PRIMARY KEY (id_area),
+    CONSTRAINT fk_rrhh_area_rrhh_empleado FOREIGN KEY (id_jefe) 
+        REFERENCES rrhh_empleado(id_usuario)
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS rrhh_empleado (
@@ -88,26 +93,6 @@ CREATE TABLE IF NOT EXISTS rrhh_administrador (
     CONSTRAINT pk_rrhh_administrador PRIMARY KEY (id_usuario),
     CONSTRAINT fk_rrhh_administrador_rrhh_usuario FOREIGN KEY (id_usuario) 
         REFERENCES rrhh_usuario(id_usuario)
-) ENGINE=InnoDB;
-
-CREATE TABLE IF NOT EXISTS rrhh_historial_jefatura (
-    id_historial INT NOT NULL AUTO_INCREMENT,
-    id_empleado INT NOT NULL,
-    id_jefe INT,
-    fecha_inicio DATE, 
-    fecha_fin DATE,
-    
-    -- Auditoría
-    creado_at DATETIME,
-    actualizado_at DATETIME,
-    id_usuario_creacion INT,
-    id_usuario_modificacion INT,
-    
-    CONSTRAINT pk_rrhh_historial_jefatura PRIMARY KEY (id_historial),
-    CONSTRAINT fk_rrhh_historial_jefatura_rrhh_empleado FOREIGN KEY (id_empleado) 
-        REFERENCES rrhh_empleado(id_usuario),
-    CONSTRAINT fk_rrhh_historial_jefatura_rrhh_empleado_jefe FOREIGN KEY (id_jefe) 
-        REFERENCES rrhh_empleado(id_usuario)
 ) ENGINE=InnoDB;
 
 -- ===============================================================================
