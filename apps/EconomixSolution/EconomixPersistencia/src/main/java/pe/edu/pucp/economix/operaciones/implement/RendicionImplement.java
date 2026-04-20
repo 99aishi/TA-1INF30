@@ -22,8 +22,12 @@ public class RendicionImplement implements IRendicionDAO{
             con = DBManager.getDBManager().getConnection();
             //Insertamos al usuario
             cs= con.prepareCall("{call pa_insertar_rendicion(?,?,?,?,?,?,?,?)}");
+
             cs.setDate("p_fecha_presentacion", new java.sql.Date( rendicion.getFechaPresentacion().getTime()));
-            cs.setDate("p_fecha_aprobacion", new java.sql.Date( rendicion.getFechaAprobacion().getTime()));
+            if (rendicion.getFechaAprobacion() != null)
+                cs.setDate("p_fecha_aprobacion", new java.sql.Date( rendicion.getFechaAprobacion().getTime()));
+            else
+                cs.setNull("p_fecha_aprobacion", Types.DATE);
             cs.setDouble("p_monto_total_declarado", rendicion.getTotalDeclarado());
             cs.setDouble("p_monto_total_aprobado", rendicion.getTotalAprobado());
             cs.setDouble("p_monto_saldo_final", rendicion.getSaldoFinal());

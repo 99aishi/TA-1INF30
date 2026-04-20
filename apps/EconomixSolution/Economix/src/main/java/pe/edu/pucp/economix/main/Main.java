@@ -178,7 +178,7 @@ public class Main {
 
         Rendicion r2 = new Rendicion();
         r2.setFechaPresentacion(new Date());
-        r2.setTotalAprobado(850.00);
+        r2.setTotalDeclarado(850.00);
         r2.setEstado(EstadoRendicion.EnEspera);
         r2.setComentario("Viáticos viaje comercial Norte");
         r2.setIdRendicion(rendicionDAO.insertar(r2));
