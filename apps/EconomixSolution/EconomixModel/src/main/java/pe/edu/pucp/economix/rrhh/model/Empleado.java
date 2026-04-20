@@ -7,30 +7,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Empleado extends Usuario {
-    private static int correlativoID = 1;
-    private int empleadoID;
     private String correoInstitucional;
     private String numeroCelular;
     private Rol rol;
     private Area area;
+    private Empleado jefeDirecto;
+    private List<SolicitudGasto> solicitudes; //inicializado
     private List<CuentaBancaria> cuentas; //inicializado
 
-    private List<SolicitudGasto> solicitudes; //inicializado
-
     //Constructror
+    public Empleado(){
+
+    }
     public Empleado(int usuarioID, String nombre, String apellido_paterno,
                     String apellido_materno, String password,EstadoUsuario estado,
                     String correoInstitucional, String numeroCelular){
 
         super(nombre,  apellido_paterno, apellido_materno,  password, estado);
 
-        this.empleadoID=this.correlativoID++;
         this.correoInstitucional=correoInstitucional;
         this.numeroCelular=numeroCelular;
         this.cuentas= new ArrayList<>();
         this.solicitudes= new ArrayList<>();
     }
-
     //Selectores
     public void setRol(Rol rol){
         this.rol=rol;
@@ -38,17 +37,11 @@ public class Empleado extends Usuario {
     public Rol getRol(){
         return new Rol(this.rol);
     }
-    public int getEmpleadoID() {
-        return empleadoID;
-    }
     public String getCorreoInstitucional() {
         return correoInstitucional;
     }
     public String getNumeroCelular() {
         return numeroCelular;
-    }
-    public void setEmpleadoID(int empleadoID) {
-        this.empleadoID = empleadoID;
     }
     public void setCorreoInstitucional(String correoInstitucional) {
         this.correoInstitucional = correoInstitucional;
@@ -56,6 +49,19 @@ public class Empleado extends Usuario {
     public void setNumeroCelular(String numeroCelular) {
         this.numeroCelular = numeroCelular;
     }
+    public Empleado getJefeDirecto() {
+        return jefeDirecto;
+    }
+    public void setJefeDirecto(Empleado jefeDirecto) {
+        this.jefeDirecto = jefeDirecto;
+    }
+    public Area getArea() {
+        return area;
+    }
+    public void setArea(Area area) {
+        this.area = area;
+    }
+
 
     //Metodos
     // Métodos en Empleado.java

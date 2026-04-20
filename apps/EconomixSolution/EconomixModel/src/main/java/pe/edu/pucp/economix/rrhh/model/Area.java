@@ -10,9 +10,13 @@ public class Area{
     private int idArea;
     private String nombre;
     private String descripcion;
+    private Empleado jefe;
     private List<Empleado> empleados;
 
     //Constructores
+    public Area(){
+
+    }
     public Area(String nombre, String descripcion) {
 
         this.idArea = this.correlativoID++;
@@ -40,8 +44,20 @@ public class Area{
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
     }
+    public Empleado getJefe() {
+        return jefe;
+    }
+    public void setJefe(Empleado jefe) {
+        this.jefe = jefe;
+    }
 
     //Metodos
+    @Override
+    public String toString(){
+        String cadena = "";
+        cadena += String.format("AREA: %d - %s - %s", this.getIdArea(), this.getNombre(), this.getDescripcion());
+        return cadena;
+    }
     public List<SolicitudGasto> obtenerGastosConsolidados() {
         // TODO: Retornar lista de gastos de todos los empleados del área (RF_22)
         return new java.util.ArrayList<>();

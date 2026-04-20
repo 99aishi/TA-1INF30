@@ -6,6 +6,9 @@ public class Rol {
     private String titulo;
     private String descripcion;
     // Constructor
+    public Rol(){
+
+    }
     public Rol(String titulo, String descripcion) {
         this.rolID = this.correlativoID++;
         this.titulo = titulo;
@@ -38,4 +41,10 @@ public class Rol {
     }
 
     //Metodos
+    @Override
+    public String toString(){
+        String cadena = "";
+        cadena+=String.format("ROL: %d - %s - %s", this.getRolID(), this.getTitulo(), this.getDescripcion());
+        return cadena;
+    }
 }

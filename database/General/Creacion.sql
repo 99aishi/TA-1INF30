@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS rrhh_empleado (
     numero_celular VARCHAR(15),
     id_area INT,
     id_rol INT,
-    id_jefe_directo INT,
+    id_jefe_directo INT NULL,
     
     -- Auditoría
     creado_at DATETIME,

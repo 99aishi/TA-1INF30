@@ -10,6 +10,7 @@ abstract class Usuario{
     private EstadoUsuario estado;
 
     //Constructores
+    public Usuario(){}
     public Usuario(String nombre, String apellido_paterno,
                    String apellido_materno, String password,EstadoUsuario estado){
         //Asignación de ID automatica por el sistema
@@ -34,16 +35,16 @@ abstract class Usuario{
     public void setNombre(String nombre){
         this.nombre=nombre;
     }
-    public String getApellido_paterno(){
+    public String getApellidoPaterno(){
         return apellidoPaterno;
     }
-    public void setApellido_paterno(String apellido_paterno){
+    public void setApellidoPaterno(String apellido_paterno){
         this.apellidoPaterno=apellido_paterno;
     }
-    public String getApellido_materno(){
+    public String getApellidoMaterno(){
         return apellidoMaterno;
     }
-    public void setApellido_materno(String apellido_materno){
+    public void setApellidoMaterno(String apellido_materno){
         this.apellidoMaterno=apellido_materno;
     }
     public String getPassword(){
@@ -55,7 +56,12 @@ abstract class Usuario{
     public void cambiarPassword(String nueva){
         this.password=nueva;
     }
-
+    public EstadoUsuario getEstado() {
+        return estado;
+    }
+    public void setEstado(EstadoUsuario estado) {
+        this.estado = estado;
+    }
     //Metodos
     public boolean login(int idIngresado, String passIngresada){
         if(usuarioID == idIngresado)

@@ -113,7 +113,7 @@ public class MonedaImplement implements IMonedaDAO {
         List<Moneda>monedas=null;
         try{
             con = DBManager.getDBManager().getConnection();
-            cs= con.prepareCall("{call pa_listar_monedas()}");
+            cs = con.prepareCall("{call pa_listar_monedas()}");
             rs=cs.executeQuery();
             while(rs.next()){
                 if(monedas==null) monedas=new ArrayList<>();
