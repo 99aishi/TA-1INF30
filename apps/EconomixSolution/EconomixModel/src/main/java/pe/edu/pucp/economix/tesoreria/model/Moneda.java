@@ -7,15 +7,13 @@ public class Moneda{
     private int idMoneda;
     private String codigoISO;
     private String simbolo;
-    private Date fechaCreacion;
-    private Date fechaModificacion;
+
     //Constructores
-    public Moneda(String codigoISO, String simbolo,Date fechaCreacion,Date fechaModificacion) {
+    public Moneda(String codigoISO, String simbolo) {
         this.idMoneda = correlativoID++;
         this.codigoISO = codigoISO;
         this.simbolo = simbolo;
-        this.fechaCreacion=fechaCreacion;
-        this.fechaModificacion=fechaModificacion;
+
     }
     public Moneda(){}
     //Selectores
@@ -37,21 +35,8 @@ public class Moneda{
     public void setSimbolo(String simbolo) {
         this.simbolo = simbolo;
     }
-    public Date getFechaCreacion() {
-        return fechaCreacion;
-    }
 
-    public void setFechaCreacion(Date fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
 
-    public Date getFechaModificacion() {
-        return fechaModificacion;
-    }
-
-    public void setFechaModificacion(Date fechaModificacion) {
-        this.fechaModificacion = fechaModificacion;
-    }
     //Metodos
     public double convertirA(double monto, Moneda monedaDestino, double factorCambio) {
         // TODO: Aplicar el factor de cambio para reportes consolidados (RF_21)

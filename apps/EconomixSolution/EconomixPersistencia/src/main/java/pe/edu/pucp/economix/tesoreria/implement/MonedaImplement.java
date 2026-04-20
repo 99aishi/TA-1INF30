@@ -20,19 +20,17 @@ public class MonedaImplement implements IMonedaDAO {
         int resultado=0;
         try{
             con = DBManager.getDBManager().getConnection();
-            String sql = "INSERT INTO CC_MONEDA(CODIGO_ISO_MONEDA,SIMBOLO_MONEDA,FECHA_CREACION,FECHA_MODIFICACION) " +
-                    "VALUES (?,?,?,?)";
-            pst = con.prepareStatement(sql);
-            pst.setString(1,moneda.getCodigoISO());
-            pst.setString(2,moneda.getSimbolo());
-            pst.setDate(3, new java.sql.Date(moneda.getFechaCreacion().getTime()));
-            pst.setDate(4, new java.sql.Date(moneda.getFechaModificacion().getTime()));
-            resultado=pst.executeUpdate();
+            cs=con.prepareCall("{call pa_insertar_moneda(?,?,?)}");
+            cs.registerOutParameter("_id_moneda",Types.INTEGER);
+            cs.setString("_codigo_iso", moneda.getCodigoISO());
+            cs.setString("_simbolo", moneda.getSimbolo());
+            cs.executeUpdate();
+            resultado=cs.getInt("_id_moneda");
         }catch(Exception ex){
             System.out.println("ERROR: "+ ex.getMessage());
         }finally {
             try{
-                pst.close();
+                cs.close();
             }catch (Exception ex){
                 System.out.println("ERROR: "+ ex.getMessage());
             }
@@ -50,19 +48,16 @@ public class MonedaImplement implements IMonedaDAO {
         int resultado=0;
         try{
             con = DBManager.getDBManager().getConnection();
-            String sql = "UPDATE CC_MONEDA SET CODIGO_ISO_MONEDA = ?,"+"\n"+"SIMBOLO_MONEDA = ?,"+"\n"+"FECHA_MODIFICACION = ?"+"\n"+
-                    "WHERE ID_MONEDA = ?";
-            pst = con.prepareStatement(sql);
-            pst.setString(1,moneda.getCodigoISO());
-            pst.setString(2,moneda.getSimbolo());
-            pst.setDate(3, new java.sql.Date(moneda.getFechaModificacion().getTime()));
-            pst.setInt(4, moneda.getIdMoneda());
-            resultado=pst.executeUpdate();
+            cs= con.prepareCall("{call pa_modificar_moneda(?,?,?)}");
+            cs.setInt("_id_moneda",moneda.getIdMoneda());
+            cs.setString("_codigo_iso", moneda.getCodigoISO());
+            cs.setString("_simbolo", moneda.getSimbolo());
+            resultado=cs.executeUpdate();
         }catch(Exception ex){
             System.out.println("ERROR: "+ ex.getMessage());
         }finally {
             try{
-                pst.close();
+                cs.close();
             }catch (Exception ex){
                 System.out.println("ERROR: "+ ex.getMessage());
             }
@@ -85,25 +80,21 @@ public class MonedaImplement implements IMonedaDAO {
         Moneda moneda=null;
         try{
             con = DBManager.getDBManager().getConnection();
-            String sql = "SELECT ID_MONEDA,CODIGO_ISO_MONEDA,SIMBOLO_MONEDA,FECHA_CREACION,FECHA_MODIFICACION " +
-                    "FROM CC_MONEDA"+"\n"+"WHERE ID_MONEDA=?";
-            pst = con.prepareStatement(sql);
-
-            pst.setInt(1, idMoneda);
-            rs=pst.executeQuery();
+            cs= con.prepareCall("{call pa_busqueda_por_id_moneda(?)}");
+            cs.setInt("_id_moneda",idMoneda);
+            rs=cs.executeQuery();
             if(rs.next()){
                 moneda=new Moneda();
-                moneda.setIdMoneda(rs.getInt("ID_MONEDA"));
-                moneda.setCodigoISO(rs.getString("CODIGO_ISO_MONEDA"));
-                moneda.setSimbolo(rs.getString("SIMBOLO_MONEDA"));
-                moneda.setFechaCreacion(rs.getDate("FECHA_CREACION"));
-                moneda.setFechaModificacion(rs.getDate("FECHA_MODIFICACION"));
+                moneda.setIdMoneda(rs.getInt("id_moneda"));
+                moneda.setCodigoISO(rs.getString("codigo_iso"));
+                moneda.setSimbolo(rs.getString("simbolo"));
+
             }
         }catch(Exception ex){
             System.out.println("ERROR: "+ ex.getMessage());
         }finally {
             try{
-                pst.close();
+                cs.close();
             }catch (Exception ex){
                 System.out.println("ERROR: "+ ex.getMessage());
             }
@@ -121,25 +112,21 @@ public class MonedaImplement implements IMonedaDAO {
         List<Moneda>monedas=null;
         try{
             con = DBManager.getDBManager().getConnection();
-            String sql = "SELECT ID_MONEDA,CODIGO_ISO_MONEDA,SIMBOLO_MONEDA,FECHA_CREACION,FECHA_MODIFICACION " +
-                    "FROM CC_MONEDA";
-            pst = con.prepareStatement(sql);
-            rs=pst.executeQuery();
+            cs= con.prepareCall("{call pa_listar_monedas()}");
+            rs=cs.executeQuery();
             while(rs.next()){
-                if(monedas==null)monedas=new ArrayList<>();
+                if(monedas==null) monedas=new ArrayList<>();
                 Moneda moneda =new Moneda();
-                moneda.setIdMoneda(rs.getInt("ID_MONEDA"));
-                moneda.setCodigoISO(rs.getString("CODIGO_ISO_MONEDA"));
-                moneda.setSimbolo(rs.getString("SIMBOLO_MONEDA"));
-                moneda.setFechaCreacion(rs.getDate("FECHA_CREACION"));
-                moneda.setFechaModificacion(rs.getDate("FECHA_MODIFICACION"));
+                moneda.setIdMoneda(rs.getInt("id_moneda"));
+                moneda.setCodigoISO(rs.getString("codigo_iso"));
+                moneda.setSimbolo(rs.getString("simbolo"));
                 monedas.add(moneda);
             }
         }catch(Exception ex){
             System.out.println("ERROR: "+ ex.getMessage());
         }finally {
             try{
-                pst.close();
+                cs.close();
             }catch (Exception ex){
                 System.out.println("ERROR: "+ ex.getMessage());
             }
