@@ -1,9 +1,8 @@
 DELIMITER //
--- ===============================================================================
--- MÓDULO: tes (Tesorería)
--- ===============================================================================
 
--- TABLA: tes_moneda
+-- -------------------------------------------------------------------------------
+-- 1. TABLA: tes_moneda
+-- -------------------------------------------------------------------------------
 CREATE TRIGGER trg_tes_moneda_before_insert BEFORE INSERT ON tes_moneda FOR EACH ROW
 BEGIN
     SET NEW.creado_at = NOW();
@@ -20,7 +19,9 @@ BEGIN
     IF NEW.id_usuario_modificacion IS NULL OR NEW.id_usuario_modificacion = OLD.id_usuario_modificacion THEN SET NEW.id_usuario_modificacion = @id_usuario_sesion; END IF;
 END //
 
--- TABLA: tes_cuenta_bancaria
+-- -------------------------------------------------------------------------------
+-- 2. TABLA: tes_cuenta_bancaria
+-- -------------------------------------------------------------------------------
 CREATE TRIGGER trg_tes_cuenta_bancaria_before_insert BEFORE INSERT ON tes_cuenta_bancaria FOR EACH ROW
 BEGIN
     SET NEW.creado_at = NOW();
@@ -37,7 +38,9 @@ BEGIN
     IF NEW.id_usuario_modificacion IS NULL OR NEW.id_usuario_modificacion = OLD.id_usuario_modificacion THEN SET NEW.id_usuario_modificacion = @id_usuario_sesion; END IF;
 END //
 
--- TABLA: tes_fondo
+-- -------------------------------------------------------------------------------
+-- 3. TABLA: tes_fondo
+-- -------------------------------------------------------------------------------
 CREATE TRIGGER trg_tes_fondo_before_insert BEFORE INSERT ON tes_fondo FOR EACH ROW
 BEGIN
     SET NEW.creado_at = NOW();
@@ -54,7 +57,9 @@ BEGIN
     IF NEW.id_usuario_modificacion IS NULL OR NEW.id_usuario_modificacion = OLD.id_usuario_modificacion THEN SET NEW.id_usuario_modificacion = @id_usuario_sesion; END IF;
 END //
 
--- TABLA: tes_caja_chica
+-- -------------------------------------------------------------------------------
+-- 4. TABLA: tes_caja_chica
+-- -------------------------------------------------------------------------------
 CREATE TRIGGER trg_tes_caja_chica_before_insert BEFORE INSERT ON tes_caja_chica FOR EACH ROW
 BEGIN
     SET NEW.creado_at = NOW();
@@ -71,7 +76,9 @@ BEGIN
     IF NEW.id_usuario_modificacion IS NULL OR NEW.id_usuario_modificacion = OLD.id_usuario_modificacion THEN SET NEW.id_usuario_modificacion = @id_usuario_sesion; END IF;
 END //
 
--- TABLA: tes_entrega_rendir
+-- -------------------------------------------------------------------------------
+-- 5. TABLA: tes_entrega_rendir
+-- -------------------------------------------------------------------------------
 CREATE TRIGGER trg_tes_entrega_rendir_before_insert BEFORE INSERT ON tes_entrega_rendir FOR EACH ROW
 BEGIN
     SET NEW.creado_at = NOW();
