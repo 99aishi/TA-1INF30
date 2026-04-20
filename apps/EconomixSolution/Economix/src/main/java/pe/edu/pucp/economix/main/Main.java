@@ -2,6 +2,9 @@ package pe.edu.pucp.economix.main;
 
 import pe.edu.pucp.economix.rrhh.implement.*;
 import pe.edu.pucp.economix.rrhh.model.*;
+import pe.edu.pucp.economix.tesoreria.dao.IMonedaDAO;
+import pe.edu.pucp.economix.tesoreria.implement.MonedaImplement;
+import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 import javax.naming.ldap.ControlFactory;
 import java.util.List;
@@ -9,12 +12,12 @@ import java.util.List;
 public class Main {
     public static void main(String []args){
 //        Moneda moneda=new Moneda("PEN","S./",fechaCreacion,fechaModificacion)
-//        IMonedaDAO monedaDAO = new MonedaImplement();
+//        //IMonedaDAO monedaDAO = new MonedaImplement();
 //        Moneda moneda= new Moneda("USD","$");
 //        IMonedaDAO monedaDAO=new MonedaImplement();
 //        int resultado=monedaDAO.insertar(moneda);
 //        if(resultado!=0){
-//            System.out.println("Se inserto correctamente");x
+//            System.out.println("Se inserto correctamente");
 //        }
 
 //        moneda.setIdMoneda(1);
@@ -28,6 +31,7 @@ public class Main {
 //        Moneda moneda=monedaDAO.buscarPorId(2);
 //        System.out.println(moneda);
 //
+
 //        List<Moneda> monedas=monedaDAO.listarTodas();
 //        for(int i=0;i<monedas.size();i++){
 //            System.out.println(monedas.get(i));
