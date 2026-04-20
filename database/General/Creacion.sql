@@ -209,7 +209,7 @@ CREATE TABLE IF NOT EXISTS tes_entrega_rendir (
 
 CREATE TABLE IF NOT EXISTS ope_rendicion (
     id_rendicion INT NOT NULL AUTO_INCREMENT,
-    fecha_presentacion DATE,
+    fecha_presentacion DATE DEFAULT (CURRENT_DATE),
     fecha_aprobacion DATE,
     monto_total_declarado DECIMAL(12,2) DEFAULT 0.00,
     monto_total_aprobado DECIMAL(12,2) DEFAULT 0.00,
@@ -307,7 +307,7 @@ CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
 CREATE TABLE IF NOT EXISTS ope_transaccion (
     id_transaccion INT NOT NULL AUTO_INCREMENT,
     tipo_operacion VARCHAR(30) NOT NULL,
-    momento_operacion DATETIME, -- Gestionado por el trigger
+    momento_operacion DATETIME, -- Gestionado por el trigger -- Lol
     monto_transaccion DECIMAL(12,2) NOT NULL,
     numero_operacion_bancaria VARCHAR(30),
     medio_pago VARCHAR(30),
