@@ -34,14 +34,13 @@ public class Main {
 //        }
 
 
+        /*
         AreaImplement areaDAO = new AreaImplement();
         RolImplement rolDAO = new RolImplement();
-        UsuarioImplement usuarioDAO = new UsuarioImplement();
         EmpleadoImplement empleadoDAO = new EmpleadoImplement();
         AdministradorImplement adminDAO = new AdministradorImplement();
 
 
-        /*
         // 1. Area y Rol
         Area areaTI = new Area("Tecnología (TI)", "Infraestructura y Desarrollo");
         areaTI.setIdArea(areaDAO.insertar(areaTI));
