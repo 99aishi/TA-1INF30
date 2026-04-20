@@ -1,20 +1,8 @@
--- ===============================================================================
+SET FOREIGN_KEY_CHECKS = 0;
+
+--- ===============================================================================
 -- 1. MÓDULO: rrhh (Recursos Humanos y Accesos)
 -- ===============================================================================
-
-CREATE TABLE IF NOT EXISTS rrhh_area (
-    id_area INT NOT NULL AUTO_INCREMENT,
-    nombre_area VARCHAR(60) NOT NULL,
-    descripcion_area VARCHAR(200),
-    
-    -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    id_usuario_creacion INT,
-    id_usuario_modificacion INT,
-
-    CONSTRAINT pk_rrhh_area PRIMARY KEY (id_area)
-) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS rrhh_rol (
     id_rol INT NOT NULL AUTO_INCREMENT,
@@ -22,8 +10,8 @@ CREATE TABLE IF NOT EXISTS rrhh_rol (
     descripcion_rol VARCHAR(200),
     
     -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    creado_at DATETIME,
+    actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
@@ -39,12 +27,31 @@ CREATE TABLE IF NOT EXISTS rrhh_usuario (
     esta_activo TINYINT(1) DEFAULT 1,
     
     -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    creado_at DATETIME,
+    actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
     CONSTRAINT pk_rrhh_usuario PRIMARY KEY (id_usuario)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS rrhh_area (
+    id_area INT NOT NULL AUTO_INCREMENT,
+    nombre_area VARCHAR(60) NOT NULL UNIQUE,
+    descripcion_area VARCHAR(200),
+    id_jefe INT,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+
+    CONSTRAINT pk_rrhh_area PRIMARY KEY (id_area),
+    CONSTRAINT fk_rrhh_area_rrhh_empleado FOREIGN KEY (id_jefe) 
+        REFERENCES rrhh_empleado(id_usuario)
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS rrhh_empleado (
@@ -56,8 +63,8 @@ CREATE TABLE IF NOT EXISTS rrhh_empleado (
     id_jefe_directo INT,
     
     -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    creado_at DATETIME,
+    actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
@@ -78,34 +85,14 @@ CREATE TABLE IF NOT EXISTS rrhh_administrador (
     correo_soporte VARCHAR(100),
     
     -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    creado_at DATETIME,
+    actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
     CONSTRAINT pk_rrhh_administrador PRIMARY KEY (id_usuario),
     CONSTRAINT fk_rrhh_administrador_rrhh_usuario FOREIGN KEY (id_usuario) 
         REFERENCES rrhh_usuario(id_usuario)
-) ENGINE=InnoDB;
-
-CREATE TABLE IF NOT EXISTS rrhh_historial_jefatura (
-    id_historial INT NOT NULL AUTO_INCREMENT,
-    id_empleado INT NOT NULL,
-    id_jefe INT,
-    fecha_inicio DATE,
-    fecha_fin DATE,
-    
-    -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    id_usuario_creacion INT,
-    id_usuario_modificacion INT,
-    
-    CONSTRAINT pk_rrhh_historial_jefatura PRIMARY KEY (id_historial),
-    CONSTRAINT fk_rrhh_historial_jefatura_rrhh_empleado FOREIGN KEY (id_empleado) 
-        REFERENCES rrhh_empleado(id_usuario),
-    CONSTRAINT fk_rrhh_historial_jefatura_rrhh_empleado_jefe FOREIGN KEY (id_jefe) 
-        REFERENCES rrhh_empleado(id_usuario)
 ) ENGINE=InnoDB;
 
 -- ===============================================================================
@@ -118,8 +105,8 @@ CREATE TABLE IF NOT EXISTS tes_moneda (
     simbolo VARCHAR(5) NOT NULL,
     
     -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    creado_at DATETIME,
+    actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
@@ -136,8 +123,8 @@ CREATE TABLE IF NOT EXISTS tes_cuenta_bancaria (
     id_usuario_titular INT,
     
     -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    creado_at DATETIME,
+    actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
@@ -158,8 +145,8 @@ CREATE TABLE IF NOT EXISTS tes_fondo (
     id_usuario_responsable INT,
     
     -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    creado_at DATETIME,
+    actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
@@ -178,8 +165,8 @@ CREATE TABLE IF NOT EXISTS tes_caja_chica (
     id_area INT,
     
     -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    creado_at DATETIME,
+    actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
@@ -202,8 +189,8 @@ CREATE TABLE IF NOT EXISTS tes_entrega_rendir (
     id_usuario_aprobador INT,
     
     -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    creado_at DATETIME,
+    actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
@@ -231,8 +218,8 @@ CREATE TABLE IF NOT EXISTS ope_rendicion (
     comentario VARCHAR(500),
     
     -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    creado_at DATETIME,
+    actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
@@ -251,8 +238,8 @@ CREATE TABLE IF NOT EXISTS ope_ciclo_caja (
     id_rendicion INT,
     
     -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    creado_at DATETIME,
+    actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
@@ -274,8 +261,8 @@ CREATE TABLE IF NOT EXISTS ope_solicitud_gasto (
     id_ciclo_caja INT,
     
     -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    creado_at DATETIME,
+    actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
@@ -303,8 +290,8 @@ CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
     id_moneda INT,
     
     -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    creado_at DATETIME,
+    actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
@@ -320,7 +307,7 @@ CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
 CREATE TABLE IF NOT EXISTS ope_transaccion (
     id_transaccion INT NOT NULL AUTO_INCREMENT,
     tipo_operacion VARCHAR(30) NOT NULL,
-    momento_operacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    momento_operacion DATETIME, -- Gestionado por el trigger
     monto_transaccion DECIMAL(12,2) NOT NULL,
     numero_operacion_bancaria VARCHAR(30),
     medio_pago VARCHAR(30),
@@ -330,8 +317,8 @@ CREATE TABLE IF NOT EXISTS ope_transaccion (
     id_moneda INT,
     
     -- Auditoría
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    creado_at DATETIME,
+    actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
@@ -343,3 +330,5 @@ CREATE TABLE IF NOT EXISTS ope_transaccion (
     CONSTRAINT fk_ope_transaccion_tes_moneda FOREIGN KEY (id_moneda) 
         REFERENCES tes_moneda(id_moneda)
 ) ENGINE=InnoDB;
+
+SET FOREIGN_KEY_CHECKS = 1;
