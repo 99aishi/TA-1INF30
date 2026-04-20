@@ -16,6 +16,9 @@ public class Rendicion {
     private String comentario;
 
     // Constructores
+    public Rendicion(){
+
+    }
     public Rendicion(Date fechaPresentacion, Date fechaAprobacion,
                      double totalDeclarado, double totalAprobado, double saldoFinal,
                      EstadoRendicion estado, String comentario) {
