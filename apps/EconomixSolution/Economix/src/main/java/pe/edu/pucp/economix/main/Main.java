@@ -1,9 +1,13 @@
 package pe.edu.pucp.economix.main;
 
+import pe.edu.pucp.economix.operaciones.implement.RendicionImplement;
+import pe.edu.pucp.economix.operaciones.model.EstadoRendicion;
+import pe.edu.pucp.economix.operaciones.model.Rendicion;
 import pe.edu.pucp.economix.rrhh.implement.*;
 import pe.edu.pucp.economix.rrhh.model.*;
 
 import javax.naming.ldap.ControlFactory;
+import java.util.Date;
 import java.util.List;
 
 public class Main {
@@ -34,7 +38,7 @@ public class Main {
 //        }
 
 
-        /*
+        /* RRHH Pruebas
         AreaImplement areaDAO = new AreaImplement();
         RolImplement rolDAO = new RolImplement();
         EmpleadoImplement empleadoDAO = new EmpleadoImplement();
@@ -157,6 +161,26 @@ public class Main {
                     ad.getCorreoSoporte()));
         }
         */
+
+        /* Operaciones Pruebas*/
+        RendicionImplement rendicionDAO = new RendicionImplement();
+
+        Rendicion r1 = new Rendicion();
+        r1.setFechaPresentacion(new Date());
+        r1.setTotalDeclarado(1500.00);
+        r1.setEstado(EstadoRendicion.EnEspera);
+        r1.setComentario("Rendición de caja chica Finanzas - Semana 1");
+        r1.setIdRendicion(rendicionDAO.insertar(r1));
+
+        Rendicion r2 = new Rendicion();
+        r2.setFechaPresentacion(new Date());
+        r2.setTotalAprobado(850.00);
+        r2.setEstado(EstadoRendicion.EnEspera);
+        r2.setComentario("Viáticos viaje comercial Norte");
+        r2.setIdRendicion(rendicionDAO.insertar(r2));
+
+
+
 
     }
 
