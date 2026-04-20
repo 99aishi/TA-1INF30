@@ -210,7 +210,7 @@ CREATE TABLE IF NOT EXISTS tes_entrega_rendir (
 CREATE TABLE IF NOT EXISTS ope_rendicion (
     id_rendicion INT NOT NULL AUTO_INCREMENT,
     fecha_presentacion DATE DEFAULT (CURRENT_DATE),
-    fecha_aprobacion DATE,
+    fecha_aprobacion DATE NULL,
     monto_total_declarado DECIMAL(12,2) DEFAULT 0.00,
     monto_total_aprobado DECIMAL(12,2) DEFAULT 0.00,
     monto_saldo_final DECIMAL(12,2) DEFAULT 0.00,
@@ -230,7 +230,7 @@ CREATE TABLE IF NOT EXISTS ope_ciclo_caja (
     id_ciclo_caja INT NOT NULL AUTO_INCREMENT,
     numero_semana INT,
     fecha_apertura DATE NOT NULL,
-    fecha_cierre DATE,
+    fecha_cierre DATE NULL,
     monto_saldo_inicial DECIMAL(12,2) DEFAULT 0.00,
     monto_total_gastado DECIMAL(12,2) DEFAULT 0.00,
     estado_ciclo VARCHAR(20),
