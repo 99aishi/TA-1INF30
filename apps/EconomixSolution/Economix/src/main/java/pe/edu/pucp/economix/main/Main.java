@@ -183,6 +183,12 @@ public class Main {
         r2.setComentario("Viáticos viaje comercial Norte");
         r2.setIdRendicion(rendicionDAO.insertar(r2));
 
+        List<Rendicion> rendiciones = rendicionDAO.listarTodas();
+        for (Rendicion r : rendiciones) {
+            System.out.printf("ID: %d | Estado: %-10s | Monto: %-8s | Comentario: %s%n",
+                    r.getIdRendicion(), r.getEstado(), r.getTotalDeclarado(), r.getComentario());
+        }
+
 
 
 
