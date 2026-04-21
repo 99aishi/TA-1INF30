@@ -1,8 +1,8 @@
-DROP PROCEDURE IF EXISTS sp_insertar_tes_caja_chica;
+DROP PROCEDURE IF EXISTS pa_insertar_tes_caja_chica;
 DELIMITER $$
 
 
-CREATE PROCEDURE sp_insertar_tes_caja_chica(
+CREATE PROCEDURE pa_insertar_tes_caja_chica(
     OUT _id_fondo INT,
     IN p_nombre_fondo VARCHAR(100),
     IN p_monto_saldo_actual DECIMAL(12,2),

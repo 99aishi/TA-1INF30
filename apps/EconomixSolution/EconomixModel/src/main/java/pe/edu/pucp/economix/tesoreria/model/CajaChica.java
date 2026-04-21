@@ -30,6 +30,14 @@ public class CajaChica extends Fondo{
     public void setCicloCajaChica(CicloCajaChica ciclo){
         this.ciclos.add(ciclo);
     }
+    public String getNombreFondo(){
+        return super.getNombre();
+    }
+
+    @Override
+    public double getSaldoActual() {
+        return super.getSaldoActual();
+    }
 
     //Métodos
     public void configurarCajaChica(double montoTecho, CuentaBancaria origen, Empleado responsable) {
