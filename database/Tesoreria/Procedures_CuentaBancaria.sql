@@ -5,7 +5,7 @@
 
 DELIMITER $$
 
-CREATE PROCEDURE pa_insertar_cuentaBancaria(
+CREATE PROCEDURE pa_insertar_cuenta_bancaria(
 	OUT  _id_cuenta_bancaria INT,
 	IN _nombre_banco VARCHAR(50),
     IN _numero_cuenta VARCHAR(30),
@@ -27,7 +27,7 @@ END$$
 
 DELIMITER $$
 
-CREATE PROCEDURE pa_modificar_cuentaBancaria(
+CREATE PROCEDURE pa_modificar_cuenta_bancaria(
     IN _id_cuenta_bancaria INT,
     IN _nombre_banco VARCHAR(50),
     IN _numero_cuenta VARCHAR(30),
@@ -44,11 +44,19 @@ BEGIN
         id_usuario_titular = _id_usuario_titular
     WHERE id_cuenta_bancaria = _id_cuenta_bancaria;
 END$$
+---ELIMINAR
+CREATE PROCEDURE pa_eliminar_cuenta_bancaria( 
+	IN _id_cuenta_bancaria INT
+)
+BEGIN 
+	UPDATE tes_cuenta_bancaria SET activa = 0 WHERE id_cuenta_bancaria = _id_cuenta_bancaria;
+
+END$$
 
 --- BUSCAR POR ID 
 DELIMITER $$
 
-CREATE PROCEDURE pa_buscar_por_id_cuenta_bancaria(
+CREATE PROCEDURE pa_busqueda_por_id_cuenta_bancaria(
     IN _id_cuenta_bancaria INT
 )
 BEGIN

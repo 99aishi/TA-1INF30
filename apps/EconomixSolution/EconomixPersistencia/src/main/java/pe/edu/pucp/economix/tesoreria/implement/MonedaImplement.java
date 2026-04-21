@@ -72,7 +72,27 @@ public class MonedaImplement implements IMonedaDAO {
 
     @Override
     public int eliminar(int idMoneda) {
-        return 0;
+        int resultado=0;
+        try {
+            con = DBManager.getDBManager().getConnection();
+            cs= con.prepareCall("{call pa_eliminar_moneda(?)}");
+            cs.setInt("_id_moneda",idMoneda);
+            resultado=cs.executeUpdate();
+        }catch (Exception ex){
+            System.out.println("ERROR: "+ ex.getMessage());
+        }finally {
+            try {
+                cs.close();
+            }catch (Exception ex){
+                System.out.println("ERROR: "+ ex.getMessage());
+            }
+            try {
+                con.close();
+            }catch (Exception ex){
+                System.out.println("ERROR: "+ ex.getMessage());
+            }
+        }
+        return resultado;
     }
 
     @Override

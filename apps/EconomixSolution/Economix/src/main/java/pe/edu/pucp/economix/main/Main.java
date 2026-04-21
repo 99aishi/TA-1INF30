@@ -5,8 +5,11 @@ import pe.edu.pucp.economix.operaciones.model.EstadoRendicion;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
 import pe.edu.pucp.economix.rrhh.implement.*;
 import pe.edu.pucp.economix.rrhh.model.*;
+import pe.edu.pucp.economix.tesoreria.dao.ICuentaBancariaDAO;
 import pe.edu.pucp.economix.tesoreria.dao.IMonedaDAO;
+import pe.edu.pucp.economix.tesoreria.implement.CuentaBancariaImplement;
 import pe.edu.pucp.economix.tesoreria.implement.MonedaImplement;
+import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 import javax.naming.ldap.ControlFactory;
@@ -15,10 +18,10 @@ import java.util.List;
 
 public class Main {
     public static void main(String []args){
-//        Moneda moneda=new Moneda("PEN","S./",fechaCreacion,fechaModificacion)
-//        //IMonedaDAO monedaDAO = new MonedaImplement();
+
+//        IMonedaDAO monedaDAO = new MonedaImplement();
 //        Moneda moneda= new Moneda("USD","$");
-//        IMonedaDAO monedaDAO=new MonedaImplement();
+//
 //        int resultado=monedaDAO.insertar(moneda);
 //        if(resultado!=0){
 //            System.out.println("Se inserto correctamente");
@@ -27,12 +30,12 @@ public class Main {
 //        moneda.setIdMoneda(1);
 //        moneda.setCodigoISO("PEN");
 //        moneda.setSimbolo("S/.");
-//        resultado=monedaDAO.modificar(moneda);
+//        int resultado=monedaDAO.modificar(moneda);
 //        if(resultado!=0){
 //            System.out.println("Se modifico correctamente");
 //        }
 
-//        Moneda moneda=monedaDAO.buscarPorId(2);
+//        moneda=monedaDAO.buscarPorId(2);
 //        System.out.println(moneda);
 //
 
@@ -40,7 +43,45 @@ public class Main {
 //        for(int i=0;i<monedas.size();i++){
 //            System.out.println(monedas.get(i));
 //        }
+//        int resultado=monedaDAO.eliminar(2);
+//        if(resultado!=0){
+//            System.out.println("Se desactivo la moneda");
+//        }
 
+        //Cuenta bancaria
+
+        ICuentaBancariaDAO bDao=new CuentaBancariaImplement();
+//        CuentaBancaria cb= new CuentaBancaria();
+//        cb.setNombreBanco("BCP");
+//        cb.setNumeroBancario("444");
+//        cb.setCci("555");
+//        cb.setIdCuenta(2);
+//
+//        Moneda m=new Moneda();
+//        m.setIdMoneda(4);
+//        cb.setMoneda(m);
+//        Empleado e = new Empleado();
+//        e.setUsuarioID(2);
+//        cb.setAdministrador(e);
+//        int resultado=bDao.insertar(cb);
+//        if(resultado!=0){
+//            System.out.println("Se inserto correctamente");
+//        }
+//        int resultado=bDao.modificar(cb);
+//        if(resultado!=0){
+//            System.out.println("Se modifico correctamente");
+//        }
+
+//        int resultado=bDao.eliminar(2);
+//        if(resultado!=0){
+//            System.out.println("Se desactivo correctamente");
+//        }
+//        CuentaBancaria cb =bDao.buscarPorId(2);
+//        System.out.println(cb);
+//        List<CuentaBancaria>cuentas=bDao.listarTodas();
+//        for(int i=0;i<cuentas.size();i++){
+//            System.out.println(cuentas.get(i));
+//        }
 
         /* RRHH Pruebas
         AreaImplement areaDAO = new AreaImplement();
@@ -166,28 +207,28 @@ public class Main {
         }
         */
 
-        /* Operaciones Pruebas*/
-        RendicionImplement rendicionDAO = new RendicionImplement();
-
-        Rendicion r1 = new Rendicion();
-        r1.setFechaPresentacion(new Date());
-        r1.setTotalDeclarado(1500.00);
-        r1.setEstado(EstadoRendicion.EnEspera);
-        r1.setComentario("Rendición de caja chica Finanzas - Semana 1");
-        r1.setIdRendicion(rendicionDAO.insertar(r1));
-
-        Rendicion r2 = new Rendicion();
-        r2.setFechaPresentacion(new Date());
-        r2.setTotalDeclarado(850.00);
-        r2.setEstado(EstadoRendicion.EnEspera);
-        r2.setComentario("Viáticos viaje comercial Norte");
-        r2.setIdRendicion(rendicionDAO.insertar(r2));
-
-        List<Rendicion> rendiciones = rendicionDAO.listarTodas();
-        for (Rendicion r : rendiciones) {
-            System.out.printf("ID: %d | Estado: %-10s | Monto: %-8s | Comentario: %s%n",
-                    r.getIdRendicion(), r.getEstado(), r.getTotalDeclarado(), r.getComentario());
-        }
+//        /* Operaciones Pruebas*/
+//        RendicionImplement rendicionDAO = new RendicionImplement();
+//
+//        Rendicion r1 = new Rendicion();
+//        r1.setFechaPresentacion(new Date());
+//        r1.setTotalDeclarado(1500.00);
+//        r1.setEstado(EstadoRendicion.EnEspera);
+//        r1.setComentario("Rendición de caja chica Finanzas - Semana 1");
+//        r1.setIdRendicion(rendicionDAO.insertar(r1));
+//
+//        Rendicion r2 = new Rendicion();
+//        r2.setFechaPresentacion(new Date());
+//        r2.setTotalDeclarado(850.00);
+//        r2.setEstado(EstadoRendicion.EnEspera);
+//        r2.setComentario("Viáticos viaje comercial Norte");
+//        r2.setIdRendicion(rendicionDAO.insertar(r2));
+//
+//        List<Rendicion> rendiciones = rendicionDAO.listarTodas();
+//        for (Rendicion r : rendiciones) {
+//            System.out.printf("ID: %d | Estado: %-10s | Monto: %-8s | Comentario: %s%n",
+//                    r.getIdRendicion(), r.getEstado(), r.getTotalDeclarado(), r.getComentario());
+//        }
 
 
 

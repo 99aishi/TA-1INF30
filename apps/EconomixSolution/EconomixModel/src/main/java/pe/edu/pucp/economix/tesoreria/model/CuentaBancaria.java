@@ -9,7 +9,7 @@ public class CuentaBancaria {
     private String numeroBancario;
     private String cci;
     private Empleado administrador; //set y get , c copia
-
+    private Moneda moneda;
 
     //Constructores
     public CuentaBancaria(String nombreBanco, String numeroBancario, String cci, Empleado administrador) {
@@ -19,6 +19,7 @@ public class CuentaBancaria {
         this.cci = cci;
         this.administrador = administrador;
     }
+    public CuentaBancaria(){};
     //Selectores
     public int getIdCuenta() {
         return idCuenta;
@@ -49,6 +50,12 @@ public class CuentaBancaria {
     }
     public void setAdministrador(Empleado admin){
         this.administrador = admin;
+    }
+    public Moneda getMoneda() {return new Moneda(moneda);}
+    public void setMoneda(Moneda m){this.moneda=new Moneda(m);}
+    public String toString(){
+        return "ID: "+this.idCuenta + " - NUMERO BANCARIO: " +this.numeroBancario + " - BANCO: "+this.nombreBanco+
+                " - DUENIO: "+this.administrador.getNombre()+" "+this.administrador.getApellidoPaterno();
     }
     //Metodos
 

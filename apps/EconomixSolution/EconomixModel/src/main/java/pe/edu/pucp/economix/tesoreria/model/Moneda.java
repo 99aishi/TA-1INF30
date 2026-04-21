@@ -8,12 +8,18 @@ public class Moneda{
     private String codigoISO;
     private String simbolo;
 
+
     //Constructores
     public Moneda(String codigoISO, String simbolo) {
         this.idMoneda = correlativoID++;
         this.codigoISO = codigoISO;
         this.simbolo = simbolo;
 
+    }
+    public Moneda (Moneda m){
+        this.idMoneda=m.idMoneda;
+        this.simbolo=m.simbolo;
+        this.codigoISO=m.codigoISO;
     }
     public Moneda(){}
     //Selectores
@@ -35,6 +41,7 @@ public class Moneda{
     public void setSimbolo(String simbolo) {
         this.simbolo = simbolo;
     }
+
 
 
     //Metodos

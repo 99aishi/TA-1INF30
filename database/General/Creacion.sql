@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS tes_moneda (
     id_moneda INT NOT NULL AUTO_INCREMENT,
     codigo_iso CHAR(3) NOT NULL,
     simbolo VARCHAR(5) NOT NULL,
-    
+    activa TINYINT(1) DEFAULT 1,
     -- Auditoría
     creado_at DATETIME,
     actualizado_at DATETIME,
@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS tes_cuenta_bancaria (
     id_moneda INT NOT NULL,
     es_principal TINYINT(1) DEFAULT 0,
     id_usuario_titular INT,
-    
+    activa TINYINT(1) DEFAULT 1,
     -- Auditoría
     creado_at DATETIME,
     actualizado_at DATETIME,
