@@ -4,15 +4,15 @@ DELIMITER $$
 
 CREATE PROCEDURE pa_insertar_tes_caja_chica(
     OUT _id_fondo INT,
-    IN p_nombre_fondo VARCHAR(100),
-    IN p_monto_saldo_actual DECIMAL(12,2),
-    IN p_estado_fondo VARCHAR(20),
-    IN p_id_moneda INT,
-    IN p_id_cuenta_bancaria INT,
-    IN p_id_usuario_responsable INT,
+    IN p_nombre_fondo VARCHAR(100), -- check
+    IN p_monto_saldo_actual DECIMAL(12,2), -- check
+    IN p_estado_fondo VARCHAR(20),-- check
+    IN p_id_moneda INT, -- check
+    IN p_id_cuenta_bancaria INT, -- check
+    IN p_id_usuario_responsable INT, -- check 
        
-    IN p_monto_techo DECIMAL(12,2),
-    IN p_id_area INT
+    IN p_monto_techo DECIMAL(12,2), -- check
+    IN p_id_area INT -- check
 )
 BEGIN
     -- 1. Validaciones de obligatoriedad

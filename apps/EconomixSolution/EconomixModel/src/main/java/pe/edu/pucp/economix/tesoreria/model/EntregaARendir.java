@@ -1,5 +1,7 @@
 package pe.edu.pucp.economix.tesoreria.model;
 
+import pe.edu.pucp.economix.rrhh.model.Empleado;
+
 import java.util.Date;
 
 public class EntregaARendir extends Fondo{
@@ -9,11 +11,11 @@ public class EntregaARendir extends Fondo{
     private Date fechaAperturaEntrega;
     private Date fechaCierreEntrega;
     private EstadoEntregaARendir estado;
-
+    private Empleado responsable;
     //Constructores
     public EntregaARendir( String nombre, double saldoActual, EstadoFondo estadoFondo, Date fechaCreacion,
                            String motivo, double montoSolicitado, Date fechaSolicitud, Date fechaAperturaEntrega, Date fechaCierreEntrega,
-                           EstadoEntregaARendir estado) {
+                           EstadoEntregaARendir estado, Empleado empleado) {
         super(nombre,saldoActual,estadoFondo,fechaCreacion);
         this.motivo = motivo;
         this.montoSolicitado = montoSolicitado;
@@ -21,6 +23,7 @@ public class EntregaARendir extends Fondo{
         this.fechaAperturaEntrega = fechaAperturaEntrega;
         this.fechaCierreEntrega = fechaCierreEntrega;
         this.estado = estado;
+        this.responsable=empleado;
     }
 
     //Selectores
@@ -59,6 +62,14 @@ public class EntregaARendir extends Fondo{
     }
     public void setEstado(EstadoEntregaARendir estado) {
         this.estado = estado;
+    }
+
+    public Empleado getResponsable() {
+        return responsable;
+    }
+
+    public void setResponsable(Empleado responsable) {
+        this.responsable = responsable;
     }
 
     //Metodos

@@ -12,9 +12,7 @@ public class Fondo {
     private double saldoActual;
     private EstadoFondo estado;
     private Date fechaCreacion;
-    private CuentaBancaria cuentaBancaria; //crear set y get
-    private Moneda moneda; // crear set y get
-    private Empleado responsable;
+
     // Constructores
     public Fondo(String nombre, double saldoActual, EstadoFondo estado, Date fechaCreacion) {
         this.idFondo = this.correlativoID++;
@@ -40,13 +38,6 @@ public class Fondo {
     public Date getFechaCreacion() {
         return fechaCreacion;
     }
-    public CuentaBancaria getCuentaBancaria(){
-        return this.cuentaBancaria;
-    }
-    public Moneda getMoneda(){
-        return this.moneda;
-    }
-    public Empleado getResponsable(){ return this.responsable;}
     public void setIdFondo(int idFondo) {
         this.idFondo = idFondo;
     }
@@ -62,14 +53,6 @@ public class Fondo {
     public void setFechaCreacion(Date fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
     }
-    public void setCuentaBancaria(CuentaBancaria cuenta){
-        this.cuentaBancaria = cuenta;
-    }
-    public void setMoneda(Moneda moneda){
-        this.moneda = moneda;
-    }
-    public void setResponsable(Empleado responsable){this.responsable=responsable;}
-
     //Metodos
     public void actualizarSaldo(double monto, TipoTransaccion tipo) {
         // TODO: Lógica para sumar (Reposición) o restar (Desembolso) al saldoActual

@@ -59,10 +59,10 @@ public class Main {
         cuenta.setNombreBanco("BCP");
         cuenta.setNumeroBancario("444");
         cuenta.setCci("555");
-        cuenta.setIdCuenta(3);
+        cuenta.setIdCuenta(2);
 
         Moneda m=new Moneda();
-        m.setIdMoneda(6);
+        m.setIdMoneda(4);
         cuenta.setMoneda(m);
         Empleado e = new Empleado();
         e.setUsuarioID(2);
@@ -89,13 +89,15 @@ public class Main {
 
         //TES CAJA CHICA
         Area areaTI = new Area("Tecnología (TI)", "Infraestructura y Desarrollo");
+        areaTI.setIdArea(3);
         ICajaChicaDAO cajachicaDAO=new CajaChicaImplement();
         Date fechaActual= new Date();
         CajaChica caja= new CajaChica("Prueba1",1000, EstadoFondo.Activo,fechaActual,2000,areaTI);
         caja.setCuentaBancaria(cuenta);
         caja.setMoneda(m);
 
-        cajachicaDAO.insertar(caja);
+        cajachicaDAO.insertar(caja); // CHEEECK :v
+
         /* RRHH Pruebas
         AreaImplement areaDAO = new AreaImplement();
         RolImplement rolDAO = new RolImplement();

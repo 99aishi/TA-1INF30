@@ -21,14 +21,13 @@ public class CajaChicaImplement implements ICajaChicaDAO{
 
         try{
             con = DBManager.getDBManager().getConnection();
-            cs=con.prepareCall("{call pa_insertar_tes_caja_chica(?,?,?,?,?,?,?,?,?)}");
+            cs=con.prepareCall("{call pa_insertar_tes_caja_chica(?,?,?,?,?,?,?,?)}");
             cs.registerOutParameter("_id_fondo",Types.INTEGER);
             cs.setString("p_nombre_fondo", cajaChica.getNombre());
             cs.setInt("p_id_cuenta_bancaria", cajaChica.getCuentaBancaria().getIdCuenta());
             cs.setDouble("p_monto_saldo_actual",cajaChica.getSaldoActual());
             cs.setString("p_estado_fondo",cajaChica.getEstado().name());
             cs.setInt("p_id_moneda", cajaChica.getMoneda().getIdMoneda());
-            cs.setInt("p_id_usuario_responsable", cajaChica.getResponsable().getUsuarioID());
             cs.setDouble("p_monto_techo",cajaChica.getMontoTecho());
             cs.setInt("p_id_area",cajaChica.getAreaAsignada().getIdArea());
             cs.executeUpdate();
