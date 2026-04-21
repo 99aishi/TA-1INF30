@@ -23,35 +23,6 @@ import java.util.List;
 public class Main {
     public static void main(String []args){
 
-//        IMonedaDAO monedaDAO = new MonedaImplement();
-//        Moneda moneda= new Moneda("USD","$");
-//
-//        int resultado=monedaDAO.insertar(moneda);
-//        if(resultado!=0){
-//            System.out.println("Se inserto correctamente");
-//        }
-
-//        moneda.setIdMoneda(1);
-//        moneda.setCodigoISO("PEN");
-//        moneda.setSimbolo("S/.");
-//        int resultado=monedaDAO.modificar(moneda);
-//        if(resultado!=0){
-//            System.out.println("Se modifico correctamente");
-//        }
-
-//        moneda=monedaDAO.buscarPorId(2);
-//        System.out.println(moneda);
-//
-
-//        List<Moneda> monedas=monedaDAO.listarTodas();
-//        for(int i=0;i<monedas.size();i++){
-//            System.out.println(monedas.get(i));
-//        }
-//        int resultado=monedaDAO.eliminar(2);
-//        if(resultado!=0){
-//            System.out.println("Se desactivo la moneda");
-//        }
-
         //Cuenta bancaria
 
         ICuentaBancariaDAO bDao=new CuentaBancariaImplement();
@@ -67,25 +38,6 @@ public class Main {
         Empleado e = new Empleado();
         e.setUsuarioID(2);
         cuenta.setAdministrador(e);
-//        int resultado=bDao.insertar(cb);
-//        if(resultado!=0){
-//            System.out.println("Se inserto correctamente");
-//        }
-//        int resultado=bDao.modificar(cb);
-//        if(resultado!=0){
-//            System.out.println("Se modifico correctamente");
-//        }
-
-//        int resultado=bDao.eliminar(2);
-//        if(resultado!=0){
-//            System.out.println("Se desactivo correctamente");
-//        }
-//        CuentaBancaria cb =bDao.buscarPorId(2);
-//        System.out.println(cb);
-//        List<CuentaBancaria>cuentas=bDao.listarTodas();
-//        for(int i=0;i<cuentas.size();i++){
-//            System.out.println(cuentas.get(i));
-//        }
 
         //TES CAJA CHICA
         Area areaTI = new Area("Tecnología (TI)", "Infraestructura y Desarrollo");
