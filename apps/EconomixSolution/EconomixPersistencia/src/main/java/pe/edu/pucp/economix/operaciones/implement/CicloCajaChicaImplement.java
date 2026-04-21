@@ -143,13 +143,11 @@ public class CicloCajaChicaImplement implements ICicloCajaChicaDAO {
 
             rs = cs.executeQuery();
             if (rs.next()) {
-                ciclo = new CicloCajaChica(
-                        rs.getInt("numero_semana"),
-                        rs.getDate("fecha_apertura"),
-                        rs.getDate("fecha_cierre"),
-                        rs.getDouble("monto_saldo_inicial"),
-                        null // CajaChica se puede cargar aparte si se necesita
-                );
+                ciclo = new CicloCajaChica();
+                ciclo.setNumeroSemana(rs.getInt("numero_semana"));
+                ciclo.setFechaApertura(rs.getDate("fecha_apertura"));
+                ciclo.setFechaCierre(rs.getDate("fecha_cierre"));
+                ciclo.setSaldoInicial(rs.getDouble("monto_saldo_inicial"));
                 ciclo.setIdCicloCaja(rs.getInt("id_ciclo_caja"));
                 ciclo.setTotalGastado(rs.getDouble("monto_total_gastado"));
                 ciclo.setEstado(EstadoCicloCaja.valueOf(rs.getString("estado_ciclo")));
@@ -189,20 +187,19 @@ public class CicloCajaChicaImplement implements ICicloCajaChicaDAO {
                 if (ciclos == null)
                     ciclos = new ArrayList<>();
 
-                CicloCajaChica ciclo = new CicloCajaChica(
-                        rs.getInt("numero_semana"),
-                        rs.getDate("fecha_apertura"),
-                        rs.getDate("fecha_cierre"),
-                        rs.getDouble("monto_saldo_inicial"),
-                        null
-                );
+                CicloCajaChica ciclo = new CicloCajaChica();
+                ciclo.setNumeroSemana(rs.getInt("numero_semana"));
+                ciclo.setFechaApertura(rs.getDate("fecha_apertura"));
+                ciclo.setFechaCierre(rs.getDate("fecha_cierre"));
+                ciclo.setSaldoInicial(rs.getDouble("monto_saldo_inicial"));
                 ciclo.setIdCicloCaja(rs.getInt("id_ciclo_caja"));
                 ciclo.setTotalGastado(rs.getDouble("monto_total_gastado"));
                 ciclo.setEstado(EstadoCicloCaja.valueOf(rs.getString("estado_ciclo")));
 
+                // Para el FK de CajaChica, llamamos a su Implement
                 int idCajaChica = rs.getInt("id_fondo_caja_chica");
                 ciclo.setCajaChica(new CajaChicaImplement().buscarPorId(idCajaChica));
-
+            
                 ciclos.add(ciclo);
             }
         } catch (Exception ex) {
