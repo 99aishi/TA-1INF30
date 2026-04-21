@@ -27,7 +27,8 @@ END$$
 CREATE PROCEDURE sp_modificar_area(
     IN p_id_area INT,
     IN p_nombre_area VARCHAR(60),
-    IN p_descripcion_area VARCHAR(200)
+    IN p_descripcion_area VARCHAR(200), 
+    IN p_id_jefe INT
 )
 BEGIN
     IF p_id_area IS NULL OR p_id_area <= 0 THEN
@@ -37,7 +38,8 @@ BEGIN
 
     UPDATE rrhh_area
        SET nombre_area = TRIM(p_nombre_area),
-           descripcion_area = TRIM(p_descripcion_area)
+           descripcion_area = TRIM(p_descripcion_area), 
+           id_jefe = p_id_jefe
      WHERE id_area = p_id_area;
 END$$
 

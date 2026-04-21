@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS rrhh_area (
     id_area INT NOT NULL AUTO_INCREMENT,
     nombre_area VARCHAR(60) NOT NULL UNIQUE,
     descripcion_area VARCHAR(200),
-    id_jefe INT NULL, -- Mantiene el nombre id_jefe de Creacion.sql
+    id_jefe INT NULL,
     
     -- Auditoría
     creado_at DATETIME,
@@ -158,7 +158,7 @@ CREATE TABLE IF NOT EXISTS tes_fondo (
 CREATE TABLE IF NOT EXISTS tes_caja_chica (
     id_fondo INT NOT NULL,
     monto_techo DECIMAL(12,2) NOT NULL,
-    id_area INT NULL,
+    id_area INT NOT NULL,
     
     -- Auditoría
     creado_at DATETIME,
