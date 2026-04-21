@@ -1,6 +1,6 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
---- ===============================================================================
+-- ===============================================================================
 -- 1. MÓDULO: rrhh (Recursos Humanos y Accesos)
 -- ===============================================================================
 
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS rrhh_area (
     id_area INT NOT NULL AUTO_INCREMENT,
     nombre_area VARCHAR(60) NOT NULL UNIQUE,
     descripcion_area VARCHAR(200),
-    id_jefe INT,
+    id_jefe INT NULL, -- Mantiene el nombre id_jefe de Creacion.sql
     
     -- Auditoría
     creado_at DATETIME,
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS rrhh_area (
 
     CONSTRAINT pk_rrhh_area PRIMARY KEY (id_area),
     CONSTRAINT fk_rrhh_area_rrhh_empleado FOREIGN KEY (id_jefe) 
-        REFERENCES rrhh_empleado(id_usuario)
+        REFERENCES rrhh_empleado(id_usuario) 
         ON DELETE SET NULL 
         ON UPDATE CASCADE
 ) ENGINE=InnoDB;
@@ -58,9 +58,9 @@ CREATE TABLE IF NOT EXISTS rrhh_empleado (
     id_usuario INT NOT NULL,
     correo_institucional VARCHAR(100) NOT NULL,
     numero_celular VARCHAR(15),
-    id_area INT,
-    id_rol INT,
-    id_jefe_directo INT NULL,
+    id_area INT NULL,
+    id_rol INT NULL,
+    id_jefe_directo INT NULL, -- Mantiene el nombre id_jefe_directo
     
     -- Auditoría
     creado_at DATETIME,
@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS rrhh_empleado (
     id_usuario_modificacion INT,
     
     CONSTRAINT pk_rrhh_empleado PRIMARY KEY (id_usuario),
+    CONSTRAINT uk_rrhh_empleado_correo UNIQUE (correo_institucional), -- Mantiene nombre de UK
     CONSTRAINT fk_rrhh_empleado_rrhh_usuario FOREIGN KEY (id_usuario) 
         REFERENCES rrhh_usuario(id_usuario),
     CONSTRAINT fk_rrhh_empleado_rrhh_area FOREIGN KEY (id_area) 
@@ -76,8 +77,7 @@ CREATE TABLE IF NOT EXISTS rrhh_empleado (
     CONSTRAINT fk_rrhh_empleado_rrhh_rol FOREIGN KEY (id_rol) 
         REFERENCES rrhh_rol(id_rol),
     CONSTRAINT fk_rrhh_empleado_rrhh_empleado_jefe FOREIGN KEY (id_jefe_directo) 
-        REFERENCES rrhh_empleado(id_usuario),
-    CONSTRAINT uk_rrhh_empleado_correo UNIQUE (correo_institucional)
+        REFERENCES rrhh_empleado(id_usuario)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS rrhh_administrador (
@@ -103,7 +103,8 @@ CREATE TABLE IF NOT EXISTS tes_moneda (
     id_moneda INT NOT NULL AUTO_INCREMENT,
     codigo_iso CHAR(3) NOT NULL,
     simbolo VARCHAR(5) NOT NULL,
-    activa TINYINT(1) DEFAULT 1,
+    activa TINYINT(1) DEFAULT 1, -- Mantiene nombre "activa"
+    
     -- Auditoría
     creado_at DATETIME,
     actualizado_at DATETIME,
@@ -117,11 +118,13 @@ CREATE TABLE IF NOT EXISTS tes_cuenta_bancaria (
     id_cuenta_bancaria INT NOT NULL AUTO_INCREMENT,
     nombre_banco VARCHAR(50) NOT NULL,
     numero_cuenta VARCHAR(30) NOT NULL,
-    cci CHAR(20),
+    cci CHAR(20), -- Mantiene "cci"
     id_moneda INT NOT NULL,
     es_principal TINYINT(1) DEFAULT 0,
-    id_usuario_titular INT,
-    activa TINYINT(1) DEFAULT 1,
+    id_area INT NULL, -- Traído de la nueva lógica de Creacion_.sql
+    id_usuario_titular INT NULL,
+    activa TINYINT(1) DEFAULT 1, -- Mantiene "activa"
+    
     -- Auditoría
     creado_at DATETIME,
     actualizado_at DATETIME,
@@ -131,6 +134,8 @@ CREATE TABLE IF NOT EXISTS tes_cuenta_bancaria (
     CONSTRAINT pk_tes_cuenta_bancaria PRIMARY KEY (id_cuenta_bancaria),
     CONSTRAINT fk_tes_cuenta_bancaria_tes_moneda FOREIGN KEY (id_moneda) 
         REFERENCES tes_moneda(id_moneda),
+    CONSTRAINT fk_tes_cuenta_bancaria_rrhh_area FOREIGN KEY (id_area) 
+        REFERENCES rrhh_area(id_area),
     CONSTRAINT fk_tes_cuenta_bancaria_rrhh_empleado FOREIGN KEY (id_usuario_titular) 
         REFERENCES rrhh_empleado(id_usuario)
 ) ENGINE=InnoDB;
@@ -140,9 +145,6 @@ CREATE TABLE IF NOT EXISTS tes_fondo (
     nombre_fondo VARCHAR(100) NOT NULL,
     monto_saldo_actual DECIMAL(12,2) DEFAULT 0.00,
     estado_fondo VARCHAR(20) NOT NULL,
-    id_moneda INT NOT NULL,
-    id_cuenta_bancaria INT,
-    id_usuario_responsable INT,
     
     -- Auditoría
     creado_at DATETIME,
@@ -150,19 +152,13 @@ CREATE TABLE IF NOT EXISTS tes_fondo (
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
-    CONSTRAINT pk_tes_fondo PRIMARY KEY (id_fondo),
-    CONSTRAINT fk_tes_fondo_tes_moneda FOREIGN KEY (id_moneda) 
-        REFERENCES tes_moneda(id_moneda),
-    CONSTRAINT fk_tes_fondo_tes_cuenta_bancaria FOREIGN KEY (id_cuenta_bancaria) 
-        REFERENCES tes_cuenta_bancaria(id_cuenta_bancaria),
-    CONSTRAINT fk_tes_fondo_rrhh_empleado FOREIGN KEY (id_usuario_responsable) 
-        REFERENCES rrhh_empleado(id_usuario)
+    CONSTRAINT pk_tes_fondo PRIMARY KEY (id_fondo)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS tes_caja_chica (
     id_fondo INT NOT NULL,
     monto_techo DECIMAL(12,2) NOT NULL,
-    id_area INT,
+    id_area INT NULL,
     
     -- Auditoría
     creado_at DATETIME,
@@ -185,8 +181,8 @@ CREATE TABLE IF NOT EXISTS tes_entrega_rendir (
     fecha_apertura DATE,
     fecha_cierre DATE,
     estado_entrega VARCHAR(20),
-    id_usuario_solicitante INT,
-    id_usuario_aprobador INT,
+    id_usuario_solicitante INT NOT NULL,
+    id_usuario_aprobador INT NULL,
     
     -- Auditoría
     creado_at DATETIME,
@@ -209,7 +205,7 @@ CREATE TABLE IF NOT EXISTS tes_entrega_rendir (
 
 CREATE TABLE IF NOT EXISTS ope_rendicion (
     id_rendicion INT NOT NULL AUTO_INCREMENT,
-    fecha_presentacion DATE DEFAULT (CURRENT_DATE),
+    fecha_presentacion DATE DEFAULT (CURRENT_DATE), -- Se mantiene el default original
     fecha_aprobacion DATE NULL,
     monto_total_declarado DECIMAL(12,2) DEFAULT 0.00,
     monto_total_aprobado DECIMAL(12,2) DEFAULT 0.00,
@@ -235,7 +231,7 @@ CREATE TABLE IF NOT EXISTS ope_ciclo_caja (
     monto_total_gastado DECIMAL(12,2) DEFAULT 0.00,
     estado_ciclo VARCHAR(20),
     id_fondo_caja_chica INT NOT NULL,
-    id_rendicion INT,
+    id_rendicion INT NULL,
     
     -- Auditoría
     creado_at DATETIME,
@@ -257,8 +253,8 @@ CREATE TABLE IF NOT EXISTS ope_solicitud_gasto (
     motivo_solicitud VARCHAR(200),
     estado_solicitud VARCHAR(20),
     id_usuario_solicitante INT NOT NULL,
-    id_usuario_destinatario INT,
-    id_ciclo_caja INT,
+    id_usuario_destinatario INT NULL,
+    id_ciclo_caja INT NULL,
     
     -- Auditoría
     creado_at DATETIME,
@@ -276,18 +272,18 @@ CREATE TABLE IF NOT EXISTS ope_solicitud_gasto (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
-    id_comprobante INT NOT NULL AUTO_INCREMENT,
+    id_comprobante INT NOT NULL AUTO_INCREMENT, -- Se revirtió a id_comprobante
     tipo_documento VARCHAR(20) NOT NULL,
-    ruc_proveedor CHAR(11),
+    ruc_proveedor CHAR(11), -- Se revirtió a ruc_proveedor
     razon_social VARCHAR(150),
     numero_serie VARCHAR(30),
     fecha_emision DATE,
     monto_subtotal DECIMAL(12,2),
     monto_igv DECIMAL(12,2),
     monto_total DECIMAL(12,2) NOT NULL,
-    id_solicitud_gasto INT,
-    id_fondo_entrega INT,
-    id_moneda INT,
+    id_solicitud_gasto INT NULL,
+    id_fondo_entrega INT NULL,
+    id_moneda INT NOT NULL,
     
     -- Auditoría
     creado_at DATETIME,
@@ -307,14 +303,14 @@ CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
 CREATE TABLE IF NOT EXISTS ope_transaccion (
     id_transaccion INT NOT NULL AUTO_INCREMENT,
     tipo_operacion VARCHAR(30) NOT NULL,
-    momento_operacion DATETIME, -- Gestionado por el trigger -- Lol
+    momento_operacion DATETIME, 
     monto_transaccion DECIMAL(12,2) NOT NULL,
     numero_operacion_bancaria VARCHAR(30),
     medio_pago VARCHAR(30),
     valor_tipo_cambio DECIMAL(10,4),
-    id_cuenta_origen INT,
-    id_cuenta_destino INT,
-    id_moneda INT,
+    id_cuenta_origen INT NULL,
+    id_cuenta_destino INT NULL,
+    id_moneda INT NOT NULL,
     
     -- Auditoría
     creado_at DATETIME,
