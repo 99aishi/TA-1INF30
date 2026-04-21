@@ -5,11 +5,15 @@ import pe.edu.pucp.economix.operaciones.model.EstadoRendicion;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
 import pe.edu.pucp.economix.rrhh.implement.*;
 import pe.edu.pucp.economix.rrhh.model.*;
+import pe.edu.pucp.economix.tesoreria.dao.ICajaChicaDAO;
 import pe.edu.pucp.economix.tesoreria.dao.ICuentaBancariaDAO;
 import pe.edu.pucp.economix.tesoreria.dao.IMonedaDAO;
+import pe.edu.pucp.economix.tesoreria.implement.CajaChicaImplement;
 import pe.edu.pucp.economix.tesoreria.implement.CuentaBancariaImplement;
 import pe.edu.pucp.economix.tesoreria.implement.MonedaImplement;
+import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
+import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 import javax.naming.ldap.ControlFactory;
@@ -51,18 +55,18 @@ public class Main {
         //Cuenta bancaria
 
         ICuentaBancariaDAO bDao=new CuentaBancariaImplement();
-//        CuentaBancaria cb= new CuentaBancaria();
-//        cb.setNombreBanco("BCP");
-//        cb.setNumeroBancario("444");
-//        cb.setCci("555");
-//        cb.setIdCuenta(2);
-//
-//        Moneda m=new Moneda();
-//        m.setIdMoneda(4);
-//        cb.setMoneda(m);
-//        Empleado e = new Empleado();
-//        e.setUsuarioID(2);
-//        cb.setAdministrador(e);
+        CuentaBancaria cuenta= new CuentaBancaria();
+        cuenta.setNombreBanco("BCP");
+        cuenta.setNumeroBancario("444");
+        cuenta.setCci("555");
+        cuenta.setIdCuenta(3);
+
+        Moneda m=new Moneda();
+        m.setIdMoneda(6);
+        cuenta.setMoneda(m);
+        Empleado e = new Empleado();
+        e.setUsuarioID(2);
+        cuenta.setAdministrador(e);
 //        int resultado=bDao.insertar(cb);
 //        if(resultado!=0){
 //            System.out.println("Se inserto correctamente");
@@ -83,6 +87,15 @@ public class Main {
 //            System.out.println(cuentas.get(i));
 //        }
 
+        //TES CAJA CHICA
+        Area areaTI = new Area("Tecnología (TI)", "Infraestructura y Desarrollo");
+        ICajaChicaDAO cajachicaDAO=new CajaChicaImplement();
+        Date fechaActual= new Date();
+        CajaChica caja= new CajaChica("Prueba1",1000, EstadoFondo.Activo,fechaActual,2000,areaTI);
+        caja.setCuentaBancaria(cuenta);
+        caja.setMoneda(m);
+
+        cajachicaDAO.insertar(caja);
         /* RRHH Pruebas
         AreaImplement areaDAO = new AreaImplement();
         RolImplement rolDAO = new RolImplement();

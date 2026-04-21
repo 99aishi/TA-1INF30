@@ -1,6 +1,7 @@
 package pe.edu.pucp.economix.tesoreria.model;
 
 import pe.edu.pucp.economix.operaciones.model.TipoTransaccion;
+import pe.edu.pucp.economix.rrhh.model.Empleado;
 
 import java.util.Date;
 
@@ -13,7 +14,7 @@ public class Fondo {
     private Date fechaCreacion;
     private CuentaBancaria cuentaBancaria; //crear set y get
     private Moneda moneda; // crear set y get
-
+    private Empleado responsable;
     // Constructores
     public Fondo(String nombre, double saldoActual, EstadoFondo estado, Date fechaCreacion) {
         this.idFondo = this.correlativoID++;
@@ -45,6 +46,7 @@ public class Fondo {
     public Moneda getMoneda(){
         return this.moneda;
     }
+    public Empleado getResponsable(){ return this.responsable;}
     public void setIdFondo(int idFondo) {
         this.idFondo = idFondo;
     }
@@ -66,6 +68,7 @@ public class Fondo {
     public void setMoneda(Moneda moneda){
         this.moneda = moneda;
     }
+    public void setResponsable(Empleado responsable){this.responsable=responsable;}
 
     //Metodos
     public void actualizarSaldo(double monto, TipoTransaccion tipo) {
