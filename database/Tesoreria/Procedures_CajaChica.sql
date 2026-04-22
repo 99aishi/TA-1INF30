@@ -64,7 +64,7 @@ BEGIN
        -- SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: No se pudo actualizar la Caja Chica.';
     -- END;
 
-    START TRANSACTION;
+    -- START TRANSACTION;
 
     UPDATE tes_fondo 
     SET monto_saldo_actual = p_monto_saldo_actual,
@@ -80,7 +80,7 @@ BEGIN
        -- SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: No se encontró una Caja Chica con ese ID.';
     -- END IF;
 
-    COMMIT;
+    -- COMMIT;
 END $$
 $$
 

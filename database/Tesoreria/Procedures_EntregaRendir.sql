@@ -1,4 +1,10 @@
 DROP PROCEDURE IF EXISTS pa_insertar_tes_entrega_rendir;
+DROP PROCEDURE IF EXISTS pa_modificar_entrega_rendir;
+DROP PROCEDURE IF EXISTS pa_buscar_entrega_por_id;
+DROP PROCEDURE IF EXISTS pa_listar_entrega_rendir;
+
+
+
 $$
 DELIMITER $$
 
@@ -86,3 +92,37 @@ BEGIN
 
 
 END $$
+
+CREATE PROCEDURE pa_modificar_entrega_rendir(
+    IN p_id_fondo INT, 
+    IN p_fecha_apertura DATE, 
+    IN p_fecha_cierre DATE,
+    IN p_estado_entrega VARCHAR(20)
+)
+BEGIN
+
+
+    UPDATE tes_entrega_rendir 
+    SET fecha_apertura =p_fecha_apertura, fecha_cierre=p_fecha_cierre,estado_entrega=p_estado_entrega
+    WHERE id_fondo = p_id_fondo;
+END $$
+
+CREATE PROCEDURE pa_buscar_entrega_por_id(
+	IN p_id_fondo INT
+)
+BEGIN
+	select f.id_fondo, f.nombre_fondo,f.monto_saldo_actual,f.estado_fondo,e.motivo_entrega,e.fecha_solicitud,
+	e.fecha_apertura,e.fecha_cierre,e.estado_entrega,e.id_usuario_solicitante,e.id_usuario_aprobador,e.monto_solicitado
+ from tes_entrega_rendir e join tes_fondo f where e.id_fondo=f.id_fondo and f.id_fondo=p_id_fondo;
+END
+$$
+
+CREATE PROCEDURE pa_listar_entrega_rendir(
+
+)
+BEGIN
+	select f.id_fondo, f.nombre_fondo,f.monto_saldo_actual,f.estado_fondo,e.motivo_entrega,e.monto_solicitado,e.fecha_solicitud,
+	e.fecha_apertura,e.fecha_cierre,e.estado_entrega,e.id_usuario_solicitante,e.id_usuario_aprobador
+ from tes_entrega_rendir e join tes_fondo f where e.id_fondo=f.id_fondo;
+END
+$$

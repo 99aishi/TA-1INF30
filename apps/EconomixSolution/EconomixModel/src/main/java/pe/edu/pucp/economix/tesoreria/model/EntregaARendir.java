@@ -28,6 +28,20 @@ public class EntregaARendir extends Fondo{
         this.solicitante=solicitante;
 
     }
+    public EntregaARendir(int idFondo, String nombre, double saldoActual, EstadoFondo estadoFondo,
+                           String motivo, double montoSolicitado, Date fechaSolicitud, Date fechaAperturaEntrega, Date fechaCierreEntrega,
+                           EstadoEntregaARendir estado, Empleado solicitante, Empleado aprobador) {
+        super(idFondo,nombre,saldoActual,estadoFondo);
+        this.motivo = motivo;
+        this.montoSolicitado = montoSolicitado;
+        this.fechaSolicitud = fechaSolicitud;
+        this.fechaAperturaEntrega = fechaAperturaEntrega;
+        this.fechaCierreEntrega = fechaCierreEntrega;
+        this.estado = estado;
+        this.aprobador=aprobador;
+        this.solicitante=solicitante;
+
+    }
 
     //Selectores
     public String getMotivo() {
@@ -83,7 +97,19 @@ public class EntregaARendir extends Fondo{
         this.aprobador = aprobador;
     }
 
-
+    @Override
+    public String toString() {
+        return super.toString() +"EntregaARendir{" +
+                "motivo='" + motivo + '\'' +
+                ", montoSolicitado=" + montoSolicitado +
+                ", fechaSolicitud=" + fechaSolicitud +
+                ", fechaAperturaEntrega=" + fechaAperturaEntrega +
+                ", fechaCierreEntrega=" + fechaCierreEntrega +
+                ", estado=" + estado +
+                ", solicitante=" + solicitante +
+                ", aprobador=" + aprobador +
+                '}';
+    }
 
     //Metodos
     public void aperturarEntrega(double montoAprobado) {

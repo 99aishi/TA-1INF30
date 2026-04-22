@@ -8,14 +8,13 @@ import pe.edu.pucp.economix.rrhh.implement.*;
 import pe.edu.pucp.economix.rrhh.model.*;
 import pe.edu.pucp.economix.tesoreria.dao.ICajaChicaDAO;
 import pe.edu.pucp.economix.tesoreria.dao.ICuentaBancariaDAO;
+import pe.edu.pucp.economix.tesoreria.dao.IEntregaARendirDAO;
 import pe.edu.pucp.economix.tesoreria.dao.IMonedaDAO;
 import pe.edu.pucp.economix.tesoreria.implement.CajaChicaImplement;
 import pe.edu.pucp.economix.tesoreria.implement.CuentaBancariaImplement;
+import pe.edu.pucp.economix.tesoreria.implement.EntregaARendirImplement;
 import pe.edu.pucp.economix.tesoreria.implement.MonedaImplement;
-import pe.edu.pucp.economix.tesoreria.model.CajaChica;
-import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
-import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
-import pe.edu.pucp.economix.tesoreria.model.Moneda;
+import pe.edu.pucp.economix.tesoreria.model.*;
 
 import javax.naming.ldap.ControlFactory;
 import java.util.Date;
@@ -69,6 +68,47 @@ public class Main {
 //        }
 
         //TES ENTREGA A RENDIR
+
+
+        // Definición de los 3 usuarios empleados
+        Empleado emp1 = new Empleado(
+                1, "Fabricio", "Cordova", "Luna", "hash_seguro_123",
+                EstadoUsuario.Activo, "fabricio.cordova@pucp.edu.pe", "987654321"
+        );
+
+        Empleado emp2 = new Empleado(
+                2, "Ana", "Martínez", "Salazar", "hash_seguro_456",
+                EstadoUsuario.Activo, "ana.martinez@empresa.com", "912345678"
+        );
+
+        Empleado emp3 = new Empleado(
+                3, "Roberto", "García", "Pérez", "hash_seguro_789",
+                EstadoUsuario.Activo, "roberto.garcia@empresa.com", "933445566"
+        );
+
+        IEntregaARendirDAO entregaDao= new EntregaARendirImplement();
+
+        EntregaARendir viajeArg = new EntregaARendir(
+                "Viaje Buenos Aires",
+                0.0,
+                EstadoFondo.Activo,
+                "Gastos de movilidad y viáticos para estancia en Argentina", //
+                1200.0,
+                new Date(), // Fecha de hoy
+                null,       // Aún no se abre
+                null,       // Aún no se cierra
+                EstadoEntregaARendir.Pendiente,
+                emp1,       // Solicitante: Fabricio
+                emp2        //
+        );
+        //entregaDao.insertar(viajeArg);
+        //viajeArg.setEstado(EstadoEntregaARendir.Aceptado);
+        //viajeArg.setIdFondo(9);
+        //entregaDao.modificar(viajeArg);
+        //EntregaARendir consultada= entregaDao.buscarPorId(9);
+        //System.out.println(consultada);
+        
+
 
 
 
