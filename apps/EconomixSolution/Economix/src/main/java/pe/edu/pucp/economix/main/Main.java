@@ -54,11 +54,11 @@ public class Main {
 //        caja.setSaldoActual(1500);
 //        cajachicaDAO.modificar(caja);
 
-        CajaChica solicitado = cajachicaDAO.buscarPorId(2);
-        System.out.println(solicitado);
-        cajachicaDAO.eliminar(2);
-        solicitado=cajachicaDAO.buscarPorId(2);
-        System.out.println(solicitado);
+//        CajaChica solicitado = cajachicaDAO.buscarPorId(2);
+//        System.out.println(solicitado);
+//        cajachicaDAO.eliminar(2);
+//        solicitado=cajachicaDAO.buscarPorId(2);
+//        System.out.println(solicitado);
 
 
         /* RRHH Pruebas
