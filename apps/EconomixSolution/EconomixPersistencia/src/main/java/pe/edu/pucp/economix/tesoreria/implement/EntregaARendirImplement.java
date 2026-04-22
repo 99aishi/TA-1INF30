@@ -27,19 +27,19 @@ public class EntregaARendirImplement implements IEntregaARendirDAO  {
             cs.setString("p_nombre_fondo", entrega.getNombre());
             cs.setDouble("p_monto_saldo_actual",entrega.getSaldoActual());
             cs.setString("p_estado_fondo",entrega.getEstado().name());
-//            cs.setInt("p_id_moneda", entrega.getMoneda().getIdMoneda());
-//            cs.setInt("p_id_cuenta_bancaria", entrega.getCuentaBancaria().getIdCuenta());
-            cs.setInt("p_id_usuario_responsable",entrega.getResponsable().getUsuarioID());
-
 
             cs.setString("p_motivo_entrega", entrega.getMotivo());
             cs.setDouble("p_monto_solicitado",entrega.getMontoSolicitado());
             Date fechaSql  = new Date(entrega.getFechaSolicitud().getTime());
             cs.setDate("p_fecha_solicitud",fechaSql);
+            fechaSql= new Date(entrega.getFechaAperturaEntrega().getTime());
+            cs.setDate("p_fecha_apertura",fechaSql);
 
+            fechaSql= new Date(entrega.getFechaAperturaEntrega().getTime());
+            cs.setDate("p_fecha_cierre",fechaSql);
 
-
-
+            cs.setInt("p_id_usuario_solicitante", entrega.getSolicitante().getUsuarioID());
+            cs.setInt("p_id_usuario_aprobador",entrega.getAprobador().getUsuarioID());
 
 
 

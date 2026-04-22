@@ -11,11 +11,12 @@ public class EntregaARendir extends Fondo{
     private Date fechaAperturaEntrega;
     private Date fechaCierreEntrega;
     private EstadoEntregaARendir estado;
-    private Empleado responsable;
+    private Empleado solicitante;
+    private Empleado aprobador;
     //Constructores
     public EntregaARendir( String nombre, double saldoActual, EstadoFondo estadoFondo, Date fechaCreacion,
                            String motivo, double montoSolicitado, Date fechaSolicitud, Date fechaAperturaEntrega, Date fechaCierreEntrega,
-                           EstadoEntregaARendir estado, Empleado empleado) {
+                           EstadoEntregaARendir estado, Empleado solicitante, Empleado aprobador) {
         super(nombre,saldoActual,estadoFondo,fechaCreacion);
         this.motivo = motivo;
         this.montoSolicitado = montoSolicitado;
@@ -23,7 +24,9 @@ public class EntregaARendir extends Fondo{
         this.fechaAperturaEntrega = fechaAperturaEntrega;
         this.fechaCierreEntrega = fechaCierreEntrega;
         this.estado = estado;
-        this.responsable=empleado;
+        this.aprobador=aprobador;
+        this.solicitante=solicitante;
+
     }
 
     //Selectores
@@ -64,13 +67,23 @@ public class EntregaARendir extends Fondo{
         this.estado = estado;
     }
 
-    public Empleado getResponsable() {
-        return responsable;
+    public Empleado getSolicitante() {
+        return solicitante;
     }
 
-    public void setResponsable(Empleado responsable) {
-        this.responsable = responsable;
+    public void setSolicitante(Empleado solicitante) {
+        this.solicitante = solicitante;
     }
+
+    public Empleado getAprobador() {
+        return aprobador;
+    }
+
+    public void setAprobador(Empleado aprobador) {
+        this.aprobador = aprobador;
+    }
+
+
 
     //Metodos
     public void aperturarEntrega(double montoAprobado) {

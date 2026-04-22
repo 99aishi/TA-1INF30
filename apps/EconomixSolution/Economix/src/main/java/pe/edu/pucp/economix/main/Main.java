@@ -45,8 +45,6 @@ public class Main {
         ICajaChicaDAO cajachicaDAO=new CajaChicaImplement();
         Date fechaActual= new Date();
         CajaChica caja= new CajaChica("Prueba1",1000, EstadoFondo.Activo,fechaActual,2000,areaTI);
-        caja.setCuentaBancaria(cuenta);
-        caja.setMoneda(m);
 
         cajachicaDAO.insertar(caja); // CHEEECK :v
 

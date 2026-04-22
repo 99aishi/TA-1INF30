@@ -1,4 +1,5 @@
 DROP PROCEDURE IF EXISTS pa_insertar_tes_entrega_rendir;
+$$
 DELIMITER $$
 
 
@@ -8,10 +9,7 @@ CREATE PROCEDURE pa_insertar_tes_entrega_rendir(
     IN p_nombre_fondo VARCHAR(100), -- not null
     IN p_monto_saldo_actual DECIMAL(12,2),
     IN p_estado_fondo VARCHAR(20), -- not nul
-    IN p_id_moneda INT, -- not null
-    IN p_id_cuenta_bancaria INT,
-    IN p_id_usuario_responsable INT,
-
+    
 
     IN p_motivo_entrega VARCHAR(200),
     IN p_monto_solicitado DECIMAL(12,2), -- not null
@@ -19,8 +17,8 @@ CREATE PROCEDURE pa_insertar_tes_entrega_rendir(
     IN p_fecha_apertura DATE,
     IN p_fecha_cierre DATE,
     IN p_estado_entrega VARCHAR(20),
-    IN p_id_usuario_solicitante INT,
-    IN p_id_usuario_aprobador INT
+    IN p_id_usuario_solicitante INT, -- not null
+    IN p_id_usuario_aprobador INT -- not null
     
 )
 BEGIN
@@ -33,30 +31,19 @@ BEGIN
     IF p_estado_fondo IS NULL OR TRIM(p_estado_fondo) = '' THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El estado del fondo es obligatorio.';
     END IF;
-
-    IF p_id_moneda IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Debe especificar una moneda válida.';
-    END IF;
-
+    
     IF p_monto_solicitado IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El monto solicitado es obligatorio.';
     END IF;
-
-    IF p_id_usuario_responsable <> p_id_usuario_solicitante THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El usuario responsable debe ser el mismo que el solicitante.';
+	
+	IF p_id_usuario_solicitante IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El usuario solicitante es obligatorio.';
     END IF;
 
-    -- VALIDACIÓN: Cuenta bancaria debe pertenecer al responsable
-    IF p_id_cuenta_bancaria IS NOT NULL THEN
-        -- Obtenemos el titular de la cuenta
-        SELECT id_usuario_titular INTO v_id_titular 
-        FROM tes_cuenta_bancaria 
-        WHERE id_cuenta_bancaria = p_id_cuenta_bancaria;
-
-        IF v_id_titular <> p_id_usuario_responsable THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: La cuenta bancaria no pertenece al usuario responsable.';
-        END IF;
+	IF p_id_usuario_aprobador IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El usuario aprobador es obligatorio.';
     END IF;
+
 
 
 
@@ -64,18 +51,12 @@ BEGIN
     INSERT INTO tes_fondo (
         nombre_fondo,
         monto_saldo_actual,
-        estado_fondo,
-        id_moneda,
-        id_cuenta_bancaria,
-        id_usuario_responsable
+        estado_fondo
     ) 
     VALUES (
         p_nombre_fondo,
         COALESCE(p_monto_saldo_actual, 0.00), -- Si viene null, ponemos 0
-        p_estado_fondo,
-        p_id_moneda,
-        p_id_cuenta_bancaria,
-        p_id_usuario_responsable
+        p_estado_fondo
     );
     SET _id_fondo = LAST_INSERT_ID();
 

@@ -158,7 +158,7 @@ CREATE TABLE IF NOT EXISTS tes_fondo (
 CREATE TABLE IF NOT EXISTS tes_caja_chica (
     id_fondo INT NOT NULL,
     monto_techo DECIMAL(12,2) NOT NULL,
-    id_area INT NULL,
+    id_area INT NOT NULL,
     
     -- Auditoría
     creado_at DATETIME,
