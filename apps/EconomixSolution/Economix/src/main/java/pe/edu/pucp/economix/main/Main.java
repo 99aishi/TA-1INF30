@@ -25,28 +25,35 @@ public class Main {
 
         //Cuenta bancaria
 
-        ICuentaBancariaDAO bDao=new CuentaBancariaImplement();
-        CuentaBancaria cuenta= new CuentaBancaria();
-        cuenta.setNombreBanco("BCP");
-        cuenta.setNumeroBancario("444");
-        cuenta.setCci("555");
-        cuenta.setIdCuenta(2);
-
-        Moneda m=new Moneda();
-        m.setIdMoneda(4);
-        cuenta.setMoneda(m);
-        Empleado e = new Empleado();
-        e.setUsuarioID(2);
-        cuenta.setAdministrador(e);
+//        ICuentaBancariaDAO bDao=new CuentaBancariaImplement();
+//        CuentaBancaria cuenta= new CuentaBancaria();
+//        cuenta.setNombreBanco("BCP");
+//        cuenta.setNumeroBancario("444");
+//        cuenta.setCci("555");
+//        cuenta.setIdCuenta(2);
+//
+//        Moneda m=new Moneda();
+//        m.setIdMoneda(4);
+//        cuenta.setMoneda(m);
+//        Empleado e = new Empleado();
+//        e.setUsuarioID(2);
+//        cuenta.setAdministrador(e);
 
         //TES CAJA CHICA
         Area areaTI = new Area("Tecnología (TI)", "Infraestructura y Desarrollo");
-        areaTI.setIdArea(3);
+        areaTI.setIdArea(1);
         ICajaChicaDAO cajachicaDAO=new CajaChicaImplement();
         Date fechaActual= new Date();
-        CajaChica caja= new CajaChica("Prueba1",1000, EstadoFondo.Activo,fechaActual,2000,areaTI);
-
+        CajaChica caja= new CajaChica("Prueba3",1000, EstadoFondo.Activo,fechaActual,2000,areaTI);
+        caja.setIdFondo(7);
+        System.out.println(caja.getIdFondo());
         cajachicaDAO.insertar(caja); // CHEEECK :v
+        caja.setMontoTecho(3500);
+        caja.setSaldoActual(2500);
+        cajachicaDAO.modificar(caja);
+
+
+
 
         /* RRHH Pruebas
         AreaImplement areaDAO = new AreaImplement();

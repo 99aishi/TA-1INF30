@@ -18,6 +18,10 @@ public class CicloCajaChica{
     private CajaChica cajaChica;
     private List<SolicitudGasto> solicitudes;
 
+    public CicloCajaChica(){
+        this.idCicloCaja=0;
+        this.solicitudes=new ArrayList<>();
+    }
     //Constructores
     public CicloCajaChica(int numeroSemana,Date fechaApertura,Date fechaCierre, double saldoInicial, CajaChica cajaChica){
         this.idCicloCaja=this.correlativoID++;

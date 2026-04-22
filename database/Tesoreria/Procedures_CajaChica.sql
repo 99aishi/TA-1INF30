@@ -1,4 +1,5 @@
 DROP PROCEDURE IF EXISTS pa_insertar_tes_caja_chica;
+DROP PROCEDURE IF EXISTS pa_modificar_tes_caja_chica;
 DELIMITER $$
 
 $$
@@ -45,3 +46,37 @@ BEGIN
 END $$
 
 
+
+$$
+CREATE PROCEDURE pa_modificar_tes_caja_chica(
+    IN p_id_fondo INT, 
+    IN p_monto_saldo_actual DECIMAL(12,2), 
+    IN p_monto_techo DECIMAL(12,2)
+)
+BEGIN
+    -- Declaramos un manejador de errores para hacer ROLLBACK si algo falla
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: No se pudo actualizar la Caja Chica.';
+    END;
+
+    START TRANSACTION;
+
+    UPDATE tes_fondo 
+    SET monto_saldo_actual = p_monto_saldo_actual,
+    WHERE id_fondo = p_id_fondo;
+
+    UPDATE tes_caja_chica 
+    SET monto_techo = p_monto_techo
+    WHERE id_fondo = p_id_fondo;
+
+    -- Validar si realmente se actualizó algo (ROW_COUNT() > 0)
+    -- Si no se actualizó nada, es porque el ID no existe
+    IF ROW_COUNT() = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: No se encontró una Caja Chica con ese ID.';
+    END IF;
+
+    COMMIT;
+END $$
+$$

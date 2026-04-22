@@ -49,7 +49,31 @@ public class CajaChicaImplement implements ICajaChicaDAO{
 
     @Override
     public int modificar(CajaChica objeto) {
-        return 0;
+        int resultado=0;
+        try{
+            con = DBManager.getDBManager().getConnection();
+            cs=con.prepareCall("CALL pa_modificar_tes_caja_chica(?,?,?)");
+            cs.setInt("p_id_fondo",objeto.getIdFondo());
+            cs.setDouble("p_monto_saldo_actual",objeto.getSaldoActual());
+            cs.setDouble("p_monto_techo",objeto.getMontoTecho());
+            resultado = cs.executeUpdate();
+
+        }catch(Exception ex){
+            System.out.println("ERROR: "+ ex.getMessage());
+        }finally{
+            try{
+                cs.close();
+            }catch (Exception ex){
+                System.out.println("ERROR: "+ ex.getMessage());
+            }
+            try {
+                con.close();
+            }catch (Exception ex){
+                System.out.println("ERROR: "+ ex.getMessage());
+            }
+        }
+
+        return resultado;
     }
 
     @Override
