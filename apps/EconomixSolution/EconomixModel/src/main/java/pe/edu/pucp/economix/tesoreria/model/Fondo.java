@@ -13,6 +13,9 @@ public class Fondo {
     private EstadoFondo estado;
 
     // Constructores
+    public Fondo(){
+
+    }
     public Fondo(String nombre, double saldoActual, EstadoFondo estado) {
         this.idFondo = this.correlativoID++;
         this.nombre = nombre;
@@ -67,11 +70,8 @@ public class Fondo {
 
     @Override
     public String toString() {
-        return "Fondo{" +
-                "idFondo=" + idFondo +
-                ", nombre='" + nombre + '\'' +
-                ", saldoActual=" + saldoActual +
-                ", estado=" + estado +
-                '}';
+        return "ID: " + idFondo +
+                " Nombre: " + nombre  +
+                " Saldo Actual: " + saldoActual;
     }
 }

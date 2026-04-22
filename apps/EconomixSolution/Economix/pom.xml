@@ -40,7 +40,11 @@
             <artifactId>EconomixPersistencia</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-
+        <dependency>
+            <groupId>pe.edu.pucp.economix</groupId>
+            <artifactId>EconomixTest</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 </project>

@@ -173,6 +173,20 @@ public class EmpleadoImplement  implements IEmpleadoDAO{
                 jefe.setUsuarioID(idJefeDirecto);
                 empleado.setJefeDirecto(jefe);
 
+                //Consultamos al usuario que creamos recién
+                ResultSet rsUsuario;
+                CallableStatement csUsuario= con.prepareCall("{call pa_buscar_usuario_por_id(?)}");
+                int id = empleado.getUsuarioID();
+                csUsuario.setInt("p_id_usuario", id);
+                rsUsuario = csUsuario.executeQuery();
+
+
+                if(rsUsuario.next()){
+                    empleado.setNombre(rsUsuario.getString("nombres"));
+                    empleado.setApellidoPaterno(rsUsuario.getString("apellido_paterno"));
+                    empleado.setApellidoMaterno(rsUsuario.getString("apellido_materno"));
+                }
+
             }
         }catch(Exception ex){
             System.out.println("ERROR: "+ ex.getMessage());

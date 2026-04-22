@@ -9,10 +9,10 @@ import pe.edu.pucp.economix.rrhh.model.Rol;
 import java.util.List;
 
 public class EmpleadoTest {
+    private static EmpleadoImplement empleadoDAO = new EmpleadoImplement();
     public static List<Empleado> pruebaInsercion(Area areaGerenciaGeneral, Rol rolGerenteGeneral,
                                 Area areaTI, Rol rolAnalista,
                                 Area areaFinanzas, Rol rolGerente){
-        EmpleadoImplement empleadoDAO = new EmpleadoImplement();
 
         // 2. Jefe
         Empleado jefe = new Empleado();
@@ -84,5 +84,13 @@ public class EmpleadoTest {
         }
         System.out.println();
         return listaEmpleados;
+    }
+
+    public static Empleado buscarID(int idEmpleado){
+        return empleadoDAO.buscarPorId(idEmpleado);
+    }
+
+    public static int eliminar(int id){
+        return empleadoDAO.eliminar(id);
     }
 }

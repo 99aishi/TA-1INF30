@@ -13,6 +13,7 @@
         <module>EconomixPersistencia</module>
         <module>EconomixDBManager</module>
         <module>EconomixModel</module>
+        <module>EconomixTest</module>
     </modules>
 
     <properties>

@@ -6,7 +6,7 @@ import pe.edu.pucp.economix.tesoreria.model.Moneda;
 import java.util.List;
 
 public class MonedaTest {
-    public static List<Moneda> probarInsercion(){
+    public static List<Moneda> pruebaInsercion(){
         MonedaImplement monedaDAO = new MonedaImplement();
 
         Moneda dolar= new Moneda("USD","$");

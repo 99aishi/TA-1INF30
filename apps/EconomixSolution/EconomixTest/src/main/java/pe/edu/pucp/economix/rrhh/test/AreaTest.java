@@ -6,8 +6,8 @@ import pe.edu.pucp.economix.rrhh.model.Area;
 import java.util.List;
 
 public class AreaTest {
+    private static AreaImplement areaDAO = new AreaImplement();
     public static List<Area> pruebaInsercion(){
-        AreaImplement areaDAO = new AreaImplement();
 
         Area areaGerenciaGeneral = new Area("Gerencia General", "Administración de la empresa y su rumbo");
         areaGerenciaGeneral.setIdArea(areaDAO.insertar(areaGerenciaGeneral));
@@ -24,5 +24,9 @@ public class AreaTest {
         }
         System.out.println();
         return listaAreas;
+    }
+
+    public static Area buscarID(int idArea){
+        return areaDAO.buscarPorId(idArea);
     }
 }

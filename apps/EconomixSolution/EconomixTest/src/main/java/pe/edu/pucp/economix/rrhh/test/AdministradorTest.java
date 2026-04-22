@@ -26,6 +26,7 @@ public class AdministradorTest {
                     ad.getNombre() + " " + ad.getApellidoPaterno(),
                     ad.getCorreoSoporte()));
         }
+        System.out.println();
         return listaAdmins;
     }
 }

@@ -19,9 +19,13 @@ public class AreaImplement implements  IAreaDAO{
         int id=0;
         try{
             con = DBManager.getDBManager().getConnection();
-            cs= con.prepareCall("{call pa_insertar_area(?,?,?)}");
+            cs= con.prepareCall("{call pa_insertar_area(?,?,?,?)}");
             cs.setString("p_nombre_area", area.getNombre());
             cs.setString("p_descripcion_area", area.getDescripcion());
+            if(area.getJefe() != null)
+                cs.setInt("p_id_jefe", area.getJefe().getUsuarioID());
+            else
+                cs.setNull("p_id_jefe", java.sql.Types.INTEGER);
             cs.registerOutParameter("p_id_generado", java.sql.Types.INTEGER); // TODO Revisión INTEGER
 
             cs.executeUpdate();

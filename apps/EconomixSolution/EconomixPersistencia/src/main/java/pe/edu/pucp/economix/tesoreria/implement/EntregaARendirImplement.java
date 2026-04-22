@@ -32,7 +32,6 @@ public class EntregaARendirImplement implements IEntregaARendirDAO  {
             cs.setString("p_nombre_fondo", entrega.getNombre());
             cs.setDouble("p_monto_saldo_actual",entrega.getSaldoActual());
             cs.setString("p_estado_fondo",entrega.getEstado().name());
-
             cs.setString("p_motivo_entrega", entrega.getMotivo());
             cs.setDouble("p_monto_solicitado",entrega.getMontoSolicitado());
             Date fechaSql =null;
@@ -126,9 +125,6 @@ public class EntregaARendirImplement implements IEntregaARendirDAO  {
             cs=con.prepareCall("call pa_eliminar_entrega_rendir(?)");
             cs.setInt("p_id_fondo",id);
             resultado=cs.executeUpdate();
-
-
-
         }catch (Exception ex){
             System.out.println("ERROR: " + ex.getMessage());
         }finally {
@@ -203,11 +199,15 @@ public class EntregaARendirImplement implements IEntregaARendirDAO  {
         List<EntregaARendir> entregas = null;
         try{
             con= DBManager.getDBManager().getConnection();
-            cs=con.prepareCall("call pa_listar_caja_chica()");
+            cs=con.prepareCall("call pa_listar_entrega_rendir()");
             rs=cs.executeQuery();
 
             while(rs.next()){
-                if(entregas==null) entregas = new ArrayList<>();
+                if(entregas==null)
+                    entregas = new ArrayList<>();
+
+                //EntregaARendir entrega = new EntregaARendir();
+
                 int idFondo = rs.getInt("id_fondo");
                 String nombre= rs.getString("nombre_fondo");
                 double saldoActual=rs.getDouble("monto_saldo_actual");

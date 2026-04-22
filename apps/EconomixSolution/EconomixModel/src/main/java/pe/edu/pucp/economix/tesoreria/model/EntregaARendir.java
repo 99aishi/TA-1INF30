@@ -14,6 +14,7 @@ public class EntregaARendir extends Fondo{
     private Empleado solicitante;
     private Empleado aprobador;
     //Constructores
+    public EntregaARendir(){}
     public EntregaARendir( String nombre, double saldoActual, EstadoFondo estadoFondo,
                            String motivo, double montoSolicitado, Date fechaSolicitud, Date fechaAperturaEntrega, Date fechaCierreEntrega,
                            EstadoEntregaARendir estado, Empleado solicitante, Empleado aprobador) {

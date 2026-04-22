@@ -13,6 +13,9 @@ public class CajaChica extends Fondo{
     private List<CicloCajaChica> ciclos;
     private Area areaAsignada;
     //Constructores
+    public CajaChica(){
+
+    }
     public CajaChica(int id_Fondo ,String nombre, double saldoActual, EstadoFondo estado, double montoTecho,Area areaAsignada){
         super(id_Fondo,nombre,saldoActual,estado);
         this.montoTecho=montoTecho;
@@ -55,10 +58,8 @@ public class CajaChica extends Fondo{
 
     @Override
     public String toString() {
-        return super.toString()+ " CajaChica{" +
-                "montoTecho=" + montoTecho +
-                ", ciclos=" + ciclos +
-                ", areaAsignada=" + areaAsignada +
-                '}';
+        return "Caja Chica: " + super.toString() +
+                "montoTecho: " + montoTecho +
+                " ID Area Asignada: " + areaAsignada.getIdArea();
     }
 }

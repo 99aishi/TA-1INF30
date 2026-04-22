@@ -6,6 +6,10 @@ import pe.edu.pucp.economix.operaciones.model.Rendicion;
 import pe.edu.pucp.economix.rrhh.dao.IAreaDAO;
 import pe.edu.pucp.economix.rrhh.implement.*;
 import pe.edu.pucp.economix.rrhh.model.*;
+import pe.edu.pucp.economix.rrhh.test.AdministradorTest;
+import pe.edu.pucp.economix.rrhh.test.AreaTest;
+import pe.edu.pucp.economix.rrhh.test.EmpleadoTest;
+import pe.edu.pucp.economix.rrhh.test.RolTest;
 import pe.edu.pucp.economix.tesoreria.dao.ICajaChicaDAO;
 import pe.edu.pucp.economix.tesoreria.dao.ICuentaBancariaDAO;
 import pe.edu.pucp.economix.tesoreria.dao.IEntregaARendirDAO;
@@ -15,6 +19,10 @@ import pe.edu.pucp.economix.tesoreria.implement.CuentaBancariaImplement;
 import pe.edu.pucp.economix.tesoreria.implement.EntregaARendirImplement;
 import pe.edu.pucp.economix.tesoreria.implement.MonedaImplement;
 import pe.edu.pucp.economix.tesoreria.model.*;
+import pe.edu.pucp.economix.tesoreria.test.CajaChicaTest;
+import pe.edu.pucp.economix.tesoreria.test.CuentaBancariaTest;
+import pe.edu.pucp.economix.tesoreria.test.EntregaARendirTest;
+import pe.edu.pucp.economix.tesoreria.test.MonedaTest;
 
 import javax.naming.ldap.ControlFactory;
 import java.util.Date;
@@ -23,7 +31,28 @@ import java.util.List;
 public class Main {
     public static void main(String []args){
 
-        //Cuenta bancaria
+        //Recursos Humanos Testing
+        List<Area> areas = AreaTest.pruebaInsercion();
+        List<Rol> roles = RolTest.pruebaInsercion();
+        AdministradorTest.pruebaInsercion();
+        List<Empleado> empleados = EmpleadoTest.pruebaInsercion(areas.get(0), roles.get(0),
+                                areas.get(1), roles.get(1),
+                                areas.get(2), roles.get(2));
+
+        System.out.println(EmpleadoTest.buscarID(empleados.get(2).getUsuarioID()));
+        EmpleadoTest.eliminar(empleados.get(3).getUsuarioID());
+        System.out.println(EmpleadoTest.buscarID(empleados.get(2).getUsuarioID()));
+
+        //Tesorería Testing
+        List<Moneda> monedas = MonedaTest.pruebaInsercion();
+        CuentaBancariaTest.pruebaInsercion(empleados.get(1), monedas.get(0),
+                empleados.get(2), monedas.get(1), areas.get(1));
+        CajaChicaTest.pruebaInsercion(areas.get(2), areas.get(1));
+        EntregaARendirTest.pruebaInsercion(empleados.get(0), empleados.get(1), empleados.get(2));
+
+
+
+        // CHECK
 
 //        ICuentaBancariaDAO bDao=new CuentaBancariaImplement();
 //        CuentaBancaria cuenta= new CuentaBancaria();

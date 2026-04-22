@@ -1,7 +1,7 @@
 package pe.edu.pucp.economix.tesoreria.implement;
 
 import pe.edu.pucp.economix.config.DBManager;
-import pe.edu.pucp.economix.rrhh.model.Administrador;
+import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.tesoreria.dao.ICuentaBancariaDAO;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
@@ -21,18 +21,28 @@ public class CuentaBancariaImplement implements ICuentaBancariaDAO{
 
     @Override
     public int insertar(CuentaBancaria cuentaBancaria) {
-        int resultado=0;
+        int id =0;
         try{
             con = DBManager.getDBManager().getConnection();
-            cs=con.prepareCall("{call pa_insertar_cuenta_bancaria(?,?,?,?,?,?)}");
+            cs=con.prepareCall("{call pa_insertar_cuenta_bancaria(?,?,?,?,?,?,?)}");
             cs.registerOutParameter("_id_cuenta_bancaria",Types.INTEGER);
             cs.setString("_nombre_banco", cuentaBancaria.getNombreBanco());
             cs.setString("_numero_cuenta", cuentaBancaria.getNumeroBancario());
             cs.setString("_cci",cuentaBancaria.getCci());
             cs.setInt("_id_moneda",cuentaBancaria.getMoneda().getIdMoneda());
-            cs.setInt("_id_usuario_titular",cuentaBancaria.getAdministrador().getUsuarioID());
+            if(cuentaBancaria.getAdministrador() == null)
+                cs.setNull("_id_usuario_titular", java.sql.Types.INTEGER);
+            else
+                cs.setInt("_id_usuario_titular",cuentaBancaria.getAdministrador().getUsuarioID());
+
+            if(cuentaBancaria.getAreaAdministradora() == null)
+                cs.setNull("_id_area_titular", java.sql.Types.INTEGER);
+            else
+                cs.setInt("_id_area_titular",cuentaBancaria.getAreaAdministradora().getIdArea());
+
             cs.executeUpdate();
-            resultado=cs.getInt("_id_cuenta_bancaria");
+
+            id =cs.getInt("_id_cuenta_bancaria");
         }catch(Exception ex){
             System.out.println("ERROR: "+ ex.getMessage());
         }finally {
@@ -47,7 +57,7 @@ public class CuentaBancariaImplement implements ICuentaBancariaDAO{
                 System.out.println("ERROR: "+ ex.getMessage());
             }
         }
-        return resultado;
+        return id;
     }
 
     @Override
@@ -55,7 +65,7 @@ public class CuentaBancariaImplement implements ICuentaBancariaDAO{
         int resultado=0;
         try{
             con = DBManager.getDBManager().getConnection();
-            cs=con.prepareCall("{call pa_modificar_cuenta_bancaria(?,?,?,?,?,?)}");
+            cs=con.prepareCall("{call pa_modificar_cuenta_bancaria(?,?,?,?,?,?, ?)}");
             cs.setInt("_id_cuenta_bancaria",cuentaBancaria.getIdCuenta());
             cs.setString("_nombre_banco", cuentaBancaria.getNombreBanco());
             cs.setString("_numero_cuenta", cuentaBancaria.getNumeroBancario());
@@ -120,14 +130,22 @@ public class CuentaBancariaImplement implements ICuentaBancariaDAO{
                 cuentaBancaria.setNumeroBancario(rs.getString("numero_cuenta"));
                 cuentaBancaria.setNombreBanco(rs.getString("nombre_banco"));
                 cuentaBancaria.setCci(rs.getString("cci"));
+
                 Empleado emp=new Empleado();
+                emp.setUsuarioID(rs.getInt("id_usuario"));
                 emp.setNombre(rs.getString("nombres"));
                 emp.setApellidoPaterno(rs.getString("apellido_paterno"));
                 emp.setApellidoMaterno(rs.getString("apellido_materno"));
                 cuentaBancaria.setAdministrador(emp);
+
                 Moneda mon=new Moneda();
+                mon.setIdMoneda(rs.getInt("id_moneda"));
                 mon.setCodigoISO(rs.getString("codigo_iso"));
                 cuentaBancaria.setMoneda(mon);
+
+                Area area = new Area();
+                area.setIdArea(rs.getInt("id_area"));
+                cuentaBancaria.setAreaAdministradora(area);
             }
         }catch(Exception ex){
             System.out.println("ERROR: "+ ex.getMessage());
@@ -154,20 +172,32 @@ public class CuentaBancariaImplement implements ICuentaBancariaDAO{
             cs = con.prepareCall("{call pa_listar_cuentas_bancarias()}");
             rs=cs.executeQuery();
             while(rs.next()){
-                if(cuentas==null) cuentas=new ArrayList<>();
+                if(cuentas==null)
+                    cuentas=new ArrayList<>();
+
                 CuentaBancaria cuentaBancaria =new CuentaBancaria();
+
                 cuentaBancaria.setIdCuenta(rs.getInt("id"));
                 cuentaBancaria.setNumeroBancario(rs.getString("numero_cuenta"));
                 cuentaBancaria.setNombreBanco(rs.getString("nombre_banco"));
                 cuentaBancaria.setCci(rs.getString("cci"));
+
                 Empleado emp=new Empleado();
+                emp.setUsuarioID(rs.getInt("id_usuario"));
                 emp.setNombre(rs.getString("nombres"));
                 emp.setApellidoPaterno(rs.getString("apellido_paterno"));
                 emp.setApellidoMaterno(rs.getString("apellido_materno"));
                 cuentaBancaria.setAdministrador(emp);
+
                 Moneda mon=new Moneda();
+                mon.setIdMoneda(rs.getInt("id_moneda"));
                 mon.setCodigoISO(rs.getString("codigo_iso"));
                 cuentaBancaria.setMoneda(mon);
+
+                Area area = new Area();
+                area.setIdArea(rs.getInt("id_area"));
+                cuentaBancaria.setAreaAdministradora(area);
+
                 cuentas.add(cuentaBancaria);
             }
         }catch(Exception ex){

@@ -1,5 +1,6 @@
 package pe.edu.pucp.economix.tesoreria.model;
 
+import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 
 public class CuentaBancaria {
@@ -9,6 +10,7 @@ public class CuentaBancaria {
     private String numeroBancario;
     private String cci;
     private Empleado administrador; //set y get , c copia
+    private Area areaAdministradora;
     private Moneda moneda;
 
     //Constructores
@@ -53,10 +55,17 @@ public class CuentaBancaria {
     }
     public Moneda getMoneda() {return new Moneda(moneda);}
     public void setMoneda(Moneda m){this.moneda=new Moneda(m);}
-    public String toString(){
-        return "ID: "+this.idCuenta + " - NUMERO BANCARIO: " +this.numeroBancario + " - BANCO: "+this.nombreBanco+
-                " - DUENIO: "+this.administrador.getNombre()+" "+this.administrador.getApellidoPaterno();
+    public Area getAreaAdministradora() {
+        return areaAdministradora;
     }
-    //Metodos
+    public void setAreaAdministradora(Area areaAdministradora) {
+        this.areaAdministradora = areaAdministradora;
+    }
 
+    //Metodos
+    public String toString() {
+        return "ID: " + this.idCuenta + " - NUMERO BANCARIO: " + this.numeroBancario + " - BANCO: " + this.nombreBanco +
+                " - DUEÑO: " + this.administrador.getNombre() + " " + this.administrador.getApellidoPaterno() + " | Area " +
+                this.areaAdministradora.getNombre();
+    }
 }
