@@ -13,9 +13,16 @@ public class CajaChica extends Fondo{
     private List<CicloCajaChica> ciclos;
     private Area areaAsignada;
     //Constructores
-    public CajaChica(String nombre, double saldoActual, EstadoFondo estado, Date fechaCreacion, double montoTecho,
+    public CajaChica(int id_Fondo ,String nombre, double saldoActual, EstadoFondo estado, double montoTecho,Area areaAsignada){
+        super(id_Fondo,nombre,saldoActual,estado);
+        this.montoTecho=montoTecho;
+        this.ciclos=new ArrayList<>();
+        this.areaAsignada=areaAsignada;
+    }
+    public CajaChica(String nombre, double saldoActual, EstadoFondo estado, double montoTecho,
                      Area areaAsignada){
-        super(nombre,saldoActual,estado,fechaCreacion);
+
+        super(nombre,saldoActual,estado);
         this.montoTecho=montoTecho;
         this.ciclos=new ArrayList<>();
         this.areaAsignada=areaAsignada;
@@ -46,4 +53,12 @@ public class CajaChica extends Fondo{
         // TODO: Asignar responsable y límites financieros (RF_11)
     }
 
+    @Override
+    public String toString() {
+        return super.toString()+ " CajaChica{" +
+                "montoTecho=" + montoTecho +
+                ", ciclos=" + ciclos +
+                ", areaAsignada=" + areaAsignada +
+                '}';
+    }
 }

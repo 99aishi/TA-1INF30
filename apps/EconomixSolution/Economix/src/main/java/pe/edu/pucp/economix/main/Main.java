@@ -3,6 +3,7 @@ package pe.edu.pucp.economix.main;
 import pe.edu.pucp.economix.operaciones.implement.RendicionImplement;
 import pe.edu.pucp.economix.operaciones.model.EstadoRendicion;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
+import pe.edu.pucp.economix.rrhh.dao.IAreaDAO;
 import pe.edu.pucp.economix.rrhh.implement.*;
 import pe.edu.pucp.economix.rrhh.model.*;
 import pe.edu.pucp.economix.tesoreria.dao.ICajaChicaDAO;
@@ -40,19 +41,24 @@ public class Main {
 //        cuenta.setAdministrador(e);
 
         //TES CAJA CHICA
-        Area areaTI = new Area("Tecnología (TI)", "Infraestructura y Desarrollo");
-        areaTI.setIdArea(1);
+//        Area areaTI = new Area("Tecnología (TI)", "Infraestructura y Desarrollo");
+//        areaTI.setIdArea(1);
+//        IAreaDAO areadao=new AreaImplement();
+//        areadao.insertar(areaTI);
         ICajaChicaDAO cajachicaDAO=new CajaChicaImplement();
-        Date fechaActual= new Date();
-        CajaChica caja= new CajaChica("Prueba3",1000, EstadoFondo.Activo,fechaActual,2000,areaTI);
-        caja.setIdFondo(7);
-        System.out.println(caja.getIdFondo());
-        cajachicaDAO.insertar(caja); // CHEEECK :v
-        caja.setMontoTecho(3500);
-        caja.setSaldoActual(2500);
-        cajachicaDAO.modificar(caja);
+//        CajaChica caja= new CajaChica("Prueba3",1000, EstadoFondo.Activo,2000,areaTI);
+//        System.out.println(caja.getIdFondo());
+//        caja.setIdFondo(2);
+//        cajachicaDAO.insertar(caja); // CHEEECK :v
+//        caja.setMontoTecho(3500);
+//        caja.setSaldoActual(1500);
+//        cajachicaDAO.modificar(caja);
 
-
+        CajaChica solicitado = cajachicaDAO.buscarPorId(2);
+        System.out.println(solicitado);
+        cajachicaDAO.eliminar(2);
+        solicitado=cajachicaDAO.buscarPorId(2);
+        System.out.println(solicitado);
 
 
         /* RRHH Pruebas

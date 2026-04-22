@@ -11,15 +11,19 @@ public class Fondo {
     private String nombre;
     private double saldoActual;
     private EstadoFondo estado;
-    private Date fechaCreacion;
 
     // Constructores
-    public Fondo(String nombre, double saldoActual, EstadoFondo estado, Date fechaCreacion) {
+    public Fondo(String nombre, double saldoActual, EstadoFondo estado) {
         this.idFondo = this.correlativoID++;
         this.nombre = nombre;
         this.saldoActual = saldoActual;
         this.estado = estado;
-        this.fechaCreacion = fechaCreacion;
+    }
+    public Fondo(int id, String nombre, double saldoActual, EstadoFondo estado) {
+        this.idFondo = id;
+        this.nombre = nombre;
+        this.saldoActual = saldoActual;
+        this.estado = estado;
     }
 
     // Selectores
@@ -35,9 +39,6 @@ public class Fondo {
     public EstadoFondo getEstado() {
         return estado;
     }
-    public Date getFechaCreacion() {
-        return fechaCreacion;
-    }
     public void setIdFondo(int idFondo) {
         this.idFondo = idFondo;
     }
@@ -49,9 +50,6 @@ public class Fondo {
     }
     public void setEstado(EstadoFondo estado) {
         this.estado = estado;
-    }
-    public void setFechaCreacion(Date fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
     }
     //Metodos
     public void actualizarSaldo(double monto, TipoTransaccion tipo) {
@@ -65,5 +63,15 @@ public class Fondo {
 
     public void vincularCuentaBancaria(CuentaBancaria cuenta) {
         // TODO: Asignar la cuenta de origen del fondo (RF_11)
+    }
+
+    @Override
+    public String toString() {
+        return "Fondo{" +
+                "idFondo=" + idFondo +
+                ", nombre='" + nombre + '\'' +
+                ", saldoActual=" + saldoActual +
+                ", estado=" + estado +
+                '}';
     }
 }

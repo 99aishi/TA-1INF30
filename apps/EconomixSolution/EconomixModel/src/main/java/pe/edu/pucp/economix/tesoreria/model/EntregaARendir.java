@@ -14,10 +14,10 @@ public class EntregaARendir extends Fondo{
     private Empleado solicitante;
     private Empleado aprobador;
     //Constructores
-    public EntregaARendir( String nombre, double saldoActual, EstadoFondo estadoFondo, Date fechaCreacion,
+    public EntregaARendir( String nombre, double saldoActual, EstadoFondo estadoFondo,
                            String motivo, double montoSolicitado, Date fechaSolicitud, Date fechaAperturaEntrega, Date fechaCierreEntrega,
                            EstadoEntregaARendir estado, Empleado solicitante, Empleado aprobador) {
-        super(nombre,saldoActual,estadoFondo,fechaCreacion);
+        super(nombre,saldoActual,estadoFondo);
         this.motivo = motivo;
         this.montoSolicitado = montoSolicitado;
         this.fechaSolicitud = fechaSolicitud;

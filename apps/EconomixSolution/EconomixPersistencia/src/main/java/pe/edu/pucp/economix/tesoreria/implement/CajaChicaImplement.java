@@ -1,11 +1,14 @@
 package pe.edu.pucp.economix.tesoreria.implement;
 
 import pe.edu.pucp.economix.config.DBManager;
+import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.tesoreria.dao.ICajaChicaDAO;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
+import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class CajaChicaImplement implements ICajaChicaDAO{
@@ -78,12 +81,69 @@ public class CajaChicaImplement implements ICajaChicaDAO{
 
     @Override
     public int eliminar(int id) {
-        return 0;
+        int resultado=0;
+        try{
+            con = DBManager.getDBManager().getConnection();
+            cs=con.prepareCall("call pa_eliminar_caja_chica(?)");
+            cs.setInt("p_id_fondo",id);
+            resultado=cs.executeUpdate();
+
+
+
+        }catch (Exception ex){
+            System.out.println("ERROR: " + ex.getMessage());
+        }finally {
+            try{
+                cs.close();
+            }catch(Exception ex){
+                System.out.println("ERROR: " + ex.getMessage());
+            }
+            try{
+                con.close();
+            }catch (Exception ex){
+                System.out.println("ERROR: " + ex.getMessage());
+            }
+        }
+        return resultado;
     }
 
     @Override
     public CajaChica buscarPorId(int id) {
-        return null;
+        CajaChica caja=null;
+        try{
+            con= DBManager.getDBManager().getConnection();
+            cs=con.prepareCall("call pa_buscar_por_id_caja_chica(?)");
+            cs.setInt("p_id_fondo",id);
+            rs=cs.executeQuery();
+
+            if(rs.next()){
+                int idFondo = rs.getInt("id_fondo");
+                String nombre= rs.getString("nombre_fondo");
+                double saldoActual=rs.getDouble("monto_saldo_actual");
+                EstadoFondo estado = EstadoFondo.valueOf(rs.getString("estado_fondo"));
+                double monto_techo= rs.getDouble("monto_techo");
+                int idArea=rs.getInt("id_area");
+                Area area= new Area();
+                area.setIdArea(idArea);
+                caja = new CajaChica(idFondo ,nombre,saldoActual,estado,monto_techo,area);
+            }
+
+        }catch(Exception ex){
+            System.out.println("ERROR: "+ ex.getMessage());
+        }finally{
+            try{
+                cs.close();
+            }catch(Exception ex){
+                System.out.println("ERROR: "+ ex.getMessage());
+            }
+            try{
+                con.close();
+            }catch(Exception ex){
+                System.out.println("ERROR: "+ex.getMessage());
+            }
+        }
+
+        return caja;
     }
 
     @Override
