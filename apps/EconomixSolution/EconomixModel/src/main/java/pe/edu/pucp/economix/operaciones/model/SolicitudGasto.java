@@ -67,6 +67,16 @@ public class SolicitudGasto{
     }
 
     //Metodos
+    @Override
+    public String toString() {
+        String cadena = "";
+        cadena += String.format("SOLICITUD GASTO: %d - Fecha: %s - Monto: %.2f - Motivo: %s - %s - Solicitante: %s - Destinatario: %s",
+                idSolicitudGasto, fechaSolicitud, montoSolicitado, motivoSolicitud, estado,
+                (solicitante != null ? solicitante.getNombre() + " " + solicitante.getApellidoPaterno() : "sin solicitante"),
+                (destinatario != null ? destinatario.getNombre() + " " + destinatario.getApellidoPaterno() : "sin destinatario"));
+        return cadena;
+    }
+    
     public void evaluarSolicitud(Empleado jefe, boolean aprobado, String comentario) {
         // TODO: Registro obligatorio de fecha y sustento (RF_07)
     }
