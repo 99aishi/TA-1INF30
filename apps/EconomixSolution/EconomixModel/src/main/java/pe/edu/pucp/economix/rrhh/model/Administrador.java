@@ -25,6 +25,14 @@ public class Administrador extends Usuario{
     }
 
     // Métodos
+    public String toString() {
+        String cadena = "";
+        cadena += "ADMINISTRADOR: ";
+        cadena += super.toString();
+        cadena += String.format(" - Soporte: %s", correoSoporte);
+        return cadena;
+    }
+        
     public void crearUsuario(String nombre, String apellidoP, String apellidoM, String pass, EstadoUsuario estado) {
         // TODO: Implementar creación de registro en BD (RF_04)
     }

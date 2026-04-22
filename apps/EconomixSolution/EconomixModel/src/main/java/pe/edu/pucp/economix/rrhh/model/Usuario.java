@@ -62,6 +62,15 @@ abstract class Usuario{
     public void setEstado(EstadoUsuario estado) {
         this.estado = estado;
     }
+
+    @Override
+    public String toString() {
+        String cadena = "";
+        cadena += String.format("%d - %s %s %s - %s",
+                usuarioID, nombre, apellidoPaterno, apellidoMaterno, estado);
+        return cadena;
+    }
+    
     //Metodos
     public boolean login(int idIngresado, String passIngresada){
         if(usuarioID == idIngresado)

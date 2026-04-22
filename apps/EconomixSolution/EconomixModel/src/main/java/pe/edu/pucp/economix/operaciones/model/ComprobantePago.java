@@ -95,6 +95,15 @@ public class ComprobantePago {
         this.total = total;
     }
 
+    @Override
+    public String toString() {
+        String cadena = "";
+        cadena += String.format("COMPROBANTE: %d - %s - RUC: %s - Razon Social: %s - Nro Serie: %s - Emision: %s - Subtotal: %.2f - IGV: %.2f - Total: %.2f",
+                idComprobante, tipoDocumento, ruc, razonSocial,
+                numeroSerial, fechaEmision, subtotal, igv, total);
+        return cadena;
+    }
+    
     //Metodos
     public boolean validarConsistenciaMontos() {
         // TODO: Verificar que subtotal + igv == total (RF_09)

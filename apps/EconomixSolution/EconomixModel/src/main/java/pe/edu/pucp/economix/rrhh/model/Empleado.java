@@ -64,6 +64,20 @@ public class Empleado extends Usuario {
 
 
     //Metodos
+    @Override
+    public String toString() {
+        String cadena = "";
+        cadena += "EMPLEADO: ";
+        cadena += super.toString();
+        cadena += String.format(" - Correo: %s - Celular: %s - Rol: %s - Area: %s - Jefe: %s",
+                correoInstitucional,
+                numeroCelular,
+                (rol != null ? rol.getTitulo() : "sin rol"),
+                (area != null ? area.getNombre() : "sin area"),
+                (jefeDirecto != null ? jefeDirecto.getNombre() + " " + jefeDirecto.getApellidoPaterno() : "sin jefe"));
+        return cadena;
+    }
+    
     // Métodos en Empleado.java
     public void registrarSolicitudFondo(String motivo, double monto, java.util.Date fecha) {
         // TODO: Crear solicitud con estado "pendiente" automáticamente (RF_06)

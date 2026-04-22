@@ -82,6 +82,15 @@ public class Rendicion {
         this.comentario = comentario;
     }
 
+    @Override
+    public String toString() {
+        String cadena = "";
+        cadena += String.format("RENDICION: %d - Presentacion: %s - Aprobacion: %s - Declarado: %.2f - Aprobado: %.2f - Saldo Final: %.2f - %s - Comentario: %s",
+                idRendicion, fechaPresentacion, fechaAprobacion,
+                totalDeclarado, totalAprobado, saldoFinal, estado, comentario);
+        return cadena;
+    }
+    
     //Metodos
     public void cargarComprobanteDigital(ComprobantePago comprobante) {
         // TODO: Aplicar validaciones automáticas de coherencia (RF_09)

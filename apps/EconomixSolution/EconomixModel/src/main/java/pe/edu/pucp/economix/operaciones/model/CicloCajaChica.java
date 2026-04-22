@@ -87,6 +87,16 @@ public class CicloCajaChica{
     }
 
     //Metodos
+
+    @Override
+    public String toString() {
+        String cadena = "";
+        cadena += String.format("CICLO CAJA CHICA: %d - Semana %d - Apertura: %s - Cierre: %s - Saldo Inicial: %.2f - Total Gastado: %.2f - %s",
+                idCicloCaja, numeroSemana, fechaApertura, fechaCierre,
+                saldoInicial, totalGastado, estado);
+        return cadena;
+    }
+    
     public void abrirCiclo() {
         // TODO: Heredar saldo anterior y congelar monto techo (RF_12)
     }
