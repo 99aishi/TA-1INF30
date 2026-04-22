@@ -45,7 +45,7 @@ public class Main {
 //        areaTI.setIdArea(1);
 //        IAreaDAO areadao=new AreaImplement();
 //        areadao.insertar(areaTI);
-        ICajaChicaDAO cajachicaDAO=new CajaChicaImplement();
+//        ICajaChicaDAO cajachicaDAO=new CajaChicaImplement();
 //        CajaChica caja= new CajaChica("Prueba3",1000, EstadoFondo.Activo,2000,areaTI);
 //        System.out.println(caja.getIdFondo());
 //        caja.setIdFondo(2);
@@ -59,6 +59,17 @@ public class Main {
 //        cajachicaDAO.eliminar(2);
 //        solicitado=cajachicaDAO.buscarPorId(2);
 //        System.out.println(solicitado);
+
+//        List<CajaChica> cajas = cajachicaDAO.listarTodas();
+//        if(cajas!=null){
+//            for(CajaChica c : cajas){
+//                System.out.println(c);
+//                System.out.println("\n");
+//            }
+//        }
+
+        //TES ENTREGA A RENDIR
+
 
 
         /* RRHH Pruebas

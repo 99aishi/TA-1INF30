@@ -148,6 +148,40 @@ public class CajaChicaImplement implements ICajaChicaDAO{
 
     @Override
     public List<CajaChica> listarTodas() {
-        return List.of();
+        List<CajaChica> cajas = null;
+        try{
+            con= DBManager.getDBManager().getConnection();
+            cs=con.prepareCall("call pa_listar_caja_chica()");
+            rs=cs.executeQuery();
+
+            while(rs.next()){
+                if(cajas==null) cajas = new ArrayList<>();
+                int idFondo = rs.getInt("id_fondo");
+                String nombre= rs.getString("nombre_fondo");
+                double saldoActual=rs.getDouble("monto_saldo_actual");
+                EstadoFondo estado = EstadoFondo.valueOf(rs.getString("estado_fondo"));
+                double monto_techo= rs.getDouble("monto_techo");
+                int idArea=rs.getInt("id_area");
+                Area area= new Area();
+                area.setIdArea(idArea);
+                CajaChica caja = new CajaChica(idFondo ,nombre,saldoActual,estado,monto_techo,area);
+                cajas.add(caja);
+            }
+
+        }catch(Exception ex){
+            System.out.println("ERROR: "+ ex.getMessage());
+        }finally{
+            try{
+                cs.close();
+            }catch(Exception ex){
+                System.out.println("ERROR: "+ ex.getMessage());
+            }
+            try{
+                con.close();
+            }catch(Exception ex){
+                System.out.println("ERROR: "+ex.getMessage());
+            }
+        }
+        return cajas;
     }
 }

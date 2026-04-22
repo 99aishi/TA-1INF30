@@ -1,5 +1,8 @@
 DROP PROCEDURE IF EXISTS pa_insertar_tes_caja_chica;
 DROP PROCEDURE IF EXISTS pa_modificar_tes_caja_chica;
+DROP PROCEDURE IF EXISTS pa_eliminar_caja_chica;
+DROP PROCEDURE IF EXISTS pa_buscar_por_id_caja_chica;
+DROP PROCEDURE IF EXISTS pa_listar_caja_chica;
 DELIMITER $$
 
 $$
@@ -55,11 +58,11 @@ CREATE PROCEDURE pa_modificar_tes_caja_chica(
 )
 BEGIN
     -- Declaramos un manejador de errores para hacer ROLLBACK si algo falla
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: No se pudo actualizar la Caja Chica.';
-    END;
+    -- DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    -- BEGIN
+       -- ROLLBACK;
+       -- SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: No se pudo actualizar la Caja Chica.';
+    -- END;
 
     START TRANSACTION;
 
@@ -73,10 +76,43 @@ BEGIN
 
     -- Validar si realmente se actualizó algo (ROW_COUNT() > 0)
     -- Si no se actualizó nada, es porque el ID no existe
-    IF ROW_COUNT() = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: No se encontró una Caja Chica con ese ID.';
-    END IF;
+    -- IF ROW_COUNT() = 0 THEN
+       -- SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: No se encontró una Caja Chica con ese ID.';
+    -- END IF;
 
     COMMIT;
 END $$
 $$
+
+
+CREATE PROCEDURE pa_eliminar_caja_chica(
+    IN p_id_fondo INT
+)
+BEGIN 
+    UPDATE tes_fondo SET estado_fondo='Inactivo' WHERE id_fondo=p_id_fondo;
+END
+
+ 
+$$
+
+
+CREATE PROCEDURE pa_buscar_por_id_caja_chica(
+    IN p_id_fondo INT
+)
+BEGIN
+    SELECT f.id_fondo, f.nombre_fondo,f.monto_saldo_actual, f.estado_fondo, c.monto_techo,c.id_area 
+    FROM tes_fondo f JOIN tes_caja_chica c ON f.id_fondo=c.id_fondo AND f.id_fondo=p_id_fondo;
+END 
+
+
+$$
+
+
+
+CREATE PROCEDURE pa_listar_caja_chica()
+BEGIN
+    SELECT f.id_fondo, f.nombre_fondo,f.monto_saldo_actual, f.estado_fondo, c.monto_techo,c.id_area
+    FROM tes_fondo f JOIN tes_caja_chica c ON f.id_fondo=c.id_fondo ;
+END
+    $$
+    
