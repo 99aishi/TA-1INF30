@@ -94,6 +94,14 @@ public class Transaccion{
     public void setMoneda(Moneda moneda){
         this.moneda = moneda;
     }
+    @Override
+    public String toString() {
+        String cadena = "";
+        cadena += String.format("TRANSACCION: %d - %s - Fecha: %s - Monto: %.2f - Nro Op: %s - Medio: %s - Tipo Cambio: %.2f",
+                idTransaccion, tipoTransaccion, fecha, monto,
+                numeroOperacionBancaria, medioPago, tipoCambio);
+        return cadena;
+    }
 
     //Metodos
     public void registrarLogTrazabilidad() {
