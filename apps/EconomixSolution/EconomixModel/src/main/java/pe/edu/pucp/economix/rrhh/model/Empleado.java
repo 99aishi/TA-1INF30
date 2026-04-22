@@ -67,10 +67,8 @@ public class Empleado extends Usuario {
     @Override
     public String toString() {
         String cadena = "";
-        cadena += String.format("EMPLEADO: %d - %s %s %s - %s - %s - %s - %s",
-                getUsuarioID(),
-                getNombre(), getApellidoPaterno(), getApellidoMaterno(),
-                getEstado(),
+        cadena += super.toString(); // llama al toString de Usuario
+        cadena += String.format(" - Correo: %s - Celular: %s - Rol: %s - Area: %s - Jefe: %s",
                 correoInstitucional,
                 numeroCelular,
                 (rol != null ? rol.getTitulo() : "sin rol"),
