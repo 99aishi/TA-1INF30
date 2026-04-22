@@ -18,6 +18,8 @@ public class Transaccion{
     private CuentaBancaria cuentaDestino;
     private Moneda moneda;
 
+    //COnstructores
+    public Transaccion(){}
     public Transaccion(TipoTransaccion tipo,Date fecha,double monto,
                        String numeroOperacionBancaria, MedioPago medioPago, double tipoCambio,
                        CuentaBancaria origen, CuentaBancaria destino, Moneda moneda){

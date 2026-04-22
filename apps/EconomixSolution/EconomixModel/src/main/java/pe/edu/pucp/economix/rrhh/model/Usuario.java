@@ -1,6 +1,6 @@
 package pe.edu.pucp.economix.rrhh.model;
 
-abstract class Usuario{
+public abstract class Usuario{
     private static int correlativoID = 1;
     private int usuarioID;
     private String nombre;

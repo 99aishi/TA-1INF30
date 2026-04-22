@@ -20,6 +20,7 @@ public class SolicitudGasto{
     private CicloCajaChica ciclo;
 
     //Constructores
+    public SolicitudGasto(){}
     public SolicitudGasto(Date fechaSolicitud, double montoSolicitado, String motivoSolicitud,
                           EstadoSolicitudGasto estado,
                           Empleado solicitante, Empleado destinatario, CicloCajaChica cicloCaja){
@@ -64,6 +65,25 @@ public class SolicitudGasto{
     }
     public void setEstado(EstadoSolicitudGasto estado) {
         this.estado = estado;
+    }
+    public Empleado getSolicitante() {
+        return solicitante;
+    }
+    public void setSolicitante(Empleado solicitante) {
+        this.solicitante = solicitante;
+    }
+    public Empleado getDestinatario() {
+        return destinatario;
+    }
+    public void setDestinatario(Empleado destinatario) {
+        this.destinatario = destinatario;
+    }
+    public CicloCajaChica getCiclo() {
+        return ciclo;
+    }
+
+    public void setCiclo(CicloCajaChica ciclo) {
+        this.ciclo = ciclo;
     }
 
     //Metodos

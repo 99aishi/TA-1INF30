@@ -1,5 +1,8 @@
 package pe.edu.pucp.economix.operaciones.model;
 
+import pe.edu.pucp.economix.tesoreria.model.Fondo;
+import pe.edu.pucp.economix.tesoreria.model.Moneda;
+
 import java.util.Date;
 
 public class ComprobantePago {
@@ -14,10 +17,13 @@ public class ComprobantePago {
     private double subtotal;
     private double igv;
     private double total;
+    public Fondo fondoEntrega;
 
     private SolicitudGasto solicitud; // get set y copia
+    private Moneda moneda;
 
     // Constructor
+    public ComprobantePago(){}
     public ComprobantePago(TipoComprobante tipoDocumento, String ruc,
                            String razonSocial, String numeroSerial, Date fechaEmision,
                            double montoTotal, double subtotal, double igv, double total) {
@@ -93,6 +99,24 @@ public class ComprobantePago {
     }
     public void setTotal(double total) {
         this.total = total;
+    }
+    public SolicitudGasto getSolicitud() {
+        return solicitud;
+    }
+    public void setSolicitud(SolicitudGasto solicitud) {
+        this.solicitud = solicitud;
+    }
+    public Moneda getMoneda() {
+        return moneda;
+    }
+    public void setMoneda(Moneda moneda) {
+        this.moneda = moneda;
+    }
+    public Fondo getFondoEntrega() {
+        return fondoEntrega;
+    }
+    public void setFondoEntrega(Fondo fondoEntrega) {
+        this.fondoEntrega = fondoEntrega;
     }
 
     @Override
