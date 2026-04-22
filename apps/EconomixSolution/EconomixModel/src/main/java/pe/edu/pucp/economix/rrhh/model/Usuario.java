@@ -66,7 +66,7 @@ abstract class Usuario{
     @Override
     public String toString() {
         String cadena = "";
-        cadena += String.format("USUARIO: %d - %s %s %s - %s",
+        cadena += String.format("%d - %s %s %s - %s",
                 usuarioID, nombre, apellidoPaterno, apellidoMaterno, estado);
         return cadena;
     }
