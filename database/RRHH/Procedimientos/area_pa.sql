@@ -4,6 +4,7 @@ DROP PROCEDURE IF EXISTS pa_insertar_area  $$
 CREATE PROCEDURE pa_insertar_area(
     IN p_nombre_area VARCHAR(60),
     IN p_descripcion_area VARCHAR(200),
+    IN p_id_jefe INT,
     OUT p_id_generado INT
 )
 BEGIN
@@ -19,7 +20,8 @@ BEGIN
     )
     VALUES(
         TRIM(p_nombre_area),
-        TRIM(p_descripcion_area)
+        TRIM(p_descripcion_area), 
+        p_id_jefe
     );
 
     SET p_id_generado = LAST_INSERT_ID();

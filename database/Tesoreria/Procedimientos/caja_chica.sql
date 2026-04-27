@@ -1,11 +1,6 @@
-DROP PROCEDURE IF EXISTS pa_insertar_tes_caja_chica;
-DROP PROCEDURE IF EXISTS pa_modificar_tes_caja_chica;
-DROP PROCEDURE IF EXISTS pa_eliminar_caja_chica;
-DROP PROCEDURE IF EXISTS pa_buscar_por_id_caja_chica;
-DROP PROCEDURE IF EXISTS pa_listar_caja_chica;
 DELIMITER $$
 
-$$
+DROP PROCEDURE IF EXISTS pa_insertar_tes_caja_chica $$
 CREATE PROCEDURE pa_insertar_tes_caja_chica(
     OUT _id_fondo INT,
     IN p_nombre_fondo VARCHAR(100),
@@ -43,76 +38,50 @@ BEGIN
     SET _id_fondo = LAST_INSERT_ID();
 
     INSERT INTO tes_caja_chica(id_fondo, monto_techo,id_area) VALUES(_id_fondo, p_monto_techo,p_id_area);
+END$$
 
 
 
-END $$
-
-
-
-$$
+DROP PROCEDURE IF EXISTS pa_modificar_tes_caja_chica $$
 CREATE PROCEDURE pa_modificar_tes_caja_chica(
     IN p_id_fondo INT, 
     IN p_monto_saldo_actual DECIMAL(12,2), 
     IN p_monto_techo DECIMAL(12,2)
 )
 BEGIN
-    -- Declaramos un manejador de errores para hacer ROLLBACK si algo falla
-    -- DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    -- BEGIN
-       -- ROLLBACK;
-       -- SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: No se pudo actualizar la Caja Chica.';
-    -- END;
-
-    -- START TRANSACTION;
-
     UPDATE tes_fondo 
-    SET monto_saldo_actual = p_monto_saldo_actual,
+    SET monto_saldo_actual = p_monto_saldo_actual
     WHERE id_fondo = p_id_fondo;
 
     UPDATE tes_caja_chica 
     SET monto_techo = p_monto_techo
     WHERE id_fondo = p_id_fondo;
-
-    -- Validar si realmente se actualizó algo (ROW_COUNT() > 0)
-    -- Si no se actualizó nada, es porque el ID no existe
-    -- IF ROW_COUNT() = 0 THEN
-       -- SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: No se encontró una Caja Chica con ese ID.';
-    -- END IF;
-
-    -- COMMIT;
-END $$
-$$
+END$$
 
 
+DROP PROCEDURE IF EXISTS pa_eliminar_caja_chica $$
 CREATE PROCEDURE pa_eliminar_caja_chica(
     IN p_id_fondo INT
 )
 BEGIN 
     UPDATE tes_fondo SET estado_fondo='Inactivo' WHERE id_fondo=p_id_fondo;
-END
+END$$
 
- 
-$$
-
-
+DROP PROCEDURE IF EXISTS pa_buscar_por_id_caja_chica $$
 CREATE PROCEDURE pa_buscar_por_id_caja_chica(
     IN p_id_fondo INT
 )
 BEGIN
     SELECT f.id_fondo, f.nombre_fondo,f.monto_saldo_actual, f.estado_fondo, c.monto_techo,c.id_area 
     FROM tes_fondo f JOIN tes_caja_chica c ON f.id_fondo=c.id_fondo AND f.id_fondo=p_id_fondo;
-END 
+END$$
 
-
-$$
-
-
-
+DROP PROCEDURE IF EXISTS pa_listar_caja_chica $$
 CREATE PROCEDURE pa_listar_caja_chica()
 BEGIN
     SELECT f.id_fondo, f.nombre_fondo,f.monto_saldo_actual, f.estado_fondo, c.monto_techo,c.id_area
     FROM tes_fondo f JOIN tes_caja_chica c ON f.id_fondo=c.id_fondo ;
-END
-    $$
+END$$
+
+DELIMITER ;
     

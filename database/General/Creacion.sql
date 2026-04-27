@@ -118,12 +118,12 @@ CREATE TABLE IF NOT EXISTS tes_cuenta_bancaria (
     id_cuenta_bancaria INT NOT NULL AUTO_INCREMENT,
     nombre_banco VARCHAR(50) NOT NULL,
     numero_cuenta VARCHAR(30) NOT NULL,
-    cci CHAR(20), -- Mantiene "cci"
+    cci CHAR(20), 
     id_moneda INT NOT NULL,
     es_principal TINYINT(1) DEFAULT 0,
-    id_area INT NULL, -- Traído de la nueva lógica de Creacion_.sql
+    id_area INT NULL,
     id_usuario_titular INT NULL,
-    activa TINYINT(1) DEFAULT 1, -- Mantiene "activa"
+    activa TINYINT(1) DEFAULT 1, 
     
     -- Auditoría
     creado_at DATETIME,
