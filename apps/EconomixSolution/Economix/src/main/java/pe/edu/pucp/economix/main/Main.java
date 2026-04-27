@@ -1,8 +1,10 @@
 package pe.edu.pucp.economix.main;
 
 import pe.edu.pucp.economix.operaciones.implement.RendicionImplement;
-import pe.edu.pucp.economix.operaciones.model.EstadoRendicion;
-import pe.edu.pucp.economix.operaciones.model.Rendicion;
+import pe.edu.pucp.economix.operaciones.model.*;
+import pe.edu.pucp.economix.operaciones.test.CicloCajaChicaTest;
+import pe.edu.pucp.economix.operaciones.test.ComprobantePagoTest;
+import pe.edu.pucp.economix.operaciones.test.SolicitudGastoTest;
 import pe.edu.pucp.economix.rrhh.dao.IAreaDAO;
 import pe.edu.pucp.economix.rrhh.implement.*;
 import pe.edu.pucp.economix.rrhh.model.*;
@@ -47,9 +49,14 @@ public class Main {
         List<Moneda> monedas = MonedaTest.pruebaInsercion();
         CuentaBancariaTest.pruebaInsercion(empleados.get(1), monedas.get(0),
                 empleados.get(2), monedas.get(1), areas.get(1));
-        CajaChicaTest.pruebaInsercion(areas.get(2), areas.get(1));
+        List<CajaChica>listaCajasChicas = CajaChicaTest.pruebaInsercion(areas.get(2), areas.get(1));
         EntregaARendirTest.pruebaInsercion(empleados.get(0), empleados.get(1), empleados.get(2));
 
+        //Operaciones Testing
+        // Ejemplo de cómo orquestarías los tests separados
+        List<CicloCajaChica> ciclos = CicloCajaChicaTest.pruebaInsercion(listaCajasChicas.get(0), listaCajasChicas.get(1));
+        List<SolicitudGasto> solicitudes = SolicitudGastoTest.pruebaInsercion(ciclos.get(0), empleados.get(1), empleados.get(2));
+        List<ComprobantePago> facturas = ComprobantePagoTest.pruebaInsercion(solicitudes.getFirst(), monedas.getFirst());
 
 
         // CHECK
@@ -99,47 +106,43 @@ public class Main {
         //TES ENTREGA A RENDIR
 
 
-        // Definición de los 3 usuarios empleados
-        Empleado emp1 = new Empleado(
-                1, "Fabricio", "Cordova", "Luna", "hash_seguro_123",
-                EstadoUsuario.Activo, "fabricio.cordova@pucp.edu.pe", "987654321"
-        );
-
-        Empleado emp2 = new Empleado(
-                2, "Ana", "Martínez", "Salazar", "hash_seguro_456",
-                EstadoUsuario.Activo, "ana.martinez@empresa.com", "912345678"
-        );
-
-        Empleado emp3 = new Empleado(
-                3, "Roberto", "García", "Pérez", "hash_seguro_789",
-                EstadoUsuario.Activo, "roberto.garcia@empresa.com", "933445566"
-        );
-
-        IEntregaARendirDAO entregaDao= new EntregaARendirImplement();
-
-        EntregaARendir viajeArg = new EntregaARendir(
-                "Viaje Buenos Aires",
-                0.0,
-                EstadoFondo.Activo,
-                "Gastos de movilidad y viáticos para estancia en Argentina", //
-                1200.0,
-                new Date(), // Fecha de hoy
-                null,       // Aún no se abre
-                null,       // Aún no se cierra
-                EstadoEntregaARendir.Pendiente,
-                emp1,       // Solicitante: Fabricio
-                emp2        //
-        );
+//        // Definición de los 3 usuarios empleados
+//        Empleado emp1 = new Empleado(
+//                1, "Fabricio", "Cordova", "Luna", "hash_seguro_123",
+//                EstadoUsuario.Activo, "fabricio.cordova@pucp.edu.pe", "987654321"
+//        );
+//
+//        Empleado emp2 = new Empleado(
+//                2, "Ana", "Martínez", "Salazar", "hash_seguro_456",
+//                EstadoUsuario.Activo, "ana.martinez@empresa.com", "912345678"
+//        );
+//
+//        Empleado emp3 = new Empleado(
+//                3, "Roberto", "García", "Pérez", "hash_seguro_789",
+//                EstadoUsuario.Activo, "roberto.garcia@empresa.com", "933445566"
+//        );
+//
+//        IEntregaARendirDAO entregaDao= new EntregaARendirImplement();
+//
+//        EntregaARendir viajeArg = new EntregaARendir(
+//                "Viaje Buenos Aires",
+//                0.0,
+//                EstadoFondo.Activo,
+//                "Gastos de movilidad y viáticos para estancia en Argentina", //
+//                1200.0,
+//                new Date(), // Fecha de hoy
+//                null,       // Aún no se abre
+//                null,       // Aún no se cierra
+//                EstadoEntregaARendir.Pendiente,
+//                emp1,       // Solicitante: Fabricio
+//                emp2        //
+//        );
         //entregaDao.insertar(viajeArg);
         //viajeArg.setEstado(EstadoEntregaARendir.Aceptado);
         //viajeArg.setIdFondo(9);
         //entregaDao.modificar(viajeArg);
         //EntregaARendir consultada= entregaDao.buscarPorId(9);
         //System.out.println(consultada);
-        
-
-
-
 
         /* RRHH Pruebas
         AreaImplement areaDAO = new AreaImplement();
@@ -287,9 +290,6 @@ public class Main {
 //            System.out.printf("ID: %d | Estado: %-10s | Monto: %-8s | Comentario: %s%n",
 //                    r.getIdRendicion(), r.getEstado(), r.getTotalDeclarado(), r.getComentario());
 //        }
-
-
-
 
     }
 
