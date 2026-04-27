@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS rrhh_area (
     id_area INT NOT NULL AUTO_INCREMENT,
     nombre_area VARCHAR(60) NOT NULL UNIQUE,
     descripcion_area VARCHAR(200),
-    id_jefe INT NULL, -- Mantiene el nombre id_jefe de Creacion.sql
+    id_jefe INT NULL,
     
     -- Auditoría
     creado_at DATETIME,
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS rrhh_empleado (
     numero_celular VARCHAR(15),
     id_area INT NULL,
     id_rol INT NULL,
-    id_jefe_directo INT NULL, -- Mantiene el nombre id_jefe_directo
+    id_jefe_directo INT NULL,
     
     -- Auditoría
     creado_at DATETIME,
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS rrhh_empleado (
     id_usuario_modificacion INT,
     
     CONSTRAINT pk_rrhh_empleado PRIMARY KEY (id_usuario),
-    CONSTRAINT uk_rrhh_empleado_correo UNIQUE (correo_institucional), -- Mantiene nombre de UK
+    CONSTRAINT uk_rrhh_empleado_correo UNIQUE (correo_institucional),
     CONSTRAINT fk_rrhh_empleado_rrhh_usuario FOREIGN KEY (id_usuario) 
         REFERENCES rrhh_usuario(id_usuario),
     CONSTRAINT fk_rrhh_empleado_rrhh_area FOREIGN KEY (id_area) 
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS tes_moneda (
     id_moneda INT NOT NULL AUTO_INCREMENT,
     codigo_iso CHAR(3) NOT NULL,
     simbolo VARCHAR(5) NOT NULL,
-    activa TINYINT(1) DEFAULT 1, -- Mantiene nombre "activa"
+    activa TINYINT(1) DEFAULT 1,
     
     -- Auditoría
     creado_at DATETIME,
@@ -205,7 +205,7 @@ CREATE TABLE IF NOT EXISTS tes_entrega_rendir (
 
 CREATE TABLE IF NOT EXISTS ope_rendicion (
     id_rendicion INT NOT NULL AUTO_INCREMENT,
-    fecha_presentacion DATE DEFAULT (CURRENT_DATE), -- Se mantiene el default original
+    fecha_presentacion DATE DEFAULT (CURRENT_DATE),
     fecha_aprobacion DATE NULL,
     monto_total_declarado DECIMAL(12,2) DEFAULT 0.00,
     monto_total_aprobado DECIMAL(12,2) DEFAULT 0.00,
@@ -272,9 +272,9 @@ CREATE TABLE IF NOT EXISTS ope_solicitud_gasto (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
-    id_comprobante INT NOT NULL AUTO_INCREMENT, -- Se revirtió a id_comprobante
+    id_comprobante INT NOT NULL AUTO_INCREMENT,
     tipo_documento VARCHAR(20) NOT NULL,
-    ruc_proveedor CHAR(11), -- Se revirtió a ruc_proveedor
+    ruc_proveedor CHAR(11),
     razon_social VARCHAR(150),
     numero_serie VARCHAR(30),
     fecha_emision DATE,
