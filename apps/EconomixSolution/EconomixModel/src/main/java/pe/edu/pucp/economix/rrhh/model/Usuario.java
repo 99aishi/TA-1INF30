@@ -20,18 +20,6 @@ public abstract class Usuario{
         this.estado=estado;
     }
 
-    @Override
-    public String toString() {
-        return "Usuario{" +
-                "usuarioID=" + usuarioID +
-                ", nombres='" + nombres + '\'' +
-                ", apellidoPaterno='" + apellidoPaterno + '\'' +
-                ", apellidoMaterno='" + apellidoMaterno + '\'' +
-                ", password='" + password + '\'' +
-                ", estado=" + estado +
-                '}';
-    }
-
     //Selectores
     public int getUsuarioID(){
         return usuarioID;
