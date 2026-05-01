@@ -10,26 +10,20 @@ import java.util.List;
 
 public class CajaChica extends Fondo{
     private double montoTecho;
+
+    //Relaciones
     private List<CicloCajaChica> ciclos;
     private Area areaAsignada;
     //Constructores
     public CajaChica(){
+    }
+    public CajaChica(int idFondo, String nombre, double saldoActual, EstadoFondo estado, double montoTecho, List<CicloCajaChica> ciclos, Area areaAsignada) {
+        super(idFondo, nombre, saldoActual, estado);
+        this.montoTecho = montoTecho;
+        this.ciclos = ciclos;
+        this.areaAsignada = areaAsignada;
+    }
 
-    }
-    public CajaChica(int id_Fondo ,String nombre, double saldoActual, EstadoFondo estado, double montoTecho,Area areaAsignada){
-        super(id_Fondo,nombre,saldoActual,estado);
-        this.montoTecho=montoTecho;
-        this.ciclos=new ArrayList<>();
-        this.areaAsignada=areaAsignada;
-    }
-    public CajaChica(String nombre, double saldoActual, EstadoFondo estado, double montoTecho,
-                     Area areaAsignada){
-
-        super(nombre,saldoActual,estado);
-        this.montoTecho=montoTecho;
-        this.ciclos=new ArrayList<>();
-        this.areaAsignada=areaAsignada;
-    }
     //Selectores
     public double getMontoTecho(){
         return montoTecho;
@@ -43,7 +37,6 @@ public class CajaChica extends Fondo{
     public void setCicloCajaChica(CicloCajaChica ciclo){
         this.ciclos.add(ciclo);
     }
-
     public Area getAreaAsignada() {
         return areaAsignada;
     }
@@ -52,14 +45,17 @@ public class CajaChica extends Fondo{
     }
 
     //Métodos
-    public void configurarCajaChica(double montoTecho, CuentaBancaria origen, Empleado responsable) {
-        // TODO: Asignar responsable y límites financieros (RF_11)
-    }
 
     @Override
     public String toString() {
-        return "Caja Chica: " + super.toString() +
-                "montoTecho: " + montoTecho +
-                " ID Area Asignada: " + areaAsignada.getIdArea();
+        return super.toString() +  "CajaChica{" +
+                "montoTecho=" + montoTecho +
+                ", ciclos=" + ciclos +
+                ", areaAsignada=" + areaAsignada +
+                '}';
+    }
+
+    public void configurarCajaChica(double montoTecho, CuentaBancaria origen, Empleado responsable) {
+        // TODO: Asignar responsable y límites financieros
     }
 }
