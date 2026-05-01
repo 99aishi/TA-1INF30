@@ -9,18 +9,21 @@ import java.util.List;
 public class Empleado extends Usuario {
     private String correoInstitucional;
     private String numeroCelular;
+
+    //Relaciones
     private Rol rol;
     private Area area;
     private Empleado jefeDirecto;
-    private List<SolicitudGasto> solicitudes; //inicializado
-    private List<CuentaBancaria> cuentas; //inicializado
+    private List<SolicitudGasto> solicitudesRecibidas;
+    private List<SolicitudGasto> solicitudesEnviadas;
+    private List<CuentaBancaria> cuentas;
 
     //Constructror
     public Empleado(){
 
     }
-    public Empleado(int usuarioID, String nombre, String apellido_paterno,
-                    String apellido_materno, String password,EstadoUsuario estado,
+    public Empleado(String nombre, String apellido_paterno,
+                    String apellido_materno, String password, EstadoUsuario estado,
                     String correoInstitucional, String numeroCelular){
 
         super(nombre,  apellido_paterno, apellido_materno,  password, estado);
@@ -28,32 +31,27 @@ public class Empleado extends Usuario {
         this.correoInstitucional=correoInstitucional;
         this.numeroCelular=numeroCelular;
         this.cuentas= new ArrayList<>();
-        this.solicitudes= new ArrayList<>();
+        this.solicitudesRecibidas= new ArrayList<>();
+        this.solicitudesEnviadas= new ArrayList<>();
     }
     //Selectores
-    public void setRol(Rol rol){
-        this.rol=rol;
-    }
-    public Rol getRol(){
-        return new Rol(this.rol);
-    }
     public String getCorreoInstitucional() {
         return correoInstitucional;
-    }
-    public String getNumeroCelular() {
-        return numeroCelular;
     }
     public void setCorreoInstitucional(String correoInstitucional) {
         this.correoInstitucional = correoInstitucional;
     }
+    public String getNumeroCelular() {
+        return numeroCelular;
+    }
     public void setNumeroCelular(String numeroCelular) {
         this.numeroCelular = numeroCelular;
     }
-    public Empleado getJefeDirecto() {
-        return jefeDirecto;
+    public Rol getRol() {
+        return rol;
     }
-    public void setJefeDirecto(Empleado jefeDirecto) {
-        this.jefeDirecto = jefeDirecto;
+    public void setRol(Rol rol) {
+        this.rol = rol;
     }
     public Area getArea() {
         return area;
@@ -61,23 +59,48 @@ public class Empleado extends Usuario {
     public void setArea(Area area) {
         this.area = area;
     }
-
+    public Empleado getJefeDirecto() {
+        return jefeDirecto;
+    }
+    public void setJefeDirecto(Empleado jefeDirecto) {
+        this.jefeDirecto = jefeDirecto;
+    }
+    public List<SolicitudGasto> getSolicitudesRecibidas() {
+        return solicitudesRecibidas;
+    }
+    public void setSolicitudesRecibidas(List<SolicitudGasto> solicitudesRecibidas) {
+        this.solicitudesRecibidas = solicitudesRecibidas;
+    }
+    public List<SolicitudGasto> getSolicitudesEnviadas() {
+        return solicitudesEnviadas;
+    }
+    public void setSolicitudesEnviadas(List<SolicitudGasto> solicitudesEnviadas) {
+        this.solicitudesEnviadas = solicitudesEnviadas;
+    }
+    public List<CuentaBancaria> getCuentas() {
+        return cuentas;
+    }
+    public void setCuentas(List<CuentaBancaria> cuentas) {
+        this.cuentas = cuentas;
+    }
 
     //Metodos
+
+
     @Override
     public String toString() {
-        String cadena = "";
-        cadena += "EMPLEADO: ";
-        cadena += super.toString();
-        cadena += String.format(" - Correo: %s - Celular: %s - Rol: %s - Area: %s - Jefe: %s",
-                correoInstitucional,
-                numeroCelular,
-                (rol != null ? rol.getTitulo() : "sin rol"),
-                (area != null ? area.getNombre() : "sin area"),
-                (jefeDirecto != null ? jefeDirecto.getNombres() + " " + jefeDirecto.getApellidoPaterno() : "sin jefe"));
-        return cadena;
+        return "Empleado{" +
+                "correoInstitucional='" + correoInstitucional + '\'' +
+                ", numeroCelular='" + numeroCelular + '\'' +
+                ", rol=" + rol +
+                ", area=" + area +
+                ", jefeDirecto=" + jefeDirecto +
+                ", solicitudesRecibidas=" + solicitudesRecibidas +
+                ", solicitudesEnviadas=" + solicitudesEnviadas +
+                ", cuentas=" + cuentas +
+                '}';
     }
-    
+
     // Métodos en Empleado.java
     public void registrarSolicitudFondo(String motivo, double monto, java.util.Date fecha) {
         // TODO: Crear solicitud con estado "pendiente" automáticamente (RF_06)
