@@ -6,7 +6,6 @@ import pe.edu.pucp.economix.rrhh.model.Empleado;
 import java.util.Date;
 
 public class Fondo {
-    private static int correlativoID = 1;
     private int idFondo;
     private String nombre;
     private double saldoActual;
@@ -14,16 +13,10 @@ public class Fondo {
 
     // Constructores
     public Fondo(){
+    }
 
-    }
-    public Fondo(String nombre, double saldoActual, EstadoFondo estado) {
-        this.idFondo = this.correlativoID++;
-        this.nombre = nombre;
-        this.saldoActual = saldoActual;
-        this.estado = estado;
-    }
-    public Fondo(int id, String nombre, double saldoActual, EstadoFondo estado) {
-        this.idFondo = id;
+    public Fondo(int idFondo, String nombre, double saldoActual, EstadoFondo estado) {
+        this.idFondo = idFondo;
         this.nombre = nombre;
         this.saldoActual = saldoActual;
         this.estado = estado;
@@ -55,6 +48,17 @@ public class Fondo {
         this.estado = estado;
     }
     //Metodos
+
+    @Override
+    public String toString() {
+        return "Fondo{" +
+                "idFondo=" + idFondo +
+                ", nombre='" + nombre + '\'' +
+                ", saldoActual=" + saldoActual +
+                ", estado=" + estado +
+                '}';
+    }
+
     public void actualizarSaldo(double monto, TipoTransaccion tipo) {
         // TODO: Lógica para sumar (Reposición) o restar (Desembolso) al saldoActual
     }
@@ -68,10 +72,4 @@ public class Fondo {
         // TODO: Asignar la cuenta de origen del fondo (RF_11)
     }
 
-    @Override
-    public String toString() {
-        return "ID: " + idFondo +
-                " Nombre: " + nombre  +
-                " Saldo Actual: " + saldoActual;
-    }
 }
