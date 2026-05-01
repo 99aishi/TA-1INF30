@@ -2,8 +2,6 @@ package pe.edu.pucp.economix.tesoreria.test;
 
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.tesoreria.implement.EntregaARendirImplement;
-import pe.edu.pucp.economix.tesoreria.model.EntregaARendir;
-import pe.edu.pucp.economix.tesoreria.model.EstadoEntregaARendir;
 import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
 
 import java.util.List;

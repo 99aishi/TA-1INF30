@@ -1,12 +1,8 @@
 package pe.edu.pucp.economix.tesoreria.implement;
 
 import pe.edu.pucp.economix.config.DBManager;
-import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.tesoreria.dao.IEntregaARendirDAO;
-import pe.edu.pucp.economix.tesoreria.model.CajaChica;
-import pe.edu.pucp.economix.tesoreria.model.EntregaARendir;
-import pe.edu.pucp.economix.tesoreria.model.EstadoEntregaARendir;
 import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
 
 import java.sql.*;

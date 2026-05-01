@@ -45,7 +45,6 @@ public class CajaChica extends Fondo{
     }
 
     //Métodos
-
     @Override
     public String toString() {
         return super.toString() +  "CajaChica{" +
