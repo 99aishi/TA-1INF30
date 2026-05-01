@@ -8,12 +8,12 @@ import java.util.Date;
 import java.util.List;
 
 public class SolicitudGasto{
-    private static int correlativoID = 1;
     private int idSolicitudGasto;
     private Date fechaSolicitud;
     private double montoSolicitado;
     private String motivoSolicitud;
     private EstadoSolicitudGasto estado;
+    //Relaciones
     private Empleado solicitante;
     private Empleado destinatario;
     private List<ComprobantePago> comprobantes;
@@ -21,18 +21,19 @@ public class SolicitudGasto{
 
     //Constructores
     public SolicitudGasto(){}
-    public SolicitudGasto(Date fechaSolicitud, double montoSolicitado, String motivoSolicitud,
-                          EstadoSolicitudGasto estado,
-                          Empleado solicitante, Empleado destinatario, CicloCajaChica cicloCaja){
-        this.idSolicitudGasto=this.correlativoID++;
-        this.fechaSolicitud=fechaSolicitud;
-        this.montoSolicitado=montoSolicitado;
-        this.motivoSolicitud=motivoSolicitud;
-        this.estado=estado;
+
+    public SolicitudGasto(int idSolicitudGasto, Date fechaSolicitud, double montoSolicitado, String motivoSolicitud,
+                          EstadoSolicitudGasto estado, Empleado solicitante, Empleado destinatario,
+                          List<ComprobantePago> comprobantes, CicloCajaChica ciclo) {
+        this.idSolicitudGasto = idSolicitudGasto;
+        this.fechaSolicitud = fechaSolicitud;
+        this.montoSolicitado = montoSolicitado;
+        this.motivoSolicitud = motivoSolicitud;
+        this.estado = estado;
         this.solicitante = solicitante;
         this.destinatario = destinatario;
-        this.ciclo = cicloCaja;
-        this.comprobantes=new ArrayList<>();
+        this.comprobantes = comprobantes;
+        this.ciclo = ciclo;
     }
 
     //Selectores
@@ -81,22 +82,34 @@ public class SolicitudGasto{
     public CicloCajaChica getCiclo() {
         return ciclo;
     }
-
     public void setCiclo(CicloCajaChica ciclo) {
         this.ciclo = ciclo;
     }
+    public List<ComprobantePago> getComprobantes() {
+        return comprobantes;
+    }
+    public void setComprobantes(List<ComprobantePago> comprobantes) {
+        this.comprobantes = comprobantes;
+    }
 
     //Metodos
+
+
     @Override
     public String toString() {
-        String cadena = "";
-        cadena += String.format("SOLICITUD GASTO: %d - Fecha: %s - Monto: %.2f - Motivo: %s - %s - Solicitante: %s - Destinatario: %s",
-                idSolicitudGasto, fechaSolicitud, montoSolicitado, motivoSolicitud, estado,
-                (solicitante != null ? solicitante.getNombres() + " " + solicitante.getApellidoPaterno() : "sin solicitante"),
-                (destinatario != null ? destinatario.getNombres() + " " + destinatario.getApellidoPaterno() : "sin destinatario"));
-        return cadena;
+        return "SolicitudGasto{" +
+                "idSolicitudGasto=" + idSolicitudGasto +
+                ", fechaSolicitud=" + fechaSolicitud +
+                ", montoSolicitado=" + montoSolicitado +
+                ", motivoSolicitud='" + motivoSolicitud + '\'' +
+                ", estado=" + estado +
+                ", solicitante=" + solicitante +
+                ", destinatario=" + destinatario +
+                ", comprobantes=" + comprobantes +
+                ", ciclo=" + ciclo +
+                '}';
     }
-    
+
     public void evaluarSolicitud(Empleado jefe, boolean aprobado, String comentario) {
         // TODO: Registro obligatorio de fecha y sustento (RF_07)
     }
