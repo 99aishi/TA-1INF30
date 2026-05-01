@@ -1,71 +1,108 @@
 package pe.edu.pucp.economix.tesoreria.model;
 
+import pe.edu.pucp.economix.operaciones.model.Transaccion;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 
+import java.util.List;
+
 public class CuentaBancaria {
-    private static int correlativoID = 1;
     private int idCuenta;
     private String nombreBanco;
     private String numeroBancario;
     private String cci;
-    private Empleado administrador; //set y get , c copia
-    private Area areaAdministradora;
+    //Relaciones
     private Moneda moneda;
+    private Empleado empleadoAdministrador; //set y get , c copia
+    private Area areaAdministradora;
+    private List<Transaccion> recepciones;
+    private List<Transaccion> transferencias;
 
     //Constructores
-    public CuentaBancaria(String nombreBanco, String numeroBancario, String cci, Empleado administrador) {
-        this.idCuenta = this.correlativoID++;
+    public CuentaBancaria(){};
+
+    public CuentaBancaria(int idCuenta, String nombreBanco, String numeroBancario, String cci, Moneda moneda, Empleado empleadoAdministrador, Area areaAdministradora, List<Transaccion> recepciones, List<Transaccion> transferencias) {
+        this.idCuenta = idCuenta;
         this.nombreBanco = nombreBanco;
         this.numeroBancario = numeroBancario;
         this.cci = cci;
-        this.administrador = administrador;
+        this.moneda = moneda;
+        this.empleadoAdministrador = empleadoAdministrador;
+        this.areaAdministradora = areaAdministradora;
+        this.recepciones = recepciones;
+        this.transferencias = transferencias;
     }
-    public CuentaBancaria(){};
+
     //Selectores
     public int getIdCuenta() {
         return idCuenta;
     }
-    public String getNombreBanco() {
-        return nombreBanco;
-    }
-    public String getNumeroBancario() {
-        return numeroBancario;
-    }
-    public String getCci() {
-        return cci;
-    }
-    public Empleado getAdministrador(){
-        return this.administrador;
-    }
     public void setIdCuenta(int idCuenta) {
         this.idCuenta = idCuenta;
+    }
+    public String getNombreBanco() {
+        return nombreBanco;
     }
     public void setNombreBanco(String nombreBanco) {
         this.nombreBanco = nombreBanco;
     }
+    public String getNumeroBancario() {
+        return numeroBancario;
+    }
     public void setNumeroBancario(String numeroBancario) {
         this.numeroBancario = numeroBancario;
+    }
+    public String getCci() {
+        return cci;
     }
     public void setCci(String cci) {
         this.cci = cci;
     }
-    public void setAdministrador(Empleado admin){
-        this.administrador = admin;
+    public Moneda getMoneda() {
+        return moneda;
     }
-    public Moneda getMoneda() {return new Moneda(moneda);}
-    public void setMoneda(Moneda m){this.moneda=new Moneda(m);}
+    public void setMoneda(Moneda moneda) {
+        this.moneda = moneda;
+    }
+    public Empleado getEmpleadoAdministrador() {
+        return empleadoAdministrador;
+    }
+    public void setEmpleadoAdministrador(Empleado empleadoAdministrador) {
+        this.empleadoAdministrador = empleadoAdministrador;
+    }
     public Area getAreaAdministradora() {
         return areaAdministradora;
     }
     public void setAreaAdministradora(Area areaAdministradora) {
         this.areaAdministradora = areaAdministradora;
     }
+    public List<Transaccion> getRecepciones() {
+        return recepciones;
+    }
+    public void setRecepciones(List<Transaccion> recepciones) {
+        this.recepciones = recepciones;
+    }
+    public List<Transaccion> getTransferencias() {
+        return transferencias;
+    }
+    public void setTransferencias(List<Transaccion> transferencias) {
+        this.transferencias = transferencias;
+    }
 
     //Metodos
+
+    @Override
     public String toString() {
-        return "ID: " + this.idCuenta + " - NUMERO BANCARIO: " + this.numeroBancario + " - BANCO: " + this.nombreBanco +
-                " - DUEÑO: " + this.administrador.getNombres() + " " + this.administrador.getApellidoPaterno() + " | Area " +
-                this.areaAdministradora.getNombre();
+        return "CuentaBancaria{" +
+                "idCuenta=" + idCuenta +
+                ", nombreBanco='" + nombreBanco + '\'' +
+                ", numeroBancario='" + numeroBancario + '\'' +
+                ", cci='" + cci + '\'' +
+                ", moneda=" + moneda +
+                ", empleadoAdministrador=" + empleadoAdministrador +
+                ", areaAdministradora=" + areaAdministradora +
+                ", recepciones=" + recepciones +
+                ", transferencias=" + transferencias +
+                '}';
     }
 }
