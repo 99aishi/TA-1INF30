@@ -1,7 +1,6 @@
 package pe.edu.pucp.economix.operaciones.implement;
 
 import pe.edu.pucp.economix.config.DBManager;
-import pe.edu.pucp.economix.dao.IDAO;
 import pe.edu.pucp.economix.operaciones.dao.IComprobantePagoDAO;
 import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
@@ -26,7 +25,7 @@ public class ComprobantePagoImplement implements IComprobantePagoDAO {
             cs = con.prepareCall("{call pa_insertar_comprobante_pago(?,?,?,?,?,?,?,?,?,?,?,?)}");
 
             cs.setString("p_tipo_documento", comprobante.getTipoDocumento().toString());
-            cs.setString("p_ruc_proveedor", comprobante.getRuc());
+            cs.setString("p_ruc_proveedor", comprobante.getRUCProveedor());
             cs.setString("p_razon_social", comprobante.getRazonSocial());
             cs.setString("p_numero_serie", comprobante.getNumeroSerial());
 
@@ -78,7 +77,7 @@ public class ComprobantePagoImplement implements IComprobantePagoDAO {
 
             cs.setInt("p_id_comprobante", comprobante.getIdComprobante());
             cs.setString("p_tipo_documento", comprobante.getTipoDocumento().toString());
-            cs.setString("p_ruc_proveedor", comprobante.getRuc());
+            cs.setString("p_ruc_proveedor", comprobante.getRUCProveedor());
             cs.setString("p_razon_social", comprobante.getRazonSocial());
             cs.setString("p_numero_serie", comprobante.getNumeroSerial());
 
@@ -211,7 +210,7 @@ public class ComprobantePagoImplement implements IComprobantePagoDAO {
         if (rs.getString("tipo_documento") != null)
             cp.setTipoDocumento(TipoComprobante.valueOf(rs.getString("tipo_documento")));
 
-        cp.setRuc(rs.getString("ruc_proveedor"));
+        cp.setRUCProveedor(rs.getString("ruc_proveedor"));
         cp.setRazonSocial(rs.getString("razon_social"));
         cp.setNumeroSerial(rs.getString("numero_serie"));
         cp.setFechaEmision(rs.getDate("fecha_emision"));
