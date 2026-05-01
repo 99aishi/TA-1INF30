@@ -16,7 +16,7 @@ public class EmpleadoTest {
 
         // 2. Jefe
         Empleado jefe = new Empleado();
-        jefe.setNombre("Pedro");
+        jefe.setNombres("Pedro");
         jefe.setApellidoPaterno("Páramo");
         jefe.setEstado(EstadoUsuario.Activo);
         jefe.setCorreoInstitucional("p.paramo@acervo.com");
@@ -28,7 +28,7 @@ public class EmpleadoTest {
 
         // Empleado 1: Augusto Pérez (TI)
         Empleado emp1 = new Empleado();
-        emp1.setNombre("Augusto");
+        emp1.setNombres("Augusto");
         emp1.setApellidoPaterno("Pérez");
         emp1.setApellidoMaterno("Niebla");
         emp1.setEstado(EstadoUsuario.Activo);
@@ -42,7 +42,7 @@ public class EmpleadoTest {
 
         // Empleado 2: Esteban Trueba (Gerente de Finanzas)
         Empleado emp2 = new Empleado();
-        emp2.setNombre("Esteban");
+        emp2.setNombres("Esteban");
         emp2.setApellidoPaterno("Trueba");
         emp2.setApellidoMaterno("Del Valle");
         emp2.setEstado(EstadoUsuario.Activo);
@@ -56,7 +56,7 @@ public class EmpleadoTest {
 
         // Empleado 3: Santiago Nasar (Analista en Finanzas bajo Esteban)
         Empleado emp3 = new Empleado();
-        emp3.setNombre("Santiago");
+        emp3.setNombres("Santiago");
         emp3.setApellidoPaterno("Nasar");
         emp3.setApellidoMaterno("Linares");
         emp3.setEstado(EstadoUsuario.Activo);
@@ -77,7 +77,7 @@ public class EmpleadoTest {
 
             System.out.println(String.format("ID: %d | Empleado: %-25s | Correo: %-25s | Área: %-15s | Rol: %s",
                     e.getUsuarioID(),
-                    e.getNombre() + " " + e.getApellidoPaterno(),
+                    e.getNombres() + " " + e.getApellidoPaterno(),
                     e.getCorreoInstitucional(),
                     nombreArea,
                     tituloRol));

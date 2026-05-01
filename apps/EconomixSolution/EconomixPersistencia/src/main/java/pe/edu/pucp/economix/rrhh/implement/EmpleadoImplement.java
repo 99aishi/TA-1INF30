@@ -21,7 +21,7 @@ public class EmpleadoImplement  implements IEmpleadoDAO{
             //Insertamos al usuario
             cs= con.prepareCall("{call pa_insertar_usuario(?,?,?,?,?)}");
 
-            cs.setString("p_nombres", empleado.getNombre());
+            cs.setString("p_nombres", empleado.getNombres());
             cs.setString("p_apellido_paterno", empleado.getApellidoPaterno());
             cs.setString("p_apellido_materno", empleado.getApellidoMaterno());
             cs.setString("p_password_hash", empleado.getPassword());
@@ -78,7 +78,7 @@ public class EmpleadoImplement  implements IEmpleadoDAO{
             cs= con.prepareCall("{call pa_modificar_usuario(?,?,?,?,?)}");
 
             cs.setInt("p_id_usuario", empleado.getUsuarioID());
-            cs.setString("p_nombres", empleado.getNombre());
+            cs.setString("p_nombres", empleado.getNombres());
             cs.setString("p_apellido_paterno", empleado.getApellidoPaterno());
             cs.setString("p_apellido_materno", empleado.getApellidoMaterno());
             cs.setString("p_password_hash", empleado.getPassword());
@@ -182,7 +182,7 @@ public class EmpleadoImplement  implements IEmpleadoDAO{
 
 
                 if(rsUsuario.next()){
-                    empleado.setNombre(rsUsuario.getString("nombres"));
+                    empleado.setNombres(rsUsuario.getString("nombres"));
                     empleado.setApellidoPaterno(rsUsuario.getString("apellido_paterno"));
                     empleado.setApellidoMaterno(rsUsuario.getString("apellido_materno"));
                 }
@@ -243,7 +243,7 @@ public class EmpleadoImplement  implements IEmpleadoDAO{
 
 
                 if(rsUsuario.next()){
-                    empleado.setNombre(rsUsuario.getString("nombres"));
+                    empleado.setNombres(rsUsuario.getString("nombres"));
                     empleado.setApellidoPaterno(rsUsuario.getString("apellido_paterno"));
                     empleado.setApellidoMaterno(rsUsuario.getString("apellido_materno"));
                 }

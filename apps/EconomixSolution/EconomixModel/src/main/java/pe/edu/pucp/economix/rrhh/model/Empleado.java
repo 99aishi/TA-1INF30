@@ -74,7 +74,7 @@ public class Empleado extends Usuario {
                 numeroCelular,
                 (rol != null ? rol.getTitulo() : "sin rol"),
                 (area != null ? area.getNombre() : "sin area"),
-                (jefeDirecto != null ? jefeDirecto.getNombre() + " " + jefeDirecto.getApellidoPaterno() : "sin jefe"));
+                (jefeDirecto != null ? jefeDirecto.getNombres() + " " + jefeDirecto.getApellidoPaterno() : "sin jefe"));
         return cadena;
     }
     

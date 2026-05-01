@@ -133,7 +133,7 @@ public class CuentaBancariaImplement implements ICuentaBancariaDAO{
 
                 Empleado emp=new Empleado();
                 emp.setUsuarioID(rs.getInt("id_usuario"));
-                emp.setNombre(rs.getString("nombres"));
+                emp.setNombres(rs.getString("nombres"));
                 emp.setApellidoPaterno(rs.getString("apellido_paterno"));
                 emp.setApellidoMaterno(rs.getString("apellido_materno"));
                 cuentaBancaria.setAdministrador(emp);
@@ -184,7 +184,7 @@ public class CuentaBancariaImplement implements ICuentaBancariaDAO{
 
                 Empleado emp=new Empleado();
                 emp.setUsuarioID(rs.getInt("id_usuario"));
-                emp.setNombre(rs.getString("nombres"));
+                emp.setNombres(rs.getString("nombres"));
                 emp.setApellidoPaterno(rs.getString("apellido_paterno"));
                 emp.setApellidoMaterno(rs.getString("apellido_materno"));
                 cuentaBancaria.setAdministrador(emp);

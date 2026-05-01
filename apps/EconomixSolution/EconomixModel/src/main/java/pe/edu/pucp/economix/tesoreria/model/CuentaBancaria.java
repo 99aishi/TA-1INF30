@@ -65,7 +65,7 @@ public class CuentaBancaria {
     //Metodos
     public String toString() {
         return "ID: " + this.idCuenta + " - NUMERO BANCARIO: " + this.numeroBancario + " - BANCO: " + this.nombreBanco +
-                " - DUEÑO: " + this.administrador.getNombre() + " " + this.administrador.getApellidoPaterno() + " | Area " +
+                " - DUEÑO: " + this.administrador.getNombres() + " " + this.administrador.getApellidoPaterno() + " | Area " +
                 this.areaAdministradora.getNombre();
     }
 }

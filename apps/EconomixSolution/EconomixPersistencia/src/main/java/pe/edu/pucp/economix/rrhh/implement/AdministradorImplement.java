@@ -21,7 +21,7 @@ public class AdministradorImplement implements IAdministradorDAO {
             //Insertamos al usuario
             cs= con.prepareCall("{call pa_insertar_usuario(?,?,?,?,?)}");
 
-            cs.setString("p_nombres", administrador.getNombre());
+            cs.setString("p_nombres", administrador.getNombres());
             cs.setString("p_apellido_paterno", administrador.getApellidoPaterno());
             cs.setString("p_apellido_materno", administrador.getApellidoMaterno());
             cs.setString("p_password_hash", administrador.getPassword());
@@ -66,7 +66,7 @@ public class AdministradorImplement implements IAdministradorDAO {
             cs= con.prepareCall("{call pa_modificar_usuario(?,?,?,?,?)}");
 
             cs.setInt("p_id_usuario", administrador.getUsuarioID());
-            cs.setString("p_nombres", administrador.getNombre());
+            cs.setString("p_nombres", administrador.getNombres());
             cs.setString("p_apellido_paterno", administrador.getApellidoPaterno());
             cs.setString("p_apellido_materno", administrador.getApellidoMaterno());
             cs.setString("p_password_hash", administrador.getPassword());
@@ -182,7 +182,7 @@ public class AdministradorImplement implements IAdministradorDAO {
 
 
                 if(rsUsuario.next()){
-                    admin.setNombre(rsUsuario.getString("nombres"));
+                    admin.setNombres(rsUsuario.getString("nombres"));
                     admin.setApellidoPaterno(rsUsuario.getString("apellido_paterno"));
                     admin.setApellidoMaterno(rsUsuario.getString("apellido_materno"));
                 }

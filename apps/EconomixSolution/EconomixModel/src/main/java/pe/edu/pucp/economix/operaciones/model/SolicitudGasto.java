@@ -92,8 +92,8 @@ public class SolicitudGasto{
         String cadena = "";
         cadena += String.format("SOLICITUD GASTO: %d - Fecha: %s - Monto: %.2f - Motivo: %s - %s - Solicitante: %s - Destinatario: %s",
                 idSolicitudGasto, fechaSolicitud, montoSolicitado, motivoSolicitud, estado,
-                (solicitante != null ? solicitante.getNombre() + " " + solicitante.getApellidoPaterno() : "sin solicitante"),
-                (destinatario != null ? destinatario.getNombre() + " " + destinatario.getApellidoPaterno() : "sin destinatario"));
+                (solicitante != null ? solicitante.getNombres() + " " + solicitante.getApellidoPaterno() : "sin solicitante"),
+                (destinatario != null ? destinatario.getNombres() + " " + destinatario.getApellidoPaterno() : "sin destinatario"));
         return cadena;
     }
     

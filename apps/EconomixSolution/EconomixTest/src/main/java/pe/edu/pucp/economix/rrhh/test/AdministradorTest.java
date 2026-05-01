@@ -10,7 +10,7 @@ public class AdministradorTest {
     public static List<Administrador> pruebaInsercion(){
         Administrador admin1 = new Administrador();
         AdministradorImplement adminDAO = new AdministradorImplement();
-        admin1.setNombre("Soporte");
+        admin1.setNombres("Soporte");
         admin1.setApellidoPaterno("Técnico");
         admin1.setCorreoSoporte("soporte@empresa.com");
         admin1.setPassword("TILIN");
@@ -23,7 +23,7 @@ public class AdministradorTest {
 
             System.out.println(String.format("ID: %d | Empleado: %-25s | Correo: %-25s",
                     ad.getUsuarioID(),
-                    ad.getNombre() + " " + ad.getApellidoPaterno(),
+                    ad.getNombres() + " " + ad.getApellidoPaterno(),
                     ad.getCorreoSoporte()));
         }
         System.out.println();
