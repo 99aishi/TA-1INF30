@@ -62,6 +62,19 @@ public abstract class Usuario{
     }
 
     //Metodos
+
+    @Override
+    public String toString() {
+        return super.toString() + "Usuario{" +
+                "usuarioID=" + usuarioID +
+                ", nombres='" + nombres + '\'' +
+                ", apellidoPaterno='" + apellidoPaterno + '\'' +
+                ", apellidoMaterno='" + apellidoMaterno + '\'' +
+                ", password='" + password + '\'' +
+                ", estado=" + estado +
+                '}';
+    }
+
     public boolean login(int idIngresado, String passIngresada){
         if(usuarioID == idIngresado)
             if(estado == EstadoUsuario.Activo){
