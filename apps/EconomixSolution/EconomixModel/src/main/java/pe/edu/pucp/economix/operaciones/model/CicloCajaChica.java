@@ -17,13 +17,14 @@ public class CicloCajaChica{
     //Relaciones
     private CajaChica cajaChica;
     private List<SolicitudGasto> solicitudesDeGasto;
+    private Rendicion rendicion;
 
     //Constructores
     public CicloCajaChica(){}
 
     public CicloCajaChica(int idCicloCaja, int numeroSemana, Date fechaApertura, Date fechaCierre,
                           double saldoInicial, double totalGastado, EstadoCicloCaja estado,
-                          CajaChica cajaChica, List<SolicitudGasto> solicitudesDeGasto) {
+                          CajaChica cajaChica, List<SolicitudGasto> solicitudesDeGasto, Rendicion rendicion) {
         this.idCicloCaja = idCicloCaja;
         this.numeroSemana = numeroSemana;
         this.fechaApertura = fechaApertura;
@@ -33,6 +34,7 @@ public class CicloCajaChica{
         this.estado = estado;
         this.cajaChica = cajaChica;
         this.solicitudesDeGasto = solicitudesDeGasto;
+        this.rendicion = rendicion;
     }
 
     //Selectores
@@ -90,7 +92,7 @@ public class CicloCajaChica{
     public void setSolicitudesDeGasto(List<SolicitudGasto> solicitudesDeGasto) {
         this.solicitudesDeGasto = solicitudesDeGasto;
     }
-    //Metodos
+
     @Override
     public String toString() {
         return "CicloCajaChica{" +
@@ -103,6 +105,7 @@ public class CicloCajaChica{
                 ", estado=" + estado +
                 ", cajaChica=" + cajaChica +
                 ", solicitudesDeGasto=" + solicitudesDeGasto +
+                ", rendicion=" + rendicion +
                 '}';
     }
 
