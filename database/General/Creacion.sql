@@ -257,7 +257,7 @@ CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
     monto_subtotal DECIMAL(12,2),
     monto_igv DECIMAL(12,2),
     monto_total DECIMAL(12,2) NOT NULL,
-
+    estado_comprobante VARCHAR(20) DEFAULT 'Por Revisar',
     id_solicitud_gasto INT NOT NULL,
     id_moneda INT NOT NULL,
     

@@ -12,9 +12,6 @@ CREATE PROCEDURE pa_insertar_rendicion(
     OUT p_id_generado INT
 )
 BEGIN
-    IF p_estado_rendicion IS NULL OR TRIM(p_estado_rendicion) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estado de la rendición es obligatorio';
-    END IF;
 
     INSERT INTO ope_rendicion(
         fecha_presentacion,
@@ -26,13 +23,13 @@ BEGIN
         comentario
     )
     VALUES(
-        IFNULL(p_fecha_presentacion, CURDATE()),
+        p_fecha_presentacion,
         p_fecha_aprobacion,
-        IFNULL(p_monto_total_declarado, 0.00),
-        IFNULL(p_monto_total_aprobado, 0.00),
-        IFNULL(p_monto_saldo_final, 0.00),
-        TRIM(p_estado_rendicion),
-        TRIM(p_comentario)
+        p_monto_total_declarado,
+        p_monto_total_aprobado,
+        p_monto_saldo_final,
+        p_estado_rendicion,
+        p_comentario
     );
     
     SET p_id_generado = LAST_INSERT_ID();
@@ -55,18 +52,14 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de rendición inválido';
     END IF;
 
-    IF p_estado_rendicion IS NULL OR TRIM(p_estado_rendicion) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estado de la rendición es obligatorio';
-    END IF;
-
     UPDATE ope_rendicion
        SET fecha_presentacion = p_fecha_presentacion,
            fecha_aprobacion = p_fecha_aprobacion,
-           monto_total_declarado = IFNULL(p_monto_total_declarado, 0.00),
-           monto_total_aprobado = IFNULL(p_monto_total_aprobado, 0.00),
-           monto_saldo_final = IFNULL(p_monto_saldo_final, 0.00),
-           estado_rendicion = TRIM(p_estado_rendicion),
-           comentario = TRIM(p_comentario)
+           monto_total_declarado = p_monto_total_declarado,
+           monto_total_aprobado = p_monto_total_aprobado,
+           monto_saldo_final = p_monto_saldo_final,
+           estado_rendicion = p_estado_rendicion,
+           comentario = p_comentario
      WHERE id_rendicion = p_id_rendicion;
 END$$
 
@@ -80,7 +73,7 @@ BEGIN
     END IF;
 
     UPDATE ope_rendicion
-       SET estado_rendicion = 'ANULADO'
+       SET estado_rendicion = 'Anulado'
      WHERE id_rendicion = p_id_rendicion;
 END$$
 
