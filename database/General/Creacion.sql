@@ -226,7 +226,7 @@ CREATE TABLE IF NOT EXISTS ope_solicitud_gasto (
     fecha_solicitud DATE NOT NULL,
     monto_solicitado DECIMAL(12,2) NOT NULL,
     motivo_solicitud VARCHAR(200),
-    estado_solicitud VARCHAR(20),
+    estado_solicitud VARCHAR(20) DEFAULT 'Pendiente',
     
     id_usuario_solicitante INT NOT NULL,
     id_usuario_destinatario INT NULL,
