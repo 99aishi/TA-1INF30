@@ -98,6 +98,9 @@ END$$
 DROP PROCEDURE IF EXISTS pa_listar_rendiciones $$
 CREATE PROCEDURE pa_listar_rendiciones()
 BEGIN
+    IF p_id_solicitud_gasto IS NULL OR p_id_solicitud_gasto <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de rendición inválido';
+    END IF;
     SELECT 
         id_rendicion, 
         fecha_presentacion, 
@@ -108,8 +111,7 @@ BEGIN
         estado_rendicion, 
         comentario
     FROM ope_rendicion
-    WHERE estado_rendicion != 'ANULADO'
-    ORDER BY id_rendicion DESC;
+    ORDER BY estado_rendicion DESC;
 END$$
 
 DELIMITER ;
