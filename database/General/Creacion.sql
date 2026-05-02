@@ -180,11 +180,11 @@ CREATE TABLE IF NOT EXISTS tes_caja_chica (
 CREATE TABLE IF NOT EXISTS ope_ciclo_caja (
     id_ciclo_caja INT NOT NULL AUTO_INCREMENT,
     numero_semana INT,
-    fecha_apertura DATE NOT NULL,
+    fecha_apertura DATE NOT NULL DEFAULT (CURRENT_DATE),
     fecha_cierre DATE NULL,
     monto_saldo_inicial DECIMAL(12,2) DEFAULT 0.00,
     monto_total_gastado DECIMAL(12,2) DEFAULT 0.00,
-    estado_ciclo VARCHAR(20),
+    estado_ciclo VARCHAR(20) DEFAULT 'Abierto',
     id_fondo_caja_chica INT NOT NULL,
     
     -- Auditoría
