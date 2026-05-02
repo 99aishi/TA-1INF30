@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS rrhh_rol (
     id_rol INT NOT NULL AUTO_INCREMENT,
     titulo_rol VARCHAR(50) NOT NULL,
     descripcion_rol VARCHAR(200),
+    esta_activo TINYINT(1) DEFAULT 1,
     
     -- Auditoría
     creado_at DATETIME,
@@ -40,6 +41,7 @@ CREATE TABLE IF NOT EXISTS rrhh_area (
     nombre_area VARCHAR(60) NOT NULL UNIQUE,
     descripcion_area VARCHAR(200),
     id_jefe INT NULL,
+    esta_activo TINYINT(1) DEFAULT 1,
     
     -- Auditoría
     creado_at DATETIME,

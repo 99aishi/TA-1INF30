@@ -7,7 +7,7 @@ CREATE PROCEDURE pa_insertar_administrador(
 )
 BEGIN
     IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID de usuario es obligatorio para el administrador';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del administrador no es válido';
     END IF;
 
     INSERT INTO rrhh_administrador(
@@ -16,7 +16,7 @@ BEGIN
     )
     VALUES(
         p_id_usuario,
-        TRIM(p_correo_soporte)
+        p_correo_soporte
     );
 END$$
 
@@ -31,7 +31,7 @@ BEGIN
     END IF;
 
     UPDATE rrhh_administrador
-       SET correo_soporte = TRIM(p_correo_soporte)
+       SET correo_soporte = p_correo_soporte
      WHERE id_usuario = p_id_usuario;
 END$$
 
@@ -40,6 +40,10 @@ CREATE PROCEDURE pa_eliminar_administrador(
     IN p_id_usuario INT
 )
 BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de administrador no válido';
+    END IF;
+
     UPDATE rrhh_usuario
        SET esta_activo = 0
      WHERE id_usuario = p_id_usuario;
@@ -50,6 +54,10 @@ CREATE PROCEDURE pa_buscar_administrador_por_id(
     IN p_id_usuario INT
 )
 BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de administrador no válido';
+    END IF;
+
     SELECT 
         a.id_usuario, 
         a.correo_soporte

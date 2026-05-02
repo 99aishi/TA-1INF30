@@ -10,13 +10,8 @@ CREATE PROCEDURE pa_insertar_empleado(
     IN p_id_jefe_directo INT
 )
 BEGIN
-    -- Validamos solo los campos que son obligatorios por contrato
     IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID de usuario es obligatorio para el empleado';
-    END IF;
-
-    IF p_correo_institucional IS NULL OR TRIM(p_correo_institucional) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El correo institucional es obligatorio';
     END IF;
 
     INSERT INTO rrhh_empleado(
@@ -29,8 +24,8 @@ BEGIN
     )
     VALUES(
         p_id_usuario,
-        TRIM(p_correo_institucional),
-        TRIM(p_numero_celular),
+        p_correo_institucional,
+        p_numero_celular,
         p_id_area,
         p_id_rol,
         p_id_jefe_directo
@@ -52,8 +47,8 @@ BEGIN
     END IF;
 
     UPDATE rrhh_empleado
-       SET correo_institucional = TRIM(p_correo_institucional),
-           numero_celular = TRIM(p_numero_celular),
+       SET correo_institucional = p_correo_institucional,
+           numero_celular = p_numero_celular,
            id_area = p_id_area,
            id_rol = p_id_rol,
            id_jefe_directo = p_id_jefe_directo
@@ -65,6 +60,10 @@ CREATE PROCEDURE pa_eliminar_empleado(
     IN p_id_usuario INT
 )
 BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del empleado no es válido';
+    END IF;
+
     UPDATE rrhh_usuario
        SET esta_activo = 0
      WHERE id_usuario = p_id_usuario;
@@ -75,6 +74,9 @@ CREATE PROCEDURE pa_buscar_empleado_por_id(
     IN p_id_usuario INT
 )
 BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del empleado no es válido';
+    END IF;
     SELECT 
         e.id_usuario, 
         e.correo_institucional, 
