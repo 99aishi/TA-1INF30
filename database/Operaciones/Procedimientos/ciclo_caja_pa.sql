@@ -15,7 +15,7 @@ CREATE PROCEDURE pa_insertar_ciclo_caja(
 BEGIN
     -- Validaciones obligatorias
     IF p_id_fondo_caja_chica IS NULL OR p_id_fondo_caja_chica <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del fondo de caja chica es obligatorio';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del ciclo de caja chica es invalido';
     END IF;
 
     INSERT INTO ope_ciclo_caja(

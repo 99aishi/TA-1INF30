@@ -145,8 +145,7 @@ CREATE TABLE IF NOT EXISTS tes_cuenta_bancaria (
 CREATE TABLE IF NOT EXISTS tes_fondo (
     id_fondo INT NOT NULL AUTO_INCREMENT,
     nombre_fondo VARCHAR(100) NOT NULL,
-    monto_saldo_actual DECIMAL(12,2) DEFAULT 0.00,
-    estado_fondo VARCHAR(20) NOT NULL,
+    estado_fondo VARCHAR(20) NOT NULL DEFAULT 'Activo',
     
     -- Auditoría
     creado_at DATETIME,

@@ -29,7 +29,7 @@ END$$
 
 DROP PROCEDURE IF EXISTS pa_busqueda_por_id $$
 CREATE PROCEDURE pa_busqueda_por_id(
-	IN _id_moneda INT
+	IN p_id_moneda INT
 )
 BEGIN 
 	IF p_id_moneda IS NULL OR p_id_moneda <= 0 THEN

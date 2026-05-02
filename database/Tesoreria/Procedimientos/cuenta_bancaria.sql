@@ -11,7 +11,6 @@ CREATE PROCEDURE pa_insertar_cuenta_bancaria(
     IN p_id_area_titular INT
 )
 BEGIN
-
 	INSERT INTO tes_cuenta_bancaria(
         nombre_banco, numero_cuenta, cci,
         id_moneda,id_usuario_titular, 
