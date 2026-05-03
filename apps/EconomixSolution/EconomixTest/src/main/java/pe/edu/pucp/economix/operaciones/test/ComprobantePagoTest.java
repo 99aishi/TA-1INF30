@@ -1,19 +1,17 @@
 package pe.edu.pucp.economix.operaciones.test;
 
+import java.sql.SQLException;
+import java.util.List;
+
 import pe.edu.pucp.economix.operaciones.implement.ComprobantePagoImplement;
 import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
-import pe.edu.pucp.economix.operaciones.model.TipoComprobante;
-import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
-import java.util.Date;
-import java.util.List;
-
 public class ComprobantePagoTest {
-    private static ComprobantePagoImplement comprobanteDAO = new ComprobantePagoImplement();
+    private static final ComprobantePagoImplement comprobanteDAO = new ComprobantePagoImplement();
 
-    public static List<ComprobantePago> pruebaInsercion(SolicitudGasto solicitudAprobada, Moneda moneda){
+    public static List<ComprobantePago> pruebaInsercion(SolicitudGasto solicitudAprobada, Moneda moneda) throws SQLException{
 
         ComprobantePago factura = new ComprobantePago(
 

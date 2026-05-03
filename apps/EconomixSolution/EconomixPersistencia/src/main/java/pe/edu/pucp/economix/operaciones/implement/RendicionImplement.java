@@ -1,140 +1,68 @@
 package pe.edu.pucp.economix.operaciones.implement;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.operaciones.dao.IRendicionDAO;
 import pe.edu.pucp.economix.operaciones.model.EstadoRendicion;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-
 public class RendicionImplement implements IRendicionDAO{
-    private Connection con;
     private ResultSet rs;
-    private CallableStatement cs;
 
     @Override
-    public int insertar(Rendicion rendicion){
-        int id = 0;
+    public int insertar(Rendicion rendicion) throws SQLException{
+        Map<String,Object> parametrosSalida = new HashMap<>();
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosSalida.put("p_id_generado", Types.INTEGER);
+        parametrosEntrada.put("p_fecha_presentacion", rendicion.getFechaPresentacion().getTime());
+        parametrosEntrada.put("p_fecha_aprobacion", rendicion.getFechaAprobacion().getTime());
+        parametrosEntrada.put("p_monto_total_declarado", rendicion.getTotalDeclarado());
+        parametrosEntrada.put("p_monto_total_aprobado", rendicion.getTotalAprobado());
+        parametrosEntrada.put("p_monto_saldo_final", rendicion.getSaldoFinal());
+        parametrosEntrada.put("p_estado_rendicion", rendicion.getEstado().toString());
+        parametrosEntrada.put("p_comentario", rendicion.getComentario());
 
-        try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs= con.prepareCall("{call pa_insertar_rendicion(?,?,?,?,?,?,?,?)}");
+        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_rendicion", parametrosEntrada, parametrosSalida);
+        rendicion.setIdRendicion((int)parametrosSalida.get("p_id_generado"));
 
-            cs.setDate("p_fecha_presentacion", new java.sql.Date( rendicion.getFechaPresentacion().getTime()));
-            if (rendicion.getFechaAprobacion() != null)
-                cs.setDate("p_fecha_aprobacion", new java.sql.Date( rendicion.getFechaAprobacion().getTime()));
-            else
-                cs.setNull("p_fecha_aprobacion", Types.DATE);
-            cs.setDouble("p_monto_total_declarado", rendicion.getTotalDeclarado());
-            cs.setDouble("p_monto_total_aprobado", rendicion.getTotalAprobado());
-            cs.setDouble("p_monto_saldo_final", rendicion.getSaldoFinal());
-            cs.setString("p_estado_rendicion", rendicion.getEstado().toString());
-            cs.setString("p_comentario", rendicion.getComentario());
-            cs.registerOutParameter("p_id_generado", java.sql.Types.INTEGER); // TODO Revisión INTEGER
-
-            cs.executeUpdate();
-
-            id = cs.getInt("p_id_generado");
-
-            return id;
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-
-        return id;
+        return rendicion.getIdRendicion();
     }
     @Override
-    public int modificar(Rendicion rendicion){
-        int cantidad = 0;
+    public int modificar(Rendicion rendicion) throws SQLException{
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_rendicion", rendicion.getIdRendicion());
+        parametrosEntrada.put("p_fecha_presentacion", rendicion.getFechaPresentacion().getTime());
+        parametrosEntrada.put("p_fecha_aprobacion", rendicion.getFechaAprobacion().getTime());
+        parametrosEntrada.put("p_monto_total_declarado", rendicion.getTotalDeclarado());
+        parametrosEntrada.put("p_monto_total_aprobado", rendicion.getTotalAprobado());
+        parametrosEntrada.put("p_monto_saldo_final", rendicion.getSaldoFinal());
+        parametrosEntrada.put("p_estado_rendicion", rendicion.getEstado().toString());
+        parametrosEntrada.put("p_comentario", rendicion.getComentario());
 
-        try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs= con.prepareCall("{call pa_modificar_rendicion(?,?,?,?,?,?,?,?)}");
-            cs.setInt("p_id_rendicion", rendicion.getIdRendicion());
-            cs.setDate("p_fecha_presentacion", new java.sql.Date( rendicion.getFechaPresentacion().getTime()));
-            cs.setDate("p_fecha_aprobacion", new java.sql.Date( rendicion.getFechaAprobacion().getTime()));
-            cs.setDouble("p_monto_total_declarado", rendicion.getTotalDeclarado());
-            cs.setDouble("p_monto_total_aprobado", rendicion.getTotalAprobado());
-            cs.setDouble("p_monto_saldo_final", rendicion.getSaldoFinal());
-            cs.setString("p_estado_rendicion", rendicion.getEstado().toString());
-            cs.setString("p_comentario", rendicion.getComentario());
-
-            cantidad = cs.executeUpdate();
-
-            return cantidad;
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-
-        return cantidad;
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_rendicion", parametrosEntrada, null);
+        return resultado;
     }
     @Override
-    public int eliminar(int idRendicion){
-        int cantidad=0;
-
-        try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs= con.prepareCall("{call pa_eliminar_rendicion(?,?,?,?,?,?,?,?)}");
-            cs.setInt("p_id_rendicion", idRendicion);
-
-            cantidad = cs.executeUpdate();
-
-            return cantidad;
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-
-        return cantidad;
+    public int eliminar(int idRendicion) throws SQLException{
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_rendicion", idRendicion);
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_eliminar_rendicion", parametrosEntrada, null);
+        return resultado;
     }
     @Override
-    public Rendicion buscarPorId(int idRendicion){
+    public Rendicion buscarPorId(int idRendicion) throws SQLException{
         Rendicion rendicion = null;
-
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_rendicion", idRendicion);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_rendicion_por_id", parametrosEntrada);
         try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs= con.prepareCall("{call pa_buscar_rendicion_por_id(?)}");
-            cs.setInt("p_id_rendicion", idRendicion);
-
-            rs = cs.executeQuery();
             if(rs.next()){
                 rendicion = new Rendicion();
                 rendicion.setIdRendicion(rs.getInt("id_rendicion"));
@@ -146,36 +74,23 @@ public class RendicionImplement implements IRendicionDAO{
                 rendicion.setEstado(EstadoRendicion.valueOf(rs.getString("estado_rendicion")));
                 rendicion.setComentario(rs.getString("comentario"));
             }
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
+        }catch(SQLException ex){
+            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
 
         return rendicion;
     }
     @Override
-    public List<Rendicion> listarTodas(){
-        List rendiciones = null;
-
+    public List<Rendicion> listarTodas() throws SQLException{
+        List<Rendicion> rendiciones = null;
+        Rendicion rendicion;
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_rendicion_por_id", null);
         try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs= con.prepareCall("{call pa_listar_rendiciones()}");
-            rs = cs.executeQuery();
             while(rs.next()){
-                if(rendiciones == null)
-                    rendiciones = new ArrayList<>();
-                Rendicion rendicion = new Rendicion();
+                if(rendiciones == null) rendiciones = new ArrayList<>();
+                rendicion = new Rendicion();
                 rendicion.setIdRendicion(rs.getInt("id_rendicion"));
                 rendicion.setFechaPresentacion(rs.getDate("fecha_presentacion"));
                 rendicion.setFechaAprobacion(rs.getDate("fecha_aprobacion"));
@@ -184,25 +99,13 @@ public class RendicionImplement implements IRendicionDAO{
                 rendicion.setSaldoFinal(rs.getDouble("monto_saldo_final"));
                 rendicion.setEstado(EstadoRendicion.valueOf(rs.getString("estado_rendicion")));
                 rendicion.setComentario(rs.getString("comentario"));
-
                 rendiciones.add(rendicion);
             }
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-
-        return rendiciones;
+        }catch(SQLException ex){
+            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
+        }        return rendiciones;
     }
 
 }

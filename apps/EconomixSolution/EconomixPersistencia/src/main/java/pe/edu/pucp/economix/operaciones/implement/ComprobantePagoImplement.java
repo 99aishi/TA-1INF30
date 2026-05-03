@@ -1,231 +1,159 @@
 package pe.edu.pucp.economix.operaciones.implement;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.operaciones.dao.IComprobantePagoDAO;
 import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
+import pe.edu.pucp.economix.operaciones.model.EstadoComprobante;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.operaciones.model.TipoComprobante;
-import pe.edu.pucp.economix.tesoreria.model.Fondo;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-
 public class ComprobantePagoImplement implements IComprobantePagoDAO {
-    private Connection con;
-    private CallableStatement cs;
     private ResultSet rs;
 
     @Override
-    public int insertar(ComprobantePago comprobante) {
-        int id = 0;
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_insertar_comprobante_pago(?,?,?,?,?,?,?,?,?,?,?,?)}");
+    public int insertar(ComprobantePago comprobante) throws SQLException {
+        Map<String,Object> parametrosSalida = new HashMap<>();
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosSalida.put("p_id_generado", Types.INTEGER);
+        parametrosEntrada.put("p_tipo_documento", comprobante.getTipoDocumento().toString());
+        parametrosEntrada.put("p_ruc_proveedor", comprobante.getRUCProveedor());
+        parametrosEntrada.put("p_razon_social", comprobante.getRazonSocial());
+        parametrosEntrada.put("p_numero_serie", comprobante.getNumeroSerial());
+        if (comprobante.getFechaEmision() != null)
+            parametrosEntrada.put("p_fecha_emision", new java.sql.Date(comprobante.getFechaEmision().getTime()));
+        else
+            parametrosEntrada.put("p_fecha_emision", null);
+        parametrosEntrada.put("p_monto_subtotal", comprobante.getSubtotal());
+        parametrosEntrada.put("p_monto_igv", comprobante.getIgv());
+        parametrosEntrada.put("p_monto_total", comprobante.getMontoTotal());
+        parametrosEntrada.put("p_estado_comprobante", comprobante.getEstado().toString());
+        if (comprobante.getSolicitud() != null)
+            parametrosEntrada.put("p_id_solicitud_gasto", comprobante.getSolicitud().getIdSolicitudGasto());
+        else
+            parametrosEntrada.put("p_id_solicitud_gasto", null);
+        if (comprobante.getMoneda() != null)
+            parametrosEntrada.put("p_id_moneda", comprobante.getMoneda().getIdMoneda());
+        else
+            parametrosEntrada.put("p_id_moneda", null);
 
-            cs.setString("p_tipo_documento", comprobante.getTipoDocumento().toString());
-            cs.setString("p_ruc_proveedor", comprobante.getRUCProveedor());
-            cs.setString("p_razon_social", comprobante.getRazonSocial());
-            cs.setString("p_numero_serie", comprobante.getNumeroSerial());
+        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_comprobante_pago", parametrosEntrada, parametrosSalida);
+        comprobante.setIdComprobante((int)parametrosSalida.get("p_id_generado"));
 
-            if (comprobante.getFechaEmision() != null)
-                cs.setDate("p_fecha_emision", new java.sql.Date(comprobante.getFechaEmision().getTime()));
-            else
-                cs.setNull("p_fecha_emision", Types.DATE);
-
-            cs.setDouble("p_monto_subtotal", comprobante.getSubtotal());
-            cs.setDouble("p_monto_igv", comprobante.getIgv());
-            cs.setDouble("p_monto_total", comprobante.getMontoTotal());
-
-            // Relación con Solicitud de Gasto
-            if (comprobante.getSolicitud() != null)
-                cs.setInt("p_id_solicitud_gasto", comprobante.getSolicitud().getIdSolicitudGasto());
-            else
-                cs.setNull("p_id_solicitud_gasto", Types.INTEGER);
-
-            if (comprobante.getMoneda() != null)
-                cs.setInt("p_id_moneda", comprobante.getMoneda().getIdMoneda());
-            else
-                cs.setNull("p_id_moneda", Types.INTEGER);
-
-            cs.registerOutParameter("p_id_generado", java.sql.Types.INTEGER);
-
-            cs.executeUpdate();
-
-            id = cs.getInt("p_id_generado");
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try { if (cs != null) cs.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
-            try { if (con != null) con.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
-        }
-        return id;
+        return comprobante.getIdComprobante();
     }
 
     @Override
-    public int modificar(ComprobantePago comprobante) {
-        int cantidad = 0;
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_modificar_comprobante_pago(?,?,?,?,?,?,?,?,?,?,?,?)}");
-
-            cs.setInt("p_id_comprobante", comprobante.getIdComprobante());
-            cs.setString("p_tipo_documento", comprobante.getTipoDocumento().toString());
-            cs.setString("p_ruc_proveedor", comprobante.getRUCProveedor());
-            cs.setString("p_razon_social", comprobante.getRazonSocial());
-            cs.setString("p_numero_serie", comprobante.getNumeroSerial());
-
-            if (comprobante.getFechaEmision() != null)
-                cs.setDate("p_fecha_emision", new java.sql.Date(comprobante.getFechaEmision().getTime()));
-            else
-                cs.setNull("p_fecha_emision", Types.DATE);
-
-            cs.setDouble("p_monto_subtotal", comprobante.getSubtotal());
-            cs.setDouble("p_monto_igv", comprobante.getIgv());
-            cs.setDouble("p_monto_total", comprobante.getMontoTotal());
-
-            // Relaciones
-            if (comprobante.getSolicitud() != null)
-                cs.setInt("p_id_solicitud_gasto", comprobante.getSolicitud().getIdSolicitudGasto());
-            else
-                cs.setNull("p_id_solicitud_gasto", Types.INTEGER);
-
-            /* if (comprobante.getMoneda() != null)
-                cs.setInt("p_id_moneda", comprobante.getMoneda().getIdMoneda());
-            else
-            */
-            cs.setNull("p_id_moneda", Types.INTEGER);
-
-            cantidad = cs.executeUpdate();
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try { if (cs != null) cs.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
-            try { if (con != null) con.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
-        }
-        return cantidad;
+    public int modificar(ComprobantePago comprobante) throws SQLException {
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_comprobante", comprobante.getIdComprobante());
+        parametrosEntrada.put("p_tipo_documento", comprobante.getTipoDocumento().toString());
+        parametrosEntrada.put("p_ruc_proveedor", comprobante.getRUCProveedor());
+        parametrosEntrada.put("p_razon_social", comprobante.getRazonSocial());
+        parametrosEntrada.put("p_numero_serie", comprobante.getNumeroSerial());
+        if (comprobante.getFechaEmision() != null)
+            parametrosEntrada.put("p_fecha_emision", new java.sql.Date(comprobante.getFechaEmision().getTime()));
+        else
+            parametrosEntrada.put("p_fecha_emision", null);
+        parametrosEntrada.put("p_monto_subtotal", comprobante.getSubtotal());
+        parametrosEntrada.put("p_monto_igv", comprobante.getIgv());
+        parametrosEntrada.put("p_monto_total", comprobante.getMontoTotal());
+        parametrosEntrada.put("p_estado_comprobante", comprobante.getEstado().toString());
+        if (comprobante.getSolicitud() != null)
+            parametrosEntrada.put("p_id_solicitud_gasto", comprobante.getSolicitud().getIdSolicitudGasto());
+        else
+            parametrosEntrada.put("p_id_solicitud_gasto", null);
+        if (comprobante.getMoneda() != null)
+            parametrosEntrada.put("p_id_moneda", comprobante.getMoneda().getIdMoneda());
+        else
+            parametrosEntrada.put("p_id_moneda", null);
+        
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_comprobante_pago", parametrosEntrada, null);
+        return resultado;
     }
 
     @Override
-    public int eliminar(int id) {
-        int cantidad = 0;
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_eliminar_comprobante_pago(?)}");
-            cs.setInt("p_id_comprobante", id);
-
-            cantidad = cs.executeUpdate();
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try { if (cs != null) cs.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
-            try { if (con != null) con.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
-        }
-        return cantidad;
+    public int eliminar(int idComprobante) throws SQLException {
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_comprobante", idComprobante);
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_eliminar_comprobante_pago", parametrosEntrada, null);
+        return resultado;
     }
 
     @Override
-    public ComprobantePago buscarPorId(int id) {
+    public ComprobantePago buscarPorId(int idComprobante) throws SQLException {
         ComprobantePago comprobante = null;
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_buscar_comprobante_pago_por_id(?)}");
-            cs.setInt("p_id_comprobante", id);
-
-            rs = cs.executeQuery();
-            if (rs.next()) {
-                comprobante = extraerComprobante(rs);
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_ciclo_caja", idComprobante);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_ciclo_caja_por_id", parametrosEntrada);
+        try{
+            if(rs.next()){
+                comprobante = new ComprobantePago();
+                comprobante.setIdComprobante(rs.getInt("id_comprobante"));
+                comprobante.setTipoDocumento(TipoComprobante.valueOf(rs.getString("tipo_documento")));
+                comprobante.setRUCProveedor(rs.getString("ruc_proveedor"));
+                comprobante.setRazonSocial(rs.getString("razon_social"));
+                comprobante.setNumeroSerial(rs.getString("numero_serie"));
+                comprobante.setFechaEmision(rs.getDate("fecha_emision"));
+                comprobante.setSubtotal(rs.getDouble("monto_subtotal"));
+                comprobante.setIgv(rs.getDouble("monto_igv"));
+                comprobante.setMontoTotal(rs.getDouble("monto_total"));
+                comprobante.setEstado(EstadoComprobante.valueOf(rs.getString("estado_comprobante")));
+                if(comprobante.getSolicitud() == null)
+                    comprobante.setSolicitud(new SolicitudGasto());
+                comprobante.getSolicitud().setIdSolicitudGasto(rs.getInt("id_solicitud_gasto"));
+                if(comprobante.getMoneda() == null)
+                    comprobante.setMoneda(new Moneda());
+                comprobante.getMoneda().setIdMoneda(rs.getInt("id_moneda"));    
             }
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try { if (rs != null) rs.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
-            try { if (cs != null) cs.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
-            try { if (con != null) con.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
+        }catch(SQLException ex){
+            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
         return comprobante;
     }
 
     @Override
-    public List<ComprobantePago> listarTodas() {
-        List<ComprobantePago> comprobantes = new ArrayList<>();
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_listar_comprobantes_pago()}");
-
-            rs = cs.executeQuery();
-            while (rs.next()) {
-                ComprobantePago cp = extraerComprobante(rs);
-                comprobantes.add(cp);
+    public List<ComprobantePago> listarTodas() throws SQLException {
+        List<ComprobantePago> comprobantes=null;
+        ComprobantePago comprobante;
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_comprobantes", null);
+        try{
+            while(rs.next()){
+                if(comprobantes == null) comprobantes = new ArrayList<>();
+                comprobante = new ComprobantePago();
+                comprobante.setIdComprobante(rs.getInt("id_comprobante"));
+                comprobante.setTipoDocumento(TipoComprobante.valueOf(rs.getString("tipo_documento")));
+                comprobante.setRUCProveedor(rs.getString("ruc_proveedor"));
+                comprobante.setRazonSocial(rs.getString("razon_social"));
+                comprobante.setNumeroSerial(rs.getString("numero_serie"));
+                comprobante.setFechaEmision(rs.getDate("fecha_emision"));
+                comprobante.setSubtotal(rs.getDouble("monto_subtotal"));
+                comprobante.setIgv(rs.getDouble("monto_igv"));
+                comprobante.setMontoTotal(rs.getDouble("monto_total"));
+                comprobante.setEstado(EstadoComprobante.valueOf(rs.getString("estado_comprobante")));
+                if(comprobante.getSolicitud() == null)
+                    comprobante.setSolicitud(new SolicitudGasto());
+                comprobante.getSolicitud().setIdSolicitudGasto(rs.getInt("id_solicitud_gasto"));
+                if(comprobante.getMoneda() == null)
+                    comprobante.setMoneda(new Moneda());
+                comprobante.getMoneda().setIdMoneda(rs.getInt("id_moneda"));    
+                comprobantes.add(comprobante);
             }
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try { if (rs != null) rs.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
-            try { if (cs != null) cs.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
-            try { if (con != null) con.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
+        }catch(SQLException ex){
+            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
         return comprobantes;
-    }
-
-    @Override
-    public List<ComprobantePago> listarPorSolicitud(int idSolicitud) {
-        List<ComprobantePago> comprobantes = new ArrayList<>();
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_listar_comprobantes_por_solicitud(?)}");
-            cs.setInt("p_id_solicitud_gasto", idSolicitud);
-
-            rs = cs.executeQuery();
-            while (rs.next()) {
-                ComprobantePago cp = extraerComprobante(rs);
-                comprobantes.add(cp);
-            }
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try { if (rs != null) rs.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
-            try { if (cs != null) cs.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
-            try { if (con != null) con.close(); } catch (Exception ex) { System.out.println("ERROR: " + ex.getMessage()); }
-        }
-        return comprobantes;
-    }
-
-    // Método auxiliar para evitar repetir código en las lecturas
-    private ComprobantePago extraerComprobante(ResultSet rs) throws SQLException {
-        ComprobantePago cp = new ComprobantePago(); // <-- Requiere constructor vacío
-        cp.setIdComprobante(rs.getInt("id_comprobante"));
-
-        if (rs.getString("tipo_documento") != null)
-            cp.setTipoDocumento(TipoComprobante.valueOf(rs.getString("tipo_documento")));
-
-        cp.setRUCProveedor(rs.getString("ruc_proveedor"));
-        cp.setRazonSocial(rs.getString("razon_social"));
-        cp.setNumeroSerial(rs.getString("numero_serie"));
-        cp.setFechaEmision(rs.getDate("fecha_emision"));
-        cp.setSubtotal(rs.getDouble("monto_subtotal"));
-        cp.setIgv(rs.getDouble("monto_igv"));
-        cp.setMontoTotal(rs.getDouble("monto_total"));
-
-        // Enlazando objeto Solicitud Gasto (solo guardando el ID como pediste)
-        if (rs.getObject("id_solicitud_gasto") != null) {
-            SolicitudGasto solicitud = new SolicitudGasto();
-            solicitud.setIdSolicitudGasto(rs.getInt("id_solicitud_gasto"));
-            cp.setSolicitud(solicitud);
-        }
-
-        if (rs.getObject("id_fondo_entrega") != null) {
-            Fondo fondo = new Fondo();
-            fondo.setIdFondo(rs.getInt("id_fondo_entrega"));
-        }
-
-        if (rs.getObject("id_moneda") != null) {
-            Moneda moneda = new Moneda();
-            moneda.setIdMoneda(rs.getInt("id_moneda"));
-            cp.setMoneda(moneda);
-        }
-
-        return cp;
     }
 }

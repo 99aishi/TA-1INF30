@@ -15,6 +15,7 @@ public class ComprobantePago {
     private double subtotal;
     private double igv;
     private double total;
+    private EstadoComprobante estado;
     //Relaciones
     private SolicitudGasto solicitud;
     private Moneda moneda;
@@ -22,7 +23,7 @@ public class ComprobantePago {
     // Constructor
     public ComprobantePago(){}
     public ComprobantePago(int idComprobante, TipoComprobante tipoDocumento, String RUCProveedor, String razonSocial, String numeroSerial,
-                           Date fechaEmision, double montoTotal, double subtotal, double igv, double total,
+                           Date fechaEmision, double montoTotal, double subtotal, double igv, double total, EstadoComprobante estado,
                            SolicitudGasto solicitud, Moneda moneda) {
         this.idComprobante = idComprobante;
         this.tipoDocumento = tipoDocumento;
@@ -34,13 +35,14 @@ public class ComprobantePago {
         this.subtotal = subtotal;
         this.igv = igv;
         this.total = total;
+        this.estado = estado;
         this.solicitud = solicitud;
         this.moneda = moneda;
     }
 
     public ComprobantePago(TipoComprobante tipoDocumento, String RUCProveedor, String razonSocial,
                            String numeroSerial, Date fechaEmision, double montoTotal, double subtotal,
-                           double igv, double total, SolicitudGasto solicitud, Moneda moneda) {
+                           double igv, double total, EstadoComprobante estado, SolicitudGasto solicitud, Moneda moneda) {
         this.tipoDocumento = tipoDocumento;
         this.RUCProveedor = RUCProveedor;
         this.razonSocial = razonSocial;
@@ -50,6 +52,7 @@ public class ComprobantePago {
         this.subtotal = subtotal;
         this.igv = igv;
         this.total = total;
+        this.estado = estado;
         this.solicitud = solicitud;
         this.moneda = moneda;
     }
@@ -126,6 +129,12 @@ public class ComprobantePago {
     }
     public void setMoneda(Moneda moneda) {
         this.moneda = moneda;
+    }
+    public EstadoComprobante getEstado() {
+        return estado;
+    }
+    public void setEstado(EstadoComprobante estado) {
+        this.estado = estado;
     }
 
 

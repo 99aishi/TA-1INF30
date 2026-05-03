@@ -1,389 +1,219 @@
 package pe.edu.pucp.economix.operaciones.implement;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.operaciones.dao.ISolicitudGastoDAO;
-import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
-import pe.edu.pucp.economix.operaciones.model.EstadoSolicitudGasto;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
+import pe.edu.pucp.economix.operaciones.model.EstadoSolicitudGasto;
+import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
-import pe.edu.pucp.economix.rrhh.model.Usuario;
-
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class SolicitudGastoImplement implements ISolicitudGastoDAO {
-    private Connection con;
-    private Statement st;
-    private PreparedStatement pst;
     private ResultSet rs;
-    private CallableStatement cs;
 
     @Override
-    public int insertar(SolicitudGasto solicitudGasto) {
-        int id = 0;
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_insertar_solicitud_gasto(?,?,?,?,?,?,?,?)}");
+    public int insertar(SolicitudGasto solicitudGasto) throws SQLException{
+        Map<String,Object> parametrosSalida = new HashMap<>();
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosSalida.put("p_id_generado", Types.INTEGER);
+        parametrosEntrada.put("p_fecha_solicitud", solicitudGasto.getFechaSolicitud());
+        parametrosEntrada.put("p_monto_solicitado", solicitudGasto.getMontoSolicitado());
+        parametrosEntrada.put("p_motivo_solicitud", solicitudGasto.getMotivoSolicitud());
+        parametrosEntrada.put("p_estado_solicitud", solicitudGasto.getEstado().toString());
+        if(solicitudGasto.getSolicitante() != null)
+            parametrosEntrada.put("p_id_usuario_solicitante", solicitudGasto.getSolicitante().getUsuarioID());
+        else
+            parametrosEntrada.put("p_id_usuario_solicitante", null);
+        if(solicitudGasto.getDestinatario() != null)
+            parametrosEntrada.put("p_id_usuario_destinatario", solicitudGasto.getDestinatario().getUsuarioID());
+        else
+            parametrosEntrada.put("p_id_usuario_destinatario", null);
+        if(solicitudGasto.getCiclo() != null)
+            parametrosEntrada.put("p_id_ciclo_caja", solicitudGasto.getCiclo().getIdCicloCaja());
+        else
+            parametrosEntrada.put("p_id_ciclo_caja", null);
 
-            if (solicitudGasto.getFechaSolicitud() != null)
-                cs.setDate("p_fecha_solicitud", new java.sql.Date(solicitudGasto.getFechaSolicitud().getTime()));
-            else
-                cs.setNull("p_fecha_solicitud", Types.DATE);
+        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_solicitud_gasto", parametrosEntrada, parametrosSalida);
+        solicitudGasto.setIdSolicitudGasto((int)parametrosSalida.get("p_id_generado"));
 
-            cs.setDouble("p_monto_solicitado", solicitudGasto.getMontoSolicitado());
-            cs.setString("p_motivo_solicitud", solicitudGasto.getMotivoSolicitud());
-            cs.setString("p_estado_solicitud", solicitudGasto.getEstado().toString());
-
-            if (solicitudGasto.getSolicitante() != null)
-                cs.setInt("p_id_usuario_solicitante", solicitudGasto.getSolicitante().getUsuarioID());
-            else
-                cs.setNull("p_id_usuario_solicitante", Types.INTEGER);
-
-            if (solicitudGasto.getDestinatario() != null)
-                cs.setInt("p_id_usuario_destinatario", solicitudGasto.getDestinatario().getUsuarioID());
-            else
-                cs.setNull("p_id_usuario_destinatario", Types.INTEGER);
-
-            if (solicitudGasto.getCiclo() != null)
-                cs.setInt("p_id_ciclo_caja", solicitudGasto.getCiclo().getIdCicloCaja());
-            else
-                cs.setNull("p_id_ciclo_caja", Types.INTEGER);
-
-            cs.registerOutParameter("p_id_generado", java.sql.Types.INTEGER);
-
-            cs.executeUpdate();
-
-            id = cs.getInt("p_id_generado");
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try {
-                cs.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-            try {
-                con.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-        }
-        return id;
+        return solicitudGasto.getIdSolicitudGasto();
     }
 
     @Override
-    public int modificar(SolicitudGasto solicitudGasto) {
-        int cantidad = 0;
+    public int modificar(SolicitudGasto solicitudGasto) throws SQLException {
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_generado", Types.INTEGER);
+        parametrosEntrada.put("p_fecha_solicitud", solicitudGasto.getFechaSolicitud());
+        parametrosEntrada.put("p_monto_solicitado", solicitudGasto.getMontoSolicitado());
+        parametrosEntrada.put("p_motivo_solicitud", solicitudGasto.getMotivoSolicitud());
+        parametrosEntrada.put("p_estado_solicitud", solicitudGasto.getEstado().toString());
+        if(solicitudGasto.getSolicitante() != null)
+            parametrosEntrada.put("p_id_usuario_solicitante", solicitudGasto.getSolicitante().getUsuarioID());
+        else
+            parametrosEntrada.put("p_id_usuario_solicitante", null);
+        if(solicitudGasto.getDestinatario() != null)
+            parametrosEntrada.put("p_id_usuario_destinatario", solicitudGasto.getDestinatario().getUsuarioID());
+        else
+            parametrosEntrada.put("p_id_usuario_destinatario", null);
+        if(solicitudGasto.getCiclo() != null)
+            parametrosEntrada.put("p_id_ciclo_caja", solicitudGasto.getCiclo().getIdCicloCaja());
+        else
+            parametrosEntrada.put("p_id_ciclo_caja", null);
 
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_modificar_solicitud_gasto(?,?,?,?,?,?,?,?)}");
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_solicitud_gasto", parametrosEntrada, null);
 
-            cs.setInt("p_id_solicitud_gasto", solicitudGasto.getIdSolicitudGasto());
-
-            if (solicitudGasto.getFechaSolicitud() != null)
-                cs.setDate("p_fecha_solicitud", new java.sql.Date(solicitudGasto.getFechaSolicitud().getTime()));
-            else
-                cs.setNull("p_fecha_solicitud", Types.DATE);
-
-            cs.setDouble("p_monto_solicitado", solicitudGasto.getMontoSolicitado());
-            cs.setString("p_motivo_solicitud", solicitudGasto.getMotivoSolicitud());
-            cs.setString("p_estado_solicitud", solicitudGasto.getEstado().toString());
-
-            if (solicitudGasto.getSolicitante() != null)
-                cs.setInt("p_id_usuario_solicitante", solicitudGasto.getSolicitante().getUsuarioID());
-            else
-                cs.setNull("p_id_usuario_solicitante", Types.INTEGER);
-
-            if (solicitudGasto.getDestinatario() != null)
-                cs.setInt("p_id_usuario_destinatario", solicitudGasto.getDestinatario().getUsuarioID());
-            else
-                cs.setNull("p_id_usuario_destinatario", Types.INTEGER);
-
-            if (solicitudGasto.getCiclo() != null)
-                cs.setInt("p_id_ciclo_caja", solicitudGasto.getCiclo().getIdCicloCaja());
-            else
-                cs.setNull("p_id_ciclo_caja", Types.INTEGER);
-
-            cantidad = cs.executeUpdate();
-
-            return cantidad;
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try {
-                cs.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-            try {
-                con.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-        }
-
-        return cantidad;
+        return resultado;
     }
 
     @Override
-    public int eliminar(int idSolicitudGasto) {
-        int cantidad = 0;
-
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_eliminar_solicitud_gasto(?)}");
-            cs.setInt("p_id_solicitud_gasto", idSolicitudGasto);
-
-            cantidad = cs.executeUpdate();
-
-            return cantidad;
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try {
-                cs.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-            try {
-                con.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-        }
-
-        return cantidad;
+    public int eliminar(int idSolicitudGasto) throws SQLException {
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_solicitud_gasto", idSolicitudGasto);
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_eliminar_solicitud_gasto", parametrosEntrada, null);
+        return resultado;
     }
 
     @Override
-    public SolicitudGasto buscarPorId(int idSolicitudGasto) {
+    public SolicitudGasto buscarPorId(int idSolicitudGasto) throws SQLException {        
         SolicitudGasto solicitud = null;
-
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_buscar_solicitud_gasto_por_id(?)}");
-            cs.setInt("p_id_solicitud_gasto", idSolicitudGasto);
-
-            rs = cs.executeQuery();
-            if (rs.next()) {
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_solicitud_gasto", idSolicitudGasto);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_solicitud_gasto_por_id", parametrosEntrada);
+        try{
+            if(rs.next()){
                 solicitud = new SolicitudGasto();
                 solicitud.setIdSolicitudGasto(rs.getInt("id_solicitud_gasto"));
                 solicitud.setFechaSolicitud(rs.getDate("fecha_solicitud"));
                 solicitud.setMontoSolicitado(rs.getDouble("monto_solicitado"));
                 solicitud.setMotivoSolicitud(rs.getString("motivo_solicitud"));
                 solicitud.setEstado(EstadoSolicitudGasto.valueOf(rs.getString("estado_solicitud")));
-
-                if (rs.getObject("id_usuario_solicitante") != null) {
-                    Empleado usuarioSolicitante = new Empleado();
-                    usuarioSolicitante.setUsuarioID(rs.getInt("id_usuario_solicitante"));
-                    solicitud.setSolicitante(usuarioSolicitante);
-                }
-
-                if (rs.getObject("id_usuario_destinatario") != null) {
-                    Empleado usuarioDestinatario = new Empleado();
-                    usuarioDestinatario.setUsuarioID(rs.getInt("id_usuario_destinatario"));
-                    solicitud.setDestinatario(usuarioDestinatario);
-                }
-
-                if (rs.getObject("id_ciclo_caja") != null) {
-                    CicloCajaChica cicloCaja = new CicloCajaChica();
-                    cicloCaja.setIdCicloCaja(rs.getInt("id_ciclo_caja"));
-                    solicitud.setCiclo(cicloCaja);
-                }
+                if(solicitud.getSolicitante() == null)
+                    solicitud.setSolicitante(new Empleado());
+                solicitud.getSolicitante().setUsuarioID(rs.getInt("id_usuario_solicitante"));
+                if(solicitud.getDestinatario() == null)
+                    solicitud.setDestinatario(new Empleado());
+                solicitud.getDestinatario().setUsuarioID(rs.getInt("id_usuario_destinatario"));
+                if(solicitud.getCiclo() == null)
+                    solicitud.setCiclo(new CicloCajaChica());
+                solicitud.getCiclo().setIdCicloCaja(rs.getInt("id_ciclo_caja"));
+                
             }
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try {
-                cs.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-            try {
-                con.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
+        }catch(SQLException ex){
+            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
-
         return solicitud;
     }
 
     @Override
-    public List<SolicitudGasto> listarTodas() {
+    public List<SolicitudGasto> listarTodas() throws SQLException {
         List<SolicitudGasto> solicitudes = null;
-
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_listar_solicitudes_gasto()}");
-
-            rs = cs.executeQuery();
-            while (rs.next()) {
-                if (solicitudes == null)
-                    solicitudes = new ArrayList<>();
-
-                SolicitudGasto solicitud = new SolicitudGasto();
+        SolicitudGasto solicitud;
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_todas_solicitudes_gasto", null);
+        try{
+            while(rs.next()){
+                if(solicitudes == null) solicitudes = new ArrayList<>();
+                solicitud = new SolicitudGasto();
                 solicitud.setIdSolicitudGasto(rs.getInt("id_solicitud_gasto"));
                 solicitud.setFechaSolicitud(rs.getDate("fecha_solicitud"));
                 solicitud.setMontoSolicitado(rs.getDouble("monto_solicitado"));
                 solicitud.setMotivoSolicitud(rs.getString("motivo_solicitud"));
                 solicitud.setEstado(EstadoSolicitudGasto.valueOf(rs.getString("estado_solicitud")));
-
-                if (rs.getObject("id_usuario_solicitante") != null) {
-                    Empleado usuarioSolicitante = new Empleado();
-                    usuarioSolicitante.setUsuarioID(rs.getInt("id_usuario_solicitante"));
-                    solicitud.setSolicitante(usuarioSolicitante);
-                }
-
-                if (rs.getObject("id_usuario_destinatario") != null) {
-                    Empleado usuarioDestinatario = new Empleado();
-                    usuarioDestinatario.setUsuarioID(rs.getInt("id_usuario_destinatario"));
-                    solicitud.setDestinatario(usuarioDestinatario);
-                }
-
-                if (rs.getObject("id_ciclo_caja") != null) {
-                    CicloCajaChica cicloCaja = new CicloCajaChica();
-                    cicloCaja.setIdCicloCaja(rs.getInt("id_ciclo_caja"));
-                    solicitud.setCiclo(cicloCaja);
-                }
-
+                if(solicitud.getSolicitante() == null)
+                    solicitud.setSolicitante(new Empleado());
+                solicitud.getSolicitante().setUsuarioID(rs.getInt("id_usuario_solicitante"));
+                if(solicitud.getDestinatario() == null)
+                    solicitud.setDestinatario(new Empleado());
+                solicitud.getDestinatario().setUsuarioID(rs.getInt("id_usuario_destinatario"));
+                if(solicitud.getCiclo() == null)
+                    solicitud.setCiclo(new CicloCajaChica());
+                solicitud.getCiclo().setIdCicloCaja(rs.getInt("id_ciclo_caja"));
                 solicitudes.add(solicitud);
             }
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try {
-                cs.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-            try {
-                con.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
+        }catch(SQLException ex){
+            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
 
         return solicitudes;
     }
 
     @Override
-    public List<SolicitudGasto> listarPorSolicitante(int idUsuarioSolicitante) {
+    public List<SolicitudGasto> listarPorSolicitante(int idUsuarioSolicitante) throws SQLException {
         List<SolicitudGasto> solicitudes = null;
-
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_listar_solicitudes_por_solicitante(?)}");
-            cs.setInt("p_id_usuario_solicitante", idUsuarioSolicitante);
-
-            rs = cs.executeQuery();
-            while (rs.next()) {
-                if (solicitudes == null)
-                    solicitudes = new ArrayList<>();
-
-                SolicitudGasto solicitud = new SolicitudGasto();
+        SolicitudGasto solicitud;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario_solicitante", idUsuarioSolicitante);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_solicitudes_por_solicitante", parametrosEntrada);
+        try{
+            while(rs.next()){
+                if(solicitudes == null) solicitudes = new ArrayList<>();
+                solicitud = new SolicitudGasto();
                 solicitud.setIdSolicitudGasto(rs.getInt("id_solicitud_gasto"));
                 solicitud.setFechaSolicitud(rs.getDate("fecha_solicitud"));
                 solicitud.setMontoSolicitado(rs.getDouble("monto_solicitado"));
                 solicitud.setMotivoSolicitud(rs.getString("motivo_solicitud"));
                 solicitud.setEstado(EstadoSolicitudGasto.valueOf(rs.getString("estado_solicitud")));
-
-                if (rs.getObject("id_usuario_solicitante") != null) {
-                    Empleado usuarioSolicitante = new Empleado();
-                    usuarioSolicitante.setUsuarioID(rs.getInt("id_usuario_solicitante"));
-                    solicitud.setSolicitante(usuarioSolicitante);
-                }
-
-                if (rs.getObject("id_usuario_destinatario") != null) {
-                    Empleado usuarioDestinatario = new Empleado();
-                    usuarioDestinatario.setUsuarioID(rs.getInt("id_usuario_destinatario"));
-                    solicitud.setDestinatario(usuarioDestinatario);
-                }
-
-                if (rs.getObject("id_ciclo_caja") != null) {
-                    CicloCajaChica cicloCaja = new CicloCajaChica();
-                    cicloCaja.setIdCicloCaja(rs.getInt("id_ciclo_caja"));
-                    solicitud.setCiclo(cicloCaja);
-                }
-
+                if(solicitud.getSolicitante() == null)
+                    solicitud.setSolicitante(new Empleado());
+                solicitud.getSolicitante().setUsuarioID(rs.getInt("id_usuario_solicitante"));
+                if(solicitud.getDestinatario() == null)
+                    solicitud.setDestinatario(new Empleado());
+                solicitud.getDestinatario().setUsuarioID(rs.getInt("id_usuario_destinatario"));
+                if(solicitud.getCiclo() == null)
+                    solicitud.setCiclo(new CicloCajaChica());
+                solicitud.getCiclo().setIdCicloCaja(rs.getInt("id_ciclo_caja"));
                 solicitudes.add(solicitud);
             }
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try {
-                cs.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-            try {
-                con.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
+        }catch(SQLException ex){
+            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
-
         return solicitudes;
     }
 
     @Override
-    public List<SolicitudGasto> listarPendientesJefe(int idUsuarioDestinatario) {
+    public List<SolicitudGasto> listarPendientesJefe(int idUsuarioDestinatario) throws SQLException {
         List<SolicitudGasto> solicitudes = null;
-
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_listar_solicitudes_pendientes_jefe(?)}");
-            cs.setInt("p_id_usuario_destinatario", idUsuarioDestinatario);
-
-            rs = cs.executeQuery();
-            while (rs.next()) {
-                if (solicitudes == null)
-                    solicitudes = new ArrayList<>();
-
-                SolicitudGasto solicitud = new SolicitudGasto();
+        SolicitudGasto solicitud;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario_destinatario", idUsuarioDestinatario);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_solicitudes_pendientes_jefe", parametrosEntrada);
+        try{
+            while(rs.next()){
+                if(solicitudes == null) solicitudes = new ArrayList<>();
+                solicitud = new SolicitudGasto();
                 solicitud.setIdSolicitudGasto(rs.getInt("id_solicitud_gasto"));
                 solicitud.setFechaSolicitud(rs.getDate("fecha_solicitud"));
                 solicitud.setMontoSolicitado(rs.getDouble("monto_solicitado"));
                 solicitud.setMotivoSolicitud(rs.getString("motivo_solicitud"));
                 solicitud.setEstado(EstadoSolicitudGasto.valueOf(rs.getString("estado_solicitud")));
-
-                if (rs.getObject("id_usuario_solicitante") != null) {
-                    Empleado usuarioSolicitante = new Empleado();
-                    usuarioSolicitante.setUsuarioID(rs.getInt("id_usuario_solicitante"));
-                    solicitud.setSolicitante(usuarioSolicitante);
-                }
-
-                if (rs.getObject("id_usuario_destinatario") != null) {
-                    Empleado usuarioDestinatario = new Empleado();
-                    usuarioDestinatario.setUsuarioID(rs.getInt("id_usuario_destinatario"));
-                    solicitud.setDestinatario(usuarioDestinatario);
-                }
-
-                if (rs.getObject("id_ciclo_caja") != null) {
-                    CicloCajaChica cicloCaja = new CicloCajaChica();
-                    cicloCaja.setIdCicloCaja(rs.getInt("id_ciclo_caja"));
-                    solicitud.setCiclo(cicloCaja);
-                }
-
+                if(solicitud.getSolicitante() == null)
+                    solicitud.setSolicitante(new Empleado());
+                solicitud.getSolicitante().setUsuarioID(rs.getInt("id_usuario_solicitante"));
+                if(solicitud.getDestinatario() == null)
+                    solicitud.setDestinatario(new Empleado());
+                solicitud.getDestinatario().setUsuarioID(rs.getInt("id_usuario_destinatario"));
+                if(solicitud.getCiclo() == null)
+                    solicitud.setCiclo(new CicloCajaChica());
+                solicitud.getCiclo().setIdCicloCaja(rs.getInt("id_ciclo_caja"));
                 solicitudes.add(solicitud);
             }
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try {
-                cs.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-            try {
-                con.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
+        }catch(SQLException ex){
+            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
-
         return solicitudes;
     }
 }

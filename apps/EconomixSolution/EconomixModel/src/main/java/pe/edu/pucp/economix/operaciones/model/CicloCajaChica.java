@@ -1,9 +1,9 @@
 package pe.edu.pucp.economix.operaciones.model;
 
-import pe.edu.pucp.economix.tesoreria.model.CajaChica;
-
 import java.util.Date;
 import java.util.List;
+
+import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 
 public class CicloCajaChica{
     private int idCicloCaja;
@@ -103,6 +103,12 @@ public class CicloCajaChica{
     }
     public void setSolicitudesDeGasto(List<SolicitudGasto> solicitudesDeGasto) {
         this.solicitudesDeGasto = solicitudesDeGasto;
+    }
+    public Rendicion getRendicion() {
+        return rendicion;
+    }
+    public void setRendicion(Rendicion rendicion) {
+        this.rendicion = rendicion;
     }
 
     @Override
