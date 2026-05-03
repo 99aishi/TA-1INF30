@@ -103,9 +103,6 @@ END$$
 DROP PROCEDURE IF EXISTS pa_listar_solicitudes_gasto $$
 CREATE PROCEDURE pa_listar_solicitudes_gasto()
 BEGIN
-    IF p_id_solicitud_gasto IS NULL OR p_id_solicitud_gasto <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de solicitud de gasto inválido';
-    END IF;
 
     SELECT 
         id_solicitud_gasto, 
@@ -125,6 +122,10 @@ CREATE PROCEDURE pa_listar_solicitudes_por_solicitante(
     IN p_id_usuario_solicitante INT
 )
 BEGIN
+    IF p_id_usuario_solicitante IS NULL OR p_id_usuario_solicitante <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de usuario solicitante inválido';
+    END IF;
+
     SELECT 
         id_solicitud_gasto, 
         fecha_solicitud, 
@@ -145,6 +146,10 @@ CREATE PROCEDURE pa_listar_solicitudes_pendientes_jefe(
     IN p_id_usuario_destinatario INT
 )
 BEGIN
+    IF p_id_usuario_destinatario IS NULL OR p_id_usuario_destinatario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de usuario destinatario inválido';
+    END IF;
+
     SELECT 
         id_solicitud_gasto, 
         fecha_solicitud, 

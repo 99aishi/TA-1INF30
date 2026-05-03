@@ -180,12 +180,13 @@ CREATE TABLE IF NOT EXISTS tes_caja_chica (
 CREATE TABLE IF NOT EXISTS ope_ciclo_caja (
     id_ciclo_caja INT NOT NULL AUTO_INCREMENT,
     numero_semana INT,
-    fecha_apertura DATE NOT NULL DEFAULT (CURRENT_DATE),
+    fecha_apertura DATE NULL,
     fecha_cierre DATE NULL,
     monto_saldo_inicial DECIMAL(12,2) DEFAULT 0.00,
     monto_total_gastado DECIMAL(12,2) DEFAULT 0.00,
     estado_ciclo VARCHAR(20) DEFAULT 'Abierto',
-    id_fondo_caja_chica INT NOT NULL,
+    id_caja_chica INT NOT NULL,
+    id_rendicion INT NULL,
     
     -- Auditoría
     creado_at DATETIME,
@@ -194,8 +195,10 @@ CREATE TABLE IF NOT EXISTS ope_ciclo_caja (
     id_usuario_modificacion INT,
     
     CONSTRAINT pk_ope_ciclo_caja PRIMARY KEY (id_ciclo_caja),
-    CONSTRAINT fk_ope_ciclo_caja_tes_caja_chica FOREIGN KEY (id_fondo_caja_chica) 
-        REFERENCES tes_caja_chica(id_fondo)
+    CONSTRAINT fk_ope_ciclo_caja_tes_caja_chica FOREIGN KEY (id_caja_chica) 
+        REFERENCES tes_caja_chica(id_fondo),
+    CONSTRAINT fk_ope_ciclo_caja_ope_rendicion FOREIGN KEY (id_rendicion) 
+        REFERENCES ope_rendicion(id_rendicion)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS ope_rendicion (

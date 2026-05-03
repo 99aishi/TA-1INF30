@@ -5,7 +5,9 @@ import java.util.List;
 
 import pe.edu.pucp.economix.operaciones.implement.ComprobantePagoImplement;
 import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
+import pe.edu.pucp.economix.operaciones.model.EstadoComprobante;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
+import pe.edu.pucp.economix.operaciones.model.TipoComprobante;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 public class ComprobantePagoTest {
@@ -13,14 +15,13 @@ public class ComprobantePagoTest {
 
     public static List<ComprobantePago> pruebaInsercion(SolicitudGasto solicitudAprobada, Moneda moneda) throws SQLException{
 
-        ComprobantePago factura = new ComprobantePago(
-
-        );
+        ComprobantePago factura = new ComprobantePago();
 
         // Seteamos las relaciones (Claves Foráneas)
         factura.setSolicitud(solicitudAprobada);
         factura.setMoneda(moneda);
-
+        factura.setEstado(EstadoComprobante.PorRevisar);
+        factura.setTipoDocumento(TipoComprobante.Factura);
         factura.setIdComprobante(comprobanteDAO.insertar(factura));
 
         // Listar y verificar

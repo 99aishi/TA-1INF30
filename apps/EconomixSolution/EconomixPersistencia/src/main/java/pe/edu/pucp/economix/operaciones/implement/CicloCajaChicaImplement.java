@@ -24,7 +24,11 @@ public class CicloCajaChicaImplement implements ICicloCajaChicaDAO {
         Map<String,Object> parametrosEntrada = new HashMap<>();
         parametrosSalida.put("p_id_generado", Types.INTEGER);
         parametrosEntrada.put("p_numero_semana", cicloCajaChica.getNumeroSemana());
-        parametrosEntrada.put("p_fecha_apertura", new java.sql.Date(cicloCajaChica.getFechaApertura().getTime()));
+        if(cicloCajaChica.getFechaCierre()!= null)
+            parametrosEntrada.put("p_fecha_apertura", new java.sql.Date(cicloCajaChica.getFechaApertura().getTime()));
+        else
+            parametrosEntrada.put("p_fecha_apertura", null);
+
         if(cicloCajaChica.getFechaCierre()!= null)
             parametrosEntrada.put("p_fecha_cierre", new java.sql.Date(cicloCajaChica.getFechaCierre().getTime()));
         else
@@ -32,7 +36,10 @@ public class CicloCajaChicaImplement implements ICicloCajaChicaDAO {
         parametrosEntrada.put("p_monto_saldo_inicial", cicloCajaChica.getSaldoInicial());
         parametrosEntrada.put("p_monto_total_gastado", cicloCajaChica.getTotalGastado());
         parametrosEntrada.put("p_estado_ciclo", cicloCajaChica.getEstado().toString());
-        parametrosEntrada.put("p_id_fondo_caja_chica", cicloCajaChica.getCajaChica().getIdFondo());
+        if(cicloCajaChica.getCajaChica() != null)
+            parametrosEntrada.put("p_id_caja_chica", cicloCajaChica.getCajaChica().getIdFondo());
+        else
+            parametrosEntrada.put("p_id_caja_chica", null);
         if(cicloCajaChica.getRendicion()!= null)
             parametrosEntrada.put("p_id_rendicion", cicloCajaChica.getRendicion().getIdRendicion());
         else
@@ -56,7 +63,7 @@ public class CicloCajaChicaImplement implements ICicloCajaChicaDAO {
         parametrosEntrada.put("p_monto_saldo_inicial", cicloCajaChica.getSaldoInicial());
         parametrosEntrada.put("p_monto_total_gastado", cicloCajaChica.getTotalGastado());
         parametrosEntrada.put("p_estado_ciclo", cicloCajaChica.getEstado().toString());
-        parametrosEntrada.put("p_id_fondo_caja_chica", cicloCajaChica.getCajaChica().getIdFondo());
+        parametrosEntrada.put("p_id_caja_chica", cicloCajaChica.getCajaChica().getIdFondo());
         if(cicloCajaChica.getRendicion()!= null)
             parametrosEntrada.put("p_id_rendicion", cicloCajaChica.getRendicion().getIdRendicion());
         else
@@ -92,7 +99,7 @@ public class CicloCajaChicaImplement implements ICicloCajaChicaDAO {
                 ciclo.setEstado(EstadoCicloCaja.valueOf(rs.getString("estado_ciclo"))); 
                 if(ciclo.getCajaChica() == null)
                     ciclo.setCajaChica(new CajaChica());
-                ciclo.getCajaChica().setIdFondo(rs.getInt("id_fondo_caja_chica"));
+                ciclo.getCajaChica().setIdFondo(rs.getInt("id_caja_chica"));
                 if(ciclo.getRendicion() == null)
                     ciclo.setRendicion(new Rendicion());
                 ciclo.getRendicion().setIdRendicion(rs.getInt("id_rendicion"));
@@ -123,7 +130,7 @@ public class CicloCajaChicaImplement implements ICicloCajaChicaDAO {
                 ciclo.setEstado(EstadoCicloCaja.valueOf(rs.getString("estado_ciclo"))); 
                 if(ciclo.getCajaChica() == null)
                     ciclo.setCajaChica(new CajaChica());
-                ciclo.getCajaChica().setIdFondo(rs.getInt("id_fondo_caja_chica"));
+                ciclo.getCajaChica().setIdFondo(rs.getInt("id_caja_chica"));
                 if(ciclo.getRendicion() == null)
                     ciclo.setRendicion(new Rendicion());
                 ciclo.getRendicion().setIdRendicion(rs.getInt("id_rendicion"));

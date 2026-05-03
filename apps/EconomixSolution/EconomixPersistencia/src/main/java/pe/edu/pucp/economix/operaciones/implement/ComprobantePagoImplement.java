@@ -126,7 +126,7 @@ public class ComprobantePagoImplement implements IComprobantePagoDAO {
     public List<ComprobantePago> listarTodas() throws SQLException {
         List<ComprobantePago> comprobantes=null;
         ComprobantePago comprobante;
-        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_comprobantes", null);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_comprobantes_pago", null);
         try{
             while(rs.next()){
                 if(comprobantes == null) comprobantes = new ArrayList<>();

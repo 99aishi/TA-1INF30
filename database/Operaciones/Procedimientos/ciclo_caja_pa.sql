@@ -24,7 +24,7 @@ BEGIN
         monto_saldo_inicial,
         monto_total_gastado,
         estado_ciclo,
-        id_fondo_caja_chica,
+        id_caja_chica,
         id_rendicion
     )
     VALUES(
@@ -34,7 +34,7 @@ BEGIN
         p_monto_saldo_inicial,
         p_monto_total_gastado,
         p_estado_ciclo,
-        p_id_fondo_caja_chica,
+        p_id_caja_chica,
         p_id_rendicion
     );
     
@@ -65,7 +65,7 @@ BEGIN
            monto_saldo_inicial = p_monto_saldo_inicial,
            monto_total_gastado = p_monto_total_gastado,
            estado_ciclo = p_estado_ciclo,
-           id_fondo_caja_chica = p_id_fondo_caja_chica,
+           id_caja_chica = p_id_caja_chica,
            id_rendicion = p_id_rendicion
      WHERE id_ciclo_caja = p_id_ciclo_caja;
 END$$
@@ -102,7 +102,7 @@ BEGIN
         monto_saldo_inicial, 
         monto_total_gastado, 
         estado_ciclo, 
-        id_fondo_caja_chica, 
+        id_caja_chica, 
         id_rendicion
     FROM ope_ciclo_caja
     WHERE id_ciclo_caja = p_id_ciclo_caja
@@ -120,7 +120,7 @@ BEGIN
         monto_saldo_inicial, 
         monto_total_gastado, 
         estado_ciclo, 
-        id_fondo_caja_chica, 
+        id_caja_chica, 
         id_rendicion
     FROM ope_ciclo_caja
     ORDER BY estado_ciclo DESC;

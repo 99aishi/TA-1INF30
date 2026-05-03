@@ -117,7 +117,7 @@ public class SolicitudGastoImplement implements ISolicitudGastoDAO {
     public List<SolicitudGasto> listarTodas() throws SQLException {
         List<SolicitudGasto> solicitudes = null;
         SolicitudGasto solicitud;
-        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_todas_solicitudes_gasto", null);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_solicitudes_gasto", null);
         try{
             while(rs.next()){
                 if(solicitudes == null) solicitudes = new ArrayList<>();
