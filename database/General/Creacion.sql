@@ -281,8 +281,8 @@ CREATE TABLE IF NOT EXISTS ope_transaccion (
     monto_transaccion DECIMAL(12,2) NOT NULL,
     numero_operacion_bancaria VARCHAR(30),
     medio_pago VARCHAR(30),
-    valor_tipo_cambio DECIMAL(10,4),
-    
+    valor_tipo_cambio DECIMAL(10,4) DEFAULT 1.0000,
+    estado_transaccion VARCHAR(20) DEFAULT 'Registrada',
     id_cuenta_origen INT NULL,
     id_cuenta_destino INT NULL,
     id_moneda INT NOT NULL,
