@@ -4,7 +4,7 @@ DROP PROCEDURE IF EXISTS pa_insertar_fondo $$
 CREATE PROCEDURE pa_insertar_fondo(
 	OUT p_id_fondo INT,
     IN p_nombre_fondo VARCHAR(100),
-    IN p_estado_fondo VARCHAR(20),
+    IN p_estado_fondo VARCHAR(20)
 )
 BEGIN   
 	INSERT INTO tes_fondo(nombre_fondo, estado_fondo) 

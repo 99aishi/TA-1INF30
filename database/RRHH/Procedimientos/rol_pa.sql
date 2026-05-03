@@ -20,7 +20,7 @@ BEGIN
     );
     
     SET p_id_generado = LAST_INSERT_ID();
-END;
+END$$
 
 DROP PROCEDURE IF EXISTS pa_modificar_rol $$
 CREATE PROCEDURE pa_modificar_rol(

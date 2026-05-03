@@ -10,7 +10,7 @@ CREATE PROCEDURE pa_insertar_comprobante_pago(
     IN p_monto_subtotal DECIMAL(12,2),
     IN p_monto_igv DECIMAL(12,2),
     IN p_monto_total DECIMAL(12,2),
-    INT p_estado_comprobante VARCHAR(20),
+    IN p_estado_comprobante VARCHAR(20),
     IN p_id_solicitud_gasto INT,
     IN p_id_moneda INT,
     OUT p_id_generado INT

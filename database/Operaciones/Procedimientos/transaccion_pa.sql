@@ -60,8 +60,8 @@ BEGIN
     UPDATE ope_transaccion
        SET 
             tipo_operacion = p_tipo_operacion,
-            momento_operacion = p_momento_operacion
-            monto_transaccion = p_monto_transaccion,
+            momento_operacion = p_momento_operacion,
+			monto_transaccion = p_monto_transaccion,
             numero_operacion_bancaria = p_numero_operacion_bancaria,
             medio_pago = p_medio_pago,
             valor_tipo_cambio = p_valor_tipo_cambio,
@@ -122,7 +122,7 @@ BEGIN
         id_cuenta_destino, 
         id_moneda
     FROM ope_transaccion
-    ORDER BY estado_transaccion, DESC;
+    ORDER BY estado_transaccion DESC;
 END$$
 
 DELIMITER ;

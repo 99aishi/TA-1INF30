@@ -46,7 +46,7 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de caja chica no válido';
     END IF;
 
-    pa_eliminar_fondo(p_id_fondo);
+    call pa_eliminar_fondo(p_id_fondo);
 
 END$$
 
@@ -65,9 +65,9 @@ BEGIN
         c.monto_techo,
         c.id_area
     FROM tes_fondo f 
-    WHERE f.id_fondo = p_id_fondo and f.estado_fondo='Activo'
     JOIN tes_caja_chica c 
-        ON f.id_fondo=c.id_fondo;
+        ON f.id_fondo=c.id_fondo
+    WHERE f.id_fondo = p_id_fondo and f.estado_fondo='Activo';
 END$$
 
 DROP PROCEDURE IF EXISTS pa_listar_caja_chica $$
@@ -79,9 +79,9 @@ BEGIN
         c.monto_techo,
         c.id_area
     FROM tes_fondo f 
-    WHERE f.estado_fondo='Activo'
     JOIN tes_caja_chica c 
-        ON f.id_fondo=c.id_fondo;
+        ON f.id_fondo=c.id_fondo
+    WHERE f.estado_fondo='Activo';
 END$$
 
 DELIMITER ;
