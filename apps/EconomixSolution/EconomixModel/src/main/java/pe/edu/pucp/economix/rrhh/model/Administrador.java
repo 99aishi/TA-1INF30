@@ -29,7 +29,7 @@ public class Administrador extends Usuario{
 
     @Override
     public String toString() {
-        return super.toString() +  "Administrador{" +
+        return super.toString() +  " Administrador{" +
                 "correoSoporte='" + correoSoporte + '\'' +
                 '}';
     }

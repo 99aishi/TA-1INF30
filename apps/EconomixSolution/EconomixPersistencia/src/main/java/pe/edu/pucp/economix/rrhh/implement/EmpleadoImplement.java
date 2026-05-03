@@ -2,7 +2,10 @@ package pe.edu.pucp.economix.rrhh.implement;
 
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.rrhh.dao.IEmpleadoDAO;
+import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
+import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
+import pe.edu.pucp.economix.rrhh.model.Rol;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -35,7 +38,11 @@ public class EmpleadoImplement  implements IEmpleadoDAO{
         parametrosEntrada.put("p_numero_celular", empleado.getNumeroCelular());
         parametrosEntrada.put("p_id_area", empleado.getArea().getIdArea());
         parametrosEntrada.put("p_id_rol", empleado.getRol().getRolID());
-        parametrosEntrada.put("p_id_jefe_directo", empleado.getJefeDirecto().getUsuarioID());
+        if(empleado.getJefeDirecto() != null)
+            parametrosEntrada.put("p_id_jefe_directo", empleado.getJefeDirecto().getUsuarioID());
+        else
+            parametrosEntrada.put("p_id_jefe_directo", null);
+
         DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_empleado", parametrosEntrada, parametrosSalida);
 
         return empleado.getUsuarioID();
@@ -56,157 +63,83 @@ public class EmpleadoImplement  implements IEmpleadoDAO{
         parametrosEntrada.put("p_numero_celular", empleado.getNumeroCelular());
         parametrosEntrada.put("p_id_area", empleado.getArea().getIdArea());
         parametrosEntrada.put("p_id_rol", empleado.getRol().getRolID());
-        parametrosEntrada.put("p_id_jefe_directo", empleado.getJefeDirecto().getUsuarioID());
+        if(empleado.getJefeDirecto() != null)
+            parametrosEntrada.put("p_id_jefe_directo", empleado.getJefeDirecto().getUsuarioID());
+        else
+            parametrosEntrada.put("p_id_jefe_directo", null);
+
         DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_empleado", parametrosEntrada, null);
         return resultado;
     }
     @Override
-    public int eliminar(int idEmpleado){
-        int cantidad=0;
-        try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs= con.prepareCall("{call pa_eliminar_empleado(?)}");
-
-            cs.setInt("p_id_usuario", idEmpleado);
-            cantidad = cs.executeUpdate();
-
-
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-        return cantidad;
+    public int eliminar(int idEmpleado) throws SQLException {
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario", idEmpleado);
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_eliminar_empleado", parametrosEntrada, null);
+        return resultado;
     }
 
     @Override
-    public Empleado buscarPorId(int idEmpleado){
+    public Empleado buscarPorId(int idEmpleado) throws SQLException {
         Empleado empleado = null;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario", idEmpleado);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_empleado_por_id", parametrosEntrada);
         try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs= con.prepareCall("{call pa_buscar_empleado_por_id(?)}");
-            cs.setInt("p_id_usuario", idEmpleado);
-
-            rs = cs.executeQuery();
             if(rs.next()){
-                //Rescato los datose
                 empleado = new Empleado();
                 empleado.setUsuarioID(rs.getInt("id_usuario"));
                 empleado.setCorreoInstitucional(rs.getString("correo_institucional"));
                 empleado.setNumeroCelular(rs.getString("numero_celular"));
-                //Para los fk, hacemos el llamado para obtener su valores desde sus tablas
-                int idArea = rs.getInt("id_area");
-                empleado.setArea(new AreaImplement().buscarPorId(idArea));
-
-                int idRol = rs.getInt("id_rol");
-                empleado.setRol(new RolImplement().buscarPorId(idRol));
-
-                //Revisar relacion de recursividad al momento de obtener el jefe.
-                int idJefeDirecto = rs.getInt("id_jefe_directo");
-                Empleado jefe = new Empleado();
-                jefe.setUsuarioID(idJefeDirecto);
-                empleado.setJefeDirecto(jefe);
-
-                //Consultamos al usuario que creamos recién
-                ResultSet rsUsuario;
-                CallableStatement csUsuario= con.prepareCall("{call pa_buscar_usuario_por_id(?)}");
-                int id = empleado.getUsuarioID();
-                csUsuario.setInt("p_id_usuario", id);
-                rsUsuario = csUsuario.executeQuery();
-
-
-                if(rsUsuario.next()){
-                    empleado.setNombres(rsUsuario.getString("nombres"));
-                    empleado.setApellidoPaterno(rsUsuario.getString("apellido_paterno"));
-                    empleado.setApellidoMaterno(rsUsuario.getString("apellido_materno"));
-                }
-
+                empleado.getArea().setIdArea(rs.getInt("id_area"));
+                empleado.getRol().setRolID(rs.getInt("id_rol"));
+                empleado.getJefeDirecto().setUsuarioID(rs.getInt("id_jefe_directo"));
+                empleado.setEstado(EstadoUsuario.Activo);
+                empleado.setPassword(rs.getString("password_hash"));
+                empleado.setNombres(rs.getString("nombres"));
+                empleado.setApellidoPaterno(rs.getString("apellido_paterno"));
+                empleado.setApellidoMaterno(rs.getString("apellido_materno"));
             }
         }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
+            System.out.println("Error al buscar empleado por id: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
         return empleado;
     }
 
     @Override
-    public List<Empleado> listarTodas(){
+    public List<Empleado> listarTodas() throws SQLException {
         List<Empleado> empleados = null;
+        Empleado empleado = null;
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_empleados", null);
         try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs = con.prepareCall("{call pa_listar_empleados()}");
-            rs = cs.executeQuery();
             while(rs.next()){
-                if(empleados==null)
-                    empleados = new ArrayList<>();
-
-                //Rescato los datos
-                Empleado empleado = new Empleado();
-
+                if(empleados == null) empleados = new ArrayList<>();
+                empleado = new Empleado();
                 empleado.setUsuarioID(rs.getInt("id_usuario"));
                 empleado.setCorreoInstitucional(rs.getString("correo_institucional"));
                 empleado.setNumeroCelular(rs.getString("numero_celular"));
-                //Para los fk, hacemos el llamado para obtener su valores desde sus tablas
-                int idArea = rs.getInt("id_area");
-                empleado.setArea(new AreaImplement().buscarPorId(idArea));
-                int idRol = rs.getInt("id_rol");
-                empleado.setRol(new RolImplement().buscarPorId(idRol));
-                //Revisar relacion de recursividad al momento de obtener el jefe.
-                int idJefeDirecto = rs.getInt("id_jefe_directo");
-                Empleado jefe = new Empleado();
-                jefe.setUsuarioID(idJefeDirecto);
-                empleado.setJefeDirecto(jefe);
-
-                //Consultamos al usuario que creamos recién
-                ResultSet rsUsuario;
-                CallableStatement csUsuario= con.prepareCall("{call pa_buscar_usuario_por_id(?)}");
-                int id = empleado.getUsuarioID();
-                csUsuario.setInt("p_id_usuario", id);
-                rsUsuario = csUsuario.executeQuery();
-
-
-                if(rsUsuario.next()){
-                    empleado.setNombres(rsUsuario.getString("nombres"));
-                    empleado.setApellidoPaterno(rsUsuario.getString("apellido_paterno"));
-                    empleado.setApellidoMaterno(rsUsuario.getString("apellido_materno"));
-                }
+                if(empleado.getArea() == null)
+                    empleado.setArea(new Area());
+                empleado.getArea().setIdArea(rs.getInt("id_area"));
+                if(empleado.getRol() == null)
+                    empleado.setRol(new Rol());
+                empleado.getRol().setRolID(rs.getInt("id_rol"));
+                if(empleado.getJefeDirecto() == null)
+                    empleado.setJefeDirecto(new Empleado());
+                empleado.getJefeDirecto().setUsuarioID(rs.getInt("id_jefe_directo"));
+                empleado.setEstado(EstadoUsuario.Activo);
+                empleado.setPassword(rs.getString("password_hash"));
+                empleado.setNombres(rs.getString("nombres"));
+                empleado.setApellidoPaterno(rs.getString("apellido_paterno"));
+                empleado.setApellidoMaterno(rs.getString("apellido_materno"));
                 empleados.add(empleado);
             }
         }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
+            System.out.println("Error al buscar empleados: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
         return empleados;
 

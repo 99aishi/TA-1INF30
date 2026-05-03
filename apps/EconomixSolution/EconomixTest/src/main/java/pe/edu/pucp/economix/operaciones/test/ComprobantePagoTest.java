@@ -16,15 +16,7 @@ public class ComprobantePagoTest {
     public static List<ComprobantePago> pruebaInsercion(SolicitudGasto solicitudAprobada, Moneda moneda){
 
         ComprobantePago factura = new ComprobantePago(
-                TipoComprobante.valueOf("Factura"), // Ajusta al nombre real de tu Enum
-                "20123456789",
-                "Logitech Perú S.A.",
-                "F001-000456",
-                new Date(),
-                150.00,  // Monto Total
-                127.12,  // Subtotal
-                22.88,   // IGV
-                150.00   // Total
+
         );
 
         // Seteamos las relaciones (Claves Foráneas)

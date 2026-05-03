@@ -30,10 +30,10 @@ public class CuentaBancariaImplement implements ICuentaBancariaDAO{
             cs.setString("_numero_cuenta", cuentaBancaria.getNumeroBancario());
             cs.setString("_cci",cuentaBancaria.getCci());
             cs.setInt("_id_moneda",cuentaBancaria.getMoneda().getIdMoneda());
-            if(cuentaBancaria.getAdministrador() == null)
+            if(cuentaBancaria.getAreaAdministradora() == null)
                 cs.setNull("_id_usuario_titular", java.sql.Types.INTEGER);
             else
-                cs.setInt("_id_usuario_titular",cuentaBancaria.getAdministrador().getUsuarioID());
+                cs.setInt("_id_usuario_titular",cuentaBancaria.getAreaAdministradora().getIdArea());
 
             if(cuentaBancaria.getAreaAdministradora() == null)
                 cs.setNull("_id_area_titular", java.sql.Types.INTEGER);
@@ -71,7 +71,7 @@ public class CuentaBancariaImplement implements ICuentaBancariaDAO{
             cs.setString("_numero_cuenta", cuentaBancaria.getNumeroBancario());
             cs.setString("_cci",cuentaBancaria.getCci());
             cs.setInt("_id_moneda",cuentaBancaria.getMoneda().getIdMoneda());
-            cs.setInt("_id_usuario_titular",cuentaBancaria.getAdministrador().getUsuarioID());
+            cs.setInt("_id_usuario_titular",cuentaBancaria.getEmpleadoAdministrador().getUsuarioID());
             resultado=cs.executeUpdate();;
         }catch(Exception ex){
             System.out.println("ERROR: "+ ex.getMessage());
@@ -136,7 +136,7 @@ public class CuentaBancariaImplement implements ICuentaBancariaDAO{
                 emp.setNombres(rs.getString("nombres"));
                 emp.setApellidoPaterno(rs.getString("apellido_paterno"));
                 emp.setApellidoMaterno(rs.getString("apellido_materno"));
-                cuentaBancaria.setAdministrador(emp);
+                cuentaBancaria.setEmpleadoAdministrador(emp);
 
                 Moneda mon=new Moneda();
                 mon.setIdMoneda(rs.getInt("id_moneda"));
@@ -187,7 +187,7 @@ public class CuentaBancariaImplement implements ICuentaBancariaDAO{
                 emp.setNombres(rs.getString("nombres"));
                 emp.setApellidoPaterno(rs.getString("apellido_paterno"));
                 emp.setApellidoMaterno(rs.getString("apellido_materno"));
-                cuentaBancaria.setAdministrador(emp);
+                cuentaBancaria.setEmpleadoAdministrador(emp);
 
                 Moneda mon=new Moneda();
                 mon.setIdMoneda(rs.getInt("id_moneda"));

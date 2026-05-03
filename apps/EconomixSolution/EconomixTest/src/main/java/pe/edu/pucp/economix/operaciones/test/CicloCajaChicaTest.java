@@ -11,21 +11,13 @@ public class CicloCajaChicaTest {
     private static CicloCajaChicaImplement cicloDAO = new CicloCajaChicaImplement();
     public static List<CicloCajaChica> pruebaInsercion(CajaChica cajaTI, CajaChica cajaFinanzas){
         CicloCajaChica cicloTI = new CicloCajaChica(
-                1,
-                new Date(),
-                null, // Aún no cierra
-                cajaTI.getMontoTecho(),
-                cajaTI
+
         );
         cicloTI.setIdCicloCaja(cicloDAO.insertar(cicloTI));
 
         // Ciclo 2: Para el área de Finanzas (Semana 1)
         CicloCajaChica cicloFinanzas = new CicloCajaChica(
-                1,
-                new Date(),
-                null,
-                cajaFinanzas.getMontoTecho(),
-                cajaFinanzas
+
         );
         cicloFinanzas.setIdCicloCaja(cicloDAO.insertar(cicloFinanzas));
 

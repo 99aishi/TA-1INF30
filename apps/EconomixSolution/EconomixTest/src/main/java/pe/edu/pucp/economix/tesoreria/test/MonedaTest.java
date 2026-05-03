@@ -9,10 +9,10 @@ public class MonedaTest {
     public static List<Moneda> pruebaInsercion(){
         MonedaImplement monedaDAO = new MonedaImplement();
 
-        Moneda dolar= new Moneda("USD","$");
+        Moneda dolar= new Moneda(0,"USD","$");
         dolar.setIdMoneda(monedaDAO.insertar(dolar));
 
-        Moneda sol = new Moneda("PEN", "S/.");
+        Moneda sol = new Moneda(0,"PEN", "S/.");
         sol.setIdMoneda(monedaDAO.insertar(sol));
 
 

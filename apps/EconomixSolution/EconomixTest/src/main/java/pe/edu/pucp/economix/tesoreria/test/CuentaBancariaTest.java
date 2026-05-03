@@ -18,7 +18,7 @@ public class CuentaBancariaTest {
             cuenta.setNumeroBancario("444");
             cuenta.setCci("555");
             cuenta.setMoneda(sol);
-            cuenta.setAdministrador(emp1);
+            cuenta.setEmpleadoAdministrador(emp1);
             cuenta.setIdCuenta(cuentaDAO.insertar(cuenta));
 
             CuentaBancaria cuentaUSD = new CuentaBancaria();
@@ -26,7 +26,7 @@ public class CuentaBancariaTest {
             cuentaUSD.setNumeroBancario("777");
             cuentaUSD.setCci("67");
             cuentaUSD.setMoneda(usd);
-            cuentaUSD.setAdministrador(emp2);
+            cuentaUSD.setEmpleadoAdministrador((emp2));
             cuentaUSD.setIdCuenta(cuentaDAO.insertar(cuentaUSD));
 
             CuentaBancaria cuenta3 = new CuentaBancaria();

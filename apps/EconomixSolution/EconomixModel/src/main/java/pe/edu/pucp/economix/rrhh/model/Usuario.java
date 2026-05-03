@@ -72,7 +72,7 @@ public abstract class Usuario{
 
     @Override
     public String toString() {
-        return super.toString() + "Usuario{" +
+        return "Usuario{" +
                 "usuarioID=" + usuarioID +
                 ", nombres='" + nombres + '\'' +
                 ", apellidoPaterno='" + apellidoPaterno + '\'' +

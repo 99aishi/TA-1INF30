@@ -15,7 +15,6 @@ public class CajaChicaTest {
         cajaChicaTI.setAreaAsignada(areaTI);
         cajaChicaTI.setNombre("Caja Chica TI");
         cajaChicaTI.setMontoTecho(1.00);
-        cajaChicaTI.setSaldoActual(1.00);
         cajaChicaTI.setEstado(EstadoFondo.Activo);
         cajaChicaTI.setIdFondo(cajaChicaDAO.insertar(cajaChicaTI));
 
@@ -23,7 +22,6 @@ public class CajaChicaTest {
         cajaChicaFinanzas.setAreaAsignada(areaFinanzas);
         cajaChicaFinanzas.setNombre("Caja Chica Finanzas");
         cajaChicaFinanzas.setMontoTecho(1000.00);
-        cajaChicaFinanzas.setSaldoActual(1000.00);
         cajaChicaFinanzas.setEstado(EstadoFondo.Activo);
         cajaChicaTI.setIdFondo(cajaChicaDAO.insertar(cajaChicaFinanzas));
 

@@ -110,6 +110,11 @@ public class DBManager {
         for (Map.Entry<String, Object> entry : parametros.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
+
+            if (value == null) {
+                cs.setNull(key, java.sql.Types.NULL);
+                continue;
+            }
             switch (value) {
                 case Integer entero -> cs.setInt(key, entero);
                 case String cadena -> cs.setString(key, cadena);

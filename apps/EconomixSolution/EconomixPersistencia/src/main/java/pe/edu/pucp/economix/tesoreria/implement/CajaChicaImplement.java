@@ -27,7 +27,6 @@ public class CajaChicaImplement implements ICajaChicaDAO{
             cs=con.prepareCall("{call pa_insertar_tes_caja_chica(?,?,?,?,?,?)}");
             cs.registerOutParameter("_id_fondo",Types.INTEGER);
             cs.setString("p_nombre_fondo", cajaChica.getNombre());
-            cs.setDouble("p_monto_saldo_actual",cajaChica.getSaldoActual());
             cs.setString("p_estado_fondo",cajaChica.getEstado().name());
             cs.setDouble("p_monto_techo",cajaChica.getMontoTecho());
             cs.setInt("p_id_area",cajaChica.getAreaAsignada().getIdArea());
@@ -57,7 +56,6 @@ public class CajaChicaImplement implements ICajaChicaDAO{
             con = DBManager.getDBManager().getConnection();
             cs=con.prepareCall("CALL pa_modificar_tes_caja_chica(?,?,?)");
             cs.setInt("p_id_fondo",objeto.getIdFondo());
-            cs.setDouble("p_monto_saldo_actual",objeto.getSaldoActual());
             cs.setDouble("p_monto_techo",objeto.getMontoTecho());
             resultado = cs.executeUpdate();
 
@@ -125,7 +123,7 @@ public class CajaChicaImplement implements ICajaChicaDAO{
                 int idArea=rs.getInt("id_area");
                 Area area= new Area();
                 area.setIdArea(idArea);
-                caja = new CajaChica(idFondo ,nombre,saldoActual,estado,monto_techo,area);
+                //caja = new CajaChica(idFondo ,nombre,saldoActual,estado,monto_techo,area);
             }
 
         }catch(Exception ex){
@@ -164,7 +162,7 @@ public class CajaChicaImplement implements ICajaChicaDAO{
                 int idArea=rs.getInt("id_area");
                 Area area= new Area();
                 area.setIdArea(idArea);
-                CajaChica caja = new CajaChica(idFondo ,nombre,saldoActual,estado,monto_techo,area);
+                CajaChica caja = new CajaChica();
                 cajas.add(caja);
             }
 

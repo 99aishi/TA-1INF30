@@ -106,7 +106,7 @@ public class Empleado extends Usuario {
 
     @Override
     public String toString() {
-        return "Empleado{" +
+        return super.toString() + " Empleado{" +
                 "correoInstitucional='" + correoInstitucional + '\'' +
                 ", numeroCelular='" + numeroCelular + '\'' +
                 ", rol=" + rol +

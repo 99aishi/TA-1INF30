@@ -44,11 +44,6 @@ public class ComprobantePagoImplement implements IComprobantePagoDAO {
             else
                 cs.setNull("p_id_solicitud_gasto", Types.INTEGER);
 
-            if (comprobante.getFondoEntrega() != null)
-                cs.setInt("p_id_fondo_entrega", comprobante.getFondoEntrega().getIdFondo());
-            else
-                cs.setNull("p_id_fondo_entrega", Types.INTEGER);
-
             if (comprobante.getMoneda() != null)
                 cs.setInt("p_id_moneda", comprobante.getMoneda().getIdMoneda());
             else
@@ -95,11 +90,6 @@ public class ComprobantePagoImplement implements IComprobantePagoDAO {
                 cs.setInt("p_id_solicitud_gasto", comprobante.getSolicitud().getIdSolicitudGasto());
             else
                 cs.setNull("p_id_solicitud_gasto", Types.INTEGER);
-
-            if (comprobante.getFondoEntrega() != null)
-                cs.setInt("p_id_fondo_entrega", comprobante.getFondoEntrega().getIdFondo());
-            else
-                cs.setNull("p_id_fondo_entrega", Types.INTEGER);
 
             /* if (comprobante.getMoneda() != null)
                 cs.setInt("p_id_moneda", comprobante.getMoneda().getIdMoneda());
@@ -228,7 +218,6 @@ public class ComprobantePagoImplement implements IComprobantePagoDAO {
         if (rs.getObject("id_fondo_entrega") != null) {
             Fondo fondo = new Fondo();
             fondo.setIdFondo(rs.getInt("id_fondo_entrega"));
-            cp.setFondoEntrega(fondo);
         }
 
         if (rs.getObject("id_moneda") != null) {

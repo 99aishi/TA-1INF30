@@ -4,10 +4,11 @@ import pe.edu.pucp.economix.rrhh.implement.AdministradorImplement;
 import pe.edu.pucp.economix.rrhh.model.Administrador;
 import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public class AdministradorTest {
-    public static List<Administrador> pruebaInsercion(){
+    public static List<Administrador> pruebaInsercion() throws SQLException {
         Administrador admin1 = new Administrador();
         AdministradorImplement adminDAO = new AdministradorImplement();
         admin1.setNombres("Soporte");
@@ -19,12 +20,7 @@ public class AdministradorTest {
 
         List<Administrador> listaAdmins = adminDAO.listarTodas();
         for (Administrador ad : listaAdmins) {
-            // Obtenemos los nombres de los objetos relacionados (Agregación)
-
-            System.out.println(String.format("ID: %d | Empleado: %-25s | Correo: %-25s",
-                    ad.getUsuarioID(),
-                    ad.getNombres() + " " + ad.getApellidoPaterno(),
-                    ad.getCorreoSoporte()));
+            System.out.println(ad.toString());
         }
         System.out.println();
         return listaAdmins;

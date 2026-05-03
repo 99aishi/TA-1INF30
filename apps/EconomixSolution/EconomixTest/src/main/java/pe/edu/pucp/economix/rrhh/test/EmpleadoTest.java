@@ -6,13 +6,14 @@ import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
 import pe.edu.pucp.economix.rrhh.model.Rol;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public class EmpleadoTest {
     private static EmpleadoImplement empleadoDAO = new EmpleadoImplement();
     public static List<Empleado> pruebaInsercion(Area areaGerenciaGeneral, Rol rolGerenteGeneral,
                                 Area areaTI, Rol rolAnalista,
-                                Area areaFinanzas, Rol rolGerente){
+                                Area areaFinanzas, Rol rolGerente) throws SQLException {
 
         // 2. Jefe
         Empleado jefe = new Empleado();
@@ -72,25 +73,17 @@ public class EmpleadoTest {
         List<Empleado> listaEmpleados = empleadoDAO.listarTodas();
         for (Empleado e : listaEmpleados) {
             // Obtenemos los nombres de los objetos relacionados (Agregación)
-            String nombreArea = (e.getArea() != null) ? e.getArea().getNombre() : "N/A";
-            String tituloRol = (e.getRol() != null) ? e.getRol().getTitulo() : "N/A";
-
-            System.out.println(String.format("ID: %d | Empleado: %-25s | Correo: %-25s | Área: %-15s | Rol: %s",
-                    e.getUsuarioID(),
-                    e.getNombres() + " " + e.getApellidoPaterno(),
-                    e.getCorreoInstitucional(),
-                    nombreArea,
-                    tituloRol));
+            System.out.println(e);
         }
         System.out.println();
         return listaEmpleados;
     }
 
-    public static Empleado buscarID(int idEmpleado){
+    public static Empleado buscarID(int idEmpleado) throws SQLException{
         return empleadoDAO.buscarPorId(idEmpleado);
     }
 
-    public static int eliminar(int id){
+    public static int eliminar(int id) throws SQLException {
         return empleadoDAO.eliminar(id);
     }
 }

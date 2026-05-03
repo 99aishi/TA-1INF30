@@ -3,6 +3,7 @@ package pe.edu.pucp.economix.rrhh.implement;
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.rrhh.dao.IAdministradorDAO;
 import pe.edu.pucp.economix.rrhh.model.Administrador;
+import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -52,113 +53,59 @@ public class AdministradorImplement implements IAdministradorDAO {
         return resultado;
     }
     @Override
-    public int eliminar(int idAdmin){
-        int cantidad=0;
-        try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs= con.prepareCall("{call pa_eliminar_administrador(?)}");
-
-            cs.setInt("p_id_usuario", idAdmin);
-            cantidad = cs.executeUpdate();
-
-
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-        return cantidad;
+    public int eliminar(int idAdmin) throws SQLException {
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario", idAdmin);
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_eliminar_administrador", parametrosEntrada, null);
+        return resultado;
     }
     @Override
-    public Administrador buscarPorId(int idAdmin){
-        Administrador admin = null;
+    public Administrador buscarPorId(int idAdmin) throws SQLException {
+        Administrador administrador = null;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario", idAdmin);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_administrador_por_id", parametrosEntrada);
         try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs= con.prepareCall("{call pa_buscar_administrador_por_id(?)}");
-            cs.setInt("p_id_usuario", idAdmin);
-
-            rs = cs.executeQuery();
             if(rs.next()){
-                //Rescato los datose
-                admin = new Administrador();
-                admin.setUsuarioID(rs.getInt("id_usuario"));
-                admin.setCorreoSoporte(rs.getString("correo_soporte"));
+                administrador = new Administrador();
+                administrador.setUsuarioID(rs.getInt("id_usuario"));
+                administrador.setCorreoSoporte(rs.getString("correo_soporte"));
+                administrador.setEstado(EstadoUsuario.Activo);
+                administrador.setPassword(rs.getString("password_hash"));
+                administrador.setNombres(rs.getString("nombres"));
+                administrador.setApellidoPaterno(rs.getString("apellido_paterno"));
+                administrador.setApellidoMaterno(rs.getString("apellido_materno"));
             }
         }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
+            System.out.println("Error al buscar administrador por id: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
-        return  admin;
+        return administrador;
     }
     @Override
-    public List<Administrador> listarTodas(){
+    public List<Administrador> listarTodas() throws SQLException {
         List<Administrador> administradores = null;
-        Administrador admin = null;
-
+        Administrador administrador = null;
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_administradores", null);
         try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs= con.prepareCall("{call pa_listar_administradores()}");
-            rs = cs.executeQuery();
             while(rs.next()){
-                if(administradores == null)
-                    administradores = new ArrayList<>();
-                //Rescato los datose
-                admin = new Administrador();
-                admin.setUsuarioID(rs.getInt("id_usuario"));
-                admin.setCorreoSoporte(rs.getString("correo_soporte"));
-
-                ResultSet rsUsuario;
-                CallableStatement csUsuario= con.prepareCall("{call pa_buscar_usuario_por_id(?)}");
-                int id = admin.getUsuarioID();
-                csUsuario.setInt("p_id_usuario", id);
-                rsUsuario = csUsuario.executeQuery();
-
-
-                if(rsUsuario.next()){
-                    admin.setNombres(rsUsuario.getString("nombres"));
-                    admin.setApellidoPaterno(rsUsuario.getString("apellido_paterno"));
-                    admin.setApellidoMaterno(rsUsuario.getString("apellido_materno"));
-                }
-
-                administradores.add(admin);
+                if(administradores == null) administradores = new ArrayList<>();
+                administrador = new Administrador();
+                administrador.setUsuarioID(rs.getInt("id_usuario"));
+                administrador.setCorreoSoporte(rs.getString("correo_soporte"));
+                administrador.setEstado(EstadoUsuario.Activo);
+                administrador.setPassword(rs.getString("password_hash"));
+                administrador.setNombres(rs.getString("nombres"));
+                administrador.setApellidoPaterno(rs.getString("apellido_paterno"));
+                administrador.setApellidoMaterno(rs.getString("apellido_materno"));
+                administradores.add(administrador);
             }
         }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
+            System.out.println("Error al buscar administradores: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
-
         return administradores;
     }
 }
