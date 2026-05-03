@@ -12,16 +12,16 @@ public class Main {
     public static void main(String []args) throws SQLException {
 
         //Recursos Humanos Testing
-        List<Area> areas = AreaTest.pruebaInsercion();
-        List<Rol> roles = RolTest.pruebaInsercion();
-        List<Empleado> empleados = EmpleadoTest.pruebaInsercion(areas.get(0), roles.get(0),
-                                areas.get(1), roles.get(1),
-                                areas.get(2), roles.get(2));
-        AdministradorTest.pruebaInsercion();
+//        List<Area> areas = AreaTest.pruebaInsercion();
+//        List<Rol> roles = RolTest.pruebaInsercion();
+//        List<Empleado> empleados = EmpleadoTest.pruebaInsercion(areas.get(0), roles.get(0),
+//                                areas.get(1), roles.get(1),
+//                                areas.get(2), roles.get(2));
+//        AdministradorTest.pruebaInsercion();
 //
-//        System.out.println(EmpleadoTest.buscarID(empleados.get(2).getUsuarioID()));
-//        EmpleadoTest.eliminar(empleados.get(3).getUsuarioID());
-//        System.out.println(EmpleadoTest.buscarID(empleados.get(2).getUsuarioID()));
+//        System.out.println(EmpleadoTest.buscarID(1));
+//        EmpleadoTest.eliminar(1);
+//        System.out.println(EmpleadoTest.buscarID(1));
 //
 //        //Tesorería Testing
 //        List<Moneda> monedas = MonedaTest.pruebaInsercion();

@@ -91,8 +91,14 @@ public class EmpleadoImplement  implements IEmpleadoDAO{
                 empleado.setUsuarioID(rs.getInt("id_usuario"));
                 empleado.setCorreoInstitucional(rs.getString("correo_institucional"));
                 empleado.setNumeroCelular(rs.getString("numero_celular"));
+                if(empleado.getArea() == null)
+                    empleado.setArea(new Area());
                 empleado.getArea().setIdArea(rs.getInt("id_area"));
+                if(empleado.getRol() == null)
+                    empleado.setRol(new Rol());
                 empleado.getRol().setRolID(rs.getInt("id_rol"));
+                if(empleado.getJefeDirecto() == null)
+                    empleado.setJefeDirecto(new Empleado());
                 empleado.getJefeDirecto().setUsuarioID(rs.getInt("id_jefe_directo"));
                 empleado.setEstado(EstadoUsuario.Activo);
                 empleado.setPassword(rs.getString("password_hash"));
