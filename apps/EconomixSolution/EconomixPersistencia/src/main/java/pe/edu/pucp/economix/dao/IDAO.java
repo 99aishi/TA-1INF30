@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface IDAO <T> {
      int insertar(T objeto) throws SQLException;
-     int modificar(T objeto);
+     int modificar(T objeto) throws SQLException;
      int eliminar(int id);
      T buscarPorId(int id);
      List<T> listarTodas();

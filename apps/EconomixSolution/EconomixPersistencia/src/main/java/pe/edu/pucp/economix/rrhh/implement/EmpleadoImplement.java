@@ -42,51 +42,23 @@ public class EmpleadoImplement  implements IEmpleadoDAO{
     }
 
     @Override
-    public int modificar(Empleado empleado){
-        int cantidadPadre =0;
-        int cantidadHijo =0;
-        try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs= con.prepareCall("{call pa_modificar_usuario(?,?,?,?,?)}");
-
-            cs.setInt("p_id_usuario", empleado.getUsuarioID());
-            cs.setString("p_nombres", empleado.getNombres());
-            cs.setString("p_apellido_paterno", empleado.getApellidoPaterno());
-            cs.setString("p_apellido_materno", empleado.getApellidoMaterno());
-            cs.setString("p_password_hash", empleado.getPassword());
-
-            cantidadPadre = cs.executeUpdate();
-
-            //COn el usuario atualizado, actualizamos al hijo
-            cs= con.prepareCall("{call pa_modificar_empleado(?,?,?,?,?,?)}");
-
-            cs.setInt("p_id_usuario", empleado.getUsuarioID());
-            cs.setString("p_correo_institucional", empleado.getCorreoInstitucional());
-            cs.setString("p_numero_celular", empleado.getNumeroCelular());
-            cs.setInt("p_id_area", empleado.getArea().getIdArea());
-            cs.setInt("p_id_rol", empleado.getRol().getRolID());
-            cs.setInt("p_id_jefe_directo", empleado.getJefeDirecto().getUsuarioID());
-
-            cantidadHijo = cs.executeUpdate();
-
-            return cantidadPadre + cantidadHijo;
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-
-        return cantidadPadre + cantidadHijo;
+    public int modificar(Empleado empleado) throws SQLException {
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario", empleado.getUsuarioID());
+        parametrosEntrada.put("p_nombres", empleado.getNombres());
+        parametrosEntrada.put("p_apellido_paterno", empleado.getApellidoPaterno());
+        parametrosEntrada.put("p_apellido_materno", empleado.getApellidoMaterno());
+        parametrosEntrada.put("p_password_hash", empleado.getPassword());
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_usuario", parametrosEntrada, null);
+        parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario", empleado.getUsuarioID());
+        parametrosEntrada.put("p_correo_institucional", empleado.getCorreoInstitucional());
+        parametrosEntrada.put("p_numero_celular", empleado.getNumeroCelular());
+        parametrosEntrada.put("p_id_area", empleado.getArea().getIdArea());
+        parametrosEntrada.put("p_id_rol", empleado.getRol().getRolID());
+        parametrosEntrada.put("p_id_jefe_directo", empleado.getJefeDirecto().getUsuarioID());
+        DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_empleado", parametrosEntrada, null);
+        return resultado;
     }
     @Override
     public int eliminar(int idEmpleado){

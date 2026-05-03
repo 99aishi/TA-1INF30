@@ -37,44 +37,19 @@ public class AdministradorImplement implements IAdministradorDAO {
         return administrador.getUsuarioID();
     }
     @Override
-    public int modificar(Administrador administrador){
-        int cantidadPadre =0;
-        int cantidadHijo = 0;
-        try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs= con.prepareCall("{call pa_modificar_usuario(?,?,?,?,?)}");
-
-            cs.setInt("p_id_usuario", administrador.getUsuarioID());
-            cs.setString("p_nombres", administrador.getNombres());
-            cs.setString("p_apellido_paterno", administrador.getApellidoPaterno());
-            cs.setString("p_apellido_materno", administrador.getApellidoMaterno());
-            cs.setString("p_password_hash", administrador.getPassword());
-
-            cantidadPadre = cs.executeUpdate();
-
-            //COn el usuario generado, insertamos al empleado
-            cs= con.prepareCall("{call pa_modificar_administrador(?,?)}");
-            cs.setInt("p_id_usuario", administrador.getUsuarioID());
-            cs.setString("p_correo_soporte", administrador.getCorreoSoporte());
-
-            cantidadHijo = cs.executeUpdate();
-
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-        return cantidadPadre+cantidadHijo;
+    public int modificar(Administrador administrador) throws SQLException {
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario", administrador.getUsuarioID());
+        parametrosEntrada.put("p_nombres", administrador.getNombres());
+        parametrosEntrada.put("p_apellido_paterno", administrador.getApellidoPaterno());
+        parametrosEntrada.put("p_apellido_materno", administrador.getApellidoMaterno());
+        parametrosEntrada.put("p_password_hash", administrador.getPassword());
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_usuario", parametrosEntrada, null);
+        parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario", administrador.getUsuarioID());
+        parametrosEntrada.put("p_id_correo_soporte", administrador.getCorreoSoporte());
+        DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_administrador", parametrosEntrada, null);
+        return resultado;
     }
     @Override
     public int eliminar(int idAdmin){

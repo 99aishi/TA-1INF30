@@ -31,33 +31,14 @@ public class AreaImplement implements  IAreaDAO{
         return area.getIdArea();
     }
     @Override
-    public int modificar(Area area){
-        try{
-            con = DBManager.getDBManager().getConnection();
-            cs= con.prepareCall("{call pa_modificar_area(?,?,?,?)}");
-            cs.setInt("p_id_area", area.getIdArea());
-            cs.setString("p_nombre_area", area.getNombre());
-            cs.setString("p_descripcion_area", area.getDescripcion());
-            cs.setInt("p_id_jefe", area.getJefe().getUsuarioID());
-
-            return cs.executeUpdate();
-
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-        int cantidad=0;
-        return cantidad;
+    public int modificar(Area area) throws SQLException {
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_area", area.getIdArea());
+        parametrosEntrada.put("p_nombre_are", area.getNombre());
+        parametrosEntrada.put("p_descripcion_area", area.getDescripcion());
+        parametrosEntrada.put("p_id_jefe", area.getJefe().getUsuarioID());
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_area", parametrosEntrada, null);
+        return resultado;
     }
     @Override
     public int asignarJefe(Area area, Empleado empleado){

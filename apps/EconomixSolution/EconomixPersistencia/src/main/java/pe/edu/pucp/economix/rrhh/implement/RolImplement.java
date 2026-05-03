@@ -30,32 +30,13 @@ public class RolImplement  implements IRolDAO{
         return rol.getRolID();
     }
     @Override
-    public int modificar(Rol objeto){
-
-        int cantidad=0;
-        try{
-            con = DBManager.getDBManager().getConnection();
-            cs= con.prepareCall("{call pa_modificar_rol(?, ?, ?)}");
-            cs.setInt("p_id_rol", objeto.getRolID());
-            cs.setString("p_titulo_rol", objeto.getTitulo());
-            cs.setString("p_descripcion_rol", objeto.getDescripcion());
-
-            cantidad = cs.executeUpdate();
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-        return cantidad;
+    public int modificar(Rol rol) throws SQLException {
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_rol", rol.getRolID());
+        parametrosEntrada.put("p_titulo_rol", rol.getTitulo());
+        parametrosEntrada.put("p_descripcion_rol", rol.getDescripcion());
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_rol", parametrosEntrada, null);
+        return resultado;
     }
     @Override
     public int eliminar(int idRol){
