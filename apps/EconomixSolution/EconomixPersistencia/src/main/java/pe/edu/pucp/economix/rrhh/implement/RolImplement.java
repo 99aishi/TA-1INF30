@@ -7,7 +7,9 @@ import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RolImplement  implements IRolDAO{
     private Connection con;
@@ -15,34 +17,17 @@ public class RolImplement  implements IRolDAO{
     private CallableStatement cs;
 
     @Override
-    public int insertar(Rol objeto){
+    public int insertar(Rol rol) throws SQLException {
+        Map<String,Object> parametrosSalida = new HashMap<>();
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosSalida.put("p_id_generado", Types.INTEGER);
+        parametrosEntrada.put("p_titulo_rol", rol.getTitulo());
+        parametrosEntrada.put("p_descripcion_rol", rol.getDescripcion());
 
-        int id=0;
-        try{
-            con = DBManager.getDBManager().getConnection();
-            cs= con.prepareCall("{call pa_insertar_rol(?,?,?)}");
-            cs.setString("p_titulo_rol", objeto.getTitulo());
-            cs.setString("p_descripcion_rol", objeto.getDescripcion());
-            cs.registerOutParameter("p_id_generado", java.sql.Types.INTEGER); // TODO Revisión INTEGER
+        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_usuario", parametrosEntrada, parametrosSalida);
+        rol.setRolID((int)parametrosSalida.get("p_id_generado"));
 
-            cs.executeUpdate();
-
-            id = cs.getInt("p_id_generado");
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-        return id;
+        return rol.getRolID();
     }
     @Override
     public int modificar(Rol objeto){

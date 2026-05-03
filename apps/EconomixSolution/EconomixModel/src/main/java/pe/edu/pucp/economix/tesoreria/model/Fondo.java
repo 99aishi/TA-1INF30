@@ -8,7 +8,6 @@ import java.util.Date;
 public class Fondo {
     private int idFondo;
     private String nombre;
-    private double saldoActual;
     private EstadoFondo estado;
 
     // Constructores
@@ -18,7 +17,6 @@ public class Fondo {
     public Fondo(int idFondo, String nombre, double saldoActual, EstadoFondo estado) {
         this.idFondo = idFondo;
         this.nombre = nombre;
-        this.saldoActual = saldoActual;
         this.estado = estado;
     }
 
@@ -29,9 +27,6 @@ public class Fondo {
     public String getNombre() {
         return nombre;
     }
-    public double getSaldoActual() {
-        return saldoActual;
-    }
     public EstadoFondo getEstado() {
         return estado;
     }
@@ -40,9 +35,6 @@ public class Fondo {
     }
     public void setNombre(String nombre) {
         this.nombre = nombre;
-    }
-    public void setSaldoActual(double saldoActual) {
-        this.saldoActual = saldoActual;
     }
     public void setEstado(EstadoFondo estado) {
         this.estado = estado;
@@ -54,7 +46,6 @@ public class Fondo {
         return "Fondo{" +
                 "idFondo=" + idFondo +
                 ", nombre='" + nombre + '\'' +
-                ", saldoActual=" + saldoActual +
                 ", estado=" + estado +
                 '}';
     }

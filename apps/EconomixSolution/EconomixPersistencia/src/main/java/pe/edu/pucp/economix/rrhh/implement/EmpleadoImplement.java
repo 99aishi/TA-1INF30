@@ -6,7 +6,9 @@ import pe.edu.pucp.economix.rrhh.model.Empleado;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class EmpleadoImplement  implements IEmpleadoDAO{
     private Connection con;
@@ -14,58 +16,29 @@ public class EmpleadoImplement  implements IEmpleadoDAO{
     private CallableStatement cs;
 
     @Override
-    public int insertar(Empleado empleado){
-        int id=0;
-        try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs= con.prepareCall("{call pa_insertar_usuario(?,?,?,?,?)}");
+    public int insertar(Empleado empleado) throws SQLException {
+        Map<String,Object> parametrosSalida = new HashMap<>();
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosSalida.put("p_id_generado", Types.INTEGER);
+        parametrosEntrada.put("p_nombres", empleado.getNombres());
+        parametrosEntrada.put("p_apellido_paterno", empleado.getApellidoPaterno());
+        parametrosEntrada.put("p_apellido_materno", empleado.getApellidoMaterno());
+        parametrosEntrada.put("p_password_hash", empleado.getPassword());
 
-            cs.setString("p_nombres", empleado.getNombres());
-            cs.setString("p_apellido_paterno", empleado.getApellidoPaterno());
-            cs.setString("p_apellido_materno", empleado.getApellidoMaterno());
-            cs.setString("p_password_hash", empleado.getPassword());
-            cs.registerOutParameter("p_id_generado", java.sql.Types.INTEGER); // TODO Revisión INTEGER
+        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_usuario", parametrosEntrada, parametrosSalida);
+        empleado.setUsuarioID((int)parametrosSalida.get("p_id_generado"));
 
-            cs.executeUpdate();
+        parametrosSalida = new HashMap<>();
+        parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario", empleado.getUsuarioID());
+        parametrosEntrada.put("p_correo_institucional", empleado.getCorreoInstitucional());
+        parametrosEntrada.put("p_numero_celular", empleado.getNumeroCelular());
+        parametrosEntrada.put("p_id_area", empleado.getArea().getIdArea());
+        parametrosEntrada.put("p_id_rol", empleado.getRol().getRolID());
+        parametrosEntrada.put("p_id_jefe_directo", empleado.getJefeDirecto().getUsuarioID());
+        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_empleado", parametrosEntrada, parametrosSalida);
 
-            id = cs.getInt("p_id_generado");
-
-
-            //COn el usuario generado, insertamos al empleado
-            cs= con.prepareCall("{call pa_insertar_empleado(?,?,?,?,?,?)}");
-
-            cs.setInt("p_id_usuario", id);
-            cs.setString("p_correo_institucional", empleado.getCorreoInstitucional());
-            cs.setString("p_numero_celular", empleado.getNumeroCelular());
-            cs.setInt("p_id_area", empleado.getArea().getIdArea());
-            cs.setInt("p_id_rol", empleado.getRol().getRolID());
-            if (empleado.getJefeDirecto() != null) {
-                cs.setInt("p_id_jefe_directo", empleado.getJefeDirecto().getUsuarioID());
-            } else {
-                cs.setNull("p_id_jefe_directo", java.sql.Types.INTEGER);
-            }
-            //cs.setInt("p_id_jefe_directo", empleado.getJefeDirecto().getUsuarioID());
-
-            cs.executeUpdate();
-
-            return id;
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-
-        return id;
+        return empleado.getUsuarioID();
     }
 
     @Override

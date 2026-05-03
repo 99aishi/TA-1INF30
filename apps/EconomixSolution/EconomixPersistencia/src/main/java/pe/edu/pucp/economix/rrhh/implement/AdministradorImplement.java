@@ -6,7 +6,9 @@ import pe.edu.pucp.economix.rrhh.model.Administrador;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AdministradorImplement implements IAdministradorDAO {
     private Connection con;
@@ -14,47 +16,25 @@ public class AdministradorImplement implements IAdministradorDAO {
     private CallableStatement cs;
 
     @Override
-    public int insertar(Administrador administrador){
-        int id=0;
-        try{
-            con = DBManager.getDBManager().getConnection();
-            //Insertamos al usuario
-            cs= con.prepareCall("{call pa_insertar_usuario(?,?,?,?,?)}");
+    public int insertar(Administrador administrador) throws SQLException {
+        Map<String,Object> parametrosSalida = new HashMap<>();
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosSalida.put("p_id_generado", Types.INTEGER);
+        parametrosEntrada.put("p_nombres", administrador.getNombres());
+        parametrosEntrada.put("p_apellido_paterno", administrador.getApellidoPaterno());
+        parametrosEntrada.put("p_apellido_materno", administrador.getApellidoMaterno());
+        parametrosEntrada.put("p_password_hash", administrador.getPassword());
 
-            cs.setString("p_nombres", administrador.getNombres());
-            cs.setString("p_apellido_paterno", administrador.getApellidoPaterno());
-            cs.setString("p_apellido_materno", administrador.getApellidoMaterno());
-            cs.setString("p_password_hash", administrador.getPassword());
-            cs.registerOutParameter("p_id_generado", java.sql.Types.INTEGER); // TODO Revisión INTEGER
+        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_usuario", parametrosEntrada, parametrosSalida);
+        administrador.setUsuarioID((int)parametrosSalida.get("p_id_generado"));
 
-            cs.executeUpdate();
+        parametrosSalida = new HashMap<>();
+        parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario", administrador.getUsuarioID());
+        parametrosEntrada.put("p_correo_soporte", administrador.getCorreoSoporte());
+        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_administrador", parametrosEntrada, parametrosSalida);
 
-            id = cs.getInt("p_id_generado");
-
-
-            //COn el usuario generado, insertamos al empleado
-            cs= con.prepareCall("{call pa_insertar_administrador(?,?)}");
-            cs.setInt("p_id_usuario", id);
-            cs.setString("p_correo_soporte", administrador.getCorreoSoporte());
-
-            cs.executeUpdate();
-
-            return id;
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-        return id;
+        return administrador.getUsuarioID();
     }
     @Override
     public int modificar(Administrador administrador){

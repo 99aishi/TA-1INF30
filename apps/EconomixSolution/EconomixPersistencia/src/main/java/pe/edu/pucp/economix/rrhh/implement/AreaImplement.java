@@ -7,7 +7,9 @@ import pe.edu.pucp.economix.rrhh.model.Empleado;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AreaImplement implements  IAreaDAO{
     private Connection con;
@@ -15,39 +17,18 @@ public class AreaImplement implements  IAreaDAO{
     private CallableStatement cs;
 
     @Override
-    public int insertar(Area area){
-        int id=0;
-        try{
-            con = DBManager.getDBManager().getConnection();
-            cs= con.prepareCall("{call pa_insertar_area(?,?,?,?)}");
-            cs.setString("p_nombre_area", area.getNombre());
-            cs.setString("p_descripcion_area", area.getDescripcion());
-            if(area.getJefe() != null)
-                cs.setInt("p_id_jefe", area.getJefe().getUsuarioID());
-            else
-                cs.setNull("p_id_jefe", java.sql.Types.INTEGER);
-            cs.registerOutParameter("p_id_generado", java.sql.Types.INTEGER); // TODO Revisión INTEGER
+    public int insertar(Area area) throws SQLException {
+        Map<String,Object> parametrosSalida = new HashMap<>();
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosSalida.put("p_id_generado", Types.INTEGER);
+        parametrosEntrada.put("p_nombre_are", area.getNombre());
+        parametrosEntrada.put("p_descripcion_area", area.getDescripcion());
+        parametrosEntrada.put("p_id_jefe", area.getJefe().getUsuarioID());
 
-            cs.executeUpdate();
+        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_usuario", parametrosEntrada, parametrosSalida);
+        area.setIdArea((int)parametrosSalida.get("p_id_generado"));
 
-            id = cs.getInt("p_id_generado");
-
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-
-        return id;
+        return area.getIdArea();
     }
     @Override
     public int modificar(Area area){
