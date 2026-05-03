@@ -1,16 +1,17 @@
 package pe.edu.pucp.economix.tesoreria.test;
 
+import java.sql.SQLException;
+import java.util.List;
+
 import pe.edu.pucp.economix.rrhh.model.Area;
-import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.tesoreria.implement.CajaChicaImplement;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
 
-import java.util.List;
-
 public class CajaChicaTest {
-    private static CajaChicaImplement cajaChicaDAO = new CajaChicaImplement();
-    public static List<CajaChica> pruebaInsercion(Area areaTI, Area areaFinanzas){
+    private final static CajaChicaImplement cajaChicaDAO = new CajaChicaImplement();
+
+    public static List<CajaChica> pruebaInsercion(Area areaTI, Area areaFinanzas) throws SQLException {
         CajaChica cajaChicaTI = new CajaChica();
         cajaChicaTI.setAreaAsignada(areaTI);
         cajaChicaTI.setNombre("Caja Chica TI");

@@ -1,18 +1,19 @@
 package pe.edu.pucp.economix.tesoreria.test;
 
+import java.sql.SQLException;
+import java.util.List;
+
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.tesoreria.implement.CuentaBancariaImplement;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
-import java.util.List;
-
 public class CuentaBancariaTest {
-        private static CuentaBancariaImplement cuentaDAO=new CuentaBancariaImplement();
+        private final static CuentaBancariaImplement cuentaDAO=new CuentaBancariaImplement();
         public static List<CuentaBancaria> pruebaInsercion(Empleado emp1, Moneda sol,
                                                             Empleado emp2, Moneda usd,
-                                                           Area area1){
+                                                           Area area1) throws SQLException {
             CuentaBancaria cuenta= new CuentaBancaria();
             cuenta.setNombreBanco("BCP");
             cuenta.setNumeroBancario("444");

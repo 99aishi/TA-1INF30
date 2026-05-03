@@ -1,12 +1,11 @@
 package pe.edu.pucp.economix.operaciones.model;
 
+import java.util.Date;
+
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
-import java.util.Date;
-
 public class Transaccion{
-    private static int correlativoID = 1;
     private int idTransaccion;
     private TipoTransaccion tipoTransaccion;
     private Date fecha;
@@ -23,7 +22,6 @@ public class Transaccion{
     public Transaccion(TipoTransaccion tipo,Date fecha,double monto,
                        String numeroOperacionBancaria, MedioPago medioPago, double tipoCambio,
                        CuentaBancaria origen, CuentaBancaria destino, Moneda moneda){
-        this.idTransaccion=this.correlativoID++;
         this.tipoTransaccion = tipo;
         this.fecha=fecha;
         this.monto=monto;

@@ -1,12 +1,13 @@
 package pe.edu.pucp.economix.tesoreria.test;
 
+import java.sql.SQLException;
+import java.util.List;
+
 import pe.edu.pucp.economix.tesoreria.implement.MonedaImplement;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
-import java.util.List;
-
 public class MonedaTest {
-    public static List<Moneda> pruebaInsercion(){
+    public static List<Moneda> pruebaInsercion() throws SQLException {
         MonedaImplement monedaDAO = new MonedaImplement();
 
         Moneda dolar= new Moneda(0,"USD","$");

@@ -1,12 +1,10 @@
 package pe.edu.pucp.economix.rrhh.model;
 
+import java.util.List;
+
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
-
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Area{
     private int idArea;

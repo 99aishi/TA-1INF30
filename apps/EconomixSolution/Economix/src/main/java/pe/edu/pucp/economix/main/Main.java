@@ -7,6 +7,8 @@ import pe.edu.pucp.economix.rrhh.dao.IAreaDAO;
 import pe.edu.pucp.economix.rrhh.implement.AreaImplement;
 import pe.edu.pucp.economix.rrhh.model.*;
 import pe.edu.pucp.economix.rrhh.test.*;
+import pe.edu.pucp.economix.tesoreria.model.Moneda;
+import pe.edu.pucp.economix.tesoreria.test.MonedaTest;
 
 public class Main {
     public static void main(String []args) throws SQLException {
@@ -24,7 +26,7 @@ public class Main {
 //        System.out.println(EmpleadoTest.buscarID(1));
 //
 //        //Tesorería Testing
-//        List<Moneda> monedas = MonedaTest.pruebaInsercion();
+        List<Moneda> monedas = MonedaTest.pruebaInsercion();
 //        CuentaBancariaTest.pruebaInsercion(empleados.get(1), monedas.get(0),
 //                empleados.get(2), monedas.get(1), areas.get(1));
 //        List<CajaChica>listaCajasChicas = CajaChicaTest.pruebaInsercion(areas.get(2), areas.get(1));

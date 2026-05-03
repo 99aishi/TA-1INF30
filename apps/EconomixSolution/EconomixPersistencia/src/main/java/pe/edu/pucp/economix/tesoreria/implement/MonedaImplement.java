@@ -1,161 +1,91 @@
 package pe.edu.pucp.economix.tesoreria.implement;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.tesoreria.dao.IMonedaDAO;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-
 public class MonedaImplement implements IMonedaDAO {
-    private Connection con;
-    private Statement st;
-    private PreparedStatement pst;
     private ResultSet rs;
-    private CallableStatement cs;
 
     @Override
-    public int insertar(Moneda moneda) {
-        int resultado=0;
-        try{
-            con = DBManager.getDBManager().getConnection();
-            cs=con.prepareCall("{call pa_insertar_moneda(?,?,?)}");
-            cs.registerOutParameter("_id_moneda",Types.INTEGER);
-            cs.setString("_codigo_iso", moneda.getCodigoISO());
-            cs.setString("_simbolo", moneda.getSimbolo());
-            cs.executeUpdate();
-            resultado=cs.getInt("_id_moneda");
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
+    public int insertar(Moneda moneda) throws SQLException {
+        Map<String,Object> parametrosSalida = new HashMap<>();
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosSalida.put("p_id_moneda", Types.INTEGER);
+        parametrosEntrada.put("p_codigo_iso", moneda.getCodigoISO());
+        parametrosEntrada.put("p_simbolo", moneda.getSimbolo());
+
+        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_moneda", parametrosEntrada, parametrosSalida);
+        moneda.setIdMoneda((int)parametrosSalida.get("p_id_moneda"));
+
+        return moneda.getIdMoneda();
+    }
+
+    @Override
+    public int modificar(Moneda moneda) throws SQLException {
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_moneda", moneda.getIdMoneda());
+        parametrosEntrada.put("p_codigo_iso", moneda.getCodigoISO());
+        parametrosEntrada.put("p_simbolo", moneda.getSimbolo());
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_moneda", parametrosEntrada, null);
         return resultado;
     }
 
     @Override
-    public int modificar(Moneda moneda) {
-        int resultado=0;
-        try{
-            con = DBManager.getDBManager().getConnection();
-            cs= con.prepareCall("{call pa_modificar_moneda(?,?,?)}");
-            cs.setInt("_id_moneda",moneda.getIdMoneda());
-            cs.setString("_codigo_iso", moneda.getCodigoISO());
-            cs.setString("_simbolo", moneda.getSimbolo());
-            resultado=cs.executeUpdate();
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
+    public int eliminar(int idMoneda) throws SQLException {
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_moneda", idMoneda);
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_eliminar_moneda", parametrosEntrada, null);
         return resultado;
     }
 
     @Override
-    public int eliminar(int idMoneda) {
-        int resultado=0;
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs= con.prepareCall("{call pa_eliminar_moneda(?)}");
-            cs.setInt("_id_moneda",idMoneda);
-            resultado=cs.executeUpdate();
-        }catch (Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try {
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-        return resultado;
-    }
-
-    @Override
-    public Moneda buscarPorId(int idMoneda) {
+    public Moneda buscarPorId(int idMoneda) throws SQLException {
         Moneda moneda=null;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_moneda", idMoneda);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_moneda_por_id", parametrosEntrada);
         try{
-            con = DBManager.getDBManager().getConnection();
-            cs= con.prepareCall("{call pa_busqueda_por_id_moneda(?)}");
-            cs.setInt("_id_moneda",idMoneda);
-            rs=cs.executeQuery();
-            
             if(rs.next()){
-                moneda=new Moneda();
+                moneda = new Moneda();
                 moneda.setIdMoneda(rs.getInt("id_moneda"));
                 moneda.setCodigoISO(rs.getString("codigo_iso"));
                 moneda.setSimbolo(rs.getString("simbolo"));
-
             }
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
+        }catch(SQLException ex){
+            System.out.println("Error al buscar moneda por id: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
         return moneda;
     }
 
     @Override
-    public List<Moneda> listarTodas() {
+    public List<Moneda> listarTodas() throws SQLException {
         List<Moneda>monedas=null;
+        Moneda moneda;
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_monedas", null);
         try{
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_listar_monedas()}");
-            rs=cs.executeQuery();
             while(rs.next()){
-                if(monedas==null) monedas=new ArrayList<>();
-                Moneda moneda =new Moneda();
+                if(monedas == null) monedas = new ArrayList<>();
+                moneda = new Moneda();
                 moneda.setIdMoneda(rs.getInt("id_moneda"));
                 moneda.setCodigoISO(rs.getString("codigo_iso"));
                 moneda.setSimbolo(rs.getString("simbolo"));
                 monedas.add(moneda);
             }
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
+        }catch(SQLException ex){
+            System.out.println("Error al buscar monedas: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
         return monedas;
     }

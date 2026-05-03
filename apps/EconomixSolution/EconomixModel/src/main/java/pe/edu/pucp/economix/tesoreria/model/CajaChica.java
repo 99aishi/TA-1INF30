@@ -1,12 +1,10 @@
 package pe.edu.pucp.economix.tesoreria.model;
 
+import java.util.List;
+
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 public class CajaChica extends Fondo{
     private double montoTecho;

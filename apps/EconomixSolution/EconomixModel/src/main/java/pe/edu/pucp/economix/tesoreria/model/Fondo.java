@@ -1,9 +1,6 @@
 package pe.edu.pucp.economix.tesoreria.model;
 
 import pe.edu.pucp.economix.operaciones.model.TipoTransaccion;
-import pe.edu.pucp.economix.rrhh.model.Empleado;
-
-import java.util.Date;
 
 public class Fondo {
     private int idFondo;

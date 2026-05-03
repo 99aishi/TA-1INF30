@@ -1,9 +1,8 @@
 package pe.edu.pucp.economix.operaciones.model;
 
-import pe.edu.pucp.economix.tesoreria.model.Fondo;
-import pe.edu.pucp.economix.tesoreria.model.Moneda;
-
 import java.util.Date;
+
+import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 public class ComprobantePago {
     private int idComprobante;

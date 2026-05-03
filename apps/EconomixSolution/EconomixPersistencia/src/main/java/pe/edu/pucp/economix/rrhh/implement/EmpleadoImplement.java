@@ -1,5 +1,13 @@
 package pe.edu.pucp.economix.rrhh.implement;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.rrhh.dao.IEmpleadoDAO;
 import pe.edu.pucp.economix.rrhh.model.Area;
@@ -7,16 +15,8 @@ import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
 import pe.edu.pucp.economix.rrhh.model.Rol;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class EmpleadoImplement  implements IEmpleadoDAO{
-    private Connection con;
     private ResultSet rs;
-    private CallableStatement cs;
 
     @Override
     public int insertar(Empleado empleado) throws SQLException {
@@ -106,7 +106,7 @@ public class EmpleadoImplement  implements IEmpleadoDAO{
                 empleado.setApellidoPaterno(rs.getString("apellido_paterno"));
                 empleado.setApellidoMaterno(rs.getString("apellido_materno"));
             }
-        }catch(Exception ex){
+        }catch(SQLException ex){
             System.out.println("Error al buscar empleado por id: " + ex.getMessage());
         }finally{
             DBManager.getDBManager().cerrarConexion();
@@ -117,7 +117,7 @@ public class EmpleadoImplement  implements IEmpleadoDAO{
     @Override
     public List<Empleado> listarTodas() throws SQLException {
         List<Empleado> empleados = null;
-        Empleado empleado = null;
+        Empleado empleado;
         rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_empleados", null);
         try{
             while(rs.next()){
@@ -142,7 +142,7 @@ public class EmpleadoImplement  implements IEmpleadoDAO{
                 empleado.setApellidoMaterno(rs.getString("apellido_materno"));
                 empleados.add(empleado);
             }
-        }catch(Exception ex){
+        }catch(SQLException ex){
             System.out.println("Error al buscar empleados: " + ex.getMessage());
         }finally{
             DBManager.getDBManager().cerrarConexion();

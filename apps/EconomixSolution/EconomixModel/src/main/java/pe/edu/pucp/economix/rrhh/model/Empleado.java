@@ -1,10 +1,9 @@
 package pe.edu.pucp.economix.rrhh.model;
 
+import java.util.List;
+
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Empleado extends Usuario {
     private String correoInstitucional;

@@ -1,7 +1,5 @@
 package pe.edu.pucp.economix.tesoreria.model;
 
-import java.util.Date;
-
 public class Moneda{
     private int idMoneda;
     private String codigoISO;
@@ -14,8 +12,12 @@ public class Moneda{
         this.idMoneda = idMoneda;
         this.codigoISO = codigoISO;
         this.simbolo = simbolo;
-
     }
+    public Moneda(String codigoISO, String simbolo) {
+        this.codigoISO = codigoISO;
+        this.simbolo = simbolo;
+    }
+
     //Selectores
     public int getIdMoneda() {
         return idMoneda;

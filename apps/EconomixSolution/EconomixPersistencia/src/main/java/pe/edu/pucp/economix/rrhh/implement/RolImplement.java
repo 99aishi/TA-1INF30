@@ -1,21 +1,19 @@
 package pe.edu.pucp.economix.rrhh.implement;
 
-import pe.edu.pucp.economix.config.DBManager;
-import pe.edu.pucp.economix.rrhh.dao.IRolDAO;
-import pe.edu.pucp.economix.rrhh.model.Area;
-import pe.edu.pucp.economix.rrhh.model.Rol;
-import pe.edu.pucp.economix.tesoreria.model.Moneda;
-
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import pe.edu.pucp.economix.config.DBManager;
+import pe.edu.pucp.economix.rrhh.dao.IRolDAO;
+import pe.edu.pucp.economix.rrhh.model.Rol;
+
 public class RolImplement  implements IRolDAO{
-    private Connection con;
     private ResultSet rs;
-    private CallableStatement cs;
 
     @Override
     public int insertar(Rol rol) throws SQLException {
@@ -59,7 +57,7 @@ public class RolImplement  implements IRolDAO{
                 rol.setTitulo(rs.getString("titulo_rol"));
                 rol.setDescripcion(rs.getString("descripcion_rol"));
             }
-        }catch(Exception ex){
+        }catch(SQLException ex){
             System.out.println("Error al buscar rol por id: " + ex.getMessage());
         }finally{
             DBManager.getDBManager().cerrarConexion();
@@ -70,7 +68,7 @@ public class RolImplement  implements IRolDAO{
     @Override
     public List<Rol> listarTodas() throws SQLException{
         List<Rol> roles= null;
-        Rol rol = null;
+        Rol rol;
         rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_roles", null);
         try{
             while(rs.next()){
@@ -81,7 +79,7 @@ public class RolImplement  implements IRolDAO{
                 rol.setDescripcion(rs.getString("descripcion_rol"));
                 roles.add(rol);
             }
-        }catch(Exception ex){
+        }catch(SQLException ex){
             System.out.println("Error al buscar roles: " + ex.getMessage());
         }finally{
             DBManager.getDBManager().cerrarConexion();

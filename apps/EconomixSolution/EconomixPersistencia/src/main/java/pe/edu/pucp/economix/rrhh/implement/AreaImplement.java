@@ -1,21 +1,20 @@
 package pe.edu.pucp.economix.rrhh.implement;
 
-import pe.edu.pucp.economix.config.DBManager;
-import pe.edu.pucp.economix.rrhh.dao.IAreaDAO;
-import pe.edu.pucp.economix.rrhh.model.Area;
-import pe.edu.pucp.economix.rrhh.model.Empleado;
-import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
-
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import pe.edu.pucp.economix.config.DBManager;
+import pe.edu.pucp.economix.rrhh.dao.IAreaDAO;
+import pe.edu.pucp.economix.rrhh.model.Area;
+import pe.edu.pucp.economix.rrhh.model.Empleado;
+
 public class AreaImplement implements  IAreaDAO{
-    private Connection con;
     private ResultSet rs;
-    private CallableStatement cs;
 
     @Override
     public int insertar(Area area) throws SQLException {
@@ -45,31 +44,12 @@ public class AreaImplement implements  IAreaDAO{
         return resultado;
     }
     @Override
-    public int asignarJefe(Area area, Empleado empleado){
-        try{
-            con = DBManager.getDBManager().getConnection();
-            cs= con.prepareCall("{call pa_asignar_jefe_area(?,?)}");
-
-            cs.setInt("p_id_area", area.getIdArea());
-            cs.setInt("p_id_jefe", empleado.getUsuarioID());
-
-            return cs.executeUpdate();
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-        int cantidad=0;
-        return cantidad;
+    public int asignarJefe(Area area, Empleado empleado) throws SQLException {
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_area", area.getIdArea());
+        parametrosEntrada.put("p_id_jefe", empleado.getUsuarioID());
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_asignar_jefe_area", parametrosEntrada, null);
+        return resultado;
     }
     @Override
     public int eliminar(int idArea) throws SQLException {
@@ -94,7 +74,7 @@ public class AreaImplement implements  IAreaDAO{
                     area.setJefe(new Empleado());
                 area.getJefe().setUsuarioID(rs.getInt("id_jefe"));
             }
-        }catch(Exception ex){
+        }catch(SQLException ex){
             System.out.println("Error al buscar area por id: " + ex.getMessage());
         }finally{
             DBManager.getDBManager().cerrarConexion();
@@ -104,7 +84,7 @@ public class AreaImplement implements  IAreaDAO{
     @Override
     public List<Area> listarTodas() throws SQLException {
         List<Area> areas = null;
-        Area area=null;
+        Area area;
         rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_areas", null);
         try{
             while(rs.next()){
@@ -118,7 +98,7 @@ public class AreaImplement implements  IAreaDAO{
                 area.getJefe().setUsuarioID(rs.getInt("id_jefe"));
                 areas.add(area);
             }
-        }catch(Exception ex){
+        }catch(SQLException ex){
             System.out.println("Error al buscar areas: " + ex.getMessage());
         }finally{
             DBManager.getDBManager().cerrarConexion();

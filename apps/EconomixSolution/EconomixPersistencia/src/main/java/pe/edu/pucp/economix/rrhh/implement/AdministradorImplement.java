@@ -1,20 +1,20 @@
 package pe.edu.pucp.economix.rrhh.implement;
 
-import pe.edu.pucp.economix.config.DBManager;
-import pe.edu.pucp.economix.rrhh.dao.IAdministradorDAO;
-import pe.edu.pucp.economix.rrhh.model.Administrador;
-import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
-
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import pe.edu.pucp.economix.config.DBManager;
+import pe.edu.pucp.economix.rrhh.dao.IAdministradorDAO;
+import pe.edu.pucp.economix.rrhh.model.Administrador;
+import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
+
 public class AdministradorImplement implements IAdministradorDAO {
-    private Connection con;
     private ResultSet rs;
-    private CallableStatement cs;
 
     @Override
     public int insertar(Administrador administrador) throws SQLException {
@@ -76,7 +76,7 @@ public class AdministradorImplement implements IAdministradorDAO {
                 administrador.setApellidoPaterno(rs.getString("apellido_paterno"));
                 administrador.setApellidoMaterno(rs.getString("apellido_materno"));
             }
-        }catch(Exception ex){
+        }catch(SQLException ex){
             System.out.println("Error al buscar administrador por id: " + ex.getMessage());
         }finally{
             DBManager.getDBManager().cerrarConexion();
@@ -86,7 +86,7 @@ public class AdministradorImplement implements IAdministradorDAO {
     @Override
     public List<Administrador> listarTodas() throws SQLException {
         List<Administrador> administradores = null;
-        Administrador administrador = null;
+        Administrador administrador;
         rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_administradores", null);
         try{
             while(rs.next()){
@@ -101,7 +101,7 @@ public class AdministradorImplement implements IAdministradorDAO {
                 administrador.setApellidoMaterno(rs.getString("apellido_materno"));
                 administradores.add(administrador);
             }
-        }catch(Exception ex){
+        }catch(SQLException ex){
             System.out.println("Error al buscar administradores: " + ex.getMessage());
         }finally{
             DBManager.getDBManager().cerrarConexion();
