@@ -5,8 +5,12 @@ public class Rol {
     private String titulo;
     private String descripcion;
     // Constructor
-    public Rol(){
+    public Rol(){}
 
+    public Rol(int rolID, String titulo, String descripcion) {
+        this.rolID = rolID;
+        this.titulo = titulo;
+        this.descripcion = descripcion;
     }
     public Rol(String titulo, String descripcion) {
         this.titulo = titulo;

@@ -18,11 +18,16 @@ public class Area{
     private List<CuentaBancaria> cuentasBancarias;
 
     //Constructores
-    public Area(){
-    }
-
+    public Area(){}
     public Area(int idArea, String nombre, String descripcion, Empleado jefe, CajaChica cajaChica, List<CuentaBancaria> cuentasBancarias) {
         this.idArea = idArea;
+        this.nombre = nombre;
+        this.descripcion = descripcion;
+        this.jefe = jefe;
+        this.cajaChica = cajaChica;
+        this.cuentasBancarias = cuentasBancarias;
+    }
+    public Area(String nombre, String descripcion, Empleado jefe, CajaChica cajaChica, List<CuentaBancaria> cuentasBancarias) {
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.jefe = jefe;

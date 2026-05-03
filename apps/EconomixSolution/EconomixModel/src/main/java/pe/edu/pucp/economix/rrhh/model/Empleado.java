@@ -19,21 +19,38 @@ public class Empleado extends Usuario {
     private List<CuentaBancaria> cuentas;
 
     //Constructror
-    public Empleado(){
+    public Empleado(){}
 
+    public Empleado(int usuarioID, String nombres, String apellidoPaterno, String apellidoMaterno, String password,
+                    EstadoUsuario estado, String correoInstitucional, String numeroCelular,
+                    Rol rol, Area area, Empleado jefeDirecto, List<SolicitudGasto> solicitudesRecibidas,
+                    List<SolicitudGasto> solicitudesEnviadas, List<CuentaBancaria> cuentas) {
+        super(usuarioID, nombres, apellidoPaterno, apellidoMaterno, password, estado);
+        this.correoInstitucional = correoInstitucional;
+        this.numeroCelular = numeroCelular;
+        this.rol = rol;
+        this.area = area;
+        this.jefeDirecto = jefeDirecto;
+        this.solicitudesRecibidas = solicitudesRecibidas;
+        this.solicitudesEnviadas = solicitudesEnviadas;
+        this.cuentas = cuentas;
     }
-    public Empleado(String nombre, String apellido_paterno,
-                    String apellido_materno, String password, EstadoUsuario estado,
-                    String correoInstitucional, String numeroCelular){
 
-        super(nombre,  apellido_paterno, apellido_materno,  password, estado);
-
-        this.correoInstitucional=correoInstitucional;
-        this.numeroCelular=numeroCelular;
-        this.cuentas= new ArrayList<>();
-        this.solicitudesRecibidas= new ArrayList<>();
-        this.solicitudesEnviadas= new ArrayList<>();
+    public Empleado(String nombres, String apellidoPaterno, String apellidoMaterno, String password,
+                    EstadoUsuario estado, String correoInstitucional, String numeroCelular,
+                    Rol rol, Area area, Empleado jefeDirecto,
+                    List<SolicitudGasto> solicitudesRecibidas, List<SolicitudGasto> solicitudesEnviadas, List<CuentaBancaria> cuentas) {
+        super(nombres, apellidoPaterno, apellidoMaterno, password, estado);
+        this.correoInstitucional = correoInstitucional;
+        this.numeroCelular = numeroCelular;
+        this.rol = rol;
+        this.area = area;
+        this.jefeDirecto = jefeDirecto;
+        this.solicitudesRecibidas = solicitudesRecibidas;
+        this.solicitudesEnviadas = solicitudesEnviadas;
+        this.cuentas = cuentas;
     }
+
     //Selectores
     public String getCorreoInstitucional() {
         return correoInstitucional;

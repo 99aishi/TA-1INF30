@@ -10,14 +10,21 @@ public abstract class Usuario{
 
     //Constructores
     public Usuario(){}
-    public Usuario(String nombres, String apellido_paterno,
-                   String apellido_materno, String password, EstadoUsuario estado){
-        //Asignación de ID automatica por el sistema
+
+    public Usuario(int usuarioID, String nombres, String apellidoPaterno, String apellidoMaterno, String password, EstadoUsuario estado) {
+        this.usuarioID = usuarioID;
         this.nombres = nombres;
-        this.password=password;
-        this.apellidoPaterno=apellido_paterno;
-        this.apellidoMaterno=apellido_materno;
-        this.estado=estado;
+        this.apellidoPaterno = apellidoPaterno;
+        this.apellidoMaterno = apellidoMaterno;
+        this.password = password;
+        this.estado = estado;
+    }
+    public Usuario(String nombres, String apellidoPaterno, String apellidoMaterno, String password, EstadoUsuario estado) {
+        this.nombres = nombres;
+        this.apellidoPaterno = apellidoPaterno;
+        this.apellidoMaterno = apellidoMaterno;
+        this.password = password;
+        this.estado = estado;
     }
 
     //Selectores

@@ -4,16 +4,17 @@ public class Administrador extends Usuario{
     private String correoSoporte;
 
     //Constructores
-    public Administrador(){
+    public Administrador(){}
 
-    }
-    public Administrador(String nombre, String apellido_paterno,
-                         String apellido_materno, String password, EstadoUsuario estado,
-                         String correoSoporte){
-        super(nombre,  apellido_paterno, apellido_materno,  password, estado);
-        this.correoSoporte=correoSoporte;
+    public Administrador(int usuarioID, String nombres, String apellidoPaterno, String apellidoMaterno, String password, EstadoUsuario estado, String correoSoporte) {
+        super(usuarioID, nombres, apellidoPaterno, apellidoMaterno, password, estado);
+        this.correoSoporte = correoSoporte;
     }
 
+    public Administrador(String nombres, String apellidoPaterno, String apellidoMaterno, String password, EstadoUsuario estado, String correoSoporte) {
+        super(nombres, apellidoPaterno, apellidoMaterno, password, estado);
+        this.correoSoporte = correoSoporte;
+    }
 
     //Selectores
     public String getCorreoSoporte() {
