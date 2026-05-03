@@ -21,6 +21,7 @@ public class MonedaTest {
         for(Moneda mon : monedas){
             System.out.println(mon);
         }
+        System.out.println();
         return monedas;
     }
 }

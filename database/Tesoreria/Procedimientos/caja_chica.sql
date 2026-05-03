@@ -1,7 +1,7 @@
 DELIMITER $$
 
-DROP PROCEDURE IF EXISTS pa_insertar_tes_caja_chica $$
-CREATE PROCEDURE pa_insertar_tes_caja_chica(
+DROP PROCEDURE IF EXISTS pa_insertar_caja_chica $$
+CREATE PROCEDURE pa_insertar_caja_chica(
     IN p_id_fondo INT,
     IN p_monto_techo DECIMAL(12,2),
     IN p_id_area INT
@@ -19,8 +19,8 @@ BEGIN
     );
 END$$
 
-DROP PROCEDURE IF EXISTS pa_modificar_tes_caja_chica $$
-CREATE PROCEDURE pa_modificar_tes_caja_chica(
+DROP PROCEDURE IF EXISTS pa_modificar_caja_chica $$
+CREATE PROCEDURE pa_modificar_caja_chica(
     IN p_id_fondo INT,
     IN p_monto_techo DECIMAL(12,2),
     IN p_id_area INT
@@ -70,8 +70,8 @@ BEGIN
     WHERE f.id_fondo = p_id_fondo and f.estado_fondo='Activo';
 END$$
 
-DROP PROCEDURE IF EXISTS pa_listar_caja_chica $$
-CREATE PROCEDURE pa_listar_caja_chica()
+DROP PROCEDURE IF EXISTS pa_listar_cajas_chicas $$
+CREATE PROCEDURE pa_listar_cajas_chicas()
 BEGIN
     SELECT 
         f.id_fondo, 

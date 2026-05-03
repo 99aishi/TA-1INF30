@@ -22,8 +22,8 @@ public class CajaChicaImplement implements ICajaChicaDAO{
         Map<String,Object> parametrosSalida = new HashMap<>();
         Map<String,Object> parametrosEntrada = new HashMap<>();
         parametrosSalida.put("p_id_fondo", Types.INTEGER);
-        parametrosEntrada.put("p_nombre_fondo", cajaChica.getAreaAsignada());
-        parametrosEntrada.put("p_estado_fondo", cajaChica.getEstado());
+        parametrosEntrada.put("p_nombre_fondo", cajaChica.getNombre());
+        parametrosEntrada.put("p_estado_fondo", cajaChica.getEstado().toString());
 
         DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_fondo", parametrosEntrada, parametrosSalida);
         cajaChica.setIdFondo((int)parametrosSalida.get("p_id_fondo"));
@@ -72,7 +72,7 @@ public class CajaChicaImplement implements ICajaChicaDAO{
         CajaChica caja=null;
         Map<String, Object> parametrosEntrada = new HashMap<>();
         parametrosEntrada.put("p_id_fondo", idCajaChica);
-        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_empleado_por_id", parametrosEntrada);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_caja_chica_por_id", parametrosEntrada);
         try{
             if(rs.next()){
                 caja = new CajaChica();
@@ -96,7 +96,7 @@ public class CajaChicaImplement implements ICajaChicaDAO{
     public List<CajaChica> listarTodas() throws SQLException{
         List<CajaChica> cajas = null;
         CajaChica caja;
-        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_empleado_por_id", null);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_cajas_chicas", null);
         try{
             while(rs.next()){
                 if(cajas == null) cajas = new ArrayList<>();

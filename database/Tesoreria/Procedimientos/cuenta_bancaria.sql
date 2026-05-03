@@ -13,11 +13,13 @@ CREATE PROCEDURE pa_insertar_cuenta_bancaria(
 BEGIN
 	INSERT INTO tes_cuenta_bancaria(
         nombre_banco, numero_cuenta, cci,
-        id_moneda,id_usuario_titular, 
+        id_moneda,
+        id_usuario, 
         id_area) 
 	VALUES 
         (p_nombre_banco,p_numero_cuenta,p_cci,
-        p_id_moneda,p_id_usuario_titular,
+        p_id_moneda,
+        p_id_usuario_titular,
         p_id_area_titular);
 	
 	SET p_id_cuenta_bancaria=@@last_insert_id;
@@ -44,7 +46,7 @@ BEGIN
         numero_cuenta = p_numero_cuenta,
         cci = p_cci,
         id_moneda = p_id_moneda,
-        id_usuario_titular = p_id_usuario_titular,
+        id_usuario = p_id_usuario_titular,
         id_area = p_id_area_administradora
     WHERE id_cuenta_bancaria = p_id_cuenta_bancaria;
 END$$
@@ -85,9 +87,6 @@ END$$
 DROP PROCEDURE IF EXISTS pa_listar_cuentas_bancarias $$
 CREATE PROCEDURE pa_listar_cuentas_bancarias()
 BEGIN
-    IF p_id_cuenta_bancaria IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de la cuenta no válido';
-    END IF;
     SELECT 
         id_cuenta_bancaria,
         numero_cuenta,
