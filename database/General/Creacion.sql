@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS tes_cuenta_bancaria (
         REFERENCES tes_moneda(id_moneda),
     CONSTRAINT fk_tes_cuenta_bancaria_rrhh_area FOREIGN KEY (id_area) 
         REFERENCES rrhh_area(id_area),
-    CONSTRAINT fk_tes_cuenta_bancaria_rrhh_empleado FOREIGN KEY (id_usuario_titular) 
+    CONSTRAINT fk_tes_cuenta_bancaria_rrhh_empleado FOREIGN KEY (id_usuario) 
         REFERENCES rrhh_empleado(id_usuario)
 ) ENGINE=InnoDB;
 
@@ -217,7 +217,7 @@ CREATE TABLE IF NOT EXISTS ope_rendicion (
     
     CONSTRAINT pk_ope_rendicion PRIMARY KEY (id_rendicion), 
     CONSTRAINT fk_ope_rend_ope_ciclo_caja FOREIGN KEY (id_ciclo_caja) 
-        REFERENCES rrhh_empleado(id_ciclo_caja),
+        REFERENCES ope_ciclo_caja(id_ciclo_caja)
 ) ENGINE=InnoDB;
 
 
