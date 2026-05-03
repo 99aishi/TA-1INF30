@@ -8,11 +8,13 @@ public class Fondo {
     private EstadoFondo estado;
 
     // Constructores
-    public Fondo(){
-    }
-
+    public Fondo(){}
     public Fondo(int idFondo, String nombre, double saldoActual, EstadoFondo estado) {
         this.idFondo = idFondo;
+        this.nombre = nombre;
+        this.estado = estado;
+    }
+    public Fondo(String nombre, EstadoFondo estado) {
         this.nombre = nombre;
         this.estado = estado;
     }

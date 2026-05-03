@@ -15,8 +15,16 @@ public class CajaChica extends Fondo{
     //Constructores
     public CajaChica(){
     }
-    public CajaChica(int idFondo, String nombre, double saldoActual, EstadoFondo estado, double montoTecho, List<CicloCajaChica> ciclos, Area areaAsignada) {
+    public CajaChica(int idFondo, String nombre, double saldoActual, EstadoFondo estado,
+                     double montoTecho, List<CicloCajaChica> ciclos, Area areaAsignada) {
         super(idFondo, nombre, saldoActual, estado);
+        this.montoTecho = montoTecho;
+        this.ciclos = ciclos;
+        this.areaAsignada = areaAsignada;
+    }
+    public CajaChica(String nombre, EstadoFondo estado, double montoTecho,
+                     List<CicloCajaChica> ciclos, Area areaAsignada) {
+        super(nombre, estado);
         this.montoTecho = montoTecho;
         this.ciclos = ciclos;
         this.areaAsignada = areaAsignada;
@@ -43,9 +51,11 @@ public class CajaChica extends Fondo{
     }
 
     //Métodos
+
+
     @Override
     public String toString() {
-        return super.toString() +  "CajaChica{" +
+        return super.toString() + " CajaChica{" +
                 "montoTecho=" + montoTecho +
                 ", ciclos=" + ciclos +
                 ", areaAsignada=" + areaAsignada +

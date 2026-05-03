@@ -3,10 +3,6 @@ package pe.edu.pucp.economix.main;
 import java.sql.SQLException;
 import java.util.List;
 
-import pe.edu.pucp.economix.rrhh.dao.IAreaDAO;
-import pe.edu.pucp.economix.rrhh.implement.AreaImplement;
-import pe.edu.pucp.economix.rrhh.model.*;
-import pe.edu.pucp.economix.rrhh.test.*;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 import pe.edu.pucp.economix.tesoreria.test.MonedaTest;
 
