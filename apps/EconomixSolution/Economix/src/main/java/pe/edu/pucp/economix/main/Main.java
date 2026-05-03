@@ -3,6 +3,12 @@ package pe.edu.pucp.economix.main;
 import java.sql.SQLException;
 import java.util.List;
 
+import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
+import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
+import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
+import pe.edu.pucp.economix.operaciones.test.CicloCajaChicaTest;
+import pe.edu.pucp.economix.operaciones.test.ComprobantePagoTest;
+import pe.edu.pucp.economix.operaciones.test.SolicitudGastoTest;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.rrhh.model.Rol;
@@ -39,9 +45,9 @@ public class Main {
 //
 //        //Operaciones Testing
 //        // Ejemplo de cómo orquestarías los tests separados
-//        List<CicloCajaChica> ciclos = CicloCajaChicaTest.pruebaInsercion(listaCajasChicas.get(0), listaCajasChicas.get(1));
-//        List<SolicitudGasto> solicitudes = SolicitudGastoTest.pruebaInsercion(ciclos.get(0), empleados.get(1), empleados.get(2));
-//        List<ComprobantePago> facturas = ComprobantePagoTest.pruebaInsercion(solicitudes.getFirst(), monedas.getFirst());
+        List<CicloCajaChica> ciclos = CicloCajaChicaTest.pruebaInsercion(listaCajasChicas.get(0), listaCajasChicas.get(1));
+        List<SolicitudGasto> solicitudes = SolicitudGastoTest.pruebaInsercion(ciclos.get(0), empleados.get(1), empleados.get(2));
+        List<ComprobantePago> facturas = ComprobantePagoTest.pruebaInsercion(solicitudes.getFirst(), monedas.getFirst());
 
     }
 

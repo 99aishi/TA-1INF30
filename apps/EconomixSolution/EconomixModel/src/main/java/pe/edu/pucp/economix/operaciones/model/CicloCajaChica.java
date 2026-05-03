@@ -21,11 +21,23 @@ public class CicloCajaChica{
 
     //Constructores
     public CicloCajaChica(){}
-
     public CicloCajaChica(int idCicloCaja, int numeroSemana, Date fechaApertura, Date fechaCierre,
                           double saldoInicial, double totalGastado, EstadoCicloCaja estado,
                           CajaChica cajaChica, List<SolicitudGasto> solicitudesDeGasto, Rendicion rendicion) {
         this.idCicloCaja = idCicloCaja;
+        this.numeroSemana = numeroSemana;
+        this.fechaApertura = fechaApertura;
+        this.fechaCierre = fechaCierre;
+        this.saldoInicial = saldoInicial;
+        this.totalGastado = totalGastado;
+        this.estado = estado;
+        this.cajaChica = cajaChica;
+        this.solicitudesDeGasto = solicitudesDeGasto;
+        this.rendicion = rendicion;
+    }
+    public CicloCajaChica(int numeroSemana, Date fechaApertura, Date fechaCierre, double saldoInicial,
+                          double totalGastado, EstadoCicloCaja estado, CajaChica cajaChica,
+                          List<SolicitudGasto> solicitudesDeGasto, Rendicion rendicion) {
         this.numeroSemana = numeroSemana;
         this.fechaApertura = fechaApertura;
         this.fechaCierre = fechaCierre;

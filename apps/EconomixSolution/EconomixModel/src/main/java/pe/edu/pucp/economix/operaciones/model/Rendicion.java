@@ -18,11 +18,23 @@ public class Rendicion {
 
     // Constructores
     public Rendicion(){}
-
     public Rendicion(int idRendicion, Date fechaPresentacion, Date fechaAprobacion,
                      double totalDeclarado, double totalAprobado, double saldoFinal,
                      EstadoRendicion estado, String comentario, CicloCajaChica cicloCajaChica) {
         this.idRendicion = idRendicion;
+        this.fechaPresentacion = fechaPresentacion;
+        this.fechaAprobacion = fechaAprobacion;
+        this.totalDeclarado = totalDeclarado;
+        this.totalAprobado = totalAprobado;
+        this.saldoFinal = saldoFinal;
+        this.estado = estado;
+        this.comentario = comentario;
+        this.cicloCajaChica = cicloCajaChica;
+    }
+
+    public Rendicion(Date fechaPresentacion, Date fechaAprobacion,
+                     double totalDeclarado, double totalAprobado, double saldoFinal,
+                     EstadoRendicion estado, String comentario, CicloCajaChica cicloCajaChica) {
         this.fechaPresentacion = fechaPresentacion;
         this.fechaAprobacion = fechaAprobacion;
         this.totalDeclarado = totalDeclarado;

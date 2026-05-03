@@ -38,6 +38,22 @@ public class ComprobantePago {
         this.moneda = moneda;
     }
 
+    public ComprobantePago(TipoComprobante tipoDocumento, String RUCProveedor, String razonSocial,
+                           String numeroSerial, Date fechaEmision, double montoTotal, double subtotal,
+                           double igv, double total, SolicitudGasto solicitud, Moneda moneda) {
+        this.tipoDocumento = tipoDocumento;
+        this.RUCProveedor = RUCProveedor;
+        this.razonSocial = razonSocial;
+        this.numeroSerial = numeroSerial;
+        this.fechaEmision = fechaEmision;
+        this.montoTotal = montoTotal;
+        this.subtotal = subtotal;
+        this.igv = igv;
+        this.total = total;
+        this.solicitud = solicitud;
+        this.moneda = moneda;
+    }
+
     // Selectores
     public int getIdComprobante() {
         return idComprobante;

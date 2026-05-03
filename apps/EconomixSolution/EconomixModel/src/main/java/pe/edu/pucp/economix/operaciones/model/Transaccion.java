@@ -19,7 +19,23 @@ public class Transaccion{
 
     //COnstructores
     public Transaccion(){}
-    public Transaccion(TipoTransaccion tipo,Date fecha,double monto,
+
+    public Transaccion(int idTransaccion, TipoTransaccion
+                tipoTransaccion, Date fecha, double monto, String numeroOperacionBancaria,
+               MedioPago medioPago, double tipoCambio, CuentaBancaria cuentaOrigen,
+               CuentaBancaria cuentaDestino, Moneda moneda) {
+        this.idTransaccion = idTransaccion;
+        this.tipoTransaccion = tipoTransaccion;
+        this.fecha = fecha;
+        this.monto = monto;
+        this.numeroOperacionBancaria = numeroOperacionBancaria;
+        this.medioPago = medioPago;
+        this.tipoCambio = tipoCambio;
+        this.cuentaOrigen = cuentaOrigen;
+        this.cuentaDestino = cuentaDestino;
+        this.moneda = moneda;
+    }
+    public Transaccion(TipoTransaccion tipo, Date fecha, double monto,
                        String numeroOperacionBancaria, MedioPago medioPago, double tipoCambio,
                        CuentaBancaria origen, CuentaBancaria destino, Moneda moneda){
         this.tipoTransaccion = tipo;
@@ -94,16 +110,24 @@ public class Transaccion{
     public void setMoneda(Moneda moneda){
         this.moneda = moneda;
     }
-    @Override
-    public String toString() {
-        String cadena = "";
-        cadena += String.format("TRANSACCION: %d - %s - Fecha: %s - Monto: %.2f - Nro Op: %s - Medio: %s - Tipo Cambio: %.2f",
-                idTransaccion, tipoTransaccion, fecha, monto,
-                numeroOperacionBancaria, medioPago, tipoCambio);
-        return cadena;
-    }
 
     //Metodos
+    @Override
+    public String toString() {
+        return "Transaccion{" +
+                "idTransaccion=" + idTransaccion +
+                ", tipoTransaccion=" + tipoTransaccion +
+                ", fecha=" + fecha +
+                ", monto=" + monto +
+                ", numeroOperacionBancaria='" + numeroOperacionBancaria + '\'' +
+                ", medioPago=" + medioPago +
+                ", tipoCambio=" + tipoCambio +
+                ", cuentaOrigen=" + cuentaOrigen +
+                ", cuentaDestino=" + cuentaDestino +
+                ", moneda=" + moneda +
+                '}';
+    }
+
     public void registrarLogTrazabilidad() {
         // TODO: Registro inmutable con precisión de milisegundos (RF_19, RNF_07)
     }

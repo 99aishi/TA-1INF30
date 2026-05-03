@@ -20,11 +20,23 @@ public class SolicitudGasto{
 
     //Constructores
     public SolicitudGasto(){}
-
     public SolicitudGasto(int idSolicitudGasto, Date fechaSolicitud, double montoSolicitado, String motivoSolicitud,
                           EstadoSolicitudGasto estado, Empleado solicitante, Empleado destinatario,
                           List<ComprobantePago> comprobantes, CicloCajaChica ciclo) {
         this.idSolicitudGasto = idSolicitudGasto;
+        this.fechaSolicitud = fechaSolicitud;
+        this.montoSolicitado = montoSolicitado;
+        this.motivoSolicitud = motivoSolicitud;
+        this.estado = estado;
+        this.solicitante = solicitante;
+        this.destinatario = destinatario;
+        this.comprobantes = comprobantes;
+        this.ciclo = ciclo;
+    }
+
+    public SolicitudGasto(Date fechaSolicitud, double montoSolicitado, String motivoSolicitud,
+                          EstadoSolicitudGasto estado, Empleado solicitante, Empleado destinatario,
+                          List<ComprobantePago> comprobantes, CicloCajaChica ciclo) {
         this.fechaSolicitud = fechaSolicitud;
         this.montoSolicitado = montoSolicitado;
         this.motivoSolicitud = motivoSolicitud;
