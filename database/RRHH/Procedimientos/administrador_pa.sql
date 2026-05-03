@@ -59,6 +59,11 @@ BEGIN
     END IF;
 
     SELECT 
+        u.id_usuario, 
+        u.nombres, 
+        u.apellido_paterno, 
+        u.apellido_materno,
+        u.password_hash,
         a.id_usuario, 
         a.correo_soporte
     FROM rrhh_administrador a
@@ -71,6 +76,11 @@ DROP PROCEDURE IF EXISTS pa_listar_administradores $$
 CREATE PROCEDURE pa_listar_administradores()
 BEGIN
     SELECT 
+        u.id_usuario, 
+        u.nombres, 
+        u.apellido_paterno, 
+        u.apellido_materno,
+        u.password_hash,
         a.id_usuario, 
         a.correo_soporte
     FROM rrhh_administrador a

@@ -6,7 +6,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 CREATE TABLE IF NOT EXISTS rrhh_rol (
     id_rol INT NOT NULL AUTO_INCREMENT,
-    titulo_rol VARCHAR(50) NOT NULL,
+    titulo_rol VARCHAR(50) NOT NULL UNIQUE,
     descripcion_rol VARCHAR(200),
     esta_activo TINYINT(1) DEFAULT 1,
     

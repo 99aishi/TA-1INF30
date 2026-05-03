@@ -8,10 +8,6 @@ CREATE PROCEDURE pa_insertar_area(
     OUT p_id_generado INT
 )
 BEGIN
-    IF p_id_area IS NULL OR p_id_area <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del área no es válido';
-    END IF;
-
     INSERT INTO rrhh_area(
         nombre_area,
         descripcion_area, 
@@ -107,7 +103,7 @@ BEGIN
         id_jefe
     FROM rrhh_area
     WHERE esta_activo = 1
-    ORDER BY nombre_area;
+    ORDER BY id_area;
 END$$
 
 DELIMITER ;

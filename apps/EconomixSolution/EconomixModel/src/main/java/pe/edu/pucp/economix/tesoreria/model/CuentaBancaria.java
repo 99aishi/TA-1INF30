@@ -13,16 +13,30 @@ public class CuentaBancaria {
     private String cci;
     //Relaciones
     private Moneda moneda;
-    private Empleado empleadoAdministrador; //set y get , c copia
+    private Empleado empleadoAdministrador;
     private Area areaAdministradora;
     private List<Transaccion> recepciones;
     private List<Transaccion> transferencias;
 
     //Constructores
     public CuentaBancaria(){};
-
-    public CuentaBancaria(int idCuenta, String nombreBanco, String numeroBancario, String cci, Moneda moneda, Empleado empleadoAdministrador, Area areaAdministradora, List<Transaccion> recepciones, List<Transaccion> transferencias) {
+    public CuentaBancaria(int idCuenta, String nombreBanco, String numeroBancario, String cci,
+                          Moneda moneda, Empleado empleadoAdministrador, Area areaAdministradora,
+                          List<Transaccion> recepciones, List<Transaccion> transferencias) {
         this.idCuenta = idCuenta;
+        this.nombreBanco = nombreBanco;
+        this.numeroBancario = numeroBancario;
+        this.cci = cci;
+        this.moneda = moneda;
+        this.empleadoAdministrador = empleadoAdministrador;
+        this.areaAdministradora = areaAdministradora;
+        this.recepciones = recepciones;
+        this.transferencias = transferencias;
+    }
+
+    public CuentaBancaria(String nombreBanco, String numeroBancario, String cci, Moneda moneda,
+                          Empleado empleadoAdministrador, Area areaAdministradora,
+                          List<Transaccion> recepciones, List<Transaccion> transferencias) {
         this.nombreBanco = nombreBanco;
         this.numeroBancario = numeroBancario;
         this.cci = cci;

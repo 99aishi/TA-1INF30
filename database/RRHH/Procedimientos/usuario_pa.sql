@@ -62,35 +62,4 @@ BEGIN
     WHERE id_usuario = p_id_usuario;
 END$$
 
-DROP PROCEDURE IF EXISTS pa_buscar_usuario_por_id $$
-CREATE PROCEDURE pa_buscar_usuario_por_id(
-    IN p_id_usuario INT
-)
-BEGIN
-    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de usuario inválido';
-    END IF;
-
-    SELECT 
-        id_usuario, 
-        nombres, 
-        apellido_paterno, 
-        apellido_materno
-    FROM rrhh_usuario
-    WHERE id_usuario = p_id_usuario and esta_activo = 1;
-END$$
-
-DROP PROCEDURE IF EXISTS pa_listar_usuarios  $$
-CREATE PROCEDURE pa_listar_usuarios()
-BEGIN
-    SELECT 
-        id_usuario, 
-        nombres, 
-        apellido_paterno, 
-        apellido_materno
-    FROM rrhh_usuario
-    WHERE esta_activo = 1
-    ORDER BY id_usuario;
-END$$
-
 DELIMITER ;

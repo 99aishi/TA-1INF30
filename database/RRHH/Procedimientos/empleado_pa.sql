@@ -78,7 +78,11 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del empleado no es válido';
     END IF;
     SELECT 
-        e.id_usuario, 
+        u.id_usuario, 
+        u.nombres, 
+        u.apellido_paterno, 
+        u.apellido_materno,
+        u.password_hash,
         e.correo_institucional, 
         e.numero_celular, 
         e.id_area, 
@@ -94,7 +98,11 @@ DROP PROCEDURE IF EXISTS pa_listar_empleados $$
 CREATE PROCEDURE pa_listar_empleados()
 BEGIN
     SELECT 
-        e.id_usuario, 
+        u.id_usuario, 
+        u.nombres, 
+        u.apellido_paterno, 
+        u.apellido_materno,
+        u.password_hash,
         e.correo_institucional, 
         e.numero_celular, 
         e.id_area, 

@@ -77,7 +77,7 @@ BEGIN
         descripcion_rol
     FROM rrhh_rol
     WHERE esta_activo = 1
-    ORDER BY titulo_rol;
+    ORDER BY id_rol;
 END$$
 
 DELIMITER ;

@@ -61,8 +61,8 @@ BEGIN
 
 END$$
 
-DROP PROCEDURE IF EXISTS pa_busqueda_por_id_cuenta_bancaria $$
-CREATE PROCEDURE pa_busqueda_por_id_cuenta_bancaria(
+DROP PROCEDURE IF EXISTS pa_buscar_cuenta_bancaria_por_id $$
+CREATE PROCEDURE pa_buscar_cuenta_bancaria_por_id(
     IN p_id_cuenta_bancaria INT
 )
 BEGIN

@@ -27,8 +27,8 @@ BEGIN
 	WHERE id_moneda=p_id_moneda;
 END$$
 
-DROP PROCEDURE IF EXISTS pa_busqueda_por_id $$
-CREATE PROCEDURE pa_busqueda_por_id(
+DROP PROCEDURE IF EXISTS pa_buscar_moneda_por_id $$
+CREATE PROCEDURE pa_buscar_moneda_por_id(
 	IN p_id_moneda INT
 )
 BEGIN 
