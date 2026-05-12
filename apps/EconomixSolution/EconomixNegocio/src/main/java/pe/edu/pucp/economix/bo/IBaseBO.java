@@ -4,9 +4,9 @@ import java.sql.SQLException;
 import java.util.List;
 
 public interface IBaseBO <T>{
-    int insertar(T objeto) throws SQLException;
-    int modificar(T objeto) throws SQLException;
-    int eliminar(int id) throws SQLException;
-    T buscarPorId(int id) throws SQLException;
-    List<T> listarTodas() throws SQLException;
+    int insertar(T objeto) throws Exception;
+    int modificar(T objeto) throws Exception;
+    int eliminar(int id) throws Exception;
+    T buscarPorId(int id) throws Exception;
+    List<T> listarTodas() throws Exception;
 }
