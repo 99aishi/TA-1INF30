@@ -12,7 +12,6 @@ DROP TABLE IF EXISTS ope_rendicion;
 -- ---------------------------------------------------------
 -- MÓDULO 2: Tesorería (tes)
 -- ---------------------------------------------------------
-DROP TABLE IF EXISTS tes_entrega_rendir;
 DROP TABLE IF EXISTS tes_caja_chica;
 DROP TABLE IF EXISTS tes_fondo;
 DROP TABLE IF EXISTS tes_cuenta_bancaria;

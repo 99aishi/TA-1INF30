@@ -1,21 +1,21 @@
 package pe.edu.pucp.economix.tesoreria.test;
 
+import java.sql.SQLException;
+import java.util.List;
+
 import pe.edu.pucp.economix.rrhh.model.Area;
-import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.tesoreria.implement.CajaChicaImplement;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
 
-import java.util.List;
-
 public class CajaChicaTest {
-    private static CajaChicaImplement cajaChicaDAO = new CajaChicaImplement();
-    public static List<CajaChica> pruebaInsercion(Area areaTI, Area areaFinanzas){
+    private final static CajaChicaImplement cajaChicaDAO = new CajaChicaImplement();
+
+    public static List<CajaChica> pruebaInsercion(Area areaTI, Area areaFinanzas) throws SQLException {
         CajaChica cajaChicaTI = new CajaChica();
         cajaChicaTI.setAreaAsignada(areaTI);
         cajaChicaTI.setNombre("Caja Chica TI");
         cajaChicaTI.setMontoTecho(1.00);
-        cajaChicaTI.setSaldoActual(1.00);
         cajaChicaTI.setEstado(EstadoFondo.Activo);
         cajaChicaTI.setIdFondo(cajaChicaDAO.insertar(cajaChicaTI));
 
@@ -23,7 +23,6 @@ public class CajaChicaTest {
         cajaChicaFinanzas.setAreaAsignada(areaFinanzas);
         cajaChicaFinanzas.setNombre("Caja Chica Finanzas");
         cajaChicaFinanzas.setMontoTecho(1000.00);
-        cajaChicaFinanzas.setSaldoActual(1000.00);
         cajaChicaFinanzas.setEstado(EstadoFondo.Activo);
         cajaChicaTI.setIdFondo(cajaChicaDAO.insertar(cajaChicaFinanzas));
 

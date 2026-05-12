@@ -1,9 +1,8 @@
 package pe.edu.pucp.economix.rrhh.model;
 
 public abstract class Usuario{
-    private static int correlativoID = 1;
     private int usuarioID;
-    private String nombre;
+    private String nombres;
     private String apellidoPaterno;
     private String apellidoMaterno;
     private String password;
@@ -11,15 +10,21 @@ public abstract class Usuario{
 
     //Constructores
     public Usuario(){}
-    public Usuario(String nombre, String apellido_paterno,
-                   String apellido_materno, String password,EstadoUsuario estado){
-        //Asignación de ID automatica por el sistema
-        this.usuarioID = this.correlativoID++;
-        this.nombre=nombre;
-        this.password=password;
-        this.apellidoPaterno=apellido_paterno;
-        this.apellidoMaterno=apellido_materno;
-        this.estado=estado;
+
+    public Usuario(int usuarioID, String nombres, String apellidoPaterno, String apellidoMaterno, String password, EstadoUsuario estado) {
+        this.usuarioID = usuarioID;
+        this.nombres = nombres;
+        this.apellidoPaterno = apellidoPaterno;
+        this.apellidoMaterno = apellidoMaterno;
+        this.password = password;
+        this.estado = estado;
+    }
+    public Usuario(String nombres, String apellidoPaterno, String apellidoMaterno, String password, EstadoUsuario estado) {
+        this.nombres = nombres;
+        this.apellidoPaterno = apellidoPaterno;
+        this.apellidoMaterno = apellidoMaterno;
+        this.password = password;
+        this.estado = estado;
     }
 
     //Selectores
@@ -29,11 +34,11 @@ public abstract class Usuario{
     public void setUsuarioID(int usuarioID){
         this.usuarioID=usuarioID;
     }
-    public String getNombre(){
-        return nombre;
+    public String getNombres(){
+        return nombres;
     }
-    public void setNombre(String nombre){
-        this.nombre=nombre;
+    public void setNombres(String nombres){
+        this.nombres = nombres;
     }
     public String getApellidoPaterno(){
         return apellidoPaterno;
@@ -63,15 +68,20 @@ public abstract class Usuario{
         this.estado = estado;
     }
 
+    //Metodos
+
     @Override
     public String toString() {
-        String cadena = "";
-        cadena += String.format("%d - %s %s %s - %s",
-                usuarioID, nombre, apellidoPaterno, apellidoMaterno, estado);
-        return cadena;
+        return "Usuario{" +
+                "usuarioID=" + usuarioID +
+                ", nombres='" + nombres + '\'' +
+                ", apellidoPaterno='" + apellidoPaterno + '\'' +
+                ", apellidoMaterno='" + apellidoMaterno + '\'' +
+                ", password='" + password + '\'' +
+                ", estado=" + estado +
+                '}';
     }
-    
-    //Metodos
+
     public boolean login(int idIngresado, String passIngresada){
         if(usuarioID == idIngresado)
             if(estado == EstadoUsuario.Activo){
@@ -82,12 +92,12 @@ public abstract class Usuario{
         return false;
     }
     public String cifrarPassword(String passwordPlano) {
-        // TODO: Implementar algoritmo Argon2id con salt de 16 bytes (RNF_01)
+        // TODO
         return "";
     }
 
     public boolean validarAccesoPorEstado() {
-        // TODO: Restringir acceso exclusivamente a "Activos" (RF_05)
+        // TODO
         return false;
     }
 }

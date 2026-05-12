@@ -9,19 +9,6 @@ CREATE PROCEDURE pa_insertar_usuario(
     OUT p_id_generado INT
 )
 BEGIN
-    
-    IF p_nombres IS NULL OR TRIM(p_nombres) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Los nombres son obligatorios';
-    END IF;
-
-    IF p_apellido_paterno IS NULL OR TRIM(p_apellido_paterno) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El apellido paterno es obligatorio';
-    END IF;
-
-    IF p_password_hash IS NULL OR TRIM(p_password_hash) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La contraseña hash es obligatoria';
-    END IF;
-
     INSERT INTO rrhh_usuario(
         nombres,
         apellido_paterno,
@@ -30,10 +17,10 @@ BEGIN
         esta_activo
     )
     VALUES(
-        TRIM(p_nombres),
-        TRIM(p_apellido_paterno),
-        TRIM(p_apellido_materno),
-        TRIM(p_password_hash),
+        p_nombres,
+        p_apellido_paterno,
+        p_apellido_materno,
+        p_password_hash,
         1
     );
     
@@ -54,10 +41,10 @@ BEGIN
     END IF;
 
     UPDATE rrhh_usuario
-       SET nombres = TRIM(p_nombres),
-           apellido_paterno = TRIM(p_apellido_paterno),
-           apellido_materno = TRIM(p_apellido_materno),
-           password_hash = TRIM(p_password_hash)
+       SET nombres = p_nombres,
+           apellido_paterno = p_apellido_paterno,
+           apellido_materno = p_apellido_materno,
+           password_hash = p_password_hash
      WHERE id_usuario = p_id_usuario;
 END$$
 
@@ -66,37 +53,13 @@ CREATE PROCEDURE pa_eliminar_usuario(
     IN p_id_usuario INT
 )
 BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de usuario inválido';
+    END IF;
+
     UPDATE rrhh_usuario
        SET esta_activo = 0
     WHERE id_usuario = p_id_usuario;
-END$$
-
-DROP PROCEDURE IF EXISTS pa_buscar_usuario_por_id $$
-CREATE PROCEDURE pa_buscar_usuario_por_id(
-    IN p_id_usuario INT
-)
-BEGIN
-    SELECT 
-        id_usuario, 
-        nombres, 
-        apellido_paterno, 
-        apellido_materno, 
-        esta_activo
-    FROM rrhh_usuario
-    WHERE id_usuario = p_id_usuario;
-END$$
-
-DROP PROCEDURE IF EXISTS pa_listar_usuarios  $$
-CREATE PROCEDURE pa_listar_usuarios()
-BEGIN
-    SELECT 
-        id_usuario, 
-        nombres, 
-        apellido_paterno, 
-        apellido_materno, 
-        esta_activo
-    FROM rrhh_usuario
-    ORDER BY id_usuario;
 END$$
 
 DELIMITER ;

@@ -1,17 +1,19 @@
 package pe.edu.pucp.economix.operaciones.test;
 
+import java.sql.SQLException;
+import java.util.Date;
+import java.util.List;
+
 import pe.edu.pucp.economix.operaciones.implement.SolicitudGastoImplement;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
 import pe.edu.pucp.economix.operaciones.model.EstadoSolicitudGasto;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 
-import java.util.Date;
-import java.util.List;
-
 public class SolicitudGastoTest {
-    private static SolicitudGastoImplement solicitudDAO = new SolicitudGastoImplement();
-    public static List<SolicitudGasto> pruebaInsercion(CicloCajaChica cicloActivo, Empleado solicitante, Empleado aprobador){
+    private static final SolicitudGastoImplement solicitudDAO = new SolicitudGastoImplement();
+
+    public static List<SolicitudGasto> pruebaInsercion(CicloCajaChica cicloActivo, Empleado solicitante, Empleado aprobador) throws SQLException{
 
         SolicitudGasto sol1 = new SolicitudGasto();
         sol1.setFechaSolicitud(new Date());
@@ -37,7 +39,7 @@ public class SolicitudGastoTest {
 
         List<SolicitudGasto> solicitudes = solicitudDAO.listarTodas();
         for (SolicitudGasto s : solicitudes) {
-            System.out.println("SOLICITUD: " + s.getIdSolicitudGasto() + " | Motivo: " + s.getMotivoSolicitud() + " | Monto: " + s.getMontoSolicitado());
+            System.out.println(s);
         }
         System.out.println();
         return solicitudes;

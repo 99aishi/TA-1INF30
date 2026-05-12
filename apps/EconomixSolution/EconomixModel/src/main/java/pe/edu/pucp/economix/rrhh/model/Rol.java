@@ -1,23 +1,20 @@
 package pe.edu.pucp.economix.rrhh.model;
 
 public class Rol {
-    private static int correlativoID = 1;
     private int rolID;
     private String titulo;
     private String descripcion;
     // Constructor
-    public Rol(){
+    public Rol(){}
 
-    }
-    public Rol(String titulo, String descripcion) {
-        this.rolID = this.correlativoID++;
+    public Rol(int rolID, String titulo, String descripcion) {
+        this.rolID = rolID;
         this.titulo = titulo;
         this.descripcion = descripcion;
     }
-    public Rol(Rol copia){
-        this.rolID= copia.rolID;
-        this.titulo=copia.titulo;
-        this.descripcion=copia.descripcion;
+    public Rol(String titulo, String descripcion) {
+        this.titulo = titulo;
+        this.descripcion = descripcion;
     }
 
     //Selectores
@@ -41,10 +38,13 @@ public class Rol {
     }
 
     //Metodos
+
     @Override
-    public String toString(){
-        String cadena = "";
-        cadena+=String.format("ROL: %d - %s - %s", this.getRolID(), this.getTitulo(), this.getDescripcion());
-        return cadena;
+    public String toString() {
+        return "Rol{" +
+                "rolID=" + rolID +
+                ", titulo='" + titulo + '\'' +
+                ", descripcion='" + descripcion + '\'' +
+                '}';
     }
 }

@@ -1,220 +1,145 @@
 package pe.edu.pucp.economix.operaciones.implement;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.operaciones.dao.ICicloCajaChicaDAO;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
 import pe.edu.pucp.economix.operaciones.model.EstadoCicloCaja;
-import pe.edu.pucp.economix.tesoreria.dao.ICajaChicaDAO;
-import pe.edu.pucp.economix.tesoreria.implement.CajaChicaImplement;
+import pe.edu.pucp.economix.operaciones.model.Rendicion;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 
-import java.lang.reflect.Type;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-
 public class CicloCajaChicaImplement implements ICicloCajaChicaDAO {
-    private Connection con;
-    private Statement st;
-    private PreparedStatement pst;
     private ResultSet rs;
-    private CallableStatement cs;
 
     @Override
-    public int insertar(CicloCajaChica cicloCajaChica) {
-        int id=0;
-        try{
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_insertar_ciclo_caja(?,?,?,?,?,?,?,?,?)}");
+    public int insertar(CicloCajaChica cicloCajaChica) throws SQLException {
+        Map<String,Object> parametrosSalida = new HashMap<>();
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosSalida.put("p_id_generado", Types.INTEGER);
+        parametrosEntrada.put("p_numero_semana", cicloCajaChica.getNumeroSemana());
+        if(cicloCajaChica.getFechaCierre()!= null)
+            parametrosEntrada.put("p_fecha_apertura", new java.sql.Date(cicloCajaChica.getFechaApertura().getTime()));
+        else
+            parametrosEntrada.put("p_fecha_apertura", null);
 
-            cs.setInt("p_numero_semana", cicloCajaChica.getNumeroSemana());
-            cs.setDate("p_fecha_apertura", new java.sql.Date(cicloCajaChica.getFechaApertura().getTime()));
-            if(cicloCajaChica.getFechaCierre()!= null)
-                cs.setDate("p_fecha_cierre", new java.sql.Date(cicloCajaChica.getFechaCierre().getTime()));
-            else
-                cs.setNull("p_fecha_cierre", Types.DATE);
-            cs.setDouble("p_monto_saldo_inicial", cicloCajaChica.getSaldoInicial());
-            cs.setDouble("p_monto_total_gastado", cicloCajaChica.getTotalGastado());
-            cs.setString("p_estado_ciclo", cicloCajaChica.getEstado().toString());
-            cs.setInt("p_id_fondo_caja_chica", cicloCajaChica.getCajaChica().getIdFondo());
-            cs.setNull("p_id_rendicion", Types.INTEGER); // sin rendicion al crear
-            cs.registerOutParameter("p_id_generado", java.sql.Types.INTEGER);
+        if(cicloCajaChica.getFechaCierre()!= null)
+            parametrosEntrada.put("p_fecha_cierre", new java.sql.Date(cicloCajaChica.getFechaCierre().getTime()));
+        else
+            parametrosEntrada.put("p_fecha_cierre", null);
+        parametrosEntrada.put("p_monto_saldo_inicial", cicloCajaChica.getSaldoInicial());
+        parametrosEntrada.put("p_monto_total_gastado", cicloCajaChica.getTotalGastado());
+        parametrosEntrada.put("p_estado_ciclo", cicloCajaChica.getEstado().toString());
+        if(cicloCajaChica.getCajaChica() != null)
+            parametrosEntrada.put("p_id_caja_chica", cicloCajaChica.getCajaChica().getIdFondo());
+        else
+            parametrosEntrada.put("p_id_caja_chica", null);
+        if(cicloCajaChica.getRendicion()!= null)
+            parametrosEntrada.put("p_id_rendicion", cicloCajaChica.getRendicion().getIdRendicion());
+        else
+            parametrosEntrada.put("p_id_rendicion", null);
 
-            cs.executeUpdate();
+        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_ciclo_caja", parametrosEntrada, parametrosSalida);
+        cicloCajaChica.setIdCicloCaja((int)parametrosSalida.get("p_id_generado"));
 
-            id = cs.getInt("p_id_generado");
-        } catch (Exception ex){
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try {
-                cs.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-            try {
-                con.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-        }
-        return id;
+        return cicloCajaChica.getIdCicloCaja();
     }
 
     @Override
-    public int modificar(CicloCajaChica cicloCajaChica) {
-        int cantidad = 0;
-
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_modificar_ciclo_caja(?,?,?,?,?,?,?,?,?)}");
-
-            cs.setInt("p_id_ciclo_caja", cicloCajaChica.getIdCicloCaja());
-            cs.setInt("p_numero_semana", cicloCajaChica.getNumeroSemana());
-            cs.setDate("p_fecha_apertura", new java.sql.Date(cicloCajaChica.getFechaApertura().getTime()));
-            if (cicloCajaChica.getFechaCierre() != null)
-                cs.setDate("p_fecha_cierre", new java.sql.Date(cicloCajaChica.getFechaCierre().getTime()));
-            else
-                cs.setNull("p_fecha_cierre", Types.DATE);
-            cs.setDouble("p_monto_saldo_inicial", cicloCajaChica.getSaldoInicial());
-            cs.setDouble("p_monto_total_gastado", cicloCajaChica.getTotalGastado());
-            cs.setString("p_estado_ciclo", cicloCajaChica.getEstado().toString());
-            cs.setInt("p_id_fondo_caja_chica", cicloCajaChica.getCajaChica().getIdFondo());
-            cs.setNull("p_id_rendicion", Types.INTEGER);
-
-            cantidad = cs.executeUpdate();
-
-            return cantidad;
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try {
-                cs.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-            try {
-                con.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-        }
-
-        return cantidad;
+    public int modificar(CicloCajaChica cicloCajaChica) throws SQLException{
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_numero_semana", cicloCajaChica.getNumeroSemana());
+        parametrosEntrada.put("p_fecha_apertura", new java.sql.Date(cicloCajaChica.getFechaApertura().getTime()));
+        if(cicloCajaChica.getFechaCierre()!= null)
+            parametrosEntrada.put("p_fecha_cierre", new java.sql.Date(cicloCajaChica.getFechaCierre().getTime()));
+        else
+            parametrosEntrada.put("p_fecha_cierre", null);
+        parametrosEntrada.put("p_monto_saldo_inicial", cicloCajaChica.getSaldoInicial());
+        parametrosEntrada.put("p_monto_total_gastado", cicloCajaChica.getTotalGastado());
+        parametrosEntrada.put("p_estado_ciclo", cicloCajaChica.getEstado().toString());
+        parametrosEntrada.put("p_id_caja_chica", cicloCajaChica.getCajaChica().getIdFondo());
+        if(cicloCajaChica.getRendicion()!= null)
+            parametrosEntrada.put("p_id_rendicion", cicloCajaChica.getRendicion().getIdRendicion());
+        else
+            parametrosEntrada.put("p_id_rendicion", null);
+        
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_ciclo_caja", parametrosEntrada, null);
+        return resultado;
     }
 
     @Override
-    public int eliminar(int idCicloCaja) {
-        int cantidad = 0;
-
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_eliminar_ciclo_caja(?)}");
-            cs.setInt("p_id_ciclo_caja", idCicloCaja);
-
-            cantidad = cs.executeUpdate();
-
-            return cantidad;
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try {
-                cs.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-            try {
-                con.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-        }
-
-        return cantidad;
+    public int eliminar(int idCicloCaja) throws SQLException{
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_ciclo_caja", idCicloCaja);
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_eliminar_ciclo_caja", parametrosEntrada, null);
+        return resultado;
     }
 
     @Override
-    public CicloCajaChica buscarPorId(int idCicloCaja) {
+    public CicloCajaChica buscarPorId(int idCicloCaja) throws SQLException{
         CicloCajaChica ciclo = null;
-
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_buscar_ciclo_caja_por_id(?)}");
-            cs.setInt("p_id_ciclo_caja", idCicloCaja);
-
-            rs = cs.executeQuery();
-            if (rs.next()) {
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_ciclo_caja", idCicloCaja);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_ciclo_caja_por_id", parametrosEntrada);
+        try{
+            if(rs.next()){
                 ciclo = new CicloCajaChica();
+                ciclo.setIdCicloCaja(rs.getInt("id_ciclo_caja"));
                 ciclo.setNumeroSemana(rs.getInt("numero_semana"));
                 ciclo.setFechaApertura(rs.getDate("fecha_apertura"));
                 ciclo.setFechaCierre(rs.getDate("fecha_cierre"));
                 ciclo.setSaldoInicial(rs.getDouble("monto_saldo_inicial"));
-                ciclo.setIdCicloCaja(rs.getInt("id_ciclo_caja"));
                 ciclo.setTotalGastado(rs.getDouble("monto_total_gastado"));
-                ciclo.setEstado(EstadoCicloCaja.valueOf(rs.getString("estado_ciclo")));
-
-                // Para el FK de CajaChica, llamamos a su Implement
-                int idCajaChica = rs.getInt("id_fondo_caja_chica");
-                ciclo.setCajaChica(new CajaChicaImplement().buscarPorId(idCajaChica));
+                ciclo.setEstado(EstadoCicloCaja.valueOf(rs.getString("estado_ciclo"))); 
+                if(ciclo.getCajaChica() == null)
+                    ciclo.setCajaChica(new CajaChica());
+                ciclo.getCajaChica().setIdFondo(rs.getInt("id_caja_chica"));
+                if(ciclo.getRendicion() == null)
+                    ciclo.setRendicion(new Rendicion());
+                ciclo.getRendicion().setIdRendicion(rs.getInt("id_rendicion"));
             }
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try {
-                cs.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-            try {
-                con.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
+        }catch(SQLException ex){
+            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
-
         return ciclo;
     }
 
     @Override
-    public List<CicloCajaChica> listarTodas() {
+    public List<CicloCajaChica> listarTodas() throws SQLException{
         List<CicloCajaChica> ciclos = null;
-
-        try {
-            con = DBManager.getDBManager().getConnection();
-            cs = con.prepareCall("{call pa_listar_ciclos_caja()}");
-
-            rs = cs.executeQuery();
-            while (rs.next()) {
-                if (ciclos == null)
-                    ciclos = new ArrayList<>();
-
-                CicloCajaChica ciclo = new CicloCajaChica();
+        CicloCajaChica ciclo;
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_ciclos_caja", null);
+        try{
+            while(rs.next()){
+                if(ciclos == null) ciclos = new ArrayList<>();
+                ciclo = new CicloCajaChica();
+                ciclo.setIdCicloCaja(rs.getInt("id_ciclo_caja"));
                 ciclo.setNumeroSemana(rs.getInt("numero_semana"));
                 ciclo.setFechaApertura(rs.getDate("fecha_apertura"));
                 ciclo.setFechaCierre(rs.getDate("fecha_cierre"));
                 ciclo.setSaldoInicial(rs.getDouble("monto_saldo_inicial"));
-                ciclo.setIdCicloCaja(rs.getInt("id_ciclo_caja"));
                 ciclo.setTotalGastado(rs.getDouble("monto_total_gastado"));
-                ciclo.setEstado(EstadoCicloCaja.valueOf(rs.getString("estado_ciclo")));
-
-                // Para el FK de CajaChica, llamamos a su Implement
-                int idCajaChica = rs.getInt("id_fondo_caja_chica");
-                ciclo.setCajaChica(new CajaChicaImplement().buscarPorId(idCajaChica));
-            
+                ciclo.setEstado(EstadoCicloCaja.valueOf(rs.getString("estado_ciclo"))); 
+                if(ciclo.getCajaChica() == null)
+                    ciclo.setCajaChica(new CajaChica());
+                ciclo.getCajaChica().setIdFondo(rs.getInt("id_caja_chica"));
+                if(ciclo.getRendicion() == null)
+                    ciclo.setRendicion(new Rendicion());
+                ciclo.getRendicion().setIdRendicion(rs.getInt("id_rendicion"));
                 ciclos.add(ciclo);
             }
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-        } finally {
-            try {
-                cs.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-            try {
-                con.close();
-            } catch (Exception ex) {
-                System.out.println("ERROR: " + ex.getMessage());
-            }
+        }catch(SQLException ex){
+            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
         }
 
         return ciclos;

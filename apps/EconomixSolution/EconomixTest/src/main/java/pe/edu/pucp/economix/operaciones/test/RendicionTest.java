@@ -1,16 +1,17 @@
 package pe.edu.pucp.economix.operaciones.test;
 
+import java.sql.SQLException;
+import java.util.Date;
+import java.util.List;
+
 import pe.edu.pucp.economix.operaciones.implement.RendicionImplement;
 import pe.edu.pucp.economix.operaciones.model.EstadoRendicion;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
 
-import java.util.Date;
-import java.util.List;
-
 public class RendicionTest {
-    public static List<Rendicion> probarInsercion(){
-        RendicionImplement rendicionDAO = new RendicionImplement();
+    private static final RendicionImplement rendicionDAO = new RendicionImplement();
 
+    public static List<Rendicion> probarInsercion() throws SQLException{
         Rendicion r1 = new Rendicion();
         r1.setFechaPresentacion(new Date());
         r1.setTotalDeclarado(1500.00);
@@ -27,9 +28,9 @@ public class RendicionTest {
 
         List<Rendicion> rendiciones = rendicionDAO.listarTodas();
         for (Rendicion r : rendiciones) {
-            System.out.printf("ID: %d | Estado: %-10s | Monto: %-8s | Comentario: %s%n",
-                    r.getIdRendicion(), r.getEstado(), r.getTotalDeclarado(), r.getComentario());
+            System.out.println(r);
         }
+        System.out.println();
         return rendiciones;
     }
 }

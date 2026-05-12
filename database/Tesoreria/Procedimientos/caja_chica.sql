@@ -1,60 +1,38 @@
 DELIMITER $$
 
-DROP PROCEDURE IF EXISTS pa_insertar_tes_caja_chica $$
-CREATE PROCEDURE pa_insertar_tes_caja_chica(
-    OUT _id_fondo INT,
-    IN p_nombre_fondo VARCHAR(100),
-    IN p_monto_saldo_actual DECIMAL(12,2),
-    IN p_estado_fondo VARCHAR(20),
-       
+DROP PROCEDURE IF EXISTS pa_insertar_caja_chica $$
+CREATE PROCEDURE pa_insertar_caja_chica(
+    IN p_id_fondo INT,
     IN p_monto_techo DECIMAL(12,2),
     IN p_id_area INT
 )
 BEGIN
-    -- 1. Validaciones de obligatoriedad
-    IF p_nombre_fondo IS NULL OR TRIM(p_nombre_fondo) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El nombre del fondo es obligatorio.';
-    END IF;
-
-    IF p_estado_fondo IS NULL OR TRIM(p_estado_fondo) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El estado del fondo es obligatorio.';
-    END IF;
-
-    IF p_monto_techo IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El monto techo es obligatorio.';
-    END IF;
-
-    -- 2. Inserción si todo es correcto
-    INSERT INTO tes_fondo (
-        nombre_fondo,
-        monto_saldo_actual,
-        estado_fondo
+    INSERT INTO tes_caja_chica (
+        id_fondo,
+        monto_techo,
+        id_area
     ) 
     VALUES (
-        p_nombre_fondo,
-        COALESCE(p_monto_saldo_actual, 0.00), -- Si viene null, ponemos 0
-        p_estado_fondo
+        p_id_fondo,
+        p_monto_techo,
+        p_id_area
     );
-    SET _id_fondo = LAST_INSERT_ID();
-
-    INSERT INTO tes_caja_chica(id_fondo, monto_techo,id_area) VALUES(_id_fondo, p_monto_techo,p_id_area);
 END$$
 
-
-
-DROP PROCEDURE IF EXISTS pa_modificar_tes_caja_chica $$
-CREATE PROCEDURE pa_modificar_tes_caja_chica(
-    IN p_id_fondo INT, 
-    IN p_monto_saldo_actual DECIMAL(12,2), 
-    IN p_monto_techo DECIMAL(12,2)
+DROP PROCEDURE IF EXISTS pa_modificar_caja_chica $$
+CREATE PROCEDURE pa_modificar_caja_chica(
+    IN p_id_fondo INT,
+    IN p_monto_techo DECIMAL(12,2),
+    IN p_id_area INT
 )
 BEGIN
-    UPDATE tes_fondo 
-    SET monto_saldo_actual = p_monto_saldo_actual
-    WHERE id_fondo = p_id_fondo;
+    IF p_id_fondo IS NULL OR p_id_fondo <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de caja chica no válido';
+    END IF;
 
     UPDATE tes_caja_chica 
-    SET monto_techo = p_monto_techo
+    SET monto_techo = p_monto_techo,
+        id_area = p_id_area
     WHERE id_fondo = p_id_fondo;
 END$$
 
@@ -64,7 +42,12 @@ CREATE PROCEDURE pa_eliminar_caja_chica(
     IN p_id_fondo INT
 )
 BEGIN 
-    UPDATE tes_fondo SET estado_fondo='Inactivo' WHERE id_fondo=p_id_fondo;
+    IF p_id_fondo IS NULL OR p_id_fondo <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de caja chica no válido';
+    END IF;
+
+    call pa_eliminar_fondo(p_id_fondo);
+
 END$$
 
 DROP PROCEDURE IF EXISTS pa_buscar_por_id_caja_chica $$
@@ -72,15 +55,33 @@ CREATE PROCEDURE pa_buscar_por_id_caja_chica(
     IN p_id_fondo INT
 )
 BEGIN
-    SELECT f.id_fondo, f.nombre_fondo,f.monto_saldo_actual, f.estado_fondo, c.monto_techo,c.id_area 
-    FROM tes_fondo f JOIN tes_caja_chica c ON f.id_fondo=c.id_fondo AND f.id_fondo=p_id_fondo;
+    IF p_id_fondo IS NULL OR p_id_fondo <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de caja chica no válido';
+    END IF;
+
+    SELECT 
+        f.id_fondo, 
+        f.nombre_fondo,
+        c.monto_techo,
+        c.id_area
+    FROM tes_fondo f 
+    JOIN tes_caja_chica c 
+        ON f.id_fondo=c.id_fondo
+    WHERE f.id_fondo = p_id_fondo and f.estado_fondo='Activo';
 END$$
 
-DROP PROCEDURE IF EXISTS pa_listar_caja_chica $$
-CREATE PROCEDURE pa_listar_caja_chica()
+DROP PROCEDURE IF EXISTS pa_listar_cajas_chicas $$
+CREATE PROCEDURE pa_listar_cajas_chicas()
 BEGIN
-    SELECT f.id_fondo, f.nombre_fondo,f.monto_saldo_actual, f.estado_fondo, c.monto_techo,c.id_area
-    FROM tes_fondo f JOIN tes_caja_chica c ON f.id_fondo=c.id_fondo ;
+    SELECT 
+        f.id_fondo, 
+        f.nombre_fondo,
+        c.monto_techo,
+        c.id_area
+    FROM tes_fondo f 
+    JOIN tes_caja_chica c 
+        ON f.id_fondo=c.id_fondo
+    WHERE f.estado_fondo='Activo';
 END$$
 
 DELIMITER ;

@@ -8,20 +8,17 @@ CREATE PROCEDURE pa_insertar_area(
     OUT p_id_generado INT
 )
 BEGIN
-    IF p_nombre_area IS NULL OR TRIM(p_nombre_area) = '' THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'El nombre del área es obligatorio';
-    END IF;
-
     INSERT INTO rrhh_area(
         nombre_area,
         descripcion_area, 
-        id_jefe
+        id_jefe, 
+        esta_activo
     )
     VALUES(
-        TRIM(p_nombre_area),
-        TRIM(p_descripcion_area), 
-        p_id_jefe
+        p_nombre_area,
+        p_descripcion_area, 
+        p_id_jefe, 
+        1
     );
 
     SET p_id_generado = LAST_INSERT_ID();
@@ -36,13 +33,12 @@ CREATE PROCEDURE pa_modificar_area(
 )
 BEGIN
     IF p_id_area IS NULL OR p_id_area <= 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'ID de área inválido';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del área no es válido';
     END IF;
 
     UPDATE rrhh_area
-       SET nombre_area = TRIM(p_nombre_area),
-           descripcion_area = TRIM(p_descripcion_area), 
+       SET nombre_area = p_nombre_area,
+           descripcion_area = p_descripcion_area, 
            id_jefe = p_id_jefe
      WHERE id_area = p_id_area;
 END$$
@@ -53,6 +49,13 @@ CREATE PROCEDURE pa_asignar_jefe_area(
     IN p_id_jefe INT
 )
 BEGIN
+    IF p_id_area IS NULL OR p_id_area <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del área no es válido';
+    END IF;
+    IF p_id_jefe IS NULL OR p_id_jefe <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del jefe no es válido';
+    END IF;
+
     UPDATE rrhh_area
        SET id_jefe = p_id_jefe
      WHERE id_area = p_id_area;
@@ -63,7 +66,12 @@ CREATE PROCEDURE pa_eliminar_area(
     IN p_id_area INT
 )
 BEGIN
-    DELETE FROM rrhh_area
+    IF p_id_area IS NULL OR p_id_area <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del área no es válido';
+    END IF;
+
+    UPDATE rrhh_area
+       SET esta_activo = 0
      WHERE id_area = p_id_area;
 END$$
 
@@ -72,13 +80,17 @@ CREATE PROCEDURE pa_buscar_area_por_id(
     IN p_id_area INT
 )
 BEGIN
+    IF p_id_area IS NULL OR p_id_area <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del área no es válido';
+    END IF;
+
     SELECT 
         id_area, 
         nombre_area, 
         descripcion_area, 
         id_jefe
     FROM rrhh_area
-    WHERE id_area = p_id_area;
+    WHERE id_area = p_id_area and esta_activo = 1;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_listar_areas $$
@@ -90,7 +102,8 @@ BEGIN
         descripcion_area, 
         id_jefe
     FROM rrhh_area
-    ORDER BY nombre_area;
+    WHERE esta_activo = 1
+    ORDER BY id_area;
 END$$
 
 DELIMITER ;

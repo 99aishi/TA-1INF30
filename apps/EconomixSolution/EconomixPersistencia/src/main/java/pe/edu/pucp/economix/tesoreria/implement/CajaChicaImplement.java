@@ -1,186 +1,119 @@
 package pe.edu.pucp.economix.tesoreria.implement;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.tesoreria.dao.ICajaChicaDAO;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
 public class CajaChicaImplement implements ICajaChicaDAO{
-    private Connection con;
-    private Statement st;
-    private PreparedStatement pst;
     private ResultSet rs;
-    private CallableStatement cs;
 
     @Override
-    public int insertar(CajaChica cajaChica) {
-        int resultado =0;
+    public int insertar(CajaChica cajaChica) throws SQLException {
+        Map<String,Object> parametrosSalida = new HashMap<>();
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosSalida.put("p_id_fondo", Types.INTEGER);
+        parametrosEntrada.put("p_nombre_fondo", cajaChica.getNombre());
+        parametrosEntrada.put("p_estado_fondo", cajaChica.getEstado().toString());
 
-        try{
-            con = DBManager.getDBManager().getConnection();
-            cs=con.prepareCall("{call pa_insertar_tes_caja_chica(?,?,?,?,?,?)}");
-            cs.registerOutParameter("_id_fondo",Types.INTEGER);
-            cs.setString("p_nombre_fondo", cajaChica.getNombre());
-            cs.setDouble("p_monto_saldo_actual",cajaChica.getSaldoActual());
-            cs.setString("p_estado_fondo",cajaChica.getEstado().name());
-            cs.setDouble("p_monto_techo",cajaChica.getMontoTecho());
-            cs.setInt("p_id_area",cajaChica.getAreaAsignada().getIdArea());
-            cs.executeUpdate();
-            resultado=cs.getInt("_id_fondo");
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
+        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_fondo", parametrosEntrada, parametrosSalida);
+        cajaChica.setIdFondo((int)parametrosSalida.get("p_id_fondo"));
+        parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_fondo", cajaChica.getIdFondo());
+        parametrosEntrada.put("p_monto_techo", (Double)cajaChica.getMontoTecho());
+        if(cajaChica.getAreaAsignada() == null)
+            parametrosEntrada.put("p_id_area", null);
+        else
+            parametrosEntrada.put("p_id_area", cajaChica.getAreaAsignada().getIdArea());
+
+        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_caja_chica", parametrosEntrada,null);
+
+        return cajaChica.getIdFondo();
+    }
+
+    @Override
+    public int modificar(CajaChica cajaChica) throws SQLException{
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_fondo", Types.INTEGER);
+        parametrosEntrada.put("p_nombre_fondo", cajaChica.getAreaAsignada());
+        parametrosEntrada.put("p_estado_fondo", cajaChica.getEstado());
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_fondo", parametrosEntrada, null);
+        parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_fondo", cajaChica.getIdFondo());
+        parametrosEntrada.put("p_monto_techo", (Double)cajaChica.getMontoTecho());
+        if(cajaChica.getAreaAsignada() == null)
+            parametrosEntrada.put("p_id_area", null);
+        else
+            parametrosEntrada.put("p_id_area", cajaChica.getAreaAsignada().getIdArea());
+        
+        DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_caja_chica", parametrosEntrada, null);
         return resultado;
     }
 
     @Override
-    public int modificar(CajaChica objeto) {
-        int resultado=0;
-        try{
-            con = DBManager.getDBManager().getConnection();
-            cs=con.prepareCall("CALL pa_modificar_tes_caja_chica(?,?,?)");
-            cs.setInt("p_id_fondo",objeto.getIdFondo());
-            cs.setDouble("p_monto_saldo_actual",objeto.getSaldoActual());
-            cs.setDouble("p_monto_techo",objeto.getMontoTecho());
-            resultado = cs.executeUpdate();
-
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
-        }finally{
-            try{
-                cs.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try {
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-        }
-
+    public int eliminar(int id) throws SQLException{
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_fondo", id);
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_eliminar_caja_chica", parametrosEntrada, null);
         return resultado;
     }
 
     @Override
-    public int eliminar(int id) {
-        int resultado=0;
-        try{
-            con = DBManager.getDBManager().getConnection();
-            cs=con.prepareCall("call pa_eliminar_caja_chica(?)");
-            cs.setInt("p_id_fondo",id);
-            resultado=cs.executeUpdate();
-
-
-
-        }catch (Exception ex){
-            System.out.println("ERROR: " + ex.getMessage());
-        }finally {
-            try{
-                cs.close();
-            }catch(Exception ex){
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-            try{
-                con.close();
-            }catch (Exception ex){
-                System.out.println("ERROR: " + ex.getMessage());
-            }
-        }
-        return resultado;
-    }
-
-    @Override
-    public CajaChica buscarPorId(int id) {
+    public CajaChica buscarPorId(int idCajaChica) throws SQLException{
         CajaChica caja=null;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_fondo", idCajaChica);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_caja_chica_por_id", parametrosEntrada);
         try{
-            con= DBManager.getDBManager().getConnection();
-            cs=con.prepareCall("call pa_buscar_por_id_caja_chica(?)");
-            cs.setInt("p_id_fondo",id);
-            rs=cs.executeQuery();
-
             if(rs.next()){
-                int idFondo = rs.getInt("id_fondo");
-                String nombre= rs.getString("nombre_fondo");
-                double saldoActual=rs.getDouble("monto_saldo_actual");
-                EstadoFondo estado = EstadoFondo.valueOf(rs.getString("estado_fondo"));
-                double monto_techo= rs.getDouble("monto_techo");
-                int idArea=rs.getInt("id_area");
-                Area area= new Area();
-                area.setIdArea(idArea);
-                caja = new CajaChica(idFondo ,nombre,saldoActual,estado,monto_techo,area);
+                caja = new CajaChica();
+                caja.setIdFondo(rs.getInt("id_fondo"));
+                caja.setNombre(rs.getString("nombre_fondo"));
+                caja.setMontoTecho(rs.getDouble("monto_techo"));
+                caja.setEstado(EstadoFondo.Activo);
+                if(caja.getAreaAsignada() == null)
+                    caja.setAreaAsignada(new Area());
+                caja.getAreaAsignada().setIdArea(rs.getInt("id_area"));
             }
-
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
+        }catch(SQLException ex){
+            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
         }finally{
-            try{
-                cs.close();
-            }catch(Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try{
-                con.close();
-            }catch(Exception ex){
-                System.out.println("ERROR: "+ex.getMessage());
-            }
+            DBManager.getDBManager().cerrarConexion();
         }
-
         return caja;
     }
 
     @Override
-    public List<CajaChica> listarTodas() {
+    public List<CajaChica> listarTodas() throws SQLException{
         List<CajaChica> cajas = null;
+        CajaChica caja;
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_cajas_chicas", null);
         try{
-            con= DBManager.getDBManager().getConnection();
-            cs=con.prepareCall("call pa_listar_caja_chica()");
-            rs=cs.executeQuery();
-
             while(rs.next()){
-                if(cajas==null) cajas = new ArrayList<>();
-                int idFondo = rs.getInt("id_fondo");
-                String nombre= rs.getString("nombre_fondo");
-                double saldoActual=rs.getDouble("monto_saldo_actual");
-                EstadoFondo estado = EstadoFondo.valueOf(rs.getString("estado_fondo"));
-                double monto_techo= rs.getDouble("monto_techo");
-                int idArea=rs.getInt("id_area");
-                Area area= new Area();
-                area.setIdArea(idArea);
-                CajaChica caja = new CajaChica(idFondo ,nombre,saldoActual,estado,monto_techo,area);
+                if(cajas == null) cajas = new ArrayList<>();
+                caja = new CajaChica();
+                caja.setIdFondo(rs.getInt("id_fondo"));
+                caja.setNombre(rs.getString("nombre_fondo"));
+                caja.setMontoTecho(rs.getDouble("monto_techo"));
+                caja.setEstado(EstadoFondo.Activo);
+                if(caja.getAreaAsignada() == null)
+                    caja.setAreaAsignada(new Area());
+                caja.getAreaAsignada().setIdArea(rs.getInt("id_area"));
                 cajas.add(caja);
             }
-
-        }catch(Exception ex){
-            System.out.println("ERROR: "+ ex.getMessage());
+        }catch(SQLException ex){
+            System.out.println("Error al buscar cajas chicas: " + ex.getMessage());
         }finally{
-            try{
-                cs.close();
-            }catch(Exception ex){
-                System.out.println("ERROR: "+ ex.getMessage());
-            }
-            try{
-                con.close();
-            }catch(Exception ex){
-                System.out.println("ERROR: "+ex.getMessage());
-            }
+            DBManager.getDBManager().cerrarConexion();
         }
         return cajas;
     }

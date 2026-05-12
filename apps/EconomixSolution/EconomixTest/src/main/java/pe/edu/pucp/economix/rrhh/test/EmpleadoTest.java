@@ -6,17 +6,18 @@ import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
 import pe.edu.pucp.economix.rrhh.model.Rol;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public class EmpleadoTest {
     private static EmpleadoImplement empleadoDAO = new EmpleadoImplement();
     public static List<Empleado> pruebaInsercion(Area areaGerenciaGeneral, Rol rolGerenteGeneral,
                                 Area areaTI, Rol rolAnalista,
-                                Area areaFinanzas, Rol rolGerente){
+                                Area areaFinanzas, Rol rolGerente) throws SQLException {
 
         // 2. Jefe
         Empleado jefe = new Empleado();
-        jefe.setNombre("Pedro");
+        jefe.setNombres("Pedro");
         jefe.setApellidoPaterno("Páramo");
         jefe.setEstado(EstadoUsuario.Activo);
         jefe.setCorreoInstitucional("p.paramo@acervo.com");
@@ -28,7 +29,7 @@ public class EmpleadoTest {
 
         // Empleado 1: Augusto Pérez (TI)
         Empleado emp1 = new Empleado();
-        emp1.setNombre("Augusto");
+        emp1.setNombres("Augusto");
         emp1.setApellidoPaterno("Pérez");
         emp1.setApellidoMaterno("Niebla");
         emp1.setEstado(EstadoUsuario.Activo);
@@ -42,7 +43,7 @@ public class EmpleadoTest {
 
         // Empleado 2: Esteban Trueba (Gerente de Finanzas)
         Empleado emp2 = new Empleado();
-        emp2.setNombre("Esteban");
+        emp2.setNombres("Esteban");
         emp2.setApellidoPaterno("Trueba");
         emp2.setApellidoMaterno("Del Valle");
         emp2.setEstado(EstadoUsuario.Activo);
@@ -56,7 +57,7 @@ public class EmpleadoTest {
 
         // Empleado 3: Santiago Nasar (Analista en Finanzas bajo Esteban)
         Empleado emp3 = new Empleado();
-        emp3.setNombre("Santiago");
+        emp3.setNombres("Santiago");
         emp3.setApellidoPaterno("Nasar");
         emp3.setApellidoMaterno("Linares");
         emp3.setEstado(EstadoUsuario.Activo);
@@ -72,25 +73,17 @@ public class EmpleadoTest {
         List<Empleado> listaEmpleados = empleadoDAO.listarTodas();
         for (Empleado e : listaEmpleados) {
             // Obtenemos los nombres de los objetos relacionados (Agregación)
-            String nombreArea = (e.getArea() != null) ? e.getArea().getNombre() : "N/A";
-            String tituloRol = (e.getRol() != null) ? e.getRol().getTitulo() : "N/A";
-
-            System.out.println(String.format("ID: %d | Empleado: %-25s | Correo: %-25s | Área: %-15s | Rol: %s",
-                    e.getUsuarioID(),
-                    e.getNombre() + " " + e.getApellidoPaterno(),
-                    e.getCorreoInstitucional(),
-                    nombreArea,
-                    tituloRol));
+            System.out.println(e);
         }
         System.out.println();
         return listaEmpleados;
     }
 
-    public static Empleado buscarID(int idEmpleado){
+    public static Empleado buscarID(int idEmpleado) throws SQLException{
         return empleadoDAO.buscarPorId(idEmpleado);
     }
 
-    public static int eliminar(int id){
+    public static int eliminar(int id) throws SQLException {
         return empleadoDAO.eliminar(id);
     }
 }

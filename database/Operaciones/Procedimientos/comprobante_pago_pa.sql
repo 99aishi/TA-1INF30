@@ -10,26 +10,12 @@ CREATE PROCEDURE pa_insertar_comprobante_pago(
     IN p_monto_subtotal DECIMAL(12,2),
     IN p_monto_igv DECIMAL(12,2),
     IN p_monto_total DECIMAL(12,2),
+    IN p_estado_comprobante VARCHAR(20),
     IN p_id_solicitud_gasto INT,
-    IN p_id_fondo_entrega INT,
     IN p_id_moneda INT,
     OUT p_id_generado INT
 )
 BEGIN
-    IF p_tipo_documento IS NULL OR TRIM(p_tipo_documento) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El tipo de documento es obligatorio';
-    END IF;
-
-    IF p_monto_total IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El monto total es obligatorio';
-    END IF;
-
-    -- Debe pertenecer a un flujo (Solicitud o Entrega a Rendir)
-    IF (p_id_solicitud_gasto IS NULL OR p_id_solicitud_gasto <= 0) AND 
-       (p_id_fondo_entrega IS NULL OR p_id_fondo_entrega <= 0) THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El comprobante debe estar asociado a una solicitud de gasto o a un fondo de entrega';
-    END IF;
-
     INSERT INTO ope_comprobante_pago(
         tipo_documento,
         ruc_proveedor,
@@ -39,21 +25,21 @@ BEGIN
         monto_subtotal,
         monto_igv,
         monto_total,
+        estado_comprobante,
         id_solicitud_gasto,
-        id_fondo_entrega,
         id_moneda
     )
     VALUES(
-        TRIM(p_tipo_documento),
-        TRIM(p_ruc_proveedor),
-        TRIM(p_razon_social),
-        TRIM(p_numero_serie),
-        IFNULL(p_fecha_emision, CURDATE()),
-        IFNULL(p_monto_subtotal, 0.00),
-        IFNULL(p_monto_igv, 0.00),
+        p_tipo_documento,
+        p_ruc_proveedor,
+        p_razon_social,
+        p_numero_serie,
+        p_fecha_emision,
+        p_monto_subtotal,
+        p_monto_igv,
         p_monto_total,
+        p_estado_comprobante,
         p_id_solicitud_gasto,
-        p_id_fondo_entrega,
         p_id_moneda
     );
     
@@ -71,34 +57,26 @@ CREATE PROCEDURE pa_modificar_comprobante_pago(
     IN p_monto_subtotal DECIMAL(12,2),
     IN p_monto_igv DECIMAL(12,2),
     IN p_monto_total DECIMAL(12,2),
+    IN p_estado_comprobante VARCHAR(20),
     IN p_id_solicitud_gasto INT,
-    IN p_id_fondo_entrega INT,
     IN p_id_moneda INT
 )
 BEGIN
-    IF p_id_comprobante IS NULL OR p_id_comprobante <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de comprobante inválido';
-    END IF;
-
-    IF p_tipo_documento IS NULL OR TRIM(p_tipo_documento) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El tipo de documento es obligatorio';
-    END IF;
-
-    IF p_monto_total IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El monto total es obligatorio';
+    IF p_id_solicitud_gasto IS NULL OR p_id_solicitud_gasto <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de comprobante de pago inválido';
     END IF;
 
     UPDATE ope_comprobante_pago
-       SET tipo_documento = TRIM(p_tipo_documento),
-           ruc_proveedor = TRIM(p_ruc_proveedor),
-           razon_social = TRIM(p_razon_social),
-           numero_serie = TRIM(p_numero_serie),
-           fecha_emision = IFNULL(p_fecha_emision, fecha_emision),
-           monto_subtotal = IFNULL(p_monto_subtotal, 0.00),
-           monto_igv = IFNULL(p_monto_igv, 0.00),
+       SET tipo_documento = p_tipo_documento,
+           ruc_proveedor = p_ruc_proveedor,
+           razon_social = p_razon_social,
+           numero_serie = p_numero_serie,
+           fecha_emision = p_fecha_emision,
+           monto_subtotal = p_monto_subtotal,
+           monto_igv = p_monto_igv,
            monto_total = p_monto_total,
+           estado_comprobante = p_estado_comprobante,
            id_solicitud_gasto = p_id_solicitud_gasto,
-           id_fondo_entrega = p_id_fondo_entrega,
            id_moneda = p_id_moneda
      WHERE id_comprobante = p_id_comprobante;
 END$$
@@ -113,9 +91,10 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de comprobante inválido';
     END IF;
 
-    -- TODO Revisar si colocar el borrado fisico o logico o ninguno
-    DELETE FROM ope_comprobante_pago
+    UPDATE ope_comprobante_pago
+       SET estado_comprobante = 'Anulado'
      WHERE id_comprobante = p_id_comprobante;
+    
 END$$
 
 DROP PROCEDURE IF EXISTS pa_buscar_comprobante_pago_por_id $$
@@ -133,11 +112,12 @@ BEGIN
         monto_subtotal, 
         monto_igv, 
         monto_total, 
+        estado_comprobante,
         id_solicitud_gasto, 
-        id_fondo_entrega, 
         id_moneda
     FROM ope_comprobante_pago
-    WHERE id_comprobante = p_id_comprobante;
+    WHERE id_comprobante = p_id_comprobante
+    ORDER BY estado_comprobante DESC;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_listar_comprobantes_pago $$
@@ -153,34 +133,9 @@ BEGIN
         monto_subtotal, 
         monto_igv, 
         monto_total, 
+        estado_comprobante,
         id_solicitud_gasto, 
-        id_fondo_entrega, 
         id_moneda
     FROM ope_comprobante_pago
-    ORDER BY id_comprobante DESC;
+    ORDER BY estado_comprobante DESC;
 END$$
-
-DROP PROCEDURE IF EXISTS pa_listar_comprobantes_por_solicitud $$
-CREATE PROCEDURE pa_listar_comprobantes_por_solicitud(
-    IN p_id_solicitud_gasto INT
-)
-BEGIN
-    SELECT 
-        id_comprobante, 
-        tipo_documento, 
-        ruc_proveedor, 
-        razon_social, 
-        numero_serie, 
-        fecha_emision, 
-        monto_subtotal, 
-        monto_igv, 
-        monto_total, 
-        id_solicitud_gasto, 
-        id_fondo_entrega, 
-        id_moneda
-    FROM ope_comprobante_pago
-    WHERE id_solicitud_gasto = p_id_solicitud_gasto
-    ORDER BY id_comprobante ASC;
-END$$
-
-DELIMITER ;

@@ -3,10 +3,11 @@ package pe.edu.pucp.economix.rrhh.test;
 import pe.edu.pucp.economix.rrhh.implement.RolImplement;
 import pe.edu.pucp.economix.rrhh.model.Rol;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public class RolTest {
-    public static List<Rol> pruebaInsercion(){
+    public static List<Rol> pruebaInsercion() throws SQLException {
         RolImplement rolDAO = new RolImplement();
         Rol rolGerenteGeneral = new Rol("Gerente General", "Responsable de la empresa");
         rolGerenteGeneral.setRolID(rolDAO.insertar(rolGerenteGeneral));

@@ -1,13 +1,11 @@
 package pe.edu.pucp.economix.operaciones.model;
 
-import pe.edu.pucp.economix.tesoreria.model.CajaChica;
-
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import pe.edu.pucp.economix.tesoreria.model.CajaChica;
+
 public class CicloCajaChica{
-    private static int correlativoID = 1;
     private int idCicloCaja;
     private int numeroSemana;
     private Date fechaApertura;
@@ -15,24 +13,40 @@ public class CicloCajaChica{
     private double saldoInicial;
     private double totalGastado;
     private EstadoCicloCaja estado;
-    private CajaChica cajaChica;
-    private List<SolicitudGasto> solicitudes;
 
-    public CicloCajaChica(){
-        this.idCicloCaja=0;
-        this.solicitudes=new ArrayList<>();
-    }
+    //Relaciones
+    private CajaChica cajaChica;
+    private List<SolicitudGasto> solicitudesDeGasto;
+    private Rendicion rendicion;
+
     //Constructores
-    public CicloCajaChica(int numeroSemana,Date fechaApertura,Date fechaCierre, double saldoInicial, CajaChica cajaChica){
-        this.idCicloCaja=this.correlativoID++;
-        this.numeroSemana=numeroSemana;
-        this.fechaApertura=fechaApertura;
-        this.fechaCierre=fechaCierre;
-        this.saldoInicial=saldoInicial;
-        this.totalGastado=0;
-        this.estado=EstadoCicloCaja.Activo;
+    public CicloCajaChica(){}
+    public CicloCajaChica(int idCicloCaja, int numeroSemana, Date fechaApertura, Date fechaCierre,
+                          double saldoInicial, double totalGastado, EstadoCicloCaja estado,
+                          CajaChica cajaChica, List<SolicitudGasto> solicitudesDeGasto, Rendicion rendicion) {
+        this.idCicloCaja = idCicloCaja;
+        this.numeroSemana = numeroSemana;
+        this.fechaApertura = fechaApertura;
+        this.fechaCierre = fechaCierre;
+        this.saldoInicial = saldoInicial;
+        this.totalGastado = totalGastado;
+        this.estado = estado;
         this.cajaChica = cajaChica;
-        this.solicitudes=new ArrayList<>();
+        this.solicitudesDeGasto = solicitudesDeGasto;
+        this.rendicion = rendicion;
+    }
+    public CicloCajaChica(int numeroSemana, Date fechaApertura, Date fechaCierre, double saldoInicial,
+                          double totalGastado, EstadoCicloCaja estado, CajaChica cajaChica,
+                          List<SolicitudGasto> solicitudesDeGasto, Rendicion rendicion) {
+        this.numeroSemana = numeroSemana;
+        this.fechaApertura = fechaApertura;
+        this.fechaCierre = fechaCierre;
+        this.saldoInicial = saldoInicial;
+        this.totalGastado = totalGastado;
+        this.estado = estado;
+        this.cajaChica = cajaChica;
+        this.solicitudesDeGasto = solicitudesDeGasto;
+        this.rendicion = rendicion;
     }
 
     //Selectores
@@ -76,7 +90,6 @@ public class CicloCajaChica{
         return estado;
     }
     public void setEstado(EstadoCicloCaja estado) {
-
         this.estado = estado;
     }
     public CajaChica getCajaChica(){
@@ -85,18 +98,35 @@ public class CicloCajaChica{
     public void setCajaChica(CajaChica cajaChica){
         this.cajaChica = cajaChica;
     }
-
-    //Metodos
+    public List<SolicitudGasto> getSolicitudesDeGasto() {
+        return solicitudesDeGasto;
+    }
+    public void setSolicitudesDeGasto(List<SolicitudGasto> solicitudesDeGasto) {
+        this.solicitudesDeGasto = solicitudesDeGasto;
+    }
+    public Rendicion getRendicion() {
+        return rendicion;
+    }
+    public void setRendicion(Rendicion rendicion) {
+        this.rendicion = rendicion;
+    }
 
     @Override
     public String toString() {
-        String cadena = "";
-        cadena += String.format("CICLO CAJA CHICA: %d - Semana %d - Apertura: %s - Cierre: %s - Saldo Inicial: %.2f - Total Gastado: %.2f - %s",
-                idCicloCaja, numeroSemana, fechaApertura, fechaCierre,
-                saldoInicial, totalGastado, estado);
-        return cadena;
+        return "CicloCajaChica{" +
+                "idCicloCaja=" + idCicloCaja +
+                ", numeroSemana=" + numeroSemana +
+                ", fechaApertura=" + fechaApertura +
+                ", fechaCierre=" + fechaCierre +
+                ", saldoInicial=" + saldoInicial +
+                ", totalGastado=" + totalGastado +
+                ", estado=" + estado +
+                ", cajaChica=" + cajaChica +
+                ", solicitudesDeGasto=" + solicitudesDeGasto +
+                ", rendicion=" + rendicion +
+                '}';
     }
-    
+
     public void abrirCiclo() {
         // TODO: Heredar saldo anterior y congelar monto techo (RF_12)
     }

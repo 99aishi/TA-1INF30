@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.List;
 
 public class Rendicion {
-    private static int correlativoID = 1;
     private int idRendicion;
     private Date fechaPresentacion;
     private Date fechaAprobacion;
@@ -14,15 +13,15 @@ public class Rendicion {
     private double saldoFinal;
     private EstadoRendicion estado;
     private String comentario;
+    //Relaciones
+    CicloCajaChica cicloCajaChica;
 
     // Constructores
-    public Rendicion(){
-
-    }
-    public Rendicion(Date fechaPresentacion, Date fechaAprobacion,
+    public Rendicion(){}
+    public Rendicion(int idRendicion, Date fechaPresentacion, Date fechaAprobacion,
                      double totalDeclarado, double totalAprobado, double saldoFinal,
-                     EstadoRendicion estado, String comentario) {
-        this.idRendicion = this.correlativoID++;
+                     EstadoRendicion estado, String comentario, CicloCajaChica cicloCajaChica) {
+        this.idRendicion = idRendicion;
         this.fechaPresentacion = fechaPresentacion;
         this.fechaAprobacion = fechaAprobacion;
         this.totalDeclarado = totalDeclarado;
@@ -30,6 +29,20 @@ public class Rendicion {
         this.saldoFinal = saldoFinal;
         this.estado = estado;
         this.comentario = comentario;
+        this.cicloCajaChica = cicloCajaChica;
+    }
+
+    public Rendicion(Date fechaPresentacion, Date fechaAprobacion,
+                     double totalDeclarado, double totalAprobado, double saldoFinal,
+                     EstadoRendicion estado, String comentario, CicloCajaChica cicloCajaChica) {
+        this.fechaPresentacion = fechaPresentacion;
+        this.fechaAprobacion = fechaAprobacion;
+        this.totalDeclarado = totalDeclarado;
+        this.totalAprobado = totalAprobado;
+        this.saldoFinal = saldoFinal;
+        this.estado = estado;
+        this.comentario = comentario;
+        this.cicloCajaChica = cicloCajaChica;
     }
 
     //Selectores
@@ -81,17 +94,30 @@ public class Rendicion {
     public void setComentario(String comentario) {
         this.comentario = comentario;
     }
+    public CicloCajaChica getCicloCajaChica() {
+        return cicloCajaChica;
+    }
+    public void setCicloCajaChica(CicloCajaChica cicloCajaChica) {
+        this.cicloCajaChica = cicloCajaChica;
+    }
+
+    //Metodos
 
     @Override
     public String toString() {
-        String cadena = "";
-        cadena += String.format("RENDICION: %d - Presentacion: %s - Aprobacion: %s - Declarado: %.2f - Aprobado: %.2f - Saldo Final: %.2f - %s - Comentario: %s",
-                idRendicion, fechaPresentacion, fechaAprobacion,
-                totalDeclarado, totalAprobado, saldoFinal, estado, comentario);
-        return cadena;
+        return "Rendicion{" +
+                "idRendicion=" + idRendicion +
+                ", fechaPresentacion=" + fechaPresentacion +
+                ", fechaAprobacion=" + fechaAprobacion +
+                ", totalDeclarado=" + totalDeclarado +
+                ", totalAprobado=" + totalAprobado +
+                ", saldoFinal=" + saldoFinal +
+                ", estado=" + estado +
+                ", comentario='" + comentario + '\'' +
+                ", cicloCajaChica=" + cicloCajaChica +
+                '}';
     }
-    
-    //Metodos
+
     public void cargarComprobanteDigital(ComprobantePago comprobante) {
         // TODO: Aplicar validaciones automáticas de coherencia (RF_09)
     }

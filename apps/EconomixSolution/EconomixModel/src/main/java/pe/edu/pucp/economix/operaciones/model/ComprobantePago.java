@@ -1,15 +1,13 @@
 package pe.edu.pucp.economix.operaciones.model;
 
-import pe.edu.pucp.economix.tesoreria.model.Fondo;
-import pe.edu.pucp.economix.tesoreria.model.Moneda;
-
 import java.util.Date;
 
+import pe.edu.pucp.economix.tesoreria.model.Moneda;
+
 public class ComprobantePago {
-    private static int correlativoID = 1;
     private int idComprobante;
     private TipoComprobante tipoDocumento;
-    private String ruc;
+    private String RUCProveedor;
     private String razonSocial;
     private String numeroSerial;
     private Date fechaEmision;
@@ -17,19 +15,19 @@ public class ComprobantePago {
     private double subtotal;
     private double igv;
     private double total;
-    public Fondo fondoEntrega;
-
-    private SolicitudGasto solicitud; // get set y copia
+    private EstadoComprobante estado;
+    //Relaciones
+    private SolicitudGasto solicitud;
     private Moneda moneda;
 
     // Constructor
     public ComprobantePago(){}
-    public ComprobantePago(TipoComprobante tipoDocumento, String ruc,
-                           String razonSocial, String numeroSerial, Date fechaEmision,
-                           double montoTotal, double subtotal, double igv, double total) {
-        this.idComprobante = this.correlativoID++;
+    public ComprobantePago(int idComprobante, TipoComprobante tipoDocumento, String RUCProveedor, String razonSocial, String numeroSerial,
+                           Date fechaEmision, double montoTotal, double subtotal, double igv, double total, EstadoComprobante estado,
+                           SolicitudGasto solicitud, Moneda moneda) {
+        this.idComprobante = idComprobante;
         this.tipoDocumento = tipoDocumento;
-        this.ruc = ruc;
+        this.RUCProveedor = RUCProveedor;
         this.razonSocial = razonSocial;
         this.numeroSerial = numeroSerial;
         this.fechaEmision = fechaEmision;
@@ -37,6 +35,26 @@ public class ComprobantePago {
         this.subtotal = subtotal;
         this.igv = igv;
         this.total = total;
+        this.estado = estado;
+        this.solicitud = solicitud;
+        this.moneda = moneda;
+    }
+
+    public ComprobantePago(TipoComprobante tipoDocumento, String RUCProveedor, String razonSocial,
+                           String numeroSerial, Date fechaEmision, double montoTotal, double subtotal,
+                           double igv, double total, EstadoComprobante estado, SolicitudGasto solicitud, Moneda moneda) {
+        this.tipoDocumento = tipoDocumento;
+        this.RUCProveedor = RUCProveedor;
+        this.razonSocial = razonSocial;
+        this.numeroSerial = numeroSerial;
+        this.fechaEmision = fechaEmision;
+        this.montoTotal = montoTotal;
+        this.subtotal = subtotal;
+        this.igv = igv;
+        this.total = total;
+        this.estado = estado;
+        this.solicitud = solicitud;
+        this.moneda = moneda;
     }
 
     // Selectores
@@ -46,8 +64,8 @@ public class ComprobantePago {
     public TipoComprobante getTipoDocumento() {
         return tipoDocumento;
     }
-    public String getRuc() {
-        return ruc;
+    public String getRUCProveedor() {
+        return RUCProveedor;
     }
     public String getRazonSocial() {
         return razonSocial;
@@ -76,8 +94,8 @@ public class ComprobantePago {
     public void setTipoDocumento(TipoComprobante tipoDocumento) {
         this.tipoDocumento = tipoDocumento;
     }
-    public void setRuc(String ruc) {
-        this.ruc=ruc;
+    public void setRUCProveedor(String RUCProveedor) {
+        this.RUCProveedor = RUCProveedor;
     }
     public void setRazonSocial(String razonSocial) {
         this.razonSocial = razonSocial;
@@ -112,23 +130,32 @@ public class ComprobantePago {
     public void setMoneda(Moneda moneda) {
         this.moneda = moneda;
     }
-    public Fondo getFondoEntrega() {
-        return fondoEntrega;
+    public EstadoComprobante getEstado() {
+        return estado;
     }
-    public void setFondoEntrega(Fondo fondoEntrega) {
-        this.fondoEntrega = fondoEntrega;
+    public void setEstado(EstadoComprobante estado) {
+        this.estado = estado;
     }
 
+
+    //Metodos
     @Override
     public String toString() {
-        String cadena = "";
-        cadena += String.format("COMPROBANTE: %d - %s - RUC: %s - Razon Social: %s - Nro Serie: %s - Emision: %s - Subtotal: %.2f - IGV: %.2f - Total: %.2f",
-                idComprobante, tipoDocumento, ruc, razonSocial,
-                numeroSerial, fechaEmision, subtotal, igv, total);
-        return cadena;
+        return "ComprobantePago{" +
+                "idComprobante=" + idComprobante +
+                ", tipoDocumento=" + tipoDocumento +
+                ", RUCProveedor='" + RUCProveedor + '\'' +
+                ", razonSocial='" + razonSocial + '\'' +
+                ", numeroSerial='" + numeroSerial + '\'' +
+                ", fechaEmision=" + fechaEmision +
+                ", montoTotal=" + montoTotal +
+                ", subtotal=" + subtotal +
+                ", igv=" + igv +
+                ", total=" + total +
+                ", solicitud=" + solicitud +
+                ", moneda=" + moneda +
+                '}';
     }
-    
-    //Metodos
     public boolean validarConsistenciaMontos() {
         // TODO: Verificar que subtotal + igv == total (RF_09)
         return false;

@@ -1,18 +1,19 @@
 package pe.edu.pucp.economix.tesoreria.test;
 
+import java.sql.SQLException;
+import java.util.List;
+
 import pe.edu.pucp.economix.tesoreria.implement.MonedaImplement;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
-import java.util.List;
-
 public class MonedaTest {
-    public static List<Moneda> pruebaInsercion(){
+    public static List<Moneda> pruebaInsercion() throws SQLException {
         MonedaImplement monedaDAO = new MonedaImplement();
 
-        Moneda dolar= new Moneda("USD","$");
+        Moneda dolar= new Moneda(0,"USD","$");
         dolar.setIdMoneda(monedaDAO.insertar(dolar));
 
-        Moneda sol = new Moneda("PEN", "S/.");
+        Moneda sol = new Moneda(0,"PEN", "S/.");
         sol.setIdMoneda(monedaDAO.insertar(sol));
 
 
@@ -20,6 +21,7 @@ public class MonedaTest {
         for(Moneda mon : monedas){
             System.out.println(mon);
         }
+        System.out.println();
         return monedas;
     }
 }

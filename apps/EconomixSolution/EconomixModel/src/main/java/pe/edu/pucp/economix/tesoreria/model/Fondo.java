@@ -1,31 +1,21 @@
 package pe.edu.pucp.economix.tesoreria.model;
 
 import pe.edu.pucp.economix.operaciones.model.TipoTransaccion;
-import pe.edu.pucp.economix.rrhh.model.Empleado;
-
-import java.util.Date;
 
 public class Fondo {
-    private static int correlativoID = 1;
     private int idFondo;
     private String nombre;
-    private double saldoActual;
     private EstadoFondo estado;
 
     // Constructores
-    public Fondo(){
-
-    }
-    public Fondo(String nombre, double saldoActual, EstadoFondo estado) {
-        this.idFondo = this.correlativoID++;
+    public Fondo(){}
+    public Fondo(int idFondo, String nombre, double saldoActual, EstadoFondo estado) {
+        this.idFondo = idFondo;
         this.nombre = nombre;
-        this.saldoActual = saldoActual;
         this.estado = estado;
     }
-    public Fondo(int id, String nombre, double saldoActual, EstadoFondo estado) {
-        this.idFondo = id;
+    public Fondo(String nombre, EstadoFondo estado) {
         this.nombre = nombre;
-        this.saldoActual = saldoActual;
         this.estado = estado;
     }
 
@@ -36,9 +26,6 @@ public class Fondo {
     public String getNombre() {
         return nombre;
     }
-    public double getSaldoActual() {
-        return saldoActual;
-    }
     public EstadoFondo getEstado() {
         return estado;
     }
@@ -48,13 +35,20 @@ public class Fondo {
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
-    public void setSaldoActual(double saldoActual) {
-        this.saldoActual = saldoActual;
-    }
     public void setEstado(EstadoFondo estado) {
         this.estado = estado;
     }
     //Metodos
+
+    @Override
+    public String toString() {
+        return "Fondo{" +
+                "idFondo=" + idFondo +
+                ", nombre='" + nombre + '\'' +
+                ", estado=" + estado +
+                '}';
+    }
+
     public void actualizarSaldo(double monto, TipoTransaccion tipo) {
         // TODO: Lógica para sumar (Reposición) o restar (Desembolso) al saldoActual
     }
@@ -68,10 +62,4 @@ public class Fondo {
         // TODO: Asignar la cuenta de origen del fondo (RF_11)
     }
 
-    @Override
-    public String toString() {
-        return "ID: " + idFondo +
-                " Nombre: " + nombre  +
-                " Saldo Actual: " + saldoActual;
-    }
 }
