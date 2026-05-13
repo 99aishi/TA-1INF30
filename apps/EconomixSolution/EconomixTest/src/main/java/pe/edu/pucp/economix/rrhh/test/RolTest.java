@@ -1,5 +1,7 @@
 package pe.edu.pucp.economix.rrhh.test;
 
+import pe.edu.pucp.economix.rrhh.bo.RolBOImpl;
+import pe.edu.pucp.economix.rrhh.boi.IRolBO;
 import pe.edu.pucp.economix.rrhh.implement.RolImplement;
 import pe.edu.pucp.economix.rrhh.model.Rol;
 
@@ -7,16 +9,16 @@ import java.sql.SQLException;
 import java.util.List;
 
 public class RolTest {
-    public static List<Rol> pruebaInsercion() throws SQLException {
-        RolImplement rolDAO = new RolImplement();
+    public static List<Rol> pruebaInsercion() throws Exception {
+        IRolBO rolBO = new RolBOImpl();
         Rol rolGerenteGeneral = new Rol("Gerente General", "Responsable de la empresa");
-        rolGerenteGeneral.setRolID(rolDAO.insertar(rolGerenteGeneral));
+        rolGerenteGeneral.setRolID(rolBO.insertar(rolGerenteGeneral));
         Rol rolGerente = new Rol("Gerente de Área", "Responsable de departamento");
-        rolGerente.setRolID(rolDAO.insertar(rolGerente));
+        rolGerente.setRolID(rolBO.insertar(rolGerente));
         Rol rolAnalista = new Rol("Analista Senior", "Especialista con experiencia");
-        rolAnalista.setRolID(rolDAO.insertar(rolAnalista));
+        rolAnalista.setRolID(rolBO.insertar(rolAnalista));
 
-        List<Rol> listaRoles = rolDAO.listarTodas();
+        List<Rol> listaRoles = rolBO.listarTodas();
         for (Rol r : listaRoles) {
             System.out.println(r);
         }

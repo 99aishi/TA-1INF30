@@ -57,7 +57,7 @@ public class CuentaBancariaBOImpl implements ICuentaBancariaBO {
 
     @Override
     public List<CuentaBancaria> listarTodas() throws Exception {
-        return List.of();
+        return cuentaDAO.listarTodas();
     }
     public void validar(CuentaBancaria cuenta, boolean esModificacion)throws Exception{
         if(cuenta==null){
@@ -67,26 +67,15 @@ public class CuentaBancariaBOImpl implements ICuentaBancariaBO {
         if (esModificacion && cuenta.getIdCuenta() <= 0) {
             throw new Exception("El id de la cuenta bancaria es obligatorio para la modificación.");
         }
-        validarAdministrador(cuenta.getEmpleadoAdministrador());
         validarMoneda(cuenta.getMoneda());
-        validarArea(cuenta.getAreaAdministradora());
+        if(cuenta.getAreaAdministradora()==null && cuenta.getEmpleadoAdministrador()==null) {
+            throw new Exception("La cuenta debe tener un dueño");
+        }
         validarNombreBanco(cuenta.getNombreBanco());
         valiarNumeroBancario(cuenta.getNumeroBancario());
         validarCCI(cuenta.getCci());
     }
-    public void validarAdministrador(Empleado empleado) throws Exception{
-        if (empleado == null) {
-            throw new Exception("El empleado administrador de la cuenta bancaria es obligatorio.");
-        }
 
-        if (empleado.getUsuarioID() <= 0) {
-            throw new Exception("El empleado administrador de la cuenta bancaria no es válido.");
-        }
-        if(empleadoDAO.buscarPorId(empleado.getUsuarioID())==null){
-            throw new Exception("El empleado administrador de la cuenta bancaria no existe.");
-        }
-
-    }
     public void validarMoneda(Moneda moneda) throws Exception{
         if (moneda == null) {
             throw new Exception("La moneda de la cuenta bancaria es obligatoria.");
@@ -101,19 +90,7 @@ public class CuentaBancariaBOImpl implements ICuentaBancariaBO {
 
 
     }
-    public void  validarArea(Area area) throws Exception{
-        if (area == null) {
-            throw new Exception("El area de la cuenta bancaria es obligatorio.");
-        }
 
-        if (area.getIdArea() <= 0) {
-            throw new Exception("El area de la cuenta bancaria no es válido.");
-        }
-        if(areaDAO.buscarPorId(area.getIdArea())==null){
-            throw new Exception("El area de la cuenta bancaria no existe.");
-        }
-
-    }
     public void validarNombreBanco(String nombre) throws Exception{
         if (nombre == null || nombre.trim().isEmpty()) {
             throw new Exception("El nombre del banco de la cuenta bancaria es obligatorio.");

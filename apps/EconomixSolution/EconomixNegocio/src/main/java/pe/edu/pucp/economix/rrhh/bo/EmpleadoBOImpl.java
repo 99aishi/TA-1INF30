@@ -52,7 +52,7 @@ public class EmpleadoBOImpl implements IEmpleadoBO {
 
     @Override
     public List<Empleado> listarTodas() throws Exception {
-        return List.of();
+        return empleadoDAO.listarTodas();
     }
     public void validar(Empleado empleado,boolean esModificacion) throws Exception{
         if(empleado==null){
@@ -64,7 +64,9 @@ public class EmpleadoBOImpl implements IEmpleadoBO {
         }
         validarRol(empleado.getRol());
         validarArea(empleado.getArea());
-        validarJefe(empleado.getJefeDirecto());
+        if(empleadoDAO.listarTodas()!=null) {
+            validarJefe(empleado.getJefeDirecto());
+        }
         validarNombre(empleado.getNombres());
         validarApellidoPaterno(empleado.getApellidoPaterno());
         validarApellidoMaterno(empleado.getApellidoMaterno());
@@ -96,17 +98,19 @@ public class EmpleadoBOImpl implements IEmpleadoBO {
             throw new Exception("El area del empleado no existe.");
         }
     }
-    public void validarJefe(Empleado jefe) throws Exception{
+    public void validarJefe(Empleado jefe) throws Exception {
+
         if (jefe == null) {
-            throw new Exception("El jefe del empleado es obligatorio.");
+                throw new Exception("El jefe del empleado es obligatorio.");
         }
 
         if (jefe.getUsuarioID() <= 0) {
             throw new Exception("El jefe del empleado no es válido.");
         }
-        if(empleadoDAO.buscarPorId(jefe.getUsuarioID())==null){
+        if (empleadoDAO.buscarPorId(jefe.getUsuarioID()) == null) {
             throw new Exception("El jefe del empleado no existe.");
         }
+
     }
     public void validarNombre(String nombre) throws Exception{
         if (nombre == null || nombre.trim().isEmpty()) {

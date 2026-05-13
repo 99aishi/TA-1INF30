@@ -23,7 +23,7 @@ import pe.edu.pucp.economix.tesoreria.test.CuentaBancariaTest;
 import pe.edu.pucp.economix.tesoreria.test.MonedaTest;
 
 public class Main {
-    public static void main(String []args) throws SQLException {
+    public static void main(String []args) throws Exception {
 
         //Recursos Humanos Testing
         List<Area> areas = AreaTest.pruebaInsercion();

@@ -1,5 +1,7 @@
 package pe.edu.pucp.economix.rrhh.test;
 
+import pe.edu.pucp.economix.rrhh.bo.EmpleadoBOImpl;
+import pe.edu.pucp.economix.rrhh.boi.IEmpleadoBO;
 import pe.edu.pucp.economix.rrhh.implement.EmpleadoImplement;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
@@ -10,22 +12,24 @@ import java.sql.SQLException;
 import java.util.List;
 
 public class EmpleadoTest {
-    private static EmpleadoImplement empleadoDAO = new EmpleadoImplement();
+    private static IEmpleadoBO empleadoBO = new EmpleadoBOImpl();
     public static List<Empleado> pruebaInsercion(Area areaGerenciaGeneral, Rol rolGerenteGeneral,
                                 Area areaTI, Rol rolAnalista,
-                                Area areaFinanzas, Rol rolGerente) throws SQLException {
+                                Area areaFinanzas, Rol rolGerente) throws Exception {
 
         // 2. Jefe
         Empleado jefe = new Empleado();
         jefe.setNombres("Pedro");
         jefe.setApellidoPaterno("Páramo");
         jefe.setEstado(EstadoUsuario.Activo);
+        jefe.setApellidoMaterno("Galvez");
         jefe.setCorreoInstitucional("p.paramo@acervo.com");
         jefe.setPassword("TILIN");
         jefe.setArea(areaGerenciaGeneral);
         jefe.setRol(rolGerenteGeneral);
         jefe.setJefeDirecto(null);
-        jefe.setUsuarioID(empleadoDAO.insertar(jefe));
+        jefe.setNumeroCelular("993000093");
+        jefe.setUsuarioID(empleadoBO.insertar(jefe));
 
         // Empleado 1: Augusto Pérez (TI)
         Empleado emp1 = new Empleado();
@@ -39,7 +43,7 @@ public class EmpleadoTest {
         emp1.setArea(areaTI);
         emp1.setRol(rolAnalista);
         emp1.setJefeDirecto(jefe);
-        emp1.setUsuarioID(empleadoDAO.insertar(emp1));
+        emp1.setUsuarioID(empleadoBO.insertar(emp1));
 
         // Empleado 2: Esteban Trueba (Gerente de Finanzas)
         Empleado emp2 = new Empleado();
@@ -53,7 +57,7 @@ public class EmpleadoTest {
         emp2.setArea(areaFinanzas);
         emp2.setRol(rolGerente);
         emp2.setJefeDirecto(jefe);
-        emp2.setUsuarioID(empleadoDAO.insertar(emp2));
+        emp2.setUsuarioID(empleadoBO.insertar(emp2));
 
         // Empleado 3: Santiago Nasar (Analista en Finanzas bajo Esteban)
         Empleado emp3 = new Empleado();
@@ -67,10 +71,10 @@ public class EmpleadoTest {
         emp3.setArea(areaFinanzas);
         emp3.setRol(rolAnalista);
         emp3.setJefeDirecto(emp2); // Su jefe es Esteban
-        emp3.setUsuarioID(empleadoDAO.insertar(emp3));
+        emp3.setUsuarioID(empleadoBO.insertar(emp3));
 
 
-        List<Empleado> listaEmpleados = empleadoDAO.listarTodas();
+        List<Empleado> listaEmpleados = empleadoBO.listarTodas();
         for (Empleado e : listaEmpleados) {
             // Obtenemos los nombres de los objetos relacionados (Agregación)
             System.out.println(e);
@@ -79,11 +83,11 @@ public class EmpleadoTest {
         return listaEmpleados;
     }
 
-    public static Empleado buscarID(int idEmpleado) throws SQLException{
-        return empleadoDAO.buscarPorId(idEmpleado);
+    public static Empleado buscarID(int idEmpleado) throws Exception{
+        return empleadoBO.buscarPorId(idEmpleado);
     }
 
-    public static int eliminar(int id) throws SQLException {
-        return empleadoDAO.eliminar(id);
+    public static int eliminar(int id) throws Exception {
+        return empleadoBO.eliminar(id);
     }
 }

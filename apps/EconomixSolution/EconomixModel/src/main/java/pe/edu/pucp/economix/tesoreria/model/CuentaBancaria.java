@@ -11,6 +11,7 @@ public class CuentaBancaria {
     private String nombreBanco;
     private String numeroBancario;
     private String cci;
+
     //Relaciones
     private Moneda moneda;
     private Empleado empleadoAdministrador;
@@ -102,6 +103,7 @@ public class CuentaBancaria {
     public void setTransferencias(List<Transaccion> transferencias) {
         this.transferencias = transferencias;
     }
+
 
     //Metodos
 

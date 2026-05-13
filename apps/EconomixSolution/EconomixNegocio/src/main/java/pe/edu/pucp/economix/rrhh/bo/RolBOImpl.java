@@ -42,7 +42,7 @@ public class RolBOImpl implements IRolBO {
 
     @Override
     public List<Rol> listarTodas() throws Exception {
-        return List.of();
+        return rolDAO.listarTodas();
     }
     public void validar(Rol rol, boolean esModificacion)throws Exception{
         if(rol==null){

@@ -17,6 +17,8 @@ public class Empleado extends Usuario {
     private List<SolicitudGasto> solicitudesEnviadas;
     private List<CuentaBancaria> cuentas;
 
+
+
     //Constructror
     public Empleado(){}
 
@@ -99,6 +101,7 @@ public class Empleado extends Usuario {
     public void setCuentas(List<CuentaBancaria> cuentas) {
         this.cuentas = cuentas;
     }
+
 
     //Metodos
 

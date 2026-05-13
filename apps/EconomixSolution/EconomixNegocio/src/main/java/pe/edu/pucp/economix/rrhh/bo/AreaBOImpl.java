@@ -54,7 +54,7 @@ public class AreaBOImpl implements IAreaBO {
 
     @Override
     public List<Area> listarTodas() throws Exception {
-        return List.of();
+        return areaDAO.listarTodas();
     }
     public void validar(Area area, boolean esModificacion) throws Exception{
         if(area==null){
@@ -64,23 +64,12 @@ public class AreaBOImpl implements IAreaBO {
         if (esModificacion && area.getIdArea() <= 0) {
             throw new Exception("El id del area es obligatorio para la modificación.");
         }
-        validarJefe(area.getJefe());
+
         validarNombre(area.getNombre());
         validarDescripcion(area.getDescripcion());
 
     }
-    public void validarJefe(Empleado jefe) throws Exception{
-        if (jefe == null) {
-            throw new Exception("El jefe del area es obligatorio.");
-        }
 
-        if (jefe.getUsuarioID() <= 0) {
-            throw new Exception("El jefe del area no es válido.");
-        }
-        if(empleadoDAO.buscarPorId(jefe.getUsuarioID())==null){
-            throw new Exception("El jefe del area no existe.");
-        }
-    }
 
     public void validarNombre(String nombre) throws Exception{
         if (nombre == null || nombre.trim().isEmpty()) {

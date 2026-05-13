@@ -47,7 +47,7 @@ public class CajaChicaBOImpl implements ICajaChicaBO {
 
     @Override
     public List<CajaChica> listarTodas() throws Exception {
-        return List.of();
+        return cajaDAO.listarTodas();
     }
     public void validar(CajaChica caja,boolean esModificacion) throws Exception{
         if(caja==null){

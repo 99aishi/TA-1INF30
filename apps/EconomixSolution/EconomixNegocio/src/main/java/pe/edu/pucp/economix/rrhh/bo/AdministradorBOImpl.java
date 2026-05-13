@@ -42,7 +42,7 @@ public class AdministradorBOImpl implements IAdministradorBO {
 
     @Override
     public List<Administrador> listarTodas() throws Exception {
-        return List.of();
+        return administradorDAO.listarTodas();
     }
     public void validar(Administrador admin,boolean esModificacion) throws Exception{
         if(admin==null){

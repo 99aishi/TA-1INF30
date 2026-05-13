@@ -1,5 +1,8 @@
 package pe.edu.pucp.economix.rrhh.model;
 
+import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 public abstract class Usuario{
     private int usuarioID;
     private String nombres;
@@ -56,7 +59,8 @@ public abstract class Usuario{
         return password;
     }
     public void setPassword(String password){
-        this.password=password;
+        PasswordEncoder encoder= Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
+        this.password=encoder.encode(password);
     }
     public void cambiarPassword(String nueva){
         this.password=nueva;
@@ -82,22 +86,14 @@ public abstract class Usuario{
                 '}';
     }
 
-    public boolean login(int idIngresado, String passIngresada){
-        if(usuarioID == idIngresado)
-            if(estado == EstadoUsuario.Activo){
-                //return verificarPassword(passIngresada,this.password)
-
-                if(passIngresada.equals(this.password)) return true;
-            }
-        return false;
-    }
-    public String cifrarPassword(String passwordPlano) {
-        // TODO
-        return "";
+    public boolean validarPassword(String password){
+        PasswordEncoder encoder = Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
+        if (encoder.matches(password, this.password)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    public boolean validarAccesoPorEstado() {
-        // TODO
-        return false;
-    }
+
 }

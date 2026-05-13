@@ -45,7 +45,7 @@ public class MonedaBOImpl implements IMonedaBO {
 
     @Override
     public List<Moneda> listarTodas() throws Exception {
-        return List.of();
+        return daoMoneda.listarTodas();
     }
 
     public void validar (Moneda moneda, boolean esModificacion) throws Exception{

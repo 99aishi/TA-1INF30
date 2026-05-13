@@ -3,21 +3,23 @@ package pe.edu.pucp.economix.tesoreria.test;
 import java.sql.SQLException;
 import java.util.List;
 
+import pe.edu.pucp.economix.tesoreria.bo.MonedaBOImpl;
+import pe.edu.pucp.economix.tesoreria.boi.IMonedaBO;
 import pe.edu.pucp.economix.tesoreria.implement.MonedaImplement;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 public class MonedaTest {
-    public static List<Moneda> pruebaInsercion() throws SQLException {
-        MonedaImplement monedaDAO = new MonedaImplement();
+    public static List<Moneda> pruebaInsercion() throws Exception {
+        IMonedaBO monedaBO= new MonedaBOImpl();
 
         Moneda dolar= new Moneda(0,"USD","$");
-        dolar.setIdMoneda(monedaDAO.insertar(dolar));
+        dolar.setIdMoneda(monedaBO.insertar(dolar));
 
         Moneda sol = new Moneda(0,"PEN", "S/.");
-        sol.setIdMoneda(monedaDAO.insertar(sol));
+        sol.setIdMoneda(monedaBO.insertar(sol));
 
 
-        List<Moneda> monedas=monedaDAO.listarTodas();
+        List<Moneda> monedas=monedaBO.listarTodas();
         for(Moneda mon : monedas){
             System.out.println(mon);
         }
