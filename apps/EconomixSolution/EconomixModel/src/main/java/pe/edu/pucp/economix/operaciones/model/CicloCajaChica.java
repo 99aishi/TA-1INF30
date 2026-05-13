@@ -12,7 +12,7 @@ public class CicloCajaChica{
     private Date fechaCierre;
     private double saldoInicial;
     private double totalGastado;
-    private EstadoCicloCaja estado;
+    private EstadoCicloCaja estado; // este enum es solo activo/inactivo no veo necesario hacer un enum para esto. puede ser un boolean
 
     //Relaciones
     private CajaChica cajaChica;
@@ -127,12 +127,14 @@ public class CicloCajaChica{
                 '}';
     }
 
-    public void abrirCiclo() {
-        // TODO: Heredar saldo anterior y congelar monto techo (RF_12)
+    public void calcularTotalGastado(){
+        double total=0;
+        for (SolicitudGasto s: solicitudesDeGasto){
+            if(s.getEstado()==EstadoSolicitudGasto.Aprobado){
+                total+=s.getMontoSolicitado();
+            }
+        }
+        setTotalGastado(total);
     }
 
-    public double cerrarYConsolidarCiclo() {
-        // TODO: Inhabilitar nuevos registros y calcular total rendido (RF_16)
-        return 0.0;
-    }
 }

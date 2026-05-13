@@ -94,7 +94,7 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         if(motivo.length() > 200){
             throw new Exception("El motivo excede los caracteres maximos.");
         }
-        if(motivo.length()==0){
+        if(motivo.isEmpty()){
             throw new Exception("Debe ingresar el motivo de la solicitud.");
         }
     }
@@ -103,7 +103,7 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         if(solicitudGasto.getMontoSolicitado()==0){
             throw new Exception("El monto solicitado no puede ser cero.");
         }
-        
+
         if(solicitudGasto.getMontoSolicitado()>solicitudGasto.getCiclo().getSaldoInicial()-solicitudGasto.getCiclo().getTotalGastado()){
             throw new Exception("El monto solicitado no se puede otorgar. Fondos Insuficientes.");
         }

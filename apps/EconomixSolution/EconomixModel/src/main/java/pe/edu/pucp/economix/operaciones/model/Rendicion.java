@@ -88,8 +88,21 @@ public class Rendicion {
     public void setSaldoFinal(double saldoFinal) {
         this.saldoFinal = saldoFinal;
     }
-    public void setEstado(EstadoRendicion estado) {
-        this.estado = estado;
+    public void setEstado(EstadoRendicion nuevoEstado) {
+        // Permitir la asignación inicial si el estado es nulo
+        if (this.estado == null) {
+            this.estado = nuevoEstado;
+            return;
+        }
+
+        // Validación de transición controlada
+        if (this.estado.puedeTransicionarA(nuevoEstado)) {
+            this.estado = nuevoEstado;
+        } else {
+            // Log de error o manejo de excepción según la arquitectura del proyecto
+            System.err.println("Error: No se permite cambiar el estado de "
+                    + this.estado + " a " + nuevoEstado);
+        }
     }
     public void setComentario(String comentario) {
         this.comentario = comentario;
@@ -118,16 +131,16 @@ public class Rendicion {
                 '}';
     }
 
-    public void cargarComprobanteDigital(ComprobantePago comprobante) {
-        // TODO: Aplicar validaciones automáticas de coherencia (RF_09)
+
+    public void calcularTotalAprobado(){
+        this.totalAprobado=this.cicloCajaChica.getTotalGastado();
+    }
+    public void calcularTotalDeclarado(){
+        double declarado=0;
+        for(SolicitudGasto s :this.cicloCajaChica.getSolicitudesDeGasto()){
+            declarado += s.sumaComprobantes();
+        }
+        this.totalDeclarado=declarado;
     }
 
-    public void formalizarSaldoFinal(double montoReal) {
-        // TODO: Calcular reembolso o devolución para cierre (RF_10)
-    }
-
-    public List<Rendicion> consultarAuditoria(Date inicio, Date fin) {
-        // TODO: Retornar detalle consolidado para Gerencia de Finanzas (RF_17)
-        return new ArrayList<>();
-    }
 }

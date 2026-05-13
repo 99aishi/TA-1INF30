@@ -17,7 +17,7 @@ public class CajaChicaTest {
         CajaChica cajaChicaTI = new CajaChica();
         cajaChicaTI.setAreaAsignada(areaTI);
         cajaChicaTI.setNombre("Caja Chica TI");
-        cajaChicaTI.setMontoTecho(1.00);
+        cajaChicaTI.setMontoTecho(1000.00);
         cajaChicaTI.setEstado(EstadoFondo.Activo);
         cajaChicaTI.setIdFondo(cajaChicaBO.insertar(cajaChicaTI));
 

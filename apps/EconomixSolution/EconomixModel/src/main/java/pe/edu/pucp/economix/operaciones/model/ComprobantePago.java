@@ -133,8 +133,21 @@ public class ComprobantePago {
     public EstadoComprobante getEstado() {
         return estado;
     }
-    public void setEstado(EstadoComprobante estado) {
-        this.estado = estado;
+    public void setEstado(EstadoComprobante nuevoEstado) {
+        // Si el estado actual es nulo (objeto nuevo), se permite la asignación inicial
+        if (this.estado == null) {
+            this.estado = nuevoEstado;
+            return;
+        }
+
+        // Validación de transición controlada
+        if (this.estado.puedeTransicionarA(nuevoEstado)) {
+            this.estado = nuevoEstado;
+        } else {
+            // Aquí podrías lanzar una excepción o simplemente ignorar el cambio
+            System.err.println("Error: Transición de estado no permitida de "
+                    + this.estado + " a " + nuevoEstado);
+        }
     }
 
 

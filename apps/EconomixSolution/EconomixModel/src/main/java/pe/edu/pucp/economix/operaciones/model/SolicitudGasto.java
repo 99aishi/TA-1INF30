@@ -75,10 +75,24 @@ public class SolicitudGasto{
     public EstadoSolicitudGasto getEstado() {
         return estado;
     }
-    public void setEstado(EstadoSolicitudGasto estado) {
-        if(estado.toString()=="Aprobado" && this.estado.toString()=="Pendiente")
-            this.estado=estado;
-        
+    public void setEstado(EstadoSolicitudGasto nuevoEstado) {
+        if (this.estado == EstadoSolicitudGasto.Aprobado) {
+            System.out.println("No se puede modificar una solicitud que ya ha sido aprobada.");
+            return;
+        }
+
+        if (this.estado == EstadoSolicitudGasto.Pendiente) {
+            if (nuevoEstado == EstadoSolicitudGasto.Aprobado || nuevoEstado == EstadoSolicitudGasto.Observado) {
+                this.estado = nuevoEstado;
+            }
+        }
+        else if (this.estado == EstadoSolicitudGasto.Observado) {
+            if (nuevoEstado == EstadoSolicitudGasto.Pendiente) {
+                this.estado = nuevoEstado;
+            }
+        }else{
+            this.estado=nuevoEstado;
+        }
     }
     public Empleado getSolicitante() {
         return solicitante;
@@ -126,7 +140,13 @@ public class SolicitudGasto{
     public void evaluarSolicitud(Empleado jefe, boolean aprobado, String comentario) {
         // TODO: Registro obligatorio de fecha y sustento (RF_07)
     }
-
+    public double sumaComprobantes(){
+        double suma=0;
+        for (ComprobantePago c : comprobantes){
+            suma+=c.getTotal();
+        }
+        return suma;
+    }
     public void registrarDesembolso(String nroOperacion, CuentaBancaria destino) {
         // TODO: Cambiar estado a "desembolsado" y vincular transacción (RF_08)
     }

@@ -33,9 +33,9 @@ public class Main {
                                 areas.get(2), roles.get(2));
         AdministradorTest.pruebaInsercion();
 
-//        System.out.println(EmpleadoTest.buscarID(1));
-//        EmpleadoTest.eliminar(1);
-//        System.out.println(EmpleadoTest.buscarID(1));
+        System.out.println(EmpleadoTest.buscarID(1));
+        EmpleadoTest.eliminar(1);
+        System.out.println(EmpleadoTest.buscarID(1));
 
         //Tesorería Testing
         List<Moneda> monedas = MonedaTest.pruebaInsercion();

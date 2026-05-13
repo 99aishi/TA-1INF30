@@ -7,6 +7,7 @@ import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
 import pe.edu.pucp.economix.tesoreria.bo.CajaChicaBOImpl;
 import pe.edu.pucp.economix.tesoreria.boi.ICajaChicaBO;
+import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 
 import java.util.List;
 
@@ -32,6 +33,9 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
 
     @Override
     public int eliminar(int id) throws Exception {
+        if(id<=0){
+            throw new Exception("Debe ingresar el ID del ciclo.");
+        }
         return cicloCajaChicaDAO.eliminar(id);
     }
 
@@ -52,28 +56,43 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
         if(ciclo == null ){
             throw new Exception("El ciclo de caja chica no puede ser nulo.");
         }
-        if(esModificacion && ciclo.getIdCicloCaja()<=0){
+        if(esModificacion && ciclo.getIdCicloCaja()<=0) {
             throw new Exception("El id del Ciclo de Caja Chica es obligatorio para la modificación.");
         }
-
-        validarCajaChica(ciclo.getCajaChica().getIdFondo());
-        validarRendicion(ciclo.getRendicion());
-
-
+        validarCajaChica(ciclo.getCajaChica());
+        validarSemana(ciclo.getNumeroSemana());
+        validarMontos(ciclo);
     }
-    public void validarCajaChica(int idFondo) throws Exception{
-        if(idFondo<=0){
+    public void calcularTotalGastado(CicloCajaChica ciclo) throws Exception {
+        ciclo.calcularTotalGastado();
+        modificar(ciclo);
+    }
+    public void validarMontos(CicloCajaChica ciclo) throws Exception{
+        if(ciclo.getSaldoInicial()<0){
+            throw new Exception("El saldo inicial del Ciclo de Caja Chica no puede ser negativo.");
+        }
+        if(ciclo.getTotalGastado()<0){
+            throw new Exception("El total gastado del Ciclo de Caja Chica no puede ser negativo.");
+        }
+    }
+
+    public void validarSemana(int numeroSemana)throws Exception{
+        if(numeroSemana<=0){
+            throw new Exception("El Ciclo de Caja Chica debe tener un numero de semana valido.");
+        }
+    }
+
+    public void validarCajaChica(CajaChica cajaChica) throws Exception{
+        if(cajaChica==null){
+            throw new Exception("El ciclo debe estar asignado a una Caja Chica.");
+        }
+        if(cajaChica.getIdFondo()<=0){
             throw new Exception("El id de la Caja Chica es obligatorio para la modificación.");
         }
-
-        if(cajaBO.buscarPorId(idFondo)==null){
+        if(cajaBO.buscarPorId(cajaChica.getIdFondo())==null){
             throw new Exception("La Caja Chica no existe.");
         }
     }
-    public void validarRendicion(Rendicion rendicion) throws Exception{
-        if(rendicion.getIdRendicion()<=0){
-            throw new Exception("El id de la Rendicion es obligatorio para la modificación.");
-        }
 
-    }
+
 }
