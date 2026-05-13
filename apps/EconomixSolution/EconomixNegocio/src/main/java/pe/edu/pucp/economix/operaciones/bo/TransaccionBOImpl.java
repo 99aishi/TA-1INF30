@@ -15,15 +15,18 @@ import pe.edu.pucp.economix.tesoreria.implement.CuentaBancariaImplement;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
+import java.util.Date;
 import java.util.List;
 
 public class TransaccionBOImpl implements ITransaccionBO {
 
     private final ITransaccionDAO transaccionDAO;
     private final ICuentaBancariaDAO cbDAO;
+    private final IMonedaBO monedaBO;
     public TransaccionBOImpl() {
         transaccionDAO= new TransaccionImplement();
         cbDAO = new CuentaBancariaImplement();
+        monedaBO= new MonedaBOImpl();
     }
 
 
@@ -70,9 +73,13 @@ public class TransaccionBOImpl implements ITransaccionBO {
         validarCuentaOrigen(transaccion.getCuentaOrigen());
         validarCuentaDestino(transaccion.getCuentaDestino());
         validarMoneda(transaccion.getMoneda());
-
+        validarFecha(transaccion.getFecha());
     }
-
+    public void validarFecha(Date fecha) throws Exception{
+        if(fecha==null){
+            throw new Exception("La fecha no puede ser nula.");
+        }
+    }
     public void validarTipo(TipoTransaccion tipo) throws Exception{
         if(tipo==null)
             throw new Exception("Se debe especificar que tipo de transaccion es.");
@@ -107,7 +114,7 @@ public class TransaccionBOImpl implements ITransaccionBO {
     }
 
     public void validarMoneda(Moneda moneda) throws Exception{
-        IMonedaBO monedaBO= new MonedaBOImpl();
+
         if(monedaBO.buscarPorId(moneda.getIdMoneda())==null){
             throw new Exception("La moneda seleccionada no esta registrada.");
         }

@@ -37,6 +37,9 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
 
     @Override
     public CicloCajaChica buscarPorId(int id) throws Exception {
+        if(id<=0){
+            throw new Exception("Debe ingresar el ID del ciclo.");
+        }
         return cicloCajaChicaDAO.buscarPorId(id);
     }
 

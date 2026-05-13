@@ -76,7 +76,9 @@ public class SolicitudGasto{
         return estado;
     }
     public void setEstado(EstadoSolicitudGasto estado) {
-        this.estado = estado;
+        if(estado.toString()=="Aprobado" && this.estado.toString()=="Pendiente")
+            this.estado=estado;
+        
     }
     public Empleado getSolicitante() {
         return solicitante;
