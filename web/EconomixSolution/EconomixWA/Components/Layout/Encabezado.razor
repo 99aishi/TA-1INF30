@@ -1,0 +1,23 @@
+<div class="d-flex justify-content-between align-items-center">
+    <div class="bg-primary rounded-3 me-3 mi-logo-box"></div>
+    <div>
+        <h1 class="h5 mb-0 fw-bold text-dark">Sistema de Caja Chica</h1>
+        <p class="small mb-0 text-muted">Gestión y control de fondos</p>
+    </div>
+</div>    
+
+<div class="d-flex align-items-center">
+    <div class="text-end me-3">
+        <h2 class="h6 mb-0 fw-semibold text-dark">@NombreApellidos</h2>
+        <p class="small mb-0 text-muted">@Rol</p>
+    </div>
+    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center fw-medium text-secondary mi-avatar-circle">
+        @InicialesNombre
+    </div>
+</div>
+
+@code {
+    private String NombreApellidos = "Isabel Allende";
+    private String Rol = "Ceo";
+    private String InicialesNombre = "IA";
+}

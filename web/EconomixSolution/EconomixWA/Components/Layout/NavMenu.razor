@@ -1,0 +1,39 @@
+﻿<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="nav flex-row">
+        @foreach(String opcion in opcionesMenu){
+            <div class="nav-item pt-0 px-3 d-flex flex-column">
+                <NavLink class="nav-link" href="@($"/{opcion}")" Match="NavLinkMatch.All">
+                    @opcion
+                </NavLink>
+            </div>
+        }
+    </nav>
+</div>
+
+@code{
+    
+    public List<String> opcionesMenu;
+    private String usuarioCategoria = "Empleado";
+    private String NombreEmpleado = "Pedro Paramo";
+    private String RolEmpleado = "Jefe de TI";
+
+    protected override void OnInitialized()
+    {
+        switch (usuarioCategoria){
+            case "Administrador":
+                opcionesMenu = new List<String>(){"Dashboard", "Areas", "Usuarios", "Solicitudes de Gasto", "Transacciones", "Comprobantes de Pago", "Reportes"};
+                break;
+            case "Jefe":
+                opcionesMenu = new List<String>(){"Dashboard", "Mis Solicitudes de Gasto", "Solicitudes de Gasto", "Comprobantes de Pago", "Transacciones", "Reportes"};
+                break;
+            case "Empleado":
+                opcionesMenu = new List<String>(){"Dashboard", "Mis Solicitudes de Gasto", "Comprobantes de Pago", "Reportes"};
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+
+
