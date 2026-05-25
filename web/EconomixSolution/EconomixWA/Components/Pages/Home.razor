@@ -12,8 +12,15 @@
     </div>
 
     
-    @if(Rol.Equals("Jefe")){
-        <DashboardJefe/>
+    @switch(Rol){
+        case "Jefe":
+            <DashboardJefe/>
+            break;
+        case "Empleado":
+            <DashboardEmpleado/>
+            break;
+        default:
+            break;
     }
 
     <div class="row mt-3 flex-fill overflow-hidden pb-3">
@@ -36,7 +43,7 @@
 </div>
 
 @code{
-    public String Rol {get;set;} = "Jefe";
+    public String Rol {get;set;} = "Empleado";
     public List<String> Nombres = new List<String>(){"Mario Hugo", "Tulio Tribiño", "Gregorio Samsaaaa", "Juan Carlos BOdoque",
                                                         "Mario Hugo", "Tulio Tribiño", "Gregorio Samsaaaa", "Juan Carlos BOdoque",
     
