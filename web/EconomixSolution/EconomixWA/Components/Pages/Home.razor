@@ -1,4 +1,79 @@
 ﻿@page "/dashboard"
+@using System.Collections.Generic;
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Dashboard</PageTitle>
+
+<div class ="d-flex flex-column h-100">
+    
+    <div class="d-flex flex-column pb-3">
+        <p class="h4">Buenos días Isabel Allende</p>    
+        <p class="h6">Area de: Recursos Humanos</p>
+    </div>
+
+    <div id="cards-container" class="row">
+        <div id="card-container" class="col-3">
+            <div class="card rounded-4 h-100" >
+                <div class="card-body ">
+                    <h6 class="card-subtitle mb-2 text-body-primary">Saldo de Caja Chica</h6>
+                    <p class="card-text h2">s/. 15,400.00</p>
+                </div>
+            </div>
+        </div>
+        <div id="card-container" class="col-3">
+            <div class="card rounded-4 h-100" >
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-body-primary">Pendientes de Aprobación</h6>
+                    <p class="card-text h2">8</p>
+                    <p class="card-text text-warning">3 Urgente</p>
+                </div>
+            </div>
+        </div>
+        <div id="card-container" class="col-3">
+            <div class="card rounded-4 h-100">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-body-primary">Gastos del Ciclo</h6>
+                    <p class="card-text h2">s/. 6,700.00</p>
+                    <p class="card-text">18 Transacciones</p>
+                </div>
+            </div>
+        </div>
+        <div id="card-container" class="col-3">
+            <div class="card rounded-4 h-100" >
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-body-primary">Rendiciones Completadas</h6>
+                    <p class="card-text h2">2</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3 flex-fill overflow-hidden pb-5">
+        <div class="col-6 h-100">
+            <div class="card rounded-4 pt-3 h-100 d-flex flex-column">
+                <h5 class="h2 ms-3">Solicitudes de gasto pendientes</h5>
+                <div class="overflow-scroll flex-fill pb-3">
+                    @foreach(String nombre in Nombres){
+                        <SolicitudDeGasto Nombre="@nombre"/>
+                    }
+                </div>
+            </div>    
+        </div>
+        <div class="col-6 h-100">
+            <div class="card rounded-4 h-100 d-flex flex-column">
+                a
+            </div>    
+        </div>
+    </div>
+</div>
+
+@code{
+    public List<String> Nombres = new List<String>(){"Mario Hugo", "Tulio Tribiño", "Gregorio Samsaaaa", "Juan Carlos BOdoque",
+                                                        "Mario Hugo", "Tulio Tribiño", "Gregorio Samsaaaa", "Juan Carlos BOdoque",
+    
+                                                    
+                                                    string.Empty};
+
+}
+
+
 

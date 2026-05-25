@@ -1,6 +1,8 @@
 .mi-logo-box {
     width: 48px;
     height: 48px;
+    background-color: blue;
+    /*Todo: background-image: LOGO;*/
 }
 
 .mi-avatar-circle {
