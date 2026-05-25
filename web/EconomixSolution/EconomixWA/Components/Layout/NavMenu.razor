@@ -13,13 +13,14 @@
 @code{
     
     public List<String> opcionesMenu;
-    private String usuarioCategoria = "Jefe";
+    [Parameter]
+    public String UsuarioCategoria {get;set;}
     private String NombreEmpleado = "Pedro Paramo";
     private String RolEmpleado = "Jefe de TI";
 
     protected override void OnInitialized()
     {
-        switch (usuarioCategoria){
+        switch (UsuarioCategoria){
             case "Administrador":
                 opcionesMenu = new List<String>(){"Dashboard", "Areas", "Usuarios", "Solicitudes de Gasto", "Transacciones", "Comprobantes de Pago", "Reportes"};
                 break;

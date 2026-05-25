@@ -19,6 +19,12 @@
         case "Empleado":
             <DashboardEmpleado/>
             break;
+        case "Tesoreria":
+            <DashboardTesoreria/>
+            break;
+        case "Administrador":
+            <DashboardAdministrador/>
+            break;
         default:
             break;
     }
@@ -43,7 +49,7 @@
 </div>
 
 @code{
-    public String Rol {get;set;} = "Empleado";
+    public String Rol {get;set;} = "Administrador";
     public List<String> Nombres = new List<String>(){"Mario Hugo", "Tulio Tribiño", "Gregorio Samsaaaa", "Juan Carlos BOdoque",
                                                         "Mario Hugo", "Tulio Tribiño", "Gregorio Samsaaaa", "Juan Carlos BOdoque",
     
