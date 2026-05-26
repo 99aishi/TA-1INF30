@@ -1,0 +1,29 @@
+@page "/Transacciones"
+
+<div class="d-flex flex-column justify-content-between">
+    <p class="h4">Transacciones</p>
+    <p class="h">Movimientos de caja</p>
+</div>
+<div class="d-flex flex-column">
+    <TransaccionBusqueda/>
+    <div class="row">
+        <div class="col-6">
+            <div class="card rounded-4 mt-3 p-3">
+                <!--TODO: Hacer  un haeader o usar Un componente para la tabla completa-->
+                @for(int i = 0; i< 10; i++){
+                    <TransaccionItem/>
+                }   
+                
+            </div>
+        </div>
+        <div class="col-6">
+            <!--Se implementará cuando de se visualize o cuando se cree un o nuevo "<TransaccionDetalle/> "-->
+            <TransaccionDetalle/>
+        </div>
+    </div>
+</div>
+
+@code {
+    
+}
+s

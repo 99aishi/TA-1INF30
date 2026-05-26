@@ -1,0 +1,33 @@
+@page "/Solicitudes de gasto"
+
+<div class="d-flex flex-row justify-content-between">
+    <p class="h4">Solicitudes de gasto de Isabel Allende</p>
+    <button type="button" class="btn btn-primary"> + Agregas Solicitud</button>
+</div>
+<div class="d-flex flex-column">
+    <SolicitudDeGastoBusqueda/>
+    <div class="row">
+        <div class="col-8">
+            
+            <!--TODO: Hacer  un haeader o usar Un componente para la tabla completa-->
+            <div class="card mt-3 p-3 h-100">
+                @for(int i = 0; i< 10; i++){
+                    <SolicitudDeGastoRecibidaItem/>
+                }   
+                
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card mt-3 p-3 h-100">
+                <!--Se implementará cuando de se visualize o cuando se cree un o nuevo "<MiSolicitudDeGastoDetalle/> "-->
+                <!--Condicionado a que el usuario presiona la visualización de alguno-->
+                <SolicitudDeGastoRecibidaDetalle/>
+            </div>
+        </div>
+    </div>
+</div>>
+
+
+@code {
+    
+}
