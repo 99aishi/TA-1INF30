@@ -1,6 +1,11 @@
 ﻿@page "/dashboard"
+@page "/caja chica"
 @using System.Collections.Generic;
-@using EconomixWA.Components.Pages.DashBoard;
+@using EconomixWA.Components.Pages.MainDashBoard;
+@using EconomixWA.Components.Pages.SolicitudDeGasto.SolicitudRecibida;
+@using EconomixWA.Components.Pages.SolicitudDeGasto;
+
+
 
 <PageTitle>Dashboard</PageTitle>
 
@@ -15,6 +20,22 @@
     @switch(Rol){
         case "Jefe":
             <DashboardJefe/>
+            <div class="row mt-3 flex-fill overflow-hidden pb-3">
+                <div class="col-6 h-100">
+                    <div class="card rounded-4 pt-3 h-100 d-flex flex-column">
+                        <h5 class="h2 ms-3">Solicitudes de gasto pendientes</h5>
+                        <div class="overflow-scroll flex-fill pb-3">
+                            @foreach(String nombre in Nombres){
+                                <SolicitudDeGastoPendiente Nombre="@nombre"/>
+                            }
+                        </div>
+                    </div>    
+                </div>
+                <div class="col-6 h-100">
+                    <div class="card rounded-4 h-100 d-flex flex-column">     
+                    </div>    
+                </div>
+            </div>
             break;
         case "Empleado":
             <DashboardEmpleado/>
@@ -28,28 +49,10 @@
         default:
             break;
     }
-
-    <div class="row mt-3 flex-fill overflow-hidden pb-3">
-        <div class="col-6 h-100">
-            <div class="card rounded-4 pt-3 h-100 d-flex flex-column">
-                <h5 class="h2 ms-3">Solicitudes de gasto pendientes</h5>
-                <div class="overflow-scroll flex-fill pb-3">
-                    @foreach(String nombre in Nombres){
-                        <SolicitudDeGasto Nombre="@nombre"/>
-                    }
-                </div>
-            </div>    
-        </div>
-        <div class="col-6 h-100">
-            <div class="card rounded-4 h-100 d-flex flex-column">
-                
-            </div>    
-        </div>
-    </div>
 </div>
 
 @code{
-    public String Rol {get;set;} = "Administrador";
+    public String Rol {get;set;} = "Jefe";
     public List<String> Nombres = new List<String>(){"Mario Hugo", "Tulio Tribiño", "Gregorio Samsaaaa", "Juan Carlos BOdoque",
                                                         "Mario Hugo", "Tulio Tribiño", "Gregorio Samsaaaa", "Juan Carlos BOdoque",
     
