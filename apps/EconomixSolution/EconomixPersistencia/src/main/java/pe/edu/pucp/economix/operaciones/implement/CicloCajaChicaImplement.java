@@ -11,7 +11,7 @@ import java.util.Map;
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.operaciones.dao.ICicloCajaChicaDAO;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
-import pe.edu.pucp.economix.operaciones.model.EstadoCicloCaja;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoCicloCaja;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 

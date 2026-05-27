@@ -6,7 +6,6 @@ import pe.edu.pucp.economix.operaciones.dao.IComprobantePagoDAO;
 import pe.edu.pucp.economix.operaciones.implement.ComprobantePagoImplement;
 import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
-import pe.edu.pucp.economix.operaciones.model.TipoComprobante;
 import pe.edu.pucp.economix.tesoreria.bo.MonedaBOImpl;
 import pe.edu.pucp.economix.tesoreria.boi.IMonedaBO;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;

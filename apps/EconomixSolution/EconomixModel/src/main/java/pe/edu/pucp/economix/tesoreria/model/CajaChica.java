@@ -62,7 +62,14 @@ public class CajaChica extends Fondo{
                 '}';
     }
 
-    public void configurarCajaChica(double montoTecho, CuentaBancaria origen, Empleado responsable) {
-        // TODO: Asignar responsable y límites financieros
+    public double obtenerTotalCicloActivo(){
+        //TODO: Devuelve el valor total del ciclo de caja chica más reciente que se tiene
+        //Dashboard Princiapl Jefe de Area
+        return 0;
+    }
+    public double obtenerTotalGastoCicloActual(){
+        //TODO: Devuelve el valor total de lo gastado durante el ciclo más reciente
+        //Dashboard Princiapl Jefe de Area
+        return 0;
     }
 }

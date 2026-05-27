@@ -10,7 +10,7 @@ import java.util.Map;
 
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.operaciones.dao.IRendicionDAO;
-import pe.edu.pucp.economix.operaciones.model.EstadoRendicion;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoRendicion;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
 
 public class RendicionImplement implements IRendicionDAO{

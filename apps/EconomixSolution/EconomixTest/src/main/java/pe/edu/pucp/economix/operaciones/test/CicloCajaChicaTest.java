@@ -1,6 +1,5 @@
 package pe.edu.pucp.economix.operaciones.test;
 
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
@@ -8,7 +7,7 @@ import pe.edu.pucp.economix.operaciones.bo.CicloCajaBOImpl;
 import pe.edu.pucp.economix.operaciones.boi.ICicloCajaBO;
 import pe.edu.pucp.economix.operaciones.implement.CicloCajaChicaImplement;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
-import pe.edu.pucp.economix.operaciones.model.EstadoCicloCaja;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoCicloCaja;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 
 public class CicloCajaChicaTest {

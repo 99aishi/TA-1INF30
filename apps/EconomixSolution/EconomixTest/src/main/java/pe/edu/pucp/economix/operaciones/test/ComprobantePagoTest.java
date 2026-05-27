@@ -1,6 +1,5 @@
 package pe.edu.pucp.economix.operaciones.test;
 
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
@@ -8,9 +7,9 @@ import pe.edu.pucp.economix.operaciones.bo.ComprobantePagoBOImpl;
 import pe.edu.pucp.economix.operaciones.boi.IComprobantePagoBO;
 import pe.edu.pucp.economix.operaciones.implement.ComprobantePagoImplement;
 import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
-import pe.edu.pucp.economix.operaciones.model.EstadoComprobante;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoComprobante;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
-import pe.edu.pucp.economix.operaciones.model.TipoComprobante;
+import pe.edu.pucp.economix.operaciones.model.enums.TipoComprobante;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 public class ComprobantePagoTest {

@@ -1,13 +1,12 @@
 package pe.edu.pucp.economix.operaciones.test;
 
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
 import pe.edu.pucp.economix.operaciones.bo.RendicionBOImpl;
 import pe.edu.pucp.economix.operaciones.boi.IRendicionBO;
 import pe.edu.pucp.economix.operaciones.implement.RendicionImplement;
-import pe.edu.pucp.economix.operaciones.model.EstadoRendicion;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoRendicion;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
 
 public class RendicionTest {

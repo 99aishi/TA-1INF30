@@ -11,7 +11,7 @@ import java.util.Map;
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.operaciones.dao.ISolicitudGastoDAO;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
-import pe.edu.pucp.economix.operaciones.model.EstadoSolicitudGasto;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 

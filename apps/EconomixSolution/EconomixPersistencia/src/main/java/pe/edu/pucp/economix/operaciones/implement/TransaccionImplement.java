@@ -10,8 +10,8 @@ import java.util.Map;
 
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.operaciones.dao.ITransaccionDAO;
-import pe.edu.pucp.economix.operaciones.model.MedioPago;
-import pe.edu.pucp.economix.operaciones.model.TipoTransaccion;
+import pe.edu.pucp.economix.operaciones.model.enums.MedioPago;
+import pe.edu.pucp.economix.operaciones.model.enums.TipoTransaccion;
 import pe.edu.pucp.economix.operaciones.model.Transaccion;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
