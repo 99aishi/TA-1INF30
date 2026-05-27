@@ -1,4 +1,4 @@
-package pe.edu.pucp.economix.operaciones.model;
+package pe.edu.pucp.economix.operaciones.model.enums;
 
 public enum EstadoRendicion {
     Aceptado, EnEspera, Denegado;

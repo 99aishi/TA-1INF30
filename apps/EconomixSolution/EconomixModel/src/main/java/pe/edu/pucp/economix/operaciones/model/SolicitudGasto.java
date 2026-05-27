@@ -3,6 +3,7 @@ package pe.edu.pucp.economix.operaciones.model;
 import java.util.Date;
 import java.util.List;
 
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 

@@ -2,6 +2,8 @@ package pe.edu.pucp.economix.operaciones.model;
 
 import java.util.Date;
 
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoComprobante;
+import pe.edu.pucp.economix.operaciones.model.enums.TipoComprobante;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 public class ComprobantePago {
