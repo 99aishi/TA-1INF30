@@ -27,7 +27,7 @@ public class DBManager {
         this.usuario = db.getString("db.usuario");
         this.password = db.getString("db.password");
         this.url = "jdbc:mysql://" + this.hostname
-                + ":" + this.puerto + "/" + this.esquema;
+                + ":" + this.puerto + "/" + this.esquema + "?useSSL=FALSE";
     }
     public static DBManager getDBManager(){
         //Lo debemos de inicializar

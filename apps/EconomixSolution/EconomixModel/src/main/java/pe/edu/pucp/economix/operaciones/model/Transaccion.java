@@ -2,6 +2,8 @@ package pe.edu.pucp.economix.operaciones.model;
 
 import java.util.Date;
 
+import pe.edu.pucp.economix.operaciones.model.enums.MedioPago;
+import pe.edu.pucp.economix.operaciones.model.enums.TipoTransaccion;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 

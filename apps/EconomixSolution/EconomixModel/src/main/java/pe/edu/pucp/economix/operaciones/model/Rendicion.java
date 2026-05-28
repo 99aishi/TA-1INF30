@@ -1,8 +1,8 @@
 package pe.edu.pucp.economix.operaciones.model;
 
-import java.util.ArrayList;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoRendicion;
+
 import java.util.Date;
-import java.util.List;
 
 public class Rendicion {
     private int idRendicion;

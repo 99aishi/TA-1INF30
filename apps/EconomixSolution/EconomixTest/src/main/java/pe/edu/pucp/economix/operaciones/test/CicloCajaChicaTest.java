@@ -1,18 +1,17 @@
 package pe.edu.pucp.economix.operaciones.test;
 
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
-import pe.edu.pucp.economix.operaciones.bo.CicloCajaBOImpl;
-import pe.edu.pucp.economix.operaciones.boi.ICicloCajaBO;
-import pe.edu.pucp.economix.operaciones.implement.CicloCajaChicaImplement;
+import pe.edu.pucp.economix.operaciones.boi.CicloCajaBOImpl;
+import pe.edu.pucp.economix.operaciones.ibo.ICicloCajaBO;
+import pe.edu.pucp.economix.operaciones.daoi.CicloCajaChicaDAOImpl;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
-import pe.edu.pucp.economix.operaciones.model.EstadoCicloCaja;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoCicloCaja;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 
 public class CicloCajaChicaTest {
-    private static final CicloCajaChicaImplement cicloDAO = new CicloCajaChicaImplement();
+    private static final CicloCajaChicaDAOImpl cicloDAO = new CicloCajaChicaDAOImpl();
     private static final ICicloCajaBO cicloCajaBO = new CicloCajaBOImpl();
     public static List<CicloCajaChica> pruebaInsercion(CajaChica cajaTI, CajaChica cajaFinanzas) throws Exception {
         CicloCajaChica cicloTI = new CicloCajaChica();

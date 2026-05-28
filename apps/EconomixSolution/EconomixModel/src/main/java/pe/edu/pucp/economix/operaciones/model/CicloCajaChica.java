@@ -3,6 +3,8 @@ package pe.edu.pucp.economix.operaciones.model;
 import java.util.Date;
 import java.util.List;
 
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoCicloCaja;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 
 public class CicloCajaChica{
@@ -130,7 +132,7 @@ public class CicloCajaChica{
     public void calcularTotalGastado(){
         double total=0;
         for (SolicitudGasto s: solicitudesDeGasto){
-            if(s.getEstado()==EstadoSolicitudGasto.Aprobado){
+            if(s.getEstado()== EstadoSolicitudGasto.Aprobado){
                 total+=s.getMontoSolicitado();
             }
         }

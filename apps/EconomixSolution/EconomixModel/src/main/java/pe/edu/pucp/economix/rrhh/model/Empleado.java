@@ -104,8 +104,6 @@ public class Empleado extends Usuario {
 
 
     //Metodos
-
-
     @Override
     public String toString() {
         return super.toString() + " Empleado{" +
@@ -118,6 +116,24 @@ public class Empleado extends Usuario {
                 ", solicitudesEnviadas=" + solicitudesEnviadas +
                 ", cuentas=" + cuentas +
                 '}';
+    }
+
+    public List<SolicitudGasto> listarSolicitudesRecibidasPendientes(){
+        List<SolicitudGasto> solicitudesPendientes = null;
+
+        //TODO: Implementar la lista de las solicitudes pendientes para un usuario - Solo no permite de los empleados regulares
+        //Dashboaard princiapl del jefe de Area
+
+        return solicitudesPendientes;
+    }
+
+    public List<SolicitudGasto> listarSolicitudesEnviadas(){
+        List<SolicitudGasto> solicitudes = null;
+
+        //TODO: Implementar la lista de las solicitudes enviadas para un usuario
+        //Dashboaard princiapl del jefe de Area
+
+        return solicitudes;
     }
 
     // Métodos en Empleado.java

@@ -1,17 +1,16 @@
 package pe.edu.pucp.economix.operaciones.test;
 
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
-import pe.edu.pucp.economix.operaciones.bo.RendicionBOImpl;
-import pe.edu.pucp.economix.operaciones.boi.IRendicionBO;
-import pe.edu.pucp.economix.operaciones.implement.RendicionImplement;
-import pe.edu.pucp.economix.operaciones.model.EstadoRendicion;
+import pe.edu.pucp.economix.operaciones.boi.RendicionBOImpl;
+import pe.edu.pucp.economix.operaciones.ibo.IRendicionBO;
+import pe.edu.pucp.economix.operaciones.daoi.RendicionDAOImpl;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoRendicion;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
 
 public class RendicionTest {
-    private static final RendicionImplement rendicionDAO = new RendicionImplement();
+    private static final RendicionDAOImpl rendicionDAO = new RendicionDAOImpl();
     private static final IRendicionBO rendicionBO = new RendicionBOImpl();
     public static List<Rendicion> probarInsercion() throws Exception {
         Rendicion r1 = new Rendicion();

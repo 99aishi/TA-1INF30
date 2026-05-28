@@ -1,12 +1,10 @@
 package pe.edu.pucp.economix.tesoreria.test;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import pe.edu.pucp.economix.rrhh.model.Area;
-import pe.edu.pucp.economix.tesoreria.bo.CajaChicaBOImpl;
-import pe.edu.pucp.economix.tesoreria.boi.ICajaChicaBO;
-import pe.edu.pucp.economix.tesoreria.implement.CajaChicaImplement;
+import pe.edu.pucp.economix.tesoreria.boi.CajaChicaBOImpl;
+import pe.edu.pucp.economix.tesoreria.ibo.ICajaChicaBO;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
 

@@ -1,6 +1,6 @@
 package pe.edu.pucp.economix.tesoreria.model;
 
-import pe.edu.pucp.economix.operaciones.model.TipoTransaccion;
+import pe.edu.pucp.economix.operaciones.model.enums.TipoTransaccion;
 
 public class Fondo {
     private int idFondo;

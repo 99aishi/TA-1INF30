@@ -1,19 +1,18 @@
 package pe.edu.pucp.economix.operaciones.test;
 
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
-import pe.edu.pucp.economix.operaciones.bo.SolicitudGastoBOImpl;
-import pe.edu.pucp.economix.operaciones.boi.ISolicitudGastoBO;
-import pe.edu.pucp.economix.operaciones.implement.SolicitudGastoImplement;
+import pe.edu.pucp.economix.operaciones.boi.SolicitudGastoBOImpl;
+import pe.edu.pucp.economix.operaciones.ibo.ISolicitudGastoBO;
+import pe.edu.pucp.economix.operaciones.daoi.SolicitudGastoDAOImpl;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
-import pe.edu.pucp.economix.operaciones.model.EstadoSolicitudGasto;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 
 public class SolicitudGastoTest {
-    private static final SolicitudGastoImplement solicitudDAO = new SolicitudGastoImplement();
+    private static final SolicitudGastoDAOImpl solicitudDAO = new SolicitudGastoDAOImpl();
     private static final ISolicitudGastoBO solicitudGastoBO = new SolicitudGastoBOImpl();
 
     public static List<SolicitudGasto> pruebaInsercion(CicloCajaChica cicloActivo, Empleado solicitante, Empleado aprobador) throws Exception {
