@@ -1,22 +1,28 @@
 @page "/Comprobantes de Pago"
+<div class="h-100 d-flex flex-column">
+    
+    <div class="d-flex flex-row justify-content-between">
+        <p class="h4">Comprobantes de Pago</p>
+        <button type="button" class="btn btn-primary"> + Agregas Solicitud</button>
+    </div>
 
-<div class="d-flex flex-row justify-content-between">
-    <p class="h4">Comprobantes de Pago</p>
-    <button type="button" class="btn btn-primary"> + Agregas Solicitud</button>
-</div>
-<div class="d-flex flex-column">
-    <div class="card rounded-4">
+    <div class="d-flex flex-column flex-fill overflow-hidden">
         <ComprobanteDePagoBusqueda/>
+    
+        <div class="card rounded-4 mt-3 mb-3 p-3 flex-fill overflow-scroll">
+            <!--Se implementará cuando de se visualize o cuando se cree un o nuevo "<ComprobanteDePagoDetalle/> en una pestaña nueva"-->
+            <!--TODO: Hacer  un haeader o usar Un componente para la tabla completa-->
+            @for(int i = 0; i< 10; i++){
+                <ComprobanteDePagoItem/>
+            }   
+                
+        </div>
     </div>
-    <div class="card rounded-4 mt-3 p-3">
-        <!--Se implementará cuando de se visualize o cuando se cree un o nuevo "<ComprobanteDePagoDetalle/> en una pestaña nueva"-->
-        <!--TODO: Hacer  un haeader o usar Un componente para la tabla completa-->
-        @for(int i = 0; i< 10; i++){
-            <ComprobanteDePagoItem/>
-        }   
-            
-    </div>
+
 </div>
+
+
+
 
 @code {
     
