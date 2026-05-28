@@ -1,14 +1,12 @@
 package pe.edu.pucp.economix.rrhh.test;
 
-import pe.edu.pucp.economix.rrhh.bo.EmpleadoBOImpl;
-import pe.edu.pucp.economix.rrhh.boi.IEmpleadoBO;
-import pe.edu.pucp.economix.rrhh.implement.EmpleadoImplement;
+import pe.edu.pucp.economix.rrhh.boi.EmpleadoBOImpl;
+import pe.edu.pucp.economix.rrhh.ibo.IEmpleadoBO;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
 import pe.edu.pucp.economix.rrhh.model.Rol;
 
-import java.sql.SQLException;
 import java.util.List;
 
 public class EmpleadoTest {

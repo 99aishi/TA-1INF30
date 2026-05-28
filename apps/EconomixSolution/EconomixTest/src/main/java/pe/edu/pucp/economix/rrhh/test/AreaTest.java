@@ -1,13 +1,9 @@
 package pe.edu.pucp.economix.rrhh.test;
 
-import pe.edu.pucp.economix.rrhh.bo.AreaBOImpl;
-import pe.edu.pucp.economix.rrhh.boi.IAdministradorBO;
-import pe.edu.pucp.economix.rrhh.boi.IAreaBO;
-import pe.edu.pucp.economix.rrhh.implement.AreaImplement;
+import pe.edu.pucp.economix.rrhh.boi.AreaBOImpl;
+import pe.edu.pucp.economix.rrhh.ibo.IAreaBO;
 import pe.edu.pucp.economix.rrhh.model.Area;
-import pe.edu.pucp.economix.rrhh.model.Empleado;
 
-import java.sql.SQLException;
 import java.util.List;
 
 public class AreaTest {

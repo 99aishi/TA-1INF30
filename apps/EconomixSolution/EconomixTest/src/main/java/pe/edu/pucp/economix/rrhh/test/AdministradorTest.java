@@ -1,12 +1,10 @@
 package pe.edu.pucp.economix.rrhh.test;
 
-import pe.edu.pucp.economix.rrhh.bo.AdministradorBOImpl;
-import pe.edu.pucp.economix.rrhh.boi.IAdministradorBO;
-import pe.edu.pucp.economix.rrhh.implement.AdministradorImplement;
+import pe.edu.pucp.economix.rrhh.boi.AdministradorBOImpl;
+import pe.edu.pucp.economix.rrhh.ibo.IAdministradorBO;
 import pe.edu.pucp.economix.rrhh.model.Administrador;
 import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
 
-import java.sql.SQLException;
 import java.util.List;
 
 public class AdministradorTest {

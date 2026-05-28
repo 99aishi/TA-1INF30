@@ -3,9 +3,9 @@ package pe.edu.pucp.economix.operaciones.test;
 import java.util.Date;
 import java.util.List;
 
-import pe.edu.pucp.economix.operaciones.bo.ComprobantePagoBOImpl;
-import pe.edu.pucp.economix.operaciones.boi.IComprobantePagoBO;
-import pe.edu.pucp.economix.operaciones.implement.ComprobantePagoImplement;
+import pe.edu.pucp.economix.operaciones.boi.ComprobantePagoBOImpl;
+import pe.edu.pucp.economix.operaciones.ibo.IComprobantePagoBO;
+import pe.edu.pucp.economix.operaciones.daoi.ComprobantePagoDAOImpl;
 import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoComprobante;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
@@ -13,7 +13,7 @@ import pe.edu.pucp.economix.operaciones.model.enums.TipoComprobante;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 public class ComprobantePagoTest {
-    private static final ComprobantePagoImplement comprobanteDAO = new ComprobantePagoImplement();
+    private static final ComprobantePagoDAOImpl comprobanteDAO = new ComprobantePagoDAOImpl();
 
     private static final IComprobantePagoBO comprobantePagoBO = new ComprobantePagoBOImpl();
     public static List<ComprobantePago> pruebaInsercion(SolicitudGasto solicitudAprobada, Moneda moneda) throws Exception {

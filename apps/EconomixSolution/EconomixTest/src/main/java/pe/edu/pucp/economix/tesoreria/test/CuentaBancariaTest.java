@@ -1,13 +1,11 @@
 package pe.edu.pucp.economix.tesoreria.test;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
-import pe.edu.pucp.economix.tesoreria.bo.CuentaBancariaBOImpl;
-import pe.edu.pucp.economix.tesoreria.boi.ICuentaBancariaBO;
-import pe.edu.pucp.economix.tesoreria.implement.CuentaBancariaImplement;
+import pe.edu.pucp.economix.tesoreria.boi.CuentaBancariaBOImpl;
+import pe.edu.pucp.economix.tesoreria.ibo.ICuentaBancariaBO;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
