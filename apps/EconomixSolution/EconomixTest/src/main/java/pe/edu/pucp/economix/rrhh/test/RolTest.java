@@ -1,11 +1,9 @@
 package pe.edu.pucp.economix.rrhh.test;
 
-import pe.edu.pucp.economix.rrhh.bo.RolBOImpl;
-import pe.edu.pucp.economix.rrhh.boi.IRolBO;
-import pe.edu.pucp.economix.rrhh.implement.RolImplement;
+import pe.edu.pucp.economix.rrhh.boi.RolBOImpl;
+import pe.edu.pucp.economix.rrhh.ibo.IRolBO;
 import pe.edu.pucp.economix.rrhh.model.Rol;
 
-import java.sql.SQLException;
 import java.util.List;
 
 public class RolTest {

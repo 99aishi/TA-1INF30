@@ -15,6 +15,7 @@
         <module>EconomixModel</module>
         <module>EconomixTest</module>
         <module>EconomixNegocio</module>
+        <module>EconomixWS</module>
     </modules>
     <dependencies>
         <dependency>
