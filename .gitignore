@@ -33,6 +33,7 @@ Thumbs.db
 *.sln.docstates
 *.suo
 *.pdb
+!**/wwwroot/**/dist/
 
 ### --- FRONTEND (Node / Bootstrap) ---
 # Dependencias y builds
