@@ -10,9 +10,23 @@
             </div>    
         </div>
     </div>
+    
+    <button type="button" class="btn btn-outline-primary align-self-start mt-3"
+                    @onclick="CerrarDetalleComprobante">
+        Cerrar Detalle
+    </button>
 </div>
 
 
 @code {
-    
+    [Parameter]
+    public int IdComprobantePago{ get; set;}
+    [Parameter]
+    public EventCallback OnCierraDetalle { get; set; }
+
+    public async Task CerrarDetalleComprobante()
+    {
+        await OnCierraDetalle.InvokeAsync();
+    }
+
 }

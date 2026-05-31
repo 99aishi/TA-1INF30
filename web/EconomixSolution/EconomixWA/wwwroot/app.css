@@ -8,8 +8,24 @@ a, .btn-link {
 
 .btn-primary {
     color: #fff;
-    background-color: #1b6ec2;
+    background-color: rgb(54, 98, 227);
     border-color: #1861ac;
+}
+.btn-primary:hover {
+    background-color: rgb(40, 78, 195);
+    border-color: #11467d;
+    color: #fff;
+}
+/*AddByMe*/
+.btn-secondary {
+    color: #000;
+    background-color: rgb(225, 237, 254);
+    border-color: rgb(227, 277, 277);
+}
+.btn-secondary:hover {
+    background-color: rgb(195, 215, 245);
+    border-color: rgb(200, 200, 200);
+    color: #000;
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {

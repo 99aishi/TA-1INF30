@@ -7,16 +7,14 @@
             <p class="text-muted mb-0">SG-1025 - Juan Preciado - s/. 2500.00</p>
         </div>
         <div class="d-flex flex-row align-items-center gap-3">
-            <div class="d-flex @(MuestraDetalle? "flex-column":"flex-row gap-4 flex-row-md") ">
+            <p class="h6">11/05/2026</p>
+            <span class="badge h-100 bg-warning-subtle text-warning-emphasis rounded-pill px-2">Pendiente</span>
+            <p class="h6">s/. 4500.00</p>
 
-                <p class="h6">11/05/2026</p>
-                <span class="badge h-100 bg-warning-subtle text-warning-emphasis rounded-pill px-2">Pendiente</span>
-                <p class="h6">s/. 4500.00</p>
-                
-            </div>
             <div class="d-flex align-items-center">
-                <button type="button" class="btn btn-outline-primary align-self-start">
-                    <i class="bg-primary"></i>
+                <button type="button" class="btn btn-outline-primary align-self-start" 
+                            @onclick="MostrarDetalleComprobanteHijo">
+                    BTN
                 </button>
             </div>
         </div>
@@ -27,5 +25,11 @@
 
 @code {
     [Parameter]
-    public bool MuestraDetalle { get; set; }
+    public EventCallback OnMuestraDetalle {get; set;}
+
+    public async Task MostrarDetalleComprobanteHijo()
+    {
+        await OnMuestraDetalle.InvokeAsync();
+    }
+    
 }

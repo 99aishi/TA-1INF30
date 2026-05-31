@@ -5,22 +5,29 @@
     background-color: rgb(248,250,252);
 }
 
+
+
 main {
     flex: 1;
 }
+
+
 
 .sidebar {
     background-color: white;
 }
 
+
+
 .top-row {
     background-color: white;
-    
     display: flex;
     justify-content: space-between;
     height: 3.5rem;
     align-items: center;
 }
+
+
 
     .top-row ::deep a, .top-row ::deep .btn-link {
         white-space: nowrap;
@@ -28,36 +35,51 @@ main {
         text-decoration: none;
     }
 
-    .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
-        text-decoration: underline;
-    }
 
-    .top-row ::deep a:first-child {
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+
+        .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
+            text-decoration: underline;
+        }
+
+
+
+        .top-row ::deep a:first-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+
 
 @media (max-width: 640.98px) {
+
     .top-row {
         justify-content: space-between;
     }
 
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        margin-left: 0;
-    }
+
+
+        .top-row ::deep a, .top-row ::deep .btn-link {
+            margin-left: 0;
+        }
 }
 
+
+
 @media (min-width: 641px) {
+
     .page {
         flex-direction: row;
     }
 
+
+
     .sidebar {
         width: 100vw;
-        
         position: sticky;
         top: 0;
     }
+
+
 
     .top-row {
         position: sticky;
@@ -65,17 +87,23 @@ main {
         z-index: 1;
     }
 
-    .top-row.auth ::deep a:first-child {
-        flex: 1;
-        text-align: right;
-        width: 0;
-    }
+
+
+        .top-row.auth ::deep a:first-child {
+            flex: 1;
+            text-align: right;
+            width: 0;
+        }
+
+
 
     .top-row, article {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
     }
 }
+
+
 
 #blazor-error-ui {
     color-scheme: light only;
@@ -90,6 +118,8 @@ main {
     width: 100%;
     z-index: 1000;
 }
+
+
 
     #blazor-error-ui .dismiss {
         cursor: pointer;
