@@ -1,4 +1,6 @@
-@page "/Mis Solicitudes De Gasto/Detalle"
+@page "/Mis Solicitudes De Gasto/Detalle/{IdSolicitud:int}"
+@page "/Mis Solicitudes De Gasto/Evaluar/{IdSolicitud:int}"
+@page "/Mis Solicitudes De Gasto/Crear"
 @inject NavigationManager Navigation
 @using EconomixWA.Components.Pages.ComprobanteDePago
 
@@ -10,46 +12,61 @@
                 <div class="row">
                     <div class="col-6 mt-3">
                         <label for="Area" class="form-label">Area</label>    
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="Area" placeholder="Area">
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="Area" placeholder="Area" disabled="true">
                     </div>
                     <div class="col-6 mt-3">
                         <label for="Fecha" class="form-label">Fecha</label>    
-                        <input type="date" class="form-control form-control-lg rounded-4 bg-light" id="Fecha" placeholder="Fecha">
+                        <input type="date" class="form-control form-control-lg rounded-4 bg-light" id="Fecha" placeholder="Fecha" disabled="@(!EsCreacion)">
                     </div>
                     <div class="col-6 mt-3">
                         <label for="Solicitante" class="form-label">Solicitante</label>    
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="Solicitante" placeholder="Juan Preciado">
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="Solicitante" placeholder="Juan Preciado" disabled="true">
                     </div>
                     <div class="col-3 mt-3">
                         <label for="Monto" class="form-label">Monto</label>    
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="Monto" placeholder=" @SimboloMoneda 0.00">
+                        <input type="number" class="form-control form-control-lg rounded-4 bg-light" id="Monto" placeholder=" @SimboloMoneda 0.00" disabled="@(!EsCreacion)">
                     </div>
                     <div class="col-3 mt-3 align-self-center" style="height: 2rem">
                         <span class="badge h-100 bg-warning-subtle text-warning-emphasis rounded-pill px-2 align-self-start mt-4">Pendiente</span>
                     </div>
                     <div class="col-12 mt-3">
                         <label for="Motivo" class="form-label">Motivo</label>    
-                        <textarea class="form-control bg-light" id="exampleFormControlTextarea1" rows="3" placeholder="Motivo de la solicitud de gasto">  </textarea>
+                        <textarea class="form-control bg-light" id="exampleFormControlTextarea1" rows="3" placeholder="Motivo de la solicitud de gasto" disabled="@(!EsCreacion)">  </textarea>
                     </div>
 
                 </div>
                 <div class="d-flex justify-content-end gap-3 mt-3">
-                    <button type="button" class="btn btn-primary align-self-start mt-3"
-                                    @onclick="CerrarDetalle">
-                        
-                        @(EsCreacion? "Registrar Solicitud" : "Guardar Cambios")
-
-                    </button>
-                    
+                    @if (EsCreacion)
+                    {               
+                        <button type="button" class="btn btn-primary align-self-start mt-3"
+                                    @onclick="CerrarDetalle">               
+                                @(EsCreacion? "Registrar Solicitud" : "Guardar Cambios")
+                                    
+                        </button>
+                                
                         <button type="button" class="btn btn-outline-primary align-self-start mt-3"
-                                        @onclick="CerrarDetalle">
+                            @onclick="CerrarDetalle">
                             Guardar Borrador
                         </button>
-                    
-                    <button type="button" class="btn btn-outline-danger align-self-start mt-3"
-                                    @onclick="CerrarDetalle">
-                        Cancelar
-                    </button>
+                            
+                        <button type="button" class="btn btn-outline-danger align-self-start mt-3"
+                            @onclick="CerrarDetalle">
+                            Cancelar
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-outline-primary align-self-start mt-3"
+                                    @onclick="CerrarDetalle">               
+                                Cerrar
+                                    
+                        </button>
+                        <button type="button" class="btn btn-outline-danger align-self-start mt-3"
+                            @onclick="CerrarDetalle">
+                            Eliminar
+                        </button>
+                        
+                    }
                 </div>
                 @if (!EsCreacion)
                 {
@@ -77,8 +94,12 @@
 
 
 @code {
+    [Parameter]
+    public int? IdSolicitud { get; set; }
+
+    private bool EsCreacion => !IdSolicitud.HasValue;
     private string SimboloMoneda { get; set; } = "S/.";  
-    private bool EsCreacion { get; set; } = false; 
+
 
     [Parameter]
     public EventCallback OnCierraDetalle { get; set; }
@@ -93,6 +114,6 @@
     }
     private void IrAgregarComprobante()
     {
-        Navigation.NavigateTo("/Comprobantes de Pago/Detalle");
+        Navigation.NavigateTo($"/Comprobantes de Pago/Asociar/{IdSolicitud}");
     }
 }

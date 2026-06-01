@@ -1,20 +1,38 @@
 @page "/Comprobantes de Pago/Detalle"
+@page "/Comprobantes de Pago/Evaluar/{IdSolicitud:int}"
+@page "/Comprobantes de Pago/Crear"
+@page "/Comprobantes de Pago/Asociar/{IdSolicitud:int}"
 @inject NavigationManager Navigation
 
 <div class="rounded-4 mb-3 p-3 h-100">
 
     <div class="row h-100">
         <div class="col-4 h-100">
-            <ComprobanteDePagoSustento EsCreacion="EsCreacion"/>    
+            <ComprobanteDePagoSustento EsCreacion="EsCreacion" EsEvaluacion="EsEvaluacion" EsAsociacion="EsAsociacion"/>
         </div>    
         <div class="col-8 h-100">
-            <ComprobanteDePagoDatos EsCreacion="EsCreacion"/>
+            <ComprobanteDePagoDatos EsCreacion="EsCreacion" EsEvaluacion="EsEvaluacion" EsAsociacion="EsAsociacion"/>
         </div>
     </div>
 </div>
 
 
 @code {
-    private bool EsCreacion { get; set; } = false;
+    private bool EsCreacion { get; set; }
+    private bool EsAsociacion { get; set; }
+    private bool EsEvaluacion { get; set; }
+
+    
+    [Parameter]
+    public int IdSolicitud { get; set; }
+    protected override void OnInitialized()
+    {
+
+        EsCreacion = Navigation.Uri.EndsWith("/Crear");
+        EsAsociacion = Navigation.Uri.Contains("/Asociar");
+        EsEvaluacion = Navigation.Uri.Contains("/Evaluar");
+        
+    }
+
 
 }

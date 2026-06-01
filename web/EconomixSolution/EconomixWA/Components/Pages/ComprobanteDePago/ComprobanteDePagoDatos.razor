@@ -14,23 +14,28 @@
         </div>
         <div class="col-4 mt-3">
             <label for="RUC" class="form-label">RUC</label>    
-            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="RUC" placeholder="RUC">
+            <input type="text" id="RUC" placeholder="RUC" disbled="@(!EsEvaluacion)" 
+                    class="form-control form-control-lg rounded-4 bg-light" >
         </div>
         <div class="col-4 mt-3">
             <label for="RazonSocial" class="form-label">Razón Social</label>    
-            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="RazonSocial" placeholder="Razón Social">
+            <input type="text" id="RazonSocial" placeholder="Razón Social" disbled="@(!EsEvaluacion)" 
+                    class="form-control form-control-lg rounded-4 bg-light" >
         </div>
         <div class="col-4 mt-3">
             <label for="NumeroSerial" class="form-label">Número Serial</label>    
-            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="NumeroSerial" placeholder="Número Serial">
+            <input type="text" id="NumeroSerial" placeholder="Número Serial" disbled="@(!EsEvaluacion)"
+                    class="form-control form-control-lg rounded-4 bg-light" >
         </div>
         <div class="col-4 mt-3">
             <label for="FechaDeEmision" class="form-label">Fecha de Emisión</label>    
-            <input type="date" class="form-control form-control-lg rounded-4 bg-light" id="FechaDeEmision" placeholder="Fecha de Emisión">
+            <input type="date" id="FechaDeEmision" placeholder="Fecha de Emisión" disbled="@(!EsEvaluacion)"
+                    class="form-control form-control-lg rounded-4 bg-light" >
         </div>
         <div class="col-4 mt-3">
             <label for="Total" class="form-label">Total*</label>    
-            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="Total" placeholder=" @SimboloMoneda 0.00">
+            <input type="text" id="Total" placeholder=" @SimboloMoneda 0.00" disbled="@(!EsEvaluacion)"
+                    class="form-control form-control-lg rounded-4 bg-light" >
         </div>
         <div class="col-2 mt-3 d-flex flex-column align-items-start">
             <label for="Estado" class="form-label">Estado</label>    
@@ -40,34 +45,69 @@
         </div>
         <div class="col-10 mt-3">
             <label for="Comentario" class="form-label">Comentario</label>    
-            <input readonly type="text" class="form-control form-control-lg rounded-4 bg-light" id="Comentario" placeholder="Por Evaluar">
+            <input readonly type="text" id="Comentario" placeholder="Por Evaluar" disbled="@(EsEvaluacion)"
+                    class="form-control form-control-lg rounded-4 bg-light">
         </div>
     </div>
 
     <div class="d-flex justify-content-end gap-3 mt-3">
-        <button type="button" class="btn btn-primary align-self-start mt-3"
-                        @onclick="MostrarItemsComprobante">
-            
-            @(EsCreacion? "Registrar Comprobante" : "Guardar Cambios")
-
-        </button>
-        @if (EsCreacion)
+        @if (EsCreacion || EsAsociacion)
         {
+            <button type="button" class="btn btn-primary align-self-start mt-3"
+                            @onclick="MostrarItemsComprobante">
+                
+                Registrar Comprobante
+    
+            </button>
             <button type="button" class="btn btn-outline-primary align-self-start mt-3"
                             @onclick="MostrarItemsComprobante">
                 Guardar Borrador
             </button>
+            <button type="button" class="btn btn-outline-danger align-self-start mt-3"
+                            @onclick="MostrarItemsComprobante">
+                Cancelar
+            </button>
         }
-        <button type="button" class="btn btn-outline-danger align-self-start mt-3"
-                        @onclick="MostrarItemsComprobante">
-            Cancelar
-        </button>
+        else if (EsEvaluacion)
+        {
+            <button type="button" class="btn btn-outline-success align-self-start mt-3"
+                            @onclick="MostrarItemsComprobante">
+                Aprobar
+            </button>
+            <button type="button" class="btn btn-outline-warning align-self-start mt-3"
+                            @onclick="MostrarItemsComprobante">
+                Observar
+            </button>
+            <button type="button" class="btn btn-outline-info align-self-start mt-3"
+                @onclick="MostrarItemsComprobante">
+                Volver
+            </button>
+            <button type="button" class="btn btn-outline-danger align-self-start mt-3"
+                            @onclick="MostrarItemsComprobante">
+                Rechazar
+            </button>
+        }
+        else
+        {
+            <button type="button" class="btn btn-outline-info align-self-start mt-3"
+                            @onclick="MostrarItemsComprobante">
+                Volver
+            </button>
+            <button type="button" class="btn btn-outline-danger align-self-start mt-3"
+                            @onclick="MostrarItemsComprobante">
+                Eliminar
+            </button>
+        }
     </div>
 </div>    
 
 @code {
     [Parameter]
-    public bool EsCreacion { get; set;} =true;
+    public bool EsCreacion { get; set;}
+    [Parameter]
+    public bool EsEvaluacion { get; set;}
+    [Parameter]
+    public bool EsAsociacion { get; set;}
     private string SimboloMoneda = "S/.";
     public void MostrarItemsComprobante()
     {
