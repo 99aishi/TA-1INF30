@@ -16,7 +16,7 @@
             <label for="SolicitudAsociada" class="form-label fw-bold">Solicitud Asociada</label>    
             
             <!--Eliminar el diables cuando sea Creacion de solicitud-->
-            <select id="SolicitudAsociada" class="form-select bg-light">
+            <select id="SolicitudAsociada" class="form-select bg-light" disabled="@(!EsCreacion)">
                 <option selected value="">Solicitud de Gasto</option>
                 @for(int i = 0; i < 10; i++)
                 {   
@@ -38,4 +38,8 @@
 @code {
     [Parameter]
     public bool EsCreacion {get;set;} = true;
+    [Parameter]
+    public bool EsEvaluacion {get;set;} = false;
+    [Parameter]
+    public bool EsAsociacion { get; set;} = false;
 }
