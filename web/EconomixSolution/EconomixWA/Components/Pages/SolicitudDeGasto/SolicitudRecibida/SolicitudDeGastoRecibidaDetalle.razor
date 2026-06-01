@@ -70,11 +70,11 @@
     public EventCallback OnCierraDetalle { get; set; }
     public async Task CerrarDetalle()
     {
-        Navigation.NavigateTo("/Mis Solicitudes De Gasto");
+        Navigation.NavigateTo("/Solicitudes De Gasto");
         await OnCierraDetalle.InvokeAsync();
     }
     private void MostrarItemsSolicitud()
     {
-        Navigation.NavigateTo("/Mis Solicitudes De Gasto");
+        Navigation.NavigateTo("/Solicitudes De Gasto");
     }
 }
