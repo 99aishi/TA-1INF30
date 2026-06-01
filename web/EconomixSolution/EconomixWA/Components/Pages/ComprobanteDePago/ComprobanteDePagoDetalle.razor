@@ -1,32 +1,24 @@
-<div class="card rounded-4 mb-3 p-3 h-100">
+@page "/Comprobantes de Pago/Detalle"
+@inject NavigationManager Navigation
 
-    <div class="row">
-        <div class="col-4">
+<div class="rounded-4 mb-3 p-3 h-100">
+
+    <div class="row h-100">
+        <div class="col-4 h-100">
             <ComprobanteDePagoSustento/>    
         </div>    
-        <div class="col-8">
-            <div class="card">
-                <p class="h5">Datos extraidos</p> 
-            </div>    
+        <div class="col-8 h-100">
+            <ComprobanteDePagoDatos EsCreacion="EsCreacion"/>
         </div>
     </div>
-    
-    <button type="button" class="btn btn-outline-primary align-self-start mt-3"
-                    @onclick="CerrarDetalleComprobante">
-        Cerrar Detalle
-    </button>
 </div>
 
 
 @code {
+    private bool EsCreacion { get; set; } = false;
     [Parameter]
     public int IdComprobantePago{ get; set;}
-    [Parameter]
-    public EventCallback OnCierraDetalle { get; set; }
+    
 
-    public async Task CerrarDetalleComprobante()
-    {
-        await OnCierraDetalle.InvokeAsync();
-    }
 
 }

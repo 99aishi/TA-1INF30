@@ -1,14 +1,69 @@
-<div class="row">
-    <div class="col-8">
-        <div class="card">
-            Formulario Principal
+@page "/Mis Solicitudes De Gasto/Detalle"
+@inject NavigationManager Navigation
+
+<div class="d-flex flex-column h-100 mb-3">
+    <div class="row h-100 mb-3">
+        <div class="col-8 h-100 mb-3">
+            <div class="card rounded-4 p-3 mb-3 h-100">
+                <p class="h3">Solicitud de Gasto  - No. 6767</p>
+                <div class="row">
+                    <div class="col-6 mt-3">
+                        <label for="Area" class="form-label">Area</label>    
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="Area" placeholder="Area">
+                    </div>
+                    <div class="col-6 mt-3">
+                        <label for="Fecha" class="form-label">Fecha</label>    
+                        <input type="date" class="form-control form-control-lg rounded-4 bg-light" id="Fecha" placeholder="Fecha">
+                    </div>
+                    <div class="col-6 mt-3">
+                        <label for="Solicitante" class="form-label">Solicitante</label>    
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="Solicitante" placeholder="Juan Preciado">
+                    </div>
+                    <div class="col-6 mt-3">
+                        <label for="Monto" class="form-label">Monto</label>    
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="Monto" placeholder=" @SimboloMoneda 0.00">
+                    </div>
+                    <div class="col-12 mt-3">
+                        <label for="Motivo" class="form-label">Motivo</label>    
+                        <textarea class="form-control bg-light" id="exampleFormControlTextarea1" rows="3" placeholder="Motivo de la solicitud de gasto">  </textarea>
+                    </div>
+
+                </div>
+                <div class="d-flex justify-content-end gap-3 mt-3">
+                    <button type="button" class="btn btn-primary align-self-start mt-3"
+                                    @onclick="MostrarItemsSolicitud">
+                        
+                        @(EsCreacion? "Registrar Solicitud" : "Guardar Cambios")
+
+                    </button>
+                    
+                        <button type="button" class="btn btn-outline-primary align-self-start mt-3"
+                                        @onclick="MostrarItemsSolicitud">
+                            Guardar Borrador
+                        </button>
+                    
+                    <button type="button" class="btn btn-outline-danger align-self-start mt-3"
+                                    @onclick="MostrarItemsSolicitud">
+                        Cancelar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-4 h-100 mb-3">
+            <MiSolicitudDeGastoSeguimiento/>
         </div>
     </div>
-    <div class="col-4">
-        <MiSolicitudDeGastoSeguimiento/>
-    </div>
+
 </div>
 
+
 @code {
+    private string SimboloMoneda { get; set; } = "S/.";  
+    private bool EsCreacion { get; set; } = true; 
+    private void MostrarItemsSolicitud()
+    {
+        Navigation.NavigateTo("/Mis Solicitudes De Gasto");
+    }
     
 }

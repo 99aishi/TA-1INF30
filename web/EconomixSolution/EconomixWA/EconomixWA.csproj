@@ -7,4 +7,8 @@
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Soenneker.Blazor.Mocks.NavigationManager" />
+  </ItemGroup>
+
 </Project>

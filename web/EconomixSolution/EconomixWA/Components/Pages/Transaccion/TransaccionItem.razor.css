@@ -1,0 +1,16 @@
+/* TransaccionItem.razor.css */
+.badge-yape {
+    background-color: rgb(116, 70, 171); 
+    color: #ffffff;
+    border: 1px solid #5a0bc2; 
+}
+.badge-efectivo {
+    background-color: rgb(49, 160, 58);
+    color: #ffffff;
+    border: 1px solid #31a03a; 
+}
+.badge-transferencia {
+    background-color: rgb(110, 131, 222); 
+    color: #ffffff;
+    border: 1px solid #6e83de;
+}

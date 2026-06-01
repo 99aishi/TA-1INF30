@@ -1,75 +1,61 @@
-﻿<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+﻿@inject NavigationManager Navigation
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-row">
         @foreach (String opcion in opcionesMenu)
         {
             <div class="nav-item pt-0 px-3 d-flex flex-column">
-                <NavLink class="nav-link" href="@($"/{opcion}")" Match="NavLinkMatch.All">
+                <a class="nav-link @ObtenerClaseActiva(opcion)" href="@($"/{opcion}")">
                     @opcion
-                </NavLink>
+                </a>
             </div>
         }
     </nav>
 </div>
 
-
-
 @code {
-    public List<String> opcionesMenu;
+    public List<String> opcionesMenu = new();
 
     [Parameter]
-
     public String UsuarioCategoria { get; set; }
 
     private String NombreEmpleado = "Pedro Paramo";
-
     private String RolEmpleado = "Jefe de TI";
 
-
-
     protected override void OnInitialized()
-
     {
+        Navigation.LocationChanged += (s, e) => StateHasChanged();
 
         switch (UsuarioCategoria)
         {
-
             case "Administrador":
-
                 opcionesMenu = new List<String>() { "Dashboard", "Areas", "Usuarios", "Solicitudes de Gasto", "Transacciones", "Comprobantes de Pago", "Reportes" };
-
                 break;
-
             case "Jefe":
-
                 opcionesMenu = new List<String>() { "Dashboard", "Mis Solicitudes de Gasto", "Solicitudes de Gasto", "Comprobantes de Pago", "Transacciones", "Reportes" };
-
                 break;
-
             case "Empleado":
-
                 opcionesMenu = new List<String>() { "Dashboard", "Mis Solicitudes de Gasto", "Comprobantes de Pago", "Reportes" };
-
                 break;
-
             case "Tesoreria":
-
                 opcionesMenu = new List<String>() { "Dashboard", "Caja Chica", "Comprobantes de Pago", "Transacciones", "Reportes" };
-
                 break;
-
             default:
-
+                opcionesMenu = new List<String>(); // Evitamos nulos
                 break;
-
         }
-
     }
 
+    private string ObtenerClaseActiva(string opcion)
+    {
+        var uriActual = Navigation.Uri;
+
+        string opcionUrl = opcion.Replace(" ", "%20");
+        if (uriActual.EndsWith($"/{opcionUrl}") || uriActual.Contains($"/{opcionUrl}/"))
+        {
+            return "active";
+        }
+
+        return "";
+    }
 }
-
-
-
-
-
-
-
