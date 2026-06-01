@@ -1,5 +1,6 @@
 @page "/Mis Solicitudes De Gasto/Detalle"
 @inject NavigationManager Navigation
+@using EconomixWA.Components.Pages.ComprobanteDePago
 
 <div class="d-flex flex-column h-100 mb-3">
     <div class="row h-100 mb-3">
@@ -50,6 +51,20 @@
                         Cancelar
                     </button>
                 </div>
+                @if (!EsCreacion)
+                {
+                    <div class="d-flex flex-fill flex-column mt-4 gap-3 overflow-scroll">
+                        <div class="">
+                            @for (int i = 0; i < 5; i++)
+                            {
+                                <ComprobanteDePagoItem EsParteDeSolicitud="true"/>
+                            }
+                        </div>
+                    </div>
+                    <div class="mt-3 d-flex justify-content-end">
+                        <button class="btn btn-primary" @onclick="IrAgregarComprobante">Agregar Comprobante</button>
+                    </div>
+                }
 
             </div>
         </div>
@@ -63,7 +78,7 @@
 
 @code {
     private string SimboloMoneda { get; set; } = "S/.";  
-    private bool EsCreacion { get; set; } = true; 
+    private bool EsCreacion { get; set; } = false; 
 
     [Parameter]
     public EventCallback OnCierraDetalle { get; set; }
@@ -75,5 +90,9 @@
     private void MostrarItemsSolicitud()
     {
         Navigation.NavigateTo("/Mis Solicitudes De Gasto");
+    }
+    private void IrAgregarComprobante()
+    {
+        Navigation.NavigateTo("/Comprobantes de Pago/Detalle");
     }
 }
