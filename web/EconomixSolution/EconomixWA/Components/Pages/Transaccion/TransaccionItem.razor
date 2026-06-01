@@ -1,7 +1,31 @@
-<h3>TransaccionesItem</h3>
+<div class="card rounded-4 p-3 bg-light d-flex flex-row justify-content-between align-items-center">
+    <div class="d-flex flex-column justify-content-between">
+        <p class="h5 mb-1">Ricardo Palma</p>
+        <p class="text-muted mb-1">Compra de Materiales</p>
+        <p class="text-muted mb-1">Fecha: 2024-06-01</p>
+    </div>
 
-<p>This is the TransaccionesItem component.</p>
+
+    <div class="d-flex flex-row justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <p class="h4">S/. 500.00</p>
+        </div>
+        <div class="d-flex flex-column justify-content-center gap-2">
+            <span class="badge h-100 bg-warning-subtle text-warning-emphasis rounded-pill px-2">Pendiente</span>
+            <span class="badge h-100 badge-yape rounded-pill px-2">Yape</span>
+            <span class="badge h-100 badge-transferencia rounded-pill px-2">Transferencia</span>
+            <span class="badge h-100 badge-efectivo rounded-pill px-2">Efectivo</span>
+        </div>
+        <button class="btn btn-primary" @onclick="CerrarDetalle">Ver</button> <!-- Este botón podría abrir el detalle de la transacción -->
+    </div>
+</div>
 
 @code {
-    
+    [Parameter]
+    public EventCallback OnMuestraDetalle {get; set;}
+
+    public async Task CerrarDetalle()
+    {
+        await OnMuestraDetalle.InvokeAsync();
+    }
 }

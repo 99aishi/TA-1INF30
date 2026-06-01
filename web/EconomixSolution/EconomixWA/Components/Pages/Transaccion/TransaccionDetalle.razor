@@ -1,8 +1,67 @@
-<div class="card mt-3 rounded-4 h-100">
-    <p class="h4"> Nueva Transaccion </p>
+<div class="card rounded-4 h-100 p-3 d-flex flex-column justify-content-between">
+    <div class="row">
+        <p class="h4"> Nueva Transaccion </p>
+        <div class="col-6 p-3">
+            <label for="Fecha" class="form-label">Fecha</label>    
+            <input type="date" class="form-control form-control-lg rounded-4 bg-light" id="Fecha" placeholder="Fecha">
+        </div>
+        <div class="col-6 p-3">
+            <label for="Monto" class="form-label">Monto</label>    
+            <input type="number" class="form-control form-control-lg rounded-4 bg-light" id="Monto" placeholder="Monto">
+        </div>
+        <div class="col-6 p-3">
+            <label for="MedioPago" class="form-label">Medio de Pago</label>    
+            <select class="form-control bg-light">
+                <option selected>Medio de Pago</option>
+                <option>Transferencia</option>
+                <option>YAPE</option>
+                <option>Efectivo</option>
+            </select>
+        </div>
+        <div class="col-6 p-3">
+            <label for="Moneda" class="form-label">Moneda</label>    
+            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="Moneda" placeholder="Moneda">
+        </div>
+        <div class="col-6 p-3">
+            <label for="CuentaOrigen" class="form-label">Cuenta de Origen</label>    
+            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="CuentaOrigen" placeholder="Cuenta de Origen">
+        </div>
+        <div class="col-6 p-3">
+            <label for="CuentaDestino" class="form-label">Cuenta de Destino</label>    
+            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="CuentaDestino" placeholder="Cuenta de Destino">
+        </div>
+    
+
+        <div class="dropzone-container d-flex flex-column align-items-center justify-content-center p-4 text-center rounded-4 position-relative">
+            <div class="dropzone-content">
+                <i class="bi bi-cloud-upload text-primary fs-1 mb-2"></i>
+                
+                <p class="text-info fw-bold mb-1">Arrastra PDF, JPG o PNG</p>
+                <p class="text-muted small mb-0">(menor a 5mB)</p>
+            </div>
+        </div>
+    
+    </div>
+
+    <div class="d-flex justify-content-end gap-3">
+        <button class="btn btn-primary align-self-start mt-3" 
+                        @onclick="CerrarDetalleComprobante">
+            Cerrar
+        </button>
+        <button type="button" class="btn btn-outline-danger align-self-start mt-3"
+                        @onclick="CerrarDetalleComprobante">
+            Cancelar
+        </button>
+    </div>
 </div>
 
-
 @code {
+    [Parameter]
+    public EventCallback OnCierraDetalle { get; set; }
+
+    public async Task CerrarDetalleComprobante()
+    {
+        await OnCierraDetalle.InvokeAsync();
+    }
     
 }

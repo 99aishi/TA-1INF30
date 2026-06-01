@@ -1,29 +1,55 @@
 @page "/Transacciones"
 
-<div class="d-flex flex-column justify-content-between">
-    <p class="h4">Transacciones</p>
-    <p class="h">Movimientos de caja</p>
-</div>
-<div class="d-flex flex-column">
-    <TransaccionBusqueda/>
-    <div class="row">
-        <div class="col-6">
-            <div class="card rounded-4 mt-3 p-3">
-                <!--TODO: Hacer  un haeader o usar Un componente para la tabla completa-->
-                @for(int i = 0; i< 10; i++){
-                    <TransaccionItem/>
-                }   
+<div class="h-100 d-flex flex-column">
+    <div class="d-flex flex-row justify-content-between mb-2">
+        <p class="h4">Transacciones</p>
+    </div>
+
+    <div class="d-flex flex-column flex-fill overflow-hidden">
+        <TransaccionBusqueda/>
+
+        <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
+            
+            @if (MuestraDetalle)
+            {
+                <div class="col-6 h-100 d-flex flex-column overflow-hidden">
                 
-            </div>
-        </div>
-        <div class="col-6">
-            <!--Se implementará cuando de se visualize o cuando se cree un o nuevo "<TransaccionDetalle/> "-->
-            <TransaccionDetalle/>
+                    <div class="card h-100 rounded-4 p-3 overflow-auto gap-3">
+                        @for(int i = 0; i < 20; i++){
+                            <TransaccionItem OnMuestraDetalle="MostrarDetalleTransaccion"/>
+                        }   
+                    </div>
+                </div>
+                
+                <div class="col-6">
+                    <TransaccionDetalle OnCierraDetalle="CierraDetalleTransaccion"/>
+                </div>
+            }
+            else
+            {
+                <div class="col-12 h-100 d-flex flex-column overflow-hidden">
+                
+                    <div class="card h-100 rounded-4 p-3 overflow-auto gap-3">
+                        @for(int i = 0; i < 20; i++){
+                            <TransaccionItem OnMuestraDetalle="MostrarDetalleTransaccion"/>
+                        }   
+                    </div>
+                </div>
+                
+            }
+
         </div>
     </div>
 </div>
 
 @code {
-    
+    private bool MuestraDetalle { get; set; } = false;
+    private void MostrarDetalleTransaccion()
+    {
+        MuestraDetalle = true;
+    }
+    private void CierraDetalleTransaccion()
+    {
+        MuestraDetalle = false;
+    }
 }
-s

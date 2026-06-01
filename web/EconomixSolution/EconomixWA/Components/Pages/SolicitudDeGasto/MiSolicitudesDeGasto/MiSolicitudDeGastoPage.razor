@@ -1,24 +1,61 @@
-@page "/mis solicitudes de gasto"
+@page "/Mis Solicitudes De Gasto"
+@inject NavigationManager Navigation
 
-<div class="d-flex flex-row justify-content-between">
-    <p class="h4">Solicitudes de gasto de Isabel Allende</p>
-    <button type="button" class="btn btn-primary"> + Agregas Solicitud</button>
-</div>
-<div class="d-flex flex-column">
-    <SolicitudDeGastoBusqueda/>
-    <div class="card rounded-4 mt-3 p-3">
-        <!--Se implementará cuando de se visualize o cuando se cree un o nuevo "<MiSolicitudDeGastoDetalle/> "-->
-        <!--TODO: Hacer  un haeader o usar Un componente para la tabla completa-->
-        @for(int i = 0; i< 10; i++){
-            <MiSolicitudDeGastoItem/>
-        }   
-         
+<div class="h-100 d-flex flex-column">
+    <div class="d-flex flex-row justify-content-between">
+        <p class="h4">Solicitudes de gasto de Isabel Allende</p>
+        <button type="button" class="btn btn-primary" @onclick="IrDetalleSolicitud"> + Agregas Solicitud</button>
+    </div>
+
+    <div class="d-flex flex-column flex-fill overflow-hidden">
+        <SolicitudDeGastoBusqueda/>
+        
+        <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
+
+            @if(MostrarDetalle)
+            {
+                <div class="col-6 h-100 d-flex flex-column overflow-hidden">    
+                    <div class="card rounded-4 p-3 h-100 overflow-scroll">
+                        @for(int i = 0; i<10; i++){
+                            <MiSolicitudDeGastoItem OnMuestraDetalle="MostrarDetalleSolicitud"/>
+                        }           
+                    </div>
+                </div>
+            
+                <div class="col-6 h-100">
+                    <MiSolicitudDeGastoDetalle OnCierraDetalle="CerrarDetalleSolicitud"/>
+                </div>
+                
+            }
+            else
+            {
+                <div class="col-12 h-100 d-flex flex-column overflow-hidden">
+
+                    <div class="card rounded-4 mt-3 mb-3 p-3 flex-fill overflow-scroll">
+                        @for(int i = 0; i<10; i++){
+                            <MiSolicitudDeGastoItem OnMuestraDetalle="MostrarDetalleSolicitud"/>
+                        }           
+                    </div>
+                </div>
+            }
+        </div>
     </div>
 </div>
 
-
-
-
 @code {
     private String Nombre{get;set;} = "a";
+    private void IrDetalleSolicitud()
+    {
+        Navigation.NavigateTo("/Mis Solicitudes De Gasto/Detalle");
+    }
+    private bool MostrarDetalle{get;set;} = false;
+    public void MostrarDetalleSolicitud()
+    {
+        MostrarDetalle = true;
+    }
+    public void CerrarDetalleSolicitud()
+    {
+        MostrarDetalle = false;
+    }
+
 }

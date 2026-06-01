@@ -1,9 +1,13 @@
 @page "/Comprobantes de Pago"
+@inject NavigationManager Navigation
+
 <div class="h-100 d-flex flex-column">
     
     <div class="d-flex flex-row justify-content-between">
         <p class="h4">Comprobantes de Pago</p>
-        <button type="button" class="btn btn-primary"> + Agregas Solicitud</button>
+        <button type="button" class="btn btn-primary" @onclick="CrearDetalleComprobante">
+            + Agregar Comprobante
+        </button>
     </div>
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
@@ -15,7 +19,7 @@
                 <div class="col-6 h-100">
                     <div class="card rounded-4 p-3 h-100 overflow-scroll">
                         @for(int i = 0; i<10; i++){
-                            <ComprobanteDePagoItem MuestraDetalle="@MostrarDetalle"/>
+                            <ComprobanteDePagoItem/>
                         }           
                     </div>
                 </div>
@@ -39,4 +43,16 @@
 
 @code {
     private bool MostrarDetalle{ get; set; } = false;
+    public void MostrarDetalleComprobante()
+    {
+        MostrarDetalle = true;
+    }
+    public void CierraDetalleComprobante()
+    {
+        MostrarDetalle = false;
+    }
+    private void CrearDetalleComprobante()
+    {
+        Navigation.NavigateTo("/Comprobantes de Pago/Detalle");
+    }
 }
