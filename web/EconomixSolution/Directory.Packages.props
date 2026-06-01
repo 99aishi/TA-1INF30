@@ -4,4 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
   </ItemGroup>
+  <ItemGroup>
+    <PackageVersion Include="Soenneker.Blazor.Mocks.NavigationManager" Version="4.0.416" />
+  </ItemGroup>
 </Project>
