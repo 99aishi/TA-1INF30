@@ -5,7 +5,7 @@
 
     <div class="row h-100">
         <div class="col-4 h-100">
-            <ComprobanteDePagoSustento/>    
+            <ComprobanteDePagoSustento EsCreacion="EsCreacion"/>    
         </div>    
         <div class="col-8 h-100">
             <ComprobanteDePagoDatos EsCreacion="EsCreacion"/>
@@ -16,9 +16,5 @@
 
 @code {
     private bool EsCreacion { get; set; } = false;
-    [Parameter]
-    public int IdComprobantePago{ get; set;}
-    
-
 
 }
