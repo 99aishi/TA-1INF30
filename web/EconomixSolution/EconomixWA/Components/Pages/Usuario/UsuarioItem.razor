@@ -1,7 +1,52 @@
-<h3>UsuarioItem</h3>
+<div class="card rounded-4 p-3 mb-3 bg-light">
 
-<p>This is the UsuarioItem component.</p>
+    <div class="d-flex flex-row justify-content-between align-items-center">
+
+        <div class="d-flex flex-column">
+
+            <div class="d-flex justify-content-start align-items-start gap-3">
+                <p class="h5 mb-1">
+                    Robert Oppenheimer
+                </p>
+
+                <span class="badge bg-success-subtle text-success rounded-pill">
+                    Activo
+                </span>
+            </div>
+
+            <div class="d-flex flex-column justify-content-start">
+                <p class="text-muted m-0">
+                    Empleado
+                </p>
+
+                <p class="text-muted m-0">
+                    yona.oppie@gmail.com
+                </p>
+            </div>
+
+        </div>
+
+        <div class="d-flex flex-row justify-content-between align-items-center gap-3">
+
+            <button class="btn btn-primary"
+                    @onclick="AbrirDetalle">
+
+                Ver
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
 
 @code {
-    
+    [Parameter]
+    public EventCallback OnMuestraDetalle { get; set; }
+
+    public async Task AbrirDetalle()
+    {
+        await OnMuestraDetalle.InvokeAsync();
+    }
 }
