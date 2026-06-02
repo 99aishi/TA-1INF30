@@ -53,77 +53,26 @@
             </p>
         </div>
 
-        <div class="overflow-scroll" style="max-height: 330px;">
+        <div class="overflow-scroll overflow-x-hidden" style="max-height: 330px;">
             @foreach (var ciclo in CiclosCajaChica)
             {
-                <div class="row align-items-center px-4 py-3 border-bottom">
-
-                    <div class="col-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <h6 class="fw-bold mb-0">@ciclo.Area</h6>
-                            <span class="badge bg-success-subtle text-success">
-                                ACTIVO
-                            </span>
-                        </div>
-
-                        <small class="text-muted">
-                            <i class="bi bi-person"></i> @ciclo.Responsable
-                        </small>
-                    </div>
-
-                    <div class="col-3">
-                        <small>Uso de Fondos (@ciclo.PorcentajeUso%)</small>
-
-                        <div class="progress rounded-4 mt-2" style="height: 8px">
-                            <div class="progress-bar rounded-4 @(ciclo.PorcentajeUso >= 90 ? "bg-warning" : "bg-primary")"
-                                 style="width: @($"{ciclo.PorcentajeUso}%")"
-                                 role="progressbar"
-                                 aria-valuenow="@ciclo.PorcentajeUso"
-                                 aria-valuemin="0"
-                                 aria-valuemax="100">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-1 text-end">
-                        <strong>S/ @ciclo.MontoTotal.ToString("N2")</strong>
-                    </div>
-
-                    <div class="col-1">
-                        <small class="text-muted">GASTADO</small>
-                        <p class="text-danger fw-bold mb-0">
-                            S/ @ciclo.Gastado.ToString("N2")
-                        </p>
-                    </div>
-
-                    <div class="col-1">
-                        <small class="text-muted">DISPONIBLE</small>
-                        <p class="@(ciclo.Disponible <= 500 ? "text-danger" : "text-success") fw-bold mb-0">
-                            S/ @ciclo.Disponible.ToString("N2")
-                        </p>
-                    </div>
-
-                    <div class="col-2">
-                        <small class="@(ciclo.CerrarPronto ? "text-warning fw-bold" : "text-muted")">
-                            @(ciclo.CerrarPronto ? "CERRAR PRONTO" : "PRÓX CIERRE")
-                        </small>
-                        <p class="fw-bold mb-0">@ciclo.ProximoCierre</p>
-                    </div>
-
-                    <div class="col-1 text-end">
-                        <button class="btn btn-outline-primary btn-sm px-3"
-                                @onclick="IrADashboard">
-                            Detalle
-                        </button>
-                    </div>
-
-                </div>
+                 <CajaChicaItem Area="@ciclo.Area"
+                       Responsable="@ciclo.Responsable"
+                       PorcentajeUso="@ciclo.PorcentajeUso"
+                       MontoTotal="@ciclo.MontoTotal"
+                       Gastado="@ciclo.Gastado"
+                       Disponible="@ciclo.Disponible"
+                       ProximoCierre="@ciclo.ProximoCierre"
+                       CerrarPronto="@ciclo.CerrarPronto"
+                       OnMuestraDetalle="IrADashboard" />
                 
             }
         </div>
 
     </div>
 </div>
+
+
 @code {
 
     private void IrADashboard()
