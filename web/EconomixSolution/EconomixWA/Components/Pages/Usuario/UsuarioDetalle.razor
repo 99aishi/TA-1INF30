@@ -1,7 +1,115 @@
-<h3>UsuarioDetalle</h3>
+@page "/usuarios/detalle"
 
-<p>This is the UsuarioDetalle component.</p>
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
 
+<div class="d-flex flex-column h-100 mb-3">
+    <div class="row h-100 mb-3">
+        <div class="col-12 h-100 mb-3">
+
+            <div class="card rounded-4 p-4 mb-3 h-100 d-flex flex-column">
+
+                <p class="h3">
+                    Registrar Usuario
+                </p>
+
+                <div class="row g-5 flex-grow-1">
+
+                    <div class="col-md-6">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="Nombres" class="form-label mb-1">Nombres</label>
+                                <input type="text"
+                                       class="form-control form-control-lg rounded-4 bg-light"
+                                       id="Nombres"
+                                       placeholder="Nombres">
+                            </div>
+
+                            <div class="col-6">
+                                <label for="ApellidoPaterno" class="form-label mb-1">Apellido Paterno</label>
+                                <input type="text"
+                                       class="form-control form-control-lg rounded-4 bg-light"
+                                       id="ApellidoPaterno"
+                                       placeholder="Apellido paterno">
+                            </div>
+
+                            <div class="col-6">
+                                <label for="ApellidoMaterno" class="form-label mb-1">Apellido Materno</label>
+                                <input type="text"
+                                       class="form-control form-control-lg rounded-4 bg-light"
+                                       id="ApellidoMaterno"
+                                       placeholder="Apellido materno">
+                            </div>
+
+                            <div class="col-12">
+                                <label for="Contrasena" class="form-label mb-1" >Contrasena</label>
+                                <input type="password"
+                                       class="form-control form-control-lg rounded-4 bg-light"
+                                       id="Contrasena"
+                                       placeholder="Contrasena">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="Correo" class="form-label mb-1">Correo electronico</label>
+                                <input type="email"
+                                       class="form-control form-control-lg rounded-4 bg-light"
+                                       id="Correo"
+                                       placeholder="ejemplo@correo.com">
+                            </div>
+
+                            <div class="col-12 mt-3">
+                                <label for="Estado" class="form-label">
+                                    Estado
+                                </label>
+
+                                <div class="form-control form-control-lg rounded-4 bg-light"
+                                        id="Estado">
+                                        Activo                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="d-flex justify-content-end gap-3 mt-4">
+
+                    <button type="button"
+                            class="btn btn-primary px-4"
+                            @onclick="Registrar">
+
+                        Registrar
+
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-danger px-4"
+                            @onclick="Cancelar">
+
+                        Cancelar
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
 @code {
-    
+    private void Registrar()
+    {
+        // Redirigir a la lista de usuarios (o la ruta que manejes)
+        Navigation.NavigateTo("/usuarios");
+    }
+    private void Cancelar()
+    {
+        // Redirigir a la lista de usuarios (o la ruta que manejes)
+        Navigation.NavigateTo("/usuarios");
+    }
 }
