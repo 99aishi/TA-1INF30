@@ -1,0 +1,413 @@
+@page "/Monedas"
+
+<div class="h-100 d-flex flex-column">
+    <div class="d-flex flex-row justify-content-between align-items-center mb-3">
+        <div>
+            <p class="h4 mb-1">Monedas</p>
+            <p class="text-muted mb-0">Catálogo de monedas utilizadas para solicitudes, comprobantes y transacciones.</p>
+        </div>
+
+        <button type="button" class="btn btn-primary" @onclick="PrepararNuevaMoneda">
+            + Agregar moneda
+        </button>
+    </div>
+
+    <div class="card rounded-4 p-3 mb-3">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-5">
+                <label class="form-label small text-muted">Buscar moneda</label>
+                <input type="text"
+                       class="form-control bg-light rounded-4"
+                       placeholder="Código ISO, símbolo o nombre"
+                       @bind="Busqueda"
+                       @bind:event="oninput" />
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label small text-muted">Estado</label>
+                <select class="form-select bg-light rounded-4" @bind="EstadoFiltro">
+                    <option value="Todas">Todas</option>
+                    <option value="Activa">Activa</option>
+                    <option value="Inactiva">Inactiva</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small text-muted">Tipo</label>
+                <select class="form-select bg-light rounded-4" @bind="TipoFiltro">
+                    <option value="Todos">Todos</option>
+                    <option value="Principal">Principal</option>
+                    <option value="Extranjera">Extranjera</option>
+                    <option value="Referencia">Referencia</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-2 d-grid">
+                <button type="button" class="btn btn-secondary rounded-4" @onclick="LimpiarFiltros">
+                    Limpiar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row flex-fill overflow-hidden g-3">
+        <div class="col-12 col-lg-7 h-100 d-flex flex-column overflow-hidden">
+            <div class="card rounded-4 p-3 h-100 overflow-auto moneda-list-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <p class="h5 mb-0">Monedas registradas</p>
+                        <p class="text-muted mb-0 small">Mostrando @MonedasFiltradas.Count() de @Monedas.Count monedas.</p>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill">@Monedas.Count(m => m.Activo) activas</span>
+                </div>
+
+                @if (!MonedasFiltradas.Any())
+                {
+                    <div class="card rounded-4 p-4 bg-light text-center">
+                        <p class="h6 mb-1">No se encontraron monedas</p>
+                        <p class="text-muted mb-0">Limpia los filtros o registra una nueva moneda.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var moneda in MonedasFiltradas)
+                        {
+                            <MonedaItem CodigoIso="@moneda.CodigoIso"
+                                        Simbolo="@moneda.Simbolo"
+                                        Nombre="@moneda.Nombre"
+                                        Tipo="@moneda.Tipo"
+                                        Descripcion="@moneda.Descripcion"
+                                        Uso="@moneda.Uso"
+                                        Activo="@moneda.Activo"
+                                        Seleccionada="@(MonedaSeleccionada?.CodigoIso == moneda.CodigoIso && !ModoFormulario)"
+                                        OnSeleccionar="() => SeleccionarMoneda(moneda)" />
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-5 h-100 d-flex flex-column overflow-hidden">
+            <div class="card rounded-4 p-4 h-100 overflow-auto moneda-detail-card">
+                @if (ModoFormulario)
+                {
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <p class="h4 mb-1">@(Editando ? "Editar moneda" : "Nueva moneda")</p>
+                            <p class="text-muted mb-0">Registra el código ISO, símbolo y nombre que se usará en comprobantes y transacciones.</p>
+                        </div>
+                        <div class="moneda-symbol-box moneda-symbol-box-lg">
+                            @(string.IsNullOrWhiteSpace(Formulario.Simbolo) ? "?" : Formulario.Simbolo)
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(MensajeError))
+                    {
+                        <div class="alert alert-warning rounded-4 py-2 mb-3">@MensajeError</div>
+                    }
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Código ISO</label>
+                            <input class="form-control bg-light rounded-4"
+                                   maxlength="3"
+                                   placeholder="PEN"
+                                   @bind="Formulario.CodigoIso"
+                                   @bind:event="oninput"
+                                   readonly="@Editando" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Símbolo</label>
+                            <input class="form-control bg-light rounded-4"
+                                   placeholder="S/."
+                                   @bind="Formulario.Simbolo"
+                                   @bind:event="oninput" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small text-muted">Nombre</label>
+                            <input class="form-control bg-light rounded-4"
+                                   placeholder="Sol peruano"
+                                   @bind="Formulario.Nombre"
+                                   @bind:event="oninput" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Tipo</label>
+                            <select class="form-select bg-light rounded-4" @bind="Formulario.Tipo">
+                                <option value="Principal">Principal</option>
+                                <option value="Extranjera">Extranjera</option>
+                                <option value="Referencia">Referencia</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Estado</label>
+                            <select class="form-select bg-light rounded-4" @bind="Formulario.ActivoTexto">
+                                <option value="Activa">Activa</option>
+                                <option value="Inactiva">Inactiva</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small text-muted">Uso</label>
+                            <input class="form-control bg-light rounded-4"
+                                   placeholder="Caja chica, comprobantes y reportes"
+                                   @bind="Formulario.Uso"
+                                   @bind:event="oninput" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small text-muted">Descripción</label>
+                            <textarea class="form-control bg-light rounded-4"
+                                      rows="4"
+                                      placeholder="Describe en qué casos se usa esta moneda dentro del sistema."
+                                      @bind="Formulario.Descripcion"
+                                      @bind:event="oninput"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button type="button" class="btn btn-primary px-4" @onclick="GuardarMoneda">
+                            @(Editando ? "Guardar cambios" : "Registrar moneda")
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary px-4" @onclick="CancelarFormulario">
+                            Cancelar
+                        </button>
+                    </div>
+                }
+                else if (MonedaSeleccionada is not null)
+                {
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <p class="h4 mb-1">Detalle de moneda</p>
+                            <p class="text-muted mb-0">Información mínima necesaria para registrar comprobantes y transacciones.</p>
+                        </div>
+                        <div class="moneda-symbol-box moneda-symbol-box-lg">
+                            @MonedaSeleccionada.Simbolo
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Código ISO</label>
+                            <input class="form-control bg-light rounded-4" value="@MonedaSeleccionada.CodigoIso" readonly />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Símbolo</label>
+                            <input class="form-control bg-light rounded-4" value="@MonedaSeleccionada.Simbolo" readonly />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small text-muted">Nombre</label>
+                            <input class="form-control bg-light rounded-4" value="@MonedaSeleccionada.Nombre" readonly />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Estado</label>
+                            <input class="form-control bg-light rounded-4" value="@(MonedaSeleccionada.Activo ? "Activa" : "Inactiva")" readonly />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Tipo</label>
+                            <input class="form-control bg-light rounded-4" value="@MonedaSeleccionada.Tipo" readonly />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small text-muted">Uso dentro del sistema</label>
+                            <input class="form-control bg-light rounded-4 mb-2" value="@MonedaSeleccionada.Uso" readonly />
+                            <textarea class="form-control bg-light rounded-4" rows="4" readonly>@MonedaSeleccionada.Descripcion</textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button type="button" class="btn btn-primary px-4" @onclick="PrepararEdicion">
+                            Editar
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary px-4" @onclick="CambiarEstado">
+                            @(MonedaSeleccionada.Activo ? "Desactivar" : "Activar")
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string Busqueda { get; set; } = string.Empty;
+    private string EstadoFiltro { get; set; } = "Todas";
+    private string TipoFiltro { get; set; } = "Todos";
+    private MonedaRegistro? MonedaSeleccionada { get; set; }
+    private bool ModoFormulario { get; set; }
+    private bool Editando { get; set; }
+    private string MensajeError { get; set; } = string.Empty;
+    private MonedaFormulario Formulario { get; set; } = new();
+
+    private List<MonedaRegistro> Monedas { get; set; } = new()
+    {
+        new("PEN", "S/.", "Sol peruano", "Principal", "Moneda principal para solicitudes, caja chica, comprobantes de pago y transacciones locales.", "Caja chica, comprobantes y reportes", true),
+        new("USD", "$", "Dólar americano", "Extranjera", "Moneda extranjera utilizada para compras internacionales o comprobantes emitidos en dólares.", "Comprobantes y compras internacionales", true),
+        new("EUR", "€", "Euro", "Extranjera", "Moneda de referencia para comprobantes o rendiciones emitidas por proveedores europeos.", "Referencia y rendiciones especiales", true),
+        new("CLP", "$", "Peso chileno", "Referencia", "Moneda referencial para operaciones de movilidad o proveedores de Chile.", "Operaciones externas", true),
+        new("COP", "$", "Peso colombiano", "Referencia", "Moneda referencial para operaciones regionales o gastos de viaje.", "Viáticos y movilidad regional", false),
+        new("MXN", "$", "Peso mexicano", "Referencia", "Moneda referencial para gastos administrativos con proveedores internacionales.", "Proveedores internacionales", false)
+    };
+
+    private IEnumerable<MonedaRegistro> MonedasFiltradas => Monedas
+        .Where(m => string.IsNullOrWhiteSpace(Busqueda)
+            || m.CodigoIso.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
+            || m.Simbolo.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
+            || m.Nombre.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
+            || m.Uso.Contains(Busqueda, StringComparison.OrdinalIgnoreCase))
+        .Where(m => EstadoFiltro == "Todas" || (EstadoFiltro == "Activa" && m.Activo) || (EstadoFiltro == "Inactiva" && !m.Activo))
+        .Where(m => TipoFiltro == "Todos" || m.Tipo == TipoFiltro);
+
+    protected override void OnInitialized()
+    {
+        MonedaSeleccionada = Monedas.FirstOrDefault();
+    }
+
+    private void SeleccionarMoneda(MonedaRegistro moneda)
+    {
+        MonedaSeleccionada = moneda;
+        ModoFormulario = false;
+        Editando = false;
+        MensajeError = string.Empty;
+    }
+
+    private void PrepararNuevaMoneda()
+    {
+        Formulario = new MonedaFormulario
+        {
+            CodigoIso = string.Empty,
+            Simbolo = string.Empty,
+            Nombre = string.Empty,
+            Tipo = "Referencia",
+            ActivoTexto = "Activa",
+            Uso = string.Empty,
+            Descripcion = string.Empty
+        };
+        ModoFormulario = true;
+        Editando = false;
+        MensajeError = string.Empty;
+    }
+
+    private void PrepararEdicion()
+    {
+        if (MonedaSeleccionada is null)
+        {
+            return;
+        }
+
+        Formulario = new MonedaFormulario
+        {
+            CodigoIso = MonedaSeleccionada.CodigoIso,
+            Simbolo = MonedaSeleccionada.Simbolo,
+            Nombre = MonedaSeleccionada.Nombre,
+            Tipo = MonedaSeleccionada.Tipo,
+            ActivoTexto = MonedaSeleccionada.Activo ? "Activa" : "Inactiva",
+            Uso = MonedaSeleccionada.Uso,
+            Descripcion = MonedaSeleccionada.Descripcion
+        };
+        ModoFormulario = true;
+        Editando = true;
+        MensajeError = string.Empty;
+    }
+
+    private void GuardarMoneda()
+    {
+        MensajeError = string.Empty;
+        var codigo = (Formulario.CodigoIso ?? string.Empty).Trim().ToUpperInvariant();
+        var simbolo = (Formulario.Simbolo ?? string.Empty).Trim();
+        var nombre = (Formulario.Nombre ?? string.Empty).Trim();
+
+        if (string.IsNullOrWhiteSpace(codigo) || codigo.Length != 3)
+        {
+            MensajeError = "El código ISO debe tener 3 letras. Ejemplo: PEN, USD, EUR.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(simbolo) || string.IsNullOrWhiteSpace(nombre))
+        {
+            MensajeError = "Completa el símbolo y el nombre de la moneda.";
+            return;
+        }
+
+        if (!Editando && Monedas.Any(m => m.CodigoIso.Equals(codigo, StringComparison.OrdinalIgnoreCase)))
+        {
+            MensajeError = "Ya existe una moneda con ese código ISO.";
+            return;
+        }
+
+        var monedaGuardada = new MonedaRegistro(
+            codigo,
+            simbolo,
+            nombre,
+            Formulario.Tipo,
+            string.IsNullOrWhiteSpace(Formulario.Descripcion) ? "Moneda registrada para operaciones del sistema." : Formulario.Descripcion.Trim(),
+            string.IsNullOrWhiteSpace(Formulario.Uso) ? "Solicitudes, comprobantes y transacciones" : Formulario.Uso.Trim(),
+            Formulario.ActivoTexto == "Activa");
+
+        if (Editando)
+        {
+            var indice = Monedas.FindIndex(m => m.CodigoIso.Equals(codigo, StringComparison.OrdinalIgnoreCase));
+            if (indice >= 0)
+            {
+                Monedas[indice] = monedaGuardada;
+            }
+        }
+        else
+        {
+            Monedas.Insert(0, monedaGuardada);
+        }
+
+        MonedaSeleccionada = monedaGuardada;
+        ModoFormulario = false;
+        Editando = false;
+        LimpiarFiltros();
+    }
+
+    private void CancelarFormulario()
+    {
+        ModoFormulario = false;
+        Editando = false;
+        MensajeError = string.Empty;
+        if (MonedaSeleccionada is null)
+        {
+            MonedaSeleccionada = Monedas.FirstOrDefault();
+        }
+    }
+
+    private void CambiarEstado()
+    {
+        if (MonedaSeleccionada is null)
+        {
+            return;
+        }
+
+        var actualizada = MonedaSeleccionada with { Activo = !MonedaSeleccionada.Activo };
+        var indice = Monedas.FindIndex(m => m.CodigoIso == MonedaSeleccionada.CodigoIso);
+        if (indice >= 0)
+        {
+            Monedas[indice] = actualizada;
+            MonedaSeleccionada = actualizada;
+        }
+    }
+
+    private void LimpiarFiltros()
+    {
+        Busqueda = string.Empty;
+        EstadoFiltro = "Todas";
+        TipoFiltro = "Todos";
+    }
+
+    private sealed record MonedaRegistro(
+        string CodigoIso,
+        string Simbolo,
+        string Nombre,
+        string Tipo,
+        string Descripcion,
+        string Uso,
+        bool Activo);
+
+    private sealed class MonedaFormulario
+    {
+        public string CodigoIso { get; set; } = string.Empty;
+        public string Simbolo { get; set; } = string.Empty;
+        public string Nombre { get; set; } = string.Empty;
+        public string Tipo { get; set; } = "Referencia";
+        public string ActivoTexto { get; set; } = "Activa";
+        public string Uso { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+    }
+}
