@@ -1,3 +1,6 @@
+@page "/DashboardTesoreria"
+@inject NavigationManager Navigation
+
 <div id="cards-container" class="row">
         <div id="card-container" class="col-3">
             <div class="card rounded-4 h-100" >
@@ -37,8 +40,151 @@
                 </div>
             </div>
         </div>
-    </div>
+</div>
 
+
+<div class="card rounded-4 mt-2 overflow-hidden">
+    <div class="card-body p-0">
+
+        <div class="p-3 border-bottom">
+            <h4 class="fw-bold mb-1">Ciclos de caja chica por área</h4>
+            <p class="text-muted mb-0">
+                Visualización y seguimiento de cajas chicas por cada área de la empresa
+            </p>
+        </div>
+
+        <div class="overflow-scroll" style="max-height: 330px;">
+            @foreach (var ciclo in CiclosCajaChica)
+            {
+                <div class="row align-items-center px-4 py-3 border-bottom">
+
+                    <div class="col-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <h6 class="fw-bold mb-0">@ciclo.Area</h6>
+                            <span class="badge bg-success-subtle text-success">
+                                ACTIVO
+                            </span>
+                        </div>
+
+                        <small class="text-muted">
+                            <i class="bi bi-person"></i> @ciclo.Responsable
+                        </small>
+                    </div>
+
+                    <div class="col-3">
+                        <small>Uso de Fondos (@ciclo.PorcentajeUso%)</small>
+
+                        <div class="progress rounded-4 mt-2" style="height: 8px">
+                            <div class="progress-bar rounded-4 @(ciclo.PorcentajeUso >= 90 ? "bg-warning" : "bg-primary")"
+                                 style="width: @($"{ciclo.PorcentajeUso}%")"
+                                 role="progressbar"
+                                 aria-valuenow="@ciclo.PorcentajeUso"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-1 text-end">
+                        <strong>S/ @ciclo.MontoTotal.ToString("N2")</strong>
+                    </div>
+
+                    <div class="col-1">
+                        <small class="text-muted">GASTADO</small>
+                        <p class="text-danger fw-bold mb-0">
+                            S/ @ciclo.Gastado.ToString("N2")
+                        </p>
+                    </div>
+
+                    <div class="col-1">
+                        <small class="text-muted">DISPONIBLE</small>
+                        <p class="@(ciclo.Disponible <= 500 ? "text-danger" : "text-success") fw-bold mb-0">
+                            S/ @ciclo.Disponible.ToString("N2")
+                        </p>
+                    </div>
+
+                    <div class="col-2">
+                        <small class="@(ciclo.CerrarPronto ? "text-warning fw-bold" : "text-muted")">
+                            @(ciclo.CerrarPronto ? "CERRAR PRONTO" : "PRÓX CIERRE")
+                        </small>
+                        <p class="fw-bold mb-0">@ciclo.ProximoCierre</p>
+                    </div>
+
+                    <div class="col-1 text-end">
+                        <button class="btn btn-outline-primary btn-sm px-3"
+                                @onclick="IrADashboard">
+                            Detalle
+                        </button>
+                    </div>
+
+                </div>
+                
+            }
+        </div>
+
+    </div>
+</div>
 @code {
-    
+
+    private void IrADashboard()
+    {
+        Navigation.NavigateTo("/Dashboard");
+    }
+
+    private List<CicloCajaChica> CiclosCajaChica = new()
+    {
+        new CicloCajaChica
+        {
+            Area = "Caja Administración",
+            Responsable = "Ana Mendoza",
+            PorcentajeUso = 72,
+            MontoTotal = 5000,
+            Gastado = 3600,
+            Disponible = 1400,
+            ProximoCierre = "30 de Mayo"
+        },
+        new CicloCajaChica
+        {
+            Area = "Caja Logística",
+            Responsable = "Luis García",
+            PorcentajeUso = 45,
+            MontoTotal = 8000,
+            Gastado = 3600,
+            Disponible = 4400,
+            ProximoCierre = "28 de Mayo"
+        },
+        new CicloCajaChica
+        {
+            Area = "Caja Marketing",
+            Responsable = "Roberto Díaz",
+            PorcentajeUso = 95,
+            MontoTotal = 3500,
+            Gastado = 3325,
+            Disponible = 175,
+            ProximoCierre = "25 de Mayo",
+            CerrarPronto = true
+        },
+        new CicloCajaChica
+        {
+            Area = "Caja Operaciones",
+            Responsable = "Elena Ruiz",
+            PorcentajeUso = 72,
+            MontoTotal = 5000,
+            Gastado = 3600,
+            Disponible = 1400,
+            ProximoCierre = "30 de Mayo"
+        }
+    };
+
+    public class CicloCajaChica
+    {
+        public string Area { get; set; } = string.Empty;
+        public string Responsable { get; set; } = string.Empty;
+        public int PorcentajeUso { get; set; }
+        public decimal MontoTotal { get; set; }
+        public decimal Gastado { get; set; }
+        public decimal Disponible { get; set; }
+        public string ProximoCierre { get; set; } = string.Empty;
+        public bool CerrarPronto { get; set; }
+    }
 }
