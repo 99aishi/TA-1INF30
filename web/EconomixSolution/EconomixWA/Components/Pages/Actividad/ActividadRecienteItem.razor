@@ -1,140 +1,28 @@
-@page "/Actividad Reciente"
-
-<div class="h-100 d-flex flex-column">
-    <div class="d-flex flex-row justify-content-between align-items-center mb-3">
-        <div>
-            <p class="h4 mb-1">Actividad Reciente</p>
-            <p class="text-muted mb-0">Movimientos recientes del sistema organizados por solicitudes, comprobantes, caja chica y transacciones.</p>
-        </div>
-
-        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
-            @ActividadesFiltradas.Count actividades
-        </span>
-    </div>
-
-    <div class="card rounded-4 p-3 mb-3">
-        <div class="row g-3 align-items-end">
-            <div class="col-12 col-md-4">
-                <label class="form-label small text-muted">Buscar actividad</label>
-                <input type="text"
-                       class="form-control bg-light rounded-4"
-                       placeholder="Usuario, código, módulo o descripción"
-                       value="@Busqueda"
-                       @oninput="ActualizarBusqueda" />
+<div class="card rounded-4 p-3 m-3 bg-light actividad-card">
+    <div class="d-flex justify-content-between align-items-start gap-3">
+        <div class="d-flex gap-3">
+            <div class="actividad-icon @ClaseIcono(actividad.Modulo)">
+                @InicialModulo(actividad.Modulo)
             </div>
-            <div class="col-6 col-md-3">
-                <label class="form-label small text-muted">Módulo</label>
-                <select class="form-select bg-light rounded-4" value="@ModuloFiltro" @onchange="ActualizarModulo">
-                    <option value="Todos">Todos</option>
-                    <option value="Solicitud">Solicitud</option>
-                    <option value="Comprobante">Comprobante</option>
-                    <option value="Transacción">Transacción</option>
-                    <option value="Caja Chica">Caja Chica</option>
-                    <option value="Usuario">Usuario</option>
-                    <option value="Área">Área</option>
-                    <option value="Moneda">Moneda</option>
-                </select>
-            </div>
-            <div class="col-6 col-md-3">
-                <label class="form-label small text-muted">Fecha</label>
-                <input @key="FechaInputKey"
-                       type="date"
-                       class="form-control bg-light rounded-4"
-                       value="@FechaFiltroTexto"
-                       @onchange="ActualizarFecha" />
-            </div>
-            <div class="col-12 col-md-2 d-grid">
-                <button type="button" class="btn btn-secondary rounded-4" @onclick="LimpiarFiltros">
-                    Limpiar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div class="row flex-fill overflow-hidden g-3">
-        <div class="col-12 col-xl-8 h-100 d-flex flex-column overflow-hidden">
-            <div class="card rounded-4 p-3 h-100 overflow-auto actividad-list-card">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <p class="h5 mb-0">Registro de actividad</p>
-                        <p class="text-muted mb-0 small">Cartas con acciones recientes realizadas por usuarios del sistema.</p>
-                    </div>
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <p class="h6 mb-0">@actividad.Titulo</p>
+                    <span class="badge @ClaseModulo(actividad.Modulo) rounded-pill">@actividad.Modulo</span>
                 </div>
-
-                @if (ActividadesFiltradas.Count == 0)
-                {
-                    <div class="card rounded-4 p-4 bg-light text-center">
-                        <p class="h6 mb-1">No se encontraron actividades</p>
-                        <p class="text-muted mb-0">Limpia los filtros para volver a ver todo el registro.</p>
-                    </div>
-                }
-                else
-                {
-                    <div class="d-flex flex-column gap-3">
-                        @foreach (var actividad in ActividadesFiltradas)
-                        {
-                            <div class="card rounded-4 p-3 bg-light actividad-card">
-                                <div class="d-flex justify-content-between align-items-start gap-3">
-                                    <div class="d-flex gap-3">
-                                        <div class="actividad-icon @ClaseIcono(actividad.Modulo)">
-                                            @InicialModulo(actividad.Modulo)
-                                        </div>
-                                        <div>
-                                            <div class="d-flex align-items-center gap-2 mb-1">
-                                                <p class="h6 mb-0">@actividad.Titulo</p>
-                                                <span class="badge @ClaseModulo(actividad.Modulo) rounded-pill">@actividad.Modulo</span>
-                                            </div>
-                                            <p class="text-muted mb-1">@actividad.Descripcion</p>
-                                            <div class="d-flex flex-wrap gap-2 small text-muted">
-                                                <span>@actividad.Usuario</span>
-                                                <span>•</span>
-                                                <span>@actividad.Area</span>
-                                                <span>•</span>
-                                                <span>@actividad.Fecha.ToString("dd/MM/yyyy HH:mm")</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="text-end">
-                                        <p class="fw-bold mb-1">@actividad.Monto</p>
-                                        <span class="badge @ClaseEstado(actividad.Estado) rounded-pill">@actividad.Estado</span>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                }
+                <p class="text-muted mb-1">@actividad.Descripcion</p>
+                <div class="d-flex flex-wrap gap-2 small text-muted">
+                    <span>@actividad.Usuario</span>
+                    <span>•</span>
+                    <span>@actividad.Area</span>
+                    <span>•</span>
+                    <span>@actividad.Fecha.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
             </div>
         </div>
 
-        <div class="col-12 col-xl-4 h-100 d-flex flex-column overflow-hidden">
-            <div class="card rounded-4 p-4 h-100 overflow-auto">
-                <p class="h5 mb-3">Resumen rápido</p>
-
-                <div class="actividad-summary-card mb-3">
-                    <p class="text-muted mb-1">Solicitudes registradas</p>
-                    <p class="h3 mb-0">@Actividades.Count(a => a.Modulo == "Solicitud")</p>
-                </div>
-
-                <div class="actividad-summary-card mb-3">
-                    <p class="text-muted mb-1">Comprobantes actualizados</p>
-                    <p class="h3 mb-0">@Actividades.Count(a => a.Modulo == "Comprobante")</p>
-                </div>
-
-                <div class="actividad-summary-card mb-3">
-                    <p class="text-muted mb-1">Transacciones realizadas</p>
-                    <p class="h3 mb-0">@Actividades.Count(a => a.Modulo == "Transacción")</p>
-                </div>
-
-                <div class="actividad-summary-card mb-3">
-                    <p class="text-muted mb-1">Actividades filtradas</p>
-                    <p class="h3 mb-0">@ActividadesFiltradas.Count</p>
-                </div>
-
-                <div class="alert alert-warning rounded-4 mb-0">
-                    <strong>Recordatorio:</strong> revisar actividades con estado pendiente u observado antes del cierre del ciclo.
-                </div>
-            </div>
+        <div class="text-end">
+            <p class="fw-bold mb-1">@actividad.Monto</p>
+            <span class="badge @ClaseEstado(actividad.Estado) rounded-pill">@actividad.Estado</span>
         </div>
     </div>
 </div>
@@ -167,6 +55,7 @@
     {
         FiltrarActividades();
     }
+    private ActividadRegistro actividad => ActividadesFiltradas.FirstOrDefault() ?? new ActividadRegistro("Sin actividades recientes", "N/A", "-", "-", "-", "-", "N/A", DateTime.Now);
 
     private void ActualizarBusqueda(Microsoft.AspNetCore.Components.ChangeEventArgs e)
     {
