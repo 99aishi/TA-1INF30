@@ -165,4 +165,20 @@ BEGIN
     ORDER BY fecha_solicitud ASC;
 END$$
 
+DROP PROCEDURE IF EXISTS pa_listar_solicitudes_por_ciclo $$
+
+CREATE PROCEDURE pa_listar_solicitudes_por_ciclo(
+    IN p_id_ciclo_caja INT
+)
+BEGIN
+    SELECT 
+        id_solicitud_gasto, fecha_solicitud, monto_solicitado, 
+        motivo_solicitud, estado_solicitud, id_usuario_solicitante, 
+        id_usuario_destinatario, id_ciclo_caja
+    FROM ope_solicitud_gasto
+    WHERE id_ciclo_caja = p_id_ciclo_caja
+      AND (estado_solicitud IS NULL OR estado_solicitud != 'ANULADO')
+    ORDER BY id_solicitud_gasto DESC;
+END
+$$
 DELIMITER ;
