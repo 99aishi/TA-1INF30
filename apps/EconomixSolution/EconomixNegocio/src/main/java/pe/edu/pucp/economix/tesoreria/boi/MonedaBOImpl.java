@@ -81,4 +81,14 @@ public class MonedaBOImpl implements IMonedaBO {
             throw new Exception("El simbolo de la moneda es obligatorio.");
         }
     }
+
+    @Override
+    public List<Moneda> listarMonedas_X_codigoISO_nombre_simbolo(String busqueda) throws Exception {
+        return daoMoneda.listarMonedas_X_codigoISO_nombre_simbolo(busqueda);
+    }
+
+    @Override
+    public List<Moneda> listarMonedas_X_estado(boolean activa) throws Exception {
+        return daoMoneda.listarMonedas_X_estado(activa);
+    }
 }
