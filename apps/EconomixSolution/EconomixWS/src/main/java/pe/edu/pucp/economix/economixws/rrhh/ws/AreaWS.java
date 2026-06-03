@@ -1,25 +1,20 @@
-package pe.edu.pucp.economix.rrhh.services;
+package pe.edu.pucp.economix.economixws.rrhh.ws;
 
-import jakarta.jws.WebMethod;
-import jakarta.jws.WebService;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import pe.edu.pucp.economix.rrhh.boi.AreaBOImpl;
 import pe.edu.pucp.economix.rrhh.ibo.IAreaBO;
 import pe.edu.pucp.economix.rrhh.model.Area;
 
 import java.util.List;
 
-
-@WebService(
-        serviceName = "AreaWS",
-        targetNamespace = "http://services.economix.pucp.edu.pe"
-)
-
+@Path("AreaRS")
 public class AreaWS {
     private IAreaBO areaBO = new AreaBOImpl();
-
-    @WebMethod(
-        operationName = "lsitarAreas"
-    )
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
     public List<Area> listarAreas() throws Exception {
         return areaBO.listarTodas();
     }
