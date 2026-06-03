@@ -1,7 +1,98 @@
-<h3>CajaChicaItem</h3>
+<div class="row align-items-center px-4 py-3 border-bottom">
 
-<p>This is the CajaChicaItem component.</p>
+    <div class="col-3">
+        <div class="d-flex align-items-center gap-2">
+            <h6 class="fw-bold mb-0">@Area</h6>
+
+            <span class="badge bg-success-subtle text-success">
+                ACTIVO
+            </span>
+        </div>
+
+        <small class="text-muted">
+            <i class="bi bi-person"></i> @Responsable
+        </small>
+    </div>
+
+    <div class="col-3">
+        <small>Uso de Fondos (@PorcentajeUso%)</small>
+
+        <div class="progress rounded-4 mt-2" style="height: 8px">
+            <div class="progress-bar rounded-4 @(PorcentajeUso >= 90 ? "bg-warning" : "bg-primary")"
+                 style="width: @($"{PorcentajeUso}%")"
+                 role="progressbar"
+                 aria-valuenow="@PorcentajeUso"
+                 aria-valuemin="0"
+                 aria-valuemax="100">
+            </div>
+        </div>
+    </div>
+
+    <div class="col-1 text-end">
+        <strong>S/ @MontoTotal.ToString("N2")</strong>
+    </div>
+
+    <div class="col-1">
+        <small class="text-muted">GASTADO</small>
+        <p class="text-danger fw-bold mb-0">
+            S/ @Gastado.ToString("N2")
+        </p>
+    </div>
+
+    <div class="col-1">
+        <small class="text-muted">DISPONIBLE</small>
+        <p class="@(Disponible <= 500 ? "text-danger" : "text-success") fw-bold mb-0">
+            S/ @Disponible.ToString("N2")
+        </p>
+    </div>
+
+    <div class="col-2">
+        <small class="@(CerrarPronto ? "text-warning fw-bold" : "text-muted")">
+            @(CerrarPronto ? "CERRAR PRONTO" : "PRÓX CIERRE")
+        </small>
+
+        <p class="fw-bold mb-0">@ProximoCierre</p>
+    </div>
+
+    <div class="col-1 text-end">
+        <button class="btn btn-outline-primary btn-sm px-3"
+                @onclick="AbrirDetalle">
+            Detalle
+        </button>
+    </div>
+
+</div>
 
 @code {
-    
+    [Parameter]
+    public string Area { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Responsable { get; set; } = string.Empty;
+
+    [Parameter]
+    public int PorcentajeUso { get; set; }
+
+    [Parameter]
+    public decimal MontoTotal { get; set; }
+
+    [Parameter]
+    public decimal Gastado { get; set; }
+
+    [Parameter]
+    public decimal Disponible { get; set; }
+
+    [Parameter]
+    public string ProximoCierre { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool CerrarPronto { get; set; }
+
+    [Parameter]
+    public EventCallback OnMuestraDetalle { get; set; }
+
+    private async Task AbrirDetalle()
+    {
+        await OnMuestraDetalle.InvokeAsync();
+    }
 }
