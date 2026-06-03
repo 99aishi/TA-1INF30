@@ -20,7 +20,7 @@
                        class="form-control bg-light rounded-4"
                        placeholder="Código ISO, símbolo o nombre"
                        @bind="Busqueda"
-                       @bind:event="oninput" />
+                       @bind:event="oninput"/>
             </div>
             <div class="col-6 col-md-3">
                 <label class="form-label small text-muted">Estado</label>
@@ -41,7 +41,7 @@
             </div>
             <div class="col-12 col-md-2 d-grid">
                 <button type="button" class="btn btn-secondary rounded-4" @onclick="LimpiarFiltros">
-                    Limpiar
+                    Filtrar
                 </button>
             </div>
         </div>
@@ -52,10 +52,8 @@
             <div class="card rounded-4 p-3 h-100 overflow-auto moneda-list-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
-                        <p class="h5 mb-0">Monedas registradas</p>
-                        <p class="text-muted mb-0 small">Mostrando @MonedasFiltradas.Count() de @Monedas.Count monedas.</p>
+                        <p class="h3 mb-0">Monedas registradas</p>
                     </div>
-                    <span class="badge bg-primary-subtle text-primary rounded-pill">@Monedas.Count(m => m.Activo) activas</span>
                 </div>
 
                 @if (!MonedasFiltradas.Any())
@@ -87,137 +85,7 @@
 
         <div class="col-12 col-lg-5 h-100 d-flex flex-column overflow-hidden">
             <div class="card rounded-4 p-4 h-100 overflow-auto moneda-detail-card">
-                @if (ModoFormulario)
-                {
-                    <div class="d-flex justify-content-between align-items-start mb-4">
-                        <div>
-                            <p class="h4 mb-1">@(Editando ? "Editar moneda" : "Nueva moneda")</p>
-                            <p class="text-muted mb-0">Registra el código ISO, símbolo y nombre que se usará en comprobantes y transacciones.</p>
-                        </div>
-                        <div class="moneda-symbol-box moneda-symbol-box-lg">
-                            @(string.IsNullOrWhiteSpace(Formulario.Simbolo) ? "?" : Formulario.Simbolo)
-                        </div>
-                    </div>
-
-                    @if (!string.IsNullOrWhiteSpace(MensajeError))
-                    {
-                        <div class="alert alert-warning rounded-4 py-2 mb-3">@MensajeError</div>
-                    }
-
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <label class="form-label small text-muted">Código ISO</label>
-                            <input class="form-control bg-light rounded-4"
-                                   maxlength="3"
-                                   placeholder="PEN"
-                                   @bind="Formulario.CodigoIso"
-                                   @bind:event="oninput"
-                                   readonly="@Editando" />
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small text-muted">Símbolo</label>
-                            <input class="form-control bg-light rounded-4"
-                                   placeholder="S/."
-                                   @bind="Formulario.Simbolo"
-                                   @bind:event="oninput" />
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small text-muted">Nombre</label>
-                            <input class="form-control bg-light rounded-4"
-                                   placeholder="Sol peruano"
-                                   @bind="Formulario.Nombre"
-                                   @bind:event="oninput" />
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small text-muted">Tipo</label>
-                            <select class="form-select bg-light rounded-4" @bind="Formulario.Tipo">
-                                <option value="Principal">Principal</option>
-                                <option value="Extranjera">Extranjera</option>
-                                <option value="Referencia">Referencia</option>
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small text-muted">Estado</label>
-                            <select class="form-select bg-light rounded-4" @bind="Formulario.ActivoTexto">
-                                <option value="Activa">Activa</option>
-                                <option value="Inactiva">Inactiva</option>
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small text-muted">Uso</label>
-                            <input class="form-control bg-light rounded-4"
-                                   placeholder="Caja chica, comprobantes y reportes"
-                                   @bind="Formulario.Uso"
-                                   @bind:event="oninput" />
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small text-muted">Descripción</label>
-                            <textarea class="form-control bg-light rounded-4"
-                                      rows="4"
-                                      placeholder="Describe en qué casos se usa esta moneda dentro del sistema."
-                                      @bind="Formulario.Descripcion"
-                                      @bind:event="oninput"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <button type="button" class="btn btn-primary px-4" @onclick="GuardarMoneda">
-                            @(Editando ? "Guardar cambios" : "Registrar moneda")
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary px-4" @onclick="CancelarFormulario">
-                            Cancelar
-                        </button>
-                    </div>
-                }
-                else if (MonedaSeleccionada is not null)
-                {
-                    <div class="d-flex justify-content-between align-items-start mb-4">
-                        <div>
-                            <p class="h4 mb-1">Detalle de moneda</p>
-                            <p class="text-muted mb-0">Información mínima necesaria para registrar comprobantes y transacciones.</p>
-                        </div>
-                        <div class="moneda-symbol-box moneda-symbol-box-lg">
-                            @MonedaSeleccionada.Simbolo
-                        </div>
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <label class="form-label small text-muted">Código ISO</label>
-                            <input class="form-control bg-light rounded-4" value="@MonedaSeleccionada.CodigoIso" readonly />
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small text-muted">Símbolo</label>
-                            <input class="form-control bg-light rounded-4" value="@MonedaSeleccionada.Simbolo" readonly />
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small text-muted">Nombre</label>
-                            <input class="form-control bg-light rounded-4" value="@MonedaSeleccionada.Nombre" readonly />
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small text-muted">Estado</label>
-                            <input class="form-control bg-light rounded-4" value="@(MonedaSeleccionada.Activo ? "Activa" : "Inactiva")" readonly />
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small text-muted">Tipo</label>
-                            <input class="form-control bg-light rounded-4" value="@MonedaSeleccionada.Tipo" readonly />
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small text-muted">Uso dentro del sistema</label>
-                            <input class="form-control bg-light rounded-4 mb-2" value="@MonedaSeleccionada.Uso" readonly />
-                            <textarea class="form-control bg-light rounded-4" rows="4" readonly>@MonedaSeleccionada.Descripcion</textarea>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <button type="button" class="btn btn-primary px-4" @onclick="PrepararEdicion">
-                            Editar
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary px-4" @onclick="CambiarEstado">
-                            @(MonedaSeleccionada.Activo ? "Desactivar" : "Activar")
-                        </button>
-                    </div>
-                }
+                <MonedaDetalle/>
             </div>
         </div>
     </div>
