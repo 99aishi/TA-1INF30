@@ -130,13 +130,4 @@ public class Transaccion{
                 '}';
     }
 
-    public void registrarLogTrazabilidad() {
-        // TODO: Registro inmutable con precisión de milisegundos (RF_19, RNF_07)
-    }
-    public void generarReporteGastos(String area, String tipoFondo) {
-        // TODO: Agrupar por rubro o categoría (RF_21)
-    }
-    public void exportarReporte(String formato) {
-        // TODO: Soporte para PDF y Excel (RF_23)
-    }
 }

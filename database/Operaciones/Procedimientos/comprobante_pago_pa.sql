@@ -139,3 +139,17 @@ BEGIN
     FROM ope_comprobante_pago
     ORDER BY estado_comprobante DESC;
 END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_comprobantes_por_solicitud $$
+CREATE PROCEDURE pa_listar_comprobantes_por_solicitud(
+	IN p_id_solicitud INT
+)
+BEGIN
+    SELECT 
+        id_comprobante, tipo_documento, ruc_proveedor, razon_social, 
+        numero_serie, fecha_emision, monto_subtotal, monto_igv, 
+        monto_total, estado_comprobante, id_solicitud_gasto, id_moneda
+    FROM ope_comprobante_pago
+    WHERE id_solicitud_gasto=p_id_solicitud
+    ORDER BY estado_comprobante DESC;
+END

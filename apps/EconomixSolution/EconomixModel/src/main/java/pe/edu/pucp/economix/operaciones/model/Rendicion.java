@@ -132,15 +132,15 @@ public class Rendicion {
     }
 
 
-    public void calcularTotalAprobado(){
-        this.totalAprobado=this.cicloCajaChica.getTotalGastado();
-    }
-    public void calcularTotalDeclarado(){
-        double declarado=0;
-        for(SolicitudGasto s :this.cicloCajaChica.getSolicitudesDeGasto()){
-            declarado += s.sumaComprobantes();
-        }
-        this.totalDeclarado=declarado;
-    }
+//    public void calcularTotalAprobado(){
+//        this.totalAprobado=this.cicloCajaChica.getTotalGastado();
+//    }
+//    public void calcularTotalDeclarado(){
+//        double declarado=0;
+//        for(SolicitudGasto s :this.cicloCajaChica.getSolicitudesDeGasto()){
+//            declarado += s.sumaComprobantes();
+//        }
+//        this.totalDeclarado=declarado;
+//    }
 
 }

@@ -106,11 +106,45 @@ public class SolicitudGastoDAOImpl implements ISolicitudGastoDAO {
                 
             }
         }catch(SQLException ex){
-            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+            System.out.println("Error al buscar solicitud por id: " + ex.getMessage());
         }finally{
             DBManager.getDBManager().cerrarConexion();
         }
         return solicitud;
+    }
+
+    public List<SolicitudGasto> listarPorCiclo(int idCicloCaja) throws SQLException{
+        List<SolicitudGasto> solicitudes = null;
+        SolicitudGasto solicitud;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_ciclo_caja", idCicloCaja);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_solicitudes_por_ciclo", parametrosEntrada);
+        try{
+            while(rs.next()){
+                if(solicitudes == null) solicitudes = new ArrayList<>();
+                solicitud = new SolicitudGasto();
+                solicitud.setIdSolicitudGasto(rs.getInt("id_solicitud_gasto"));
+                solicitud.setFechaSolicitud(rs.getDate("fecha_solicitud"));
+                solicitud.setMontoSolicitado(rs.getDouble("monto_solicitado"));
+                solicitud.setMotivoSolicitud(rs.getString("motivo_solicitud"));
+                solicitud.setEstado(EstadoSolicitudGasto.valueOf(rs.getString("estado_solicitud")));
+                if(solicitud.getSolicitante() == null)
+                    solicitud.setSolicitante(new Empleado());
+                solicitud.getSolicitante().setUsuarioID(rs.getInt("id_usuario_solicitante"));
+                if(solicitud.getDestinatario() == null)
+                    solicitud.setDestinatario(new Empleado());
+                solicitud.getDestinatario().setUsuarioID(rs.getInt("id_usuario_destinatario"));
+                if(solicitud.getCiclo() == null)
+                    solicitud.setCiclo(new CicloCajaChica());
+                solicitud.getCiclo().setIdCicloCaja(rs.getInt("id_ciclo_caja"));
+                solicitudes.add(solicitud);
+            }
+        }catch(SQLException ex){
+            System.out.println("Error al buscar solicitud por id: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
+        }
+        return solicitudes;
     }
 
     @Override
@@ -139,7 +173,7 @@ public class SolicitudGastoDAOImpl implements ISolicitudGastoDAO {
                 solicitudes.add(solicitud);
             }
         }catch(SQLException ex){
-            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+            System.out.println("Error al buscar solicitud por id: " + ex.getMessage());
         }finally{
             DBManager.getDBManager().cerrarConexion();
         }
@@ -175,7 +209,7 @@ public class SolicitudGastoDAOImpl implements ISolicitudGastoDAO {
                 solicitudes.add(solicitud);
             }
         }catch(SQLException ex){
-            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+            System.out.println("Error al buscar solicitud por id: " + ex.getMessage());
         }finally{
             DBManager.getDBManager().cerrarConexion();
         }
@@ -210,7 +244,7 @@ public class SolicitudGastoDAOImpl implements ISolicitudGastoDAO {
                 solicitudes.add(solicitud);
             }
         }catch(SQLException ex){
-            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+            System.out.println("Error al buscar solicitud por id: " + ex.getMessage());
         }finally{
             DBManager.getDBManager().cerrarConexion();
         }
