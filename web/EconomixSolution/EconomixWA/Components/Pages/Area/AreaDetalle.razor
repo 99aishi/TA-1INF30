@@ -1,119 +1,109 @@
 @page "/area/detalle"
+@page "/area/Crear"
 
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 
 <div class="d-flex flex-column h-100 mb-3">
-
-    <div class="row h-100 mb-3">
-
+    <div class="row h-100 @(EsCreacion? "mb-3": " ")">
         <div class="col-12 h-100 mb-3">
-
-            <div class="card rounded-4 p-3 mb-3 h-100">
-
-                <p class="h3">
-                    Registrar Área
-                </p>
-
-                <div class="row">
-
-                    <div class="col-6 mt-3">
-                        <label for="NombreArea" class="form-label">
-                            Nombre del área
-                        </label>
-
-                        <input type="text"
-                               class="form-control form-control-lg rounded-4 bg-light"
-                               id="NombreArea"
-                               maxlength="60"
-                               placeholder="Ingrese el nombre del área">
-                    </div>
-
-                    <div class="col-6 mt-3">
-                        <label for="NombreJefe" class="form-label">
-                            Nombre del jefe
-                        </label>
-
-                        <input type="text"
-                               class="form-control form-control-lg rounded-4 bg-light"
-                               id="NombreJefe"
-                               placeholder="Ingrese el nombre del jefe">
-                    </div>
-
-                    <div class="col-6 mt-3">
-                        <label for="FondoMaximo" class="form-label">
-                            Fondo máximo
-                        </label>
-
-                        <input type="text"
-                               class="form-control form-control-lg rounded-4 bg-light"
-                               id="FondoMaximo"
-                               placeholder="S/ 0.00">
-                    </div>
-
-                    <div class="col-6 mt-3">
-                        <label for="Estado" class="form-label">
-                            Estado
-                        </label>
-
-                        <select class="form-select form-select-lg rounded-4 bg-light"
-                                id="Estado">
-
-                            <option value="1" selected>
+            <div class="card rounded-4 p-3 mb-3 h-100 d-flex justify-content-between">
+                <div class="d-flex flex-column">
+                    <div class="d-flex gap-4"> 
+                        @if (EsCreacion)
+                        {
+                            <p class="h3"> Registrar Area </p>
+                        }
+                        else
+                        {
+                            <p class="h3"> Area Nro 4 </p>
+                        }
+                        <div class="d-flex flex-column justify-content-center gap-2">
+                            <span class="badge text-bg-success rounded-pill px-2">
                                 Activo
-                            </option>
-
-                            <option value="0">
-                                Desactivo
-                            </option>
-
-                        </select>
+                            </span>
+                        </div>
                     </div>
+                    <div class="row">
+                        <div class="col-6 mt-3">
+                            <label for="NombreArea" class="form-label">Nombre del área</label>
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="NombreArea" placeholder="Ingrese el nombre del área">
+                        </div>
+                        <div class="col-6 mt-3">
+                            <label for="NombreJefe" class="form-label">
+                                Nombre del jefe
+                            </label>
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="NombreJefe" placeholder="Ingrese el nombre del jefe">
+                        </div>
 
-                    <div class="col-12 mt-3">
-                        <label for="DescripcionArea" class="form-label">
-                            Descripción
-                        </label>
-
-                        <textarea class="form-control bg-light rounded-4"
-                                  id="DescripcionArea"
-                                  rows="4"
-                                  maxlength="200"
-                                  placeholder="Ingrese una descripción del área"></textarea>
+                        <div class="col-6 mt-3">
+                            <label for="FondoMaximo" class="form-label">
+                                Fondo máximo
+                            </label>
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="FondoMaximo" placeholder="S/ 0.00"> 
+                        </div>
+                        
+                        <div class="col-12 mt-3">
+                            <label for="DescripcionArea" class="form-label">
+                                Descripción
+                            </label>
+                            <textarea class="form-control bg-light rounded-4" id="DescripcionArea" rows="4" placeholder="Ingrese una descripción del área"></textarea>
+                        </div>
                     </div>
-
                 </div>
-
+               
                 <div class="d-flex justify-content-end gap-3 mt-4">
-
-                    <button type="button"
-                            class="btn btn-primary px-4"
-                            @onclick="Guardar">
-
-                        Guardar
-
+                @if (EsCreacion)
+                {
+                    <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="IrAAreas">
+                        Registrar
                     </button>
-
-                    <a href="/ListarAreas"
-                       class="btn btn-outline-danger px-4">
-
+                    <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="IrAAreas">
+                        Cerrar
+                    </button>
+                    <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="IrAAreas">
                         Cancelar
-
-                    </a>
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-outline-warning align-self-start mt-3" @onclick="CerrarDetalle">
+                        Guardar Cambios
+                    </button>
+                    <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="CerrarDetalle">
+                        Cerrar
+                    </button>
+                    <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="CerrarDetalle">
+                        Eliminar
+                    </button>
+                    
+                }
 
                 </div>
-
             </div>
-
         </div>
-
     </div>
-
 </div>
 
 @code {
+    [Parameter]
+    public EventCallback OnCerrarDetalle{ get; set; }
+
+    public async Task CerrarDetalle()
+    {
+        await OnCerrarDetalle.InvokeAsync();
+    }
     private void Guardar()
     {
         Navigation.NavigateTo("/areas");
+    }
+    private bool EsCreacion { get; set; }
+    protected override void OnInitialized()
+    {
+        EsCreacion = Navigation.Uri.Contains("/Crear");
+    }
+    private void IrAAreas()
+    {
+        Navigation.NavigateTo("/Areas");
     }
 }

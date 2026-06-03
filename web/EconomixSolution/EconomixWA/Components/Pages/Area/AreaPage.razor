@@ -24,119 +24,26 @@
 
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
 
+            <div class=" @(@MostrarDetalle? "col-6" : "col-12") h-100 d-flex flex-column overflow-hidden">
+
+                <div class="card rounded-4 p-3 h-100 overflow-scroll">
+
+                    @for (int i = 0; i < 10; i++)
+                    {
+                         <AreaItem OnMuestraDetalle="MostrarDetalleArea" />
+                    }
+
+                </div>
+
+            </div>
             @if (MostrarDetalle)
             {
-                <div class="col-6 h-100 d-flex flex-column overflow-hidden">
-
-                    <div class="card rounded-4 p-3 h-100 overflow-scroll">
-
-                        @for (int i = 0; i < 10; i++)
-                        {
-                             <AreaItem OnMuestraDetalle="MostrarDetalleArea" />
-                        }
-
-                    </div>
-
-                </div>
 
                 <div class="col-6 h-100">
-
-                    <div class="card rounded-4 p-3 h-100">
-
-                        <div class="d-flex flex-row justify-content-between align-items-start mb-3">
-                            <div>
-                                <p class="h3 mb-1">
-                                    Área - No. 1
-                                </p>
-                            </div>
-
-                            <button type="button"
-                                    class="btn btn-outline-secondary btn-sm"
-                                    @onclick="CerrarDetalleArea">
-
-                                Cerrar
-
-                            </button>
-                        </div>
-
-                        <div class="row">
-
-                            <div class="col-6 mt-3">
-                                <label class="form-label">
-                                    Nombre del área
-                                </label>
-
-                                <input type="text"
-                                       class="form-control form-control-lg rounded-4 bg-light"
-                                       value="Recursos Humanos"
-                                       disabled />
-                            </div>
-
-                            <div class="col-6 mt-3">
-                                <label class="form-label">
-                                    Responsable
-                                </label>
-
-                                <input type="text"
-                                       class="form-control form-control-lg rounded-4 bg-light"
-                                       value="Carlos Ruiz"
-                                       disabled />
-                            </div>
-
-                            <div class="col-6 mt-3">
-                                <label class="form-label">
-                                    Fondo máximo
-                                </label>
-
-                                <input type="text"
-                                       class="form-control form-control-lg rounded-4 bg-light"
-                                       value="S/ 8,000.00"
-                                       disabled />
-                            </div>
-
-                            <div class="col-6 mt-3">
-                                <label class="form-label">
-                                    Estado
-                                </label>
-
-                                <input type="text"
-                                       class="form-control form-control-lg rounded-4 bg-light"
-                                       value="Activo"
-                                       disabled />
-                            </div>
-
-                            <div class="col-12 mt-3">
-                                <label class="form-label">
-                                    Descripción
-                                </label>
-
-                                <textarea class="form-control bg-light rounded-4"
-                                          rows="4"
-                                          disabled>Área encargada de compras menores, útiles, viáticos y gastos operativos.</textarea>
-                            </div>
-
-                        </div>
-
-                    </div>
-
+                    <AreaDetalle OnCerrarDetalle="CerrarDetalleArea"/>
                 </div>
+
             }
-            else
-            {
-                <div class="col-12 h-100 d-flex flex-column overflow-hidden">
-
-                    <div class="card rounded-4 mt-3 mb-3 p-3 flex-fill overflow-scroll">
-                        @for (int i = 0; i < 10; i++)
-                        {
-                            <AreaItem OnMuestraDetalle="MostrarDetalleArea" />
-                        }
-
-
-                    </div>
-
-                </div>
-            }
-
         </div>
 
     </div>
@@ -148,7 +55,7 @@
 
     private void IrRegistrarArea()
     {
-        Navigation.NavigateTo("/area/detalle");
+        Navigation.NavigateTo("/area/Crear");
     }
 
     private void MostrarDetalleArea()

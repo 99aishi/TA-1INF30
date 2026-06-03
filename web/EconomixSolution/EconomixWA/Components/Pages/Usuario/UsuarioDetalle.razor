@@ -1,99 +1,93 @@
+@page "/usuarios/Crear"
 @page "/usuarios/detalle"
 
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 
 <div class="d-flex flex-column h-100 mb-3">
-    <div class="row h-100 mb-3">
+    <div class="row h-100 @(EsCreacion? "mb-3": " ")">
         <div class="col-12 h-100 mb-3">
-
-            <div class="card rounded-4 p-4 mb-3 h-100 d-flex flex-column">
-
-                <p class="h3">
-                    Registrar Usuario
-                </p>
-
-                <div class="row g-5 flex-grow-1">
-
-                    <div class="col-md-6">
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label for="Nombres" class="form-label mb-1">Nombres</label>
-                                <input type="text"
-                                       class="form-control form-control-lg rounded-4 bg-light"
-                                       id="Nombres"
-                                       placeholder="Nombres">
-                            </div>
-
-                            <div class="col-6">
-                                <label for="ApellidoPaterno" class="form-label mb-1">Apellido Paterno</label>
-                                <input type="text"
-                                       class="form-control form-control-lg rounded-4 bg-light"
-                                       id="ApellidoPaterno"
-                                       placeholder="Apellido paterno">
-                            </div>
-
-                            <div class="col-6">
-                                <label for="ApellidoMaterno" class="form-label mb-1">Apellido Materno</label>
-                                <input type="text"
-                                       class="form-control form-control-lg rounded-4 bg-light"
-                                       id="ApellidoMaterno"
-                                       placeholder="Apellido materno">
-                            </div>
-
-                            <div class="col-12">
-                                <label for="Contrasena" class="form-label mb-1" >Contrasena</label>
-                                <input type="password"
-                                       class="form-control form-control-lg rounded-4 bg-light"
-                                       id="Contrasena"
-                                       placeholder="Contrasena">
-                            </div>
+            <div class="card rounded-4 p-3 mb-3 h-100 d-flex justify-content-between">
+                <div class="d-flex flex-column">
+                    <div class="d-flex gap-4">  
+                        @if (EsCreacion)
+                        {
+                          <p class="h3"> Registrar Usuario </p>
+                        }
+                        else
+                        {
+                            <p class="h3"> Usuario Nro 4 </p>
+                        }
+                        <div class="d-flex flex-column justify-content-center gap-2">
+                            <span class="badge text-bg-success rounded-pill px-2">
+                                Activo
+                            </span>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-12 mt-3">
+                            <label for="Nombres" class="form-label mb-1">Nombres</label>
+                            <input type="text" id="Nombres" placeholder="Nombres"
+                                class="form-control form-control-lg rounded-4 bg-light">
+                        </div>
 
-                    <div class="col-md-6">
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label for="Correo" class="form-label mb-1">Correo electronico</label>
-                                <input type="email"
-                                       class="form-control form-control-lg rounded-4 bg-light"
-                                       id="Correo"
-                                       placeholder="ejemplo@correo.com">
-                            </div>
+                        <div class="col-6 mt-3">
+                            <label for="ApellidoPaterno" class="form-label mb-1">Apellido Paterno</label>
+                            <input type="text" id="ApellidoPaterno" placeholder="Apellido paterno" 
+                                class="form-control form-control-lg rounded-4 bg-light">
+                        </div>
+                        <div class="col-6 mt-3">
+                            <label for="ApellidoMaterno" class="form-label mb-1">Apellido Materno</label>
+                            <input type="text"
+                                class="form-control form-control-lg rounded-4 bg-light"
+                                id="ApellidoMaterno"
+                                placeholder="Apellido materno">
+                        </div>
 
-                            <div class="col-12 mt-3">
-                                <label for="Estado" class="form-label">
-                                    Estado
-                                </label>
-
-                                <div class="form-control form-control-lg rounded-4 bg-light"
-                                        id="Estado">
-                                        Activo                                    
-                                </div>
-                            </div>
+                        <div class="col-8 mt-3">
+                            <label for="Correo" class="form-label mb-1">Correo electronico</label>
+                            <input type="email"
+                                class="form-control form-control-lg rounded-4 bg-light"
+                                id="Correo"
+                                placeholder="ejemplo@correo.com">
+                        </div>
+                        <div class="col-4 mt-3">
+                            <label for="Contrasena" class="form-label mb-1" >Contrasena</label>
+                            <input type="password"
+                                class="form-control form-control-lg rounded-4 bg-light"
+                                id="Contrasena"
+                                placeholder="Contrasena">
                         </div>
                     </div>
-
                 </div>
 
                 <div class="d-flex justify-content-end gap-3 mt-4">
 
-                    <button type="button"
-                            class="btn btn-primary px-4"
-                            @onclick="Registrar">
-
-                        Registrar
-
-                    </button>
-
-                    <button type="button"
-                            class="btn btn-danger px-4"
-                            @onclick="Cancelar">
-
-                        Cancelar
-
-                    </button>
-
+                    @if (EsCreacion)
+                    {
+                        <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="IrAUsuarios">
+                            Registrar
+                        </button>
+                        <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="IrAUsuarios">
+                            Cerrar
+                        </button>
+                        <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="IrAUsuarios">
+                            Cancelar
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-outline-warning align-self-start mt-3" @onclick="CerrarDetalle">
+                            Guardar Cambios
+                        </button>
+                        <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="CerrarDetalle">
+                            Cerrar
+                        </button>
+                        <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="CerrarDetalle">
+                            Eliminar
+                        </button>
+                        
+                    }
                 </div>
 
             </div>
@@ -102,6 +96,13 @@
     </div>
 </div>
 @code {
+    [Parameter]
+    public EventCallback OnCerrarDetalle{ get; set; }
+
+    public async Task CerrarDetalle()
+    {
+        await OnCerrarDetalle.InvokeAsync();
+    }
     private void Registrar()
     {
         // Redirigir a la lista de usuarios (o la ruta que manejes)
@@ -112,4 +113,14 @@
         // Redirigir a la lista de usuarios (o la ruta que manejes)
         Navigation.NavigateTo("/usuarios");
     }
+    private bool EsCreacion { get; set; }
+    protected override void OnInitialized()
+    {
+        EsCreacion = Navigation.Uri.Contains("/Crear");
+    }
+    private void IrAUsuarios()
+    {
+        Navigation.NavigateTo("/Usuarios");
+    }
+
 }
