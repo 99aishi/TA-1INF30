@@ -84,4 +84,9 @@ public class AdministradorBOImpl implements IAdministradorBO {
             throw new Exception("El correo del administrador es obligatorio.");
         }
     }
+    public int verificarCuenta(String correo, String password) throws Exception{
+        validarPassword(password);
+        validarCorreoSoporte(correo);
+        return  administradorDAO.verificarCuenta(correo,password);
+    }
 }

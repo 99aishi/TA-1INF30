@@ -12,6 +12,7 @@ import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.rrhh.model.Rol;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public class EmpleadoBOImpl implements IEmpleadoBO {
@@ -152,5 +153,14 @@ public class EmpleadoBOImpl implements IEmpleadoBO {
         if (celular.length() > 9) {
             throw new Exception("El numero de celularr del empleado no puede exceder los 9 caracteres.");
         }
+    }
+    public int verificarCuenta(String correo, String password) throws Exception{
+        validarPassword(password);
+        validarCorreo(correo);
+        return empleadoDAO.verificarCuenta(correo,password);
+    }
+
+    public List<Empleado> listarPorNombreApellido(String busqueda) throws Exception{
+        return empleadoDAO.listarPorNombreApellido(busqueda);
     }
 }

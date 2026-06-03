@@ -10,7 +10,6 @@ public abstract class Usuario{
     private String apellidoMaterno;
     private String password;
     private EstadoUsuario estado;
-
     //Constructores
     public Usuario(){}
 
@@ -61,6 +60,9 @@ public abstract class Usuario{
     public void setPassword(String password){
         PasswordEncoder encoder= Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
         this.password=encoder.encode(password);
+    }
+    public void setPasswordHash(String passwordHash){
+        this.password=passwordHash;
     }
     public void cambiarPassword(String nueva){
         this.password=nueva;

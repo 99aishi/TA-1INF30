@@ -11,6 +11,7 @@ import java.util.Map;
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.rrhh.idao.IAdministradorDAO;
 import pe.edu.pucp.economix.rrhh.model.Administrador;
+import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
 
 public class AdministradorDAOImpl implements IAdministradorDAO {
@@ -107,5 +108,25 @@ public class AdministradorDAOImpl implements IAdministradorDAO {
             DBManager.getDBManager().cerrarConexion();
         }
         return administradores;
+    }
+    @Override
+    public int verificarCuenta(String correo, String password)  throws  SQLException{
+        int resultado=0;
+        Administrador administrador = null;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_correo", correo);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_obtener_password_administrador_por_correo", parametrosEntrada);
+        try{
+            if(rs.next()){
+                administrador= new Administrador();
+                administrador.setPasswordHash(rs.getString("password_hash"));
+                if(administrador.validarPassword(password))resultado=1;
+            }
+        }catch(SQLException ex){
+            System.out.println("Error al verificar cuenta" + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
+        }
+        return resultado;
     }
 }

@@ -150,4 +150,64 @@ public class EmpleadoDAOImpl implements IEmpleadoDAO{
         return empleados;
 
     }
+    @Override
+    public int verificarCuenta(String correo, String password)  throws  SQLException{
+        int resultado=0;
+        Empleado empleado = null;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_correo", correo);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_obtener_password_empleado_por_correo", parametrosEntrada);
+        try{
+            if(rs.next()){
+                empleado = new Empleado();
+                empleado.setPasswordHash(rs.getString("password_hash"));
+                if(empleado.validarPassword(password))resultado=1;
+            }
+        }catch(SQLException ex){
+            System.out.println("Error al verificar cuenta" + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
+        }
+        return resultado;
+    }
+
+    @Override
+    public List<Empleado> listarPorNombreApellido(String busqueda) throws SQLException {
+        List<Empleado> empleados = null;
+        Empleado empleado;
+
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_busqueda", busqueda);
+
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura(
+                "pa_buscar_empleados_por_nombre_apellido",
+                parametrosEntrada
+        );
+
+        try {
+            while (rs.next()) {
+                if (empleados == null) empleados = new ArrayList<>();
+
+                empleado = new Empleado();
+
+                empleado.setNombres(rs.getString("nombres"));
+                empleado.setApellidoPaterno(rs.getString("apellido_paterno"));
+                empleado.setApellidoMaterno(rs.getString("apellido_materno"));
+                empleado.setCorreoInstitucional(rs.getString("correo"));
+
+                empleado.setPasswordHash(rs.getString("password"));
+
+                empleados.add(empleado);
+            }
+
+        } catch (SQLException ex) {
+            System.out.println("Error al buscar empleados: " + ex.getMessage());
+        } finally {
+            DBManager.getDBManager().cerrarConexion();
+        }
+
+        return empleados;
+    }
+
+
 }

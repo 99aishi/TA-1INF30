@@ -88,4 +88,56 @@ public class EmpleadoTest {
     public static int eliminar(int id) throws Exception {
         return empleadoBO.eliminar(id);
     }
+    public static void probarListarPorNombreApellido(String busqueda) throws Exception {
+        List<Empleado> empleados = empleadoBO.listarPorNombreApellido(busqueda);
+
+        System.out.println("==============================================================================================================");
+        System.out.println("                                      BÚSQUEDA DE EMPLEADOS                                                   ");
+        System.out.println("==============================================================================================================");
+        System.out.println("Texto buscado: " + busqueda);
+        System.out.println("--------------------------------------------------------------------------------------------------------------");
+
+        if (empleados == null || empleados.isEmpty()) {
+            System.out.println("No se encontraron empleados con ese nombre o apellido.");
+        } else {
+            System.out.printf("%-15s %-20s %-20s %-30s %-35s%n",
+                    "Nombres", "Apellido Paterno", "Apellido Materno", "Correo", "Password Hash");
+            System.out.println("--------------------------------------------------------------------------------------------------------------");
+
+            for (Empleado e : empleados) {
+                String password = e.getPassword();
+
+                if (password != null && password.length() > 35) {
+                    password = password.substring(0, 35) + "...";
+                }
+
+                System.out.printf("%-15s %-20s %-20s %-30s %-35s%n",
+                        e.getNombres(),
+                        e.getApellidoPaterno(),
+                        e.getApellidoMaterno() != null ? e.getApellidoMaterno() : "",
+                        e.getCorreoInstitucional(),
+                        password != null ? password : "");
+            }
+        }
+
+        System.out.println("==============================================================================================================");
+    }
+    public static void probarLoginEmpleado(String correo, String password) throws Exception {
+        int resultado = empleadoBO.verificarCuenta(correo, password);
+
+        System.out.println("==============================================");
+        System.out.println("              VALIDACIÓN EMPLEADO             ");
+        System.out.println("==============================================");
+        System.out.println("Correo ingresado: " + correo);
+
+        if (resultado == 1) {
+            System.out.println("Resultado: Cuenta válida.");
+            System.out.println("Mensaje: El correo y la contraseña son correctos.");
+        } else {
+            System.out.println("Resultado: Cuenta inválida.");
+            System.out.println("Mensaje: El correo o la contraseña son incorrectos.");
+        }
+
+        System.out.println("==============================================");
+    }
 }
