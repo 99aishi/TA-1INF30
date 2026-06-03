@@ -1,0 +1,41 @@
+<div class="h -100 d-flex flex-column justify-content-around">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <p class="h4 mb-1">Detalle de moneda</p>
+        </div>
+    </div>
+    <div class="row g-3">
+        <div class="col-6">
+            <label class="form-label small text-muted">Código ISO</label>
+            <input class="form-control bg-light rounded-4" value="ISO" readonly />
+        </div>
+        <div class="col-6">
+            <label class="form-label small text-muted">Símbolo</label>
+            <input class="form-control bg-light rounded-4" value="Simbolo" readonly />
+        </div>
+        <div class="col-12">
+            <label class="form-label small text-muted">Nombre</label>
+            <input class="form-control bg-light rounded-4" value="nombre" readonly />
+        </div>
+        <div class="col-12">
+            <label class="form-label small text-muted">Descripción</label>
+            <textarea class="form-control bg-light rounded-4"
+                        rows="4"
+                        placeholder="Describe en qué casos se usa esta moneda dentro del sistema."
+                    </textarea>
+        </div>
+    </div>
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <button type="button" class="btn btn-outline-primary px-4">
+            Agregar Moneda
+        </button>
+        <button type="button" class="btn btn-outline-danger px-4">
+            Cancelar
+        </button>
+    </div>
+</div>
+
+@code {
+    
+
+}
