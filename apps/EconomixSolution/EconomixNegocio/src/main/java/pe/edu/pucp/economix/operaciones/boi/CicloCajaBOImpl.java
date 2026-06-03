@@ -1,9 +1,13 @@
 package pe.edu.pucp.economix.operaciones.boi;
 
 import pe.edu.pucp.economix.operaciones.ibo.ICicloCajaBO;
+import pe.edu.pucp.economix.operaciones.ibo.ISolicitudGastoBO;
 import pe.edu.pucp.economix.operaciones.idao.ICicloCajaChicaDAO;
 import pe.edu.pucp.economix.operaciones.daoi.CicloCajaChicaDAOImpl;
+import pe.edu.pucp.economix.operaciones.idao.ISolicitudGastoDAO;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
+import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
 import pe.edu.pucp.economix.tesoreria.boi.CajaChicaBOImpl;
 import pe.edu.pucp.economix.tesoreria.ibo.ICajaChicaBO;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
@@ -13,9 +17,12 @@ import java.util.List;
 public class CicloCajaBOImpl implements ICicloCajaBO {
     private final ICicloCajaChicaDAO cicloCajaChicaDAO;
     private final ICajaChicaBO cajaBO;
+    private final ISolicitudGastoBO solicitudGastoBO;
     public CicloCajaBOImpl(){
+
         cicloCajaChicaDAO= new CicloCajaChicaDAOImpl();
         cajaBO = new CajaChicaBOImpl();
+        solicitudGastoBO=new SolicitudGastoBOImpl();
     }
 
     @Override
@@ -63,9 +70,20 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
         validarMontos(ciclo);
     }
     public void calcularTotalGastado(CicloCajaChica ciclo) throws Exception {
-        ciclo.calcularTotalGastado();
-        modificar(ciclo);
+
+        double total=0;
+        List<SolicitudGasto> solicitudesDeGasto= solicitudGastoBO.listarPorCiclo(ciclo.getIdCicloCaja());
+        for (SolicitudGasto s: solicitudesDeGasto){
+            if(s.getEstado()== EstadoSolicitudGasto.Aprobado){
+                total+=s.getMontoSolicitado();
+            }
+        }
+        CicloCajaChica ciclito= buscarPorId(ciclo.getIdCicloCaja());
+        ciclito.setTotalGastado(total);
+        modificar(ciclito);
     }
+
+
     public void validarMontos(CicloCajaChica ciclo) throws Exception{
         if(ciclo.getSaldoInicial()<0){
             throw new Exception("El saldo inicial del Ciclo de Caja Chica no puede ser negativo.");

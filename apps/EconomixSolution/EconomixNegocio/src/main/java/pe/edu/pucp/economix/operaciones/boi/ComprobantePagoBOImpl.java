@@ -1,5 +1,6 @@
 package pe.edu.pucp.economix.operaciones.boi;
 
+import pe.edu.pucp.economix.operaciones.ibo.ICicloCajaBO;
 import pe.edu.pucp.economix.operaciones.ibo.IComprobantePagoBO;
 import pe.edu.pucp.economix.operaciones.ibo.ISolicitudGastoBO;
 import pe.edu.pucp.economix.operaciones.idao.IComprobantePagoDAO;
@@ -10,16 +11,19 @@ import pe.edu.pucp.economix.tesoreria.boi.MonedaBOImpl;
 import pe.edu.pucp.economix.tesoreria.ibo.IMonedaBO;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
+import java.util.Date;
 import java.util.List;
 
 public class ComprobantePagoBOImpl implements IComprobantePagoBO {
     private final IComprobantePagoDAO comprobantePagoDAO;
     private final IMonedaBO monedaBO;
     private final ISolicitudGastoBO solicitudGastoBO;
+    private final ICicloCajaBO cicloBO;
     public ComprobantePagoBOImpl(){
         comprobantePagoDAO= new ComprobantePagoDAOImpl();
         monedaBO=new MonedaBOImpl();
         solicitudGastoBO=new SolicitudGastoBOImpl();
+        cicloBO= new CicloCajaBOImpl();
     }
     @Override
     public int insertar(ComprobantePago comprobante) throws Exception {
@@ -49,6 +53,10 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         return comprobantePagoDAO.listarTodas();
     }
 
+    public List<ComprobantePago> listarPorSolicitud(int idSolicitud)throws Exception {
+        return comprobantePagoDAO.listarPorSolicitud( idSolicitud);
+    }
+
     public void validar(ComprobantePago comprobante, boolean EsModificacion) throws Exception{
         if(comprobante==null){
             throw new Exception("El comprobante no puede ser nulo.");
@@ -56,12 +64,22 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         if(EsModificacion && comprobante.getIdComprobante()<=0){
             throw new Exception("El ID del Comprobante de Pago es necesario para la modificion");
         }
-
-        validarDocumento(comprobante);
-        validarProveedor(comprobante);
-        validarNumeros(comprobante);
-        validarMoneda(comprobante.getMoneda());
         validarSolicitud(comprobante.getSolicitud());
+        validarMoneda(comprobante.getMoneda());
+        validarFecha(comprobante);
+
+        SolicitudGasto soli = solicitudGastoBO.buscarPorId(comprobante.getSolicitud().getIdSolicitudGasto());
+        boolean esGastoExcepcional = soli.getMontoSolicitado() <= 50;
+
+        // 2. Validación de números adaptada
+        validarNumeros(comprobante, esGastoExcepcional);
+
+        // 3. Validaciones estrictamente fiscales
+        if(!esGastoExcepcional){
+            validarDocumento(comprobante);
+            validarProveedor(comprobante);
+        }
+
     }
 
 
@@ -84,20 +102,21 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         }
     }
 
-    public void validarNumeros(ComprobantePago comprobante) throws Exception {
-        if(comprobante.getTotal()==0){
-            throw new Exception("El total no puede ser cero.");
+    public void validarNumeros(ComprobantePago comprobante, boolean esGastoExcepcional) throws Exception {
+        if(comprobante.getTotal() <= 0){
+            throw new Exception("El total debe ser mayor a cero.");
         }
-        if(comprobante.getSubtotal()==0){
-            throw new Exception("El subtotal no puede ser cero.");
+        if(!esGastoExcepcional) {
+            if(comprobante.getSubtotal() <= 0){
+                throw new Exception("El subtotal no puede ser cero en un comprobante fiscal.");
+            }
+            if (comprobante.getIgv() < 0) { // El IGV podría ser 0 en boletas, pero jamás negativo
+                throw new Exception("El IGV no puede ser negativo.");
+            }
+            if(Math.abs(comprobante.getTotal() - (comprobante.getSubtotal() + comprobante.getIgv())) > 0.01){
+                throw new Exception("Los valores ingresados no suman correctamente.");
+            }
         }
-        if (comprobante.getIgv() == 0) {
-            throw new Exception("El IGV no puede ser cero.");
-        }
-        if(comprobante.getTotal()!=comprobante.getSubtotal()+comprobante.getIgv()){
-            throw new Exception("Los valores ingresados no suman correctamente.");
-        }
-
     }
 
     public void validarProveedor(ComprobantePago comprobante) throws Exception{
@@ -125,6 +144,27 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         }
         if(comprobante.getFechaEmision()==null){
             throw new Exception("Tiene que registrar la fecha en la que se genero el documento.");
+        }
+    }
+    public void validarFecha(ComprobantePago comprobante) throws Exception{
+        Date fechaEmision=comprobante.getFechaEmision();
+        if(fechaEmision == null) {
+            throw new Exception("La fecha de emisión es obligatoria.");
+        }
+        SolicitudGasto soli = solicitudGastoBO.buscarPorId(comprobante.getSolicitud().getIdSolicitudGasto());
+        Date fechaSolicitado= soli.getFechaSolicitud();
+        Date fechaActual= new Date();
+        if(fechaEmision.after(fechaActual)){
+            throw new Exception("La fecha del comprobante no puede ser posterior a la fecha actual.");
+        }
+        if(fechaEmision.before(fechaSolicitado)){
+            throw new Exception("La fecha del comprobante no puede ser antes de la fecha de la solicitud relacionada.");
+        }
+        Date inicioCiclo = cicloBO.buscarPorId(soli.getCiclo().getIdCicloCaja()).getFechaApertura();
+        Date finCiclo = cicloBO.buscarPorId(soli.getCiclo().getIdCicloCaja()).getFechaCierre();
+
+        if (fechaEmision.before(inicioCiclo) || (finCiclo != null && fechaEmision.after(finCiclo))) {
+            throw new Exception("La fecha del comprobante no pertenece al ciclo activo de la caja chica.");
         }
     }
 

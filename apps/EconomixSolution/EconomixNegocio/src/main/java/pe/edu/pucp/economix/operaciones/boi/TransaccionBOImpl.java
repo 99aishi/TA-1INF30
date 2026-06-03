@@ -3,6 +3,7 @@ package pe.edu.pucp.economix.operaciones.boi;
 import pe.edu.pucp.economix.operaciones.ibo.ITransaccionBO;
 import pe.edu.pucp.economix.operaciones.idao.ITransaccionDAO;
 import pe.edu.pucp.economix.operaciones.daoi.TransaccionDAOImpl;
+import pe.edu.pucp.economix.operaciones.model.enums.MedioPago;
 import pe.edu.pucp.economix.operaciones.model.enums.TipoTransaccion;
 import pe.edu.pucp.economix.operaciones.model.Transaccion;
 import pe.edu.pucp.economix.tesoreria.boi.MonedaBOImpl;
@@ -30,7 +31,9 @@ public class TransaccionBOImpl implements ITransaccionBO {
     @Override
     public int insertar(Transaccion transaccion) throws Exception {
         validar(transaccion,false);
-        return transaccionDAO.insertar(transaccion);
+        int resultado= transaccionDAO.insertar(transaccion);
+
+        return resultado;
     }
 
     @Override
@@ -69,12 +72,26 @@ public class TransaccionBOImpl implements ITransaccionBO {
         validarMontoTransaccion(transaccion.getMonto()); // que no sea null
         validarCuentaOrigen(transaccion.getCuentaOrigen());
         validarCuentaDestino(transaccion.getCuentaDestino());
+        validarMedioPagoYOperacion(transaccion);
         validarMoneda(transaccion.getMoneda());
         validarFecha(transaccion.getFecha());
     }
     public void validarFecha(Date fecha) throws Exception{
         if(fecha==null){
             throw new Exception("La fecha no puede ser nula.");
+        }
+    }
+    public void validarMedioPagoYOperacion(Transaccion transaccion) throws Exception {
+        if (transaccion.getMedioPago() == null) {
+            throw new Exception("Debe seleccionar un medio de pago.");
+        }
+
+        // Si es un medio digital, el código de operación es obligatorio
+        if (transaccion.getMedioPago() == MedioPago.YAPE || transaccion.getMedioPago() == MedioPago.Transferencia) {
+            String numOperacion = transaccion.getNumeroOperacionBancaria();
+            if (numOperacion == null || numOperacion.trim().isEmpty()) {
+                throw new Exception("El código de operación es obligatorio para transferencias y billeteras digitales.");
+            }
         }
     }
     public void validarTipo(TipoTransaccion tipo) throws Exception{

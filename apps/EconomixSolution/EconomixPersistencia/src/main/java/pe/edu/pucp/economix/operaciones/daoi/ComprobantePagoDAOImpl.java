@@ -156,4 +156,41 @@ public class ComprobantePagoDAOImpl implements IComprobantePagoDAO {
         }
         return comprobantes;
     }
+
+    public List<ComprobantePago> listarPorSolicitud(int idSolicitud) throws SQLException {
+        List<ComprobantePago> comprobantes=null;
+        ComprobantePago comprobante;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_solicitud", idSolicitud);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_comprobantes_por_solicitud", parametrosEntrada);
+        try{
+            while(rs.next()){
+                if(comprobantes == null) comprobantes = new ArrayList<>();
+                comprobante = new ComprobantePago();
+                comprobante.setIdComprobante(rs.getInt("id_comprobante"));
+                comprobante.setTipoDocumento(TipoComprobante.valueOf(rs.getString("tipo_documento")));
+                comprobante.setRUCProveedor(rs.getString("ruc_proveedor"));
+                comprobante.setRazonSocial(rs.getString("razon_social"));
+                comprobante.setNumeroSerial(rs.getString("numero_serie"));
+                comprobante.setFechaEmision(rs.getDate("fecha_emision"));
+                comprobante.setSubtotal(rs.getDouble("monto_subtotal"));
+                comprobante.setIgv(rs.getDouble("monto_igv"));
+                comprobante.setMontoTotal(rs.getDouble("monto_total"));
+                comprobante.setEstado(EstadoComprobante.valueOf(rs.getString("estado_comprobante")));
+                if(comprobante.getSolicitud() == null)
+                    comprobante.setSolicitud(new SolicitudGasto());
+                comprobante.getSolicitud().setIdSolicitudGasto(rs.getInt("id_solicitud_gasto"));
+                if(comprobante.getMoneda() == null)
+                    comprobante.setMoneda(new Moneda());
+                comprobante.getMoneda().setIdMoneda(rs.getInt("id_moneda"));
+                comprobantes.add(comprobante);
+            }
+        }catch(SQLException ex){
+            System.out.println("Error al buscar comprobantes de pago por idSolicitud: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
+        }
+        return comprobantes;
+    }
+
 }

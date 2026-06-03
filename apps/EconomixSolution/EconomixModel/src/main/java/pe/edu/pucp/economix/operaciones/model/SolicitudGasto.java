@@ -13,6 +13,7 @@ public class SolicitudGasto{
     private double montoSolicitado;
     private String motivoSolicitud;
     private EstadoSolicitudGasto estado;
+    private String comentarioDecision;
     //Relaciones
     private Empleado solicitante;
     private Empleado destinatario;
@@ -22,13 +23,14 @@ public class SolicitudGasto{
     //Constructores
     public SolicitudGasto(){}
     public SolicitudGasto(int idSolicitudGasto, Date fechaSolicitud, double montoSolicitado, String motivoSolicitud,
-                          EstadoSolicitudGasto estado, Empleado solicitante, Empleado destinatario,
+                          EstadoSolicitudGasto estado, String comentarioDecision, Empleado solicitante, Empleado destinatario,
                           List<ComprobantePago> comprobantes, CicloCajaChica ciclo) {
         this.idSolicitudGasto = idSolicitudGasto;
         this.fechaSolicitud = fechaSolicitud;
         this.montoSolicitado = montoSolicitado;
         this.motivoSolicitud = motivoSolicitud;
         this.estado = estado;
+        this.comentarioDecision = comentarioDecision;
         this.solicitante = solicitante;
         this.destinatario = destinatario;
         this.comprobantes = comprobantes;
@@ -36,12 +38,13 @@ public class SolicitudGasto{
     }
 
     public SolicitudGasto(Date fechaSolicitud, double montoSolicitado, String motivoSolicitud,
-                          EstadoSolicitudGasto estado, Empleado solicitante, Empleado destinatario,
+                          EstadoSolicitudGasto estado, String comentarioDecision, Empleado solicitante, Empleado destinatario,
                           List<ComprobantePago> comprobantes, CicloCajaChica ciclo) {
         this.fechaSolicitud = fechaSolicitud;
         this.montoSolicitado = montoSolicitado;
         this.motivoSolicitud = motivoSolicitud;
         this.estado = estado;
+        this.comentarioDecision = comentarioDecision;
         this.solicitante = solicitante;
         this.destinatario = destinatario;
         this.comprobantes = comprobantes;
@@ -95,6 +98,13 @@ public class SolicitudGasto{
             this.estado=nuevoEstado;
         }
     }
+    public String getComentarioDecision(){
+        return comentarioDecision;
+    }
+    public void setComentarioDecision(String comentarioDecision){
+        this.comentarioDecision=comentarioDecision;
+    }
+
     public Empleado getSolicitante() {
         return solicitante;
     }
@@ -119,8 +129,6 @@ public class SolicitudGasto{
     public void setComprobantes(List<ComprobantePago> comprobantes) {
         this.comprobantes = comprobantes;
     }
-
-    //Metodos
 
 
     @Override
@@ -150,6 +158,7 @@ public class SolicitudGasto{
     }
     public void registrarDesembolso(String nroOperacion, CuentaBancaria destino) {
         // TODO: Cambiar estado a "desembolsado" y vincular transacción (RF_08)
+
     }
 
 }

@@ -1,11 +1,18 @@
 package pe.edu.pucp.economix.operaciones.boi;
 
 import pe.edu.pucp.economix.operaciones.ibo.ICicloCajaBO;
+import pe.edu.pucp.economix.operaciones.ibo.IComprobantePagoBO;
 import pe.edu.pucp.economix.operaciones.ibo.IRendicionBO;
+import pe.edu.pucp.economix.operaciones.ibo.ISolicitudGastoBO;
+import pe.edu.pucp.economix.operaciones.idao.IComprobantePagoDAO;
 import pe.edu.pucp.economix.operaciones.idao.IRendicionDAO;
 import pe.edu.pucp.economix.operaciones.daoi.RendicionDAOImpl;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
+import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
+import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoRendicion;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
 
 import java.util.Date;
 import java.util.List;
@@ -14,9 +21,44 @@ public class RendicionBOImpl implements IRendicionBO {
 
     private final IRendicionDAO rendicionDAO;
     private final ICicloCajaBO cicloCajaBO;
+    private final ISolicitudGastoBO solicitudGastoBO;
+    private final IComprobantePagoBO comprobantePagoBO;
     public RendicionBOImpl(){
         rendicionDAO = new RendicionDAOImpl();
         cicloCajaBO =new CicloCajaBOImpl();
+        solicitudGastoBO= new SolicitudGastoBOImpl();
+        comprobantePagoBO=new ComprobantePagoBOImpl();
+    }
+
+    public Rendicion generarRendicionDeCiclo(int idCiclo) throws Exception {
+        CicloCajaChica ciclo = cicloCajaBO.buscarPorId(idCiclo);
+        cicloCajaBO.calcularTotalGastado(ciclo);
+        if(ciclo == null){
+            throw new Exception("El ciclo no existe.");
+        }
+
+        // 1. Instanciar la nueva rendición
+        Rendicion rendicionCierre = new Rendicion();
+        rendicionCierre.setCicloCajaChica(ciclo);
+        rendicionCierre.setFechaPresentacion(new Date());
+        rendicionCierre.setEstado(EstadoRendicion.EnEspera);
+
+        // 2. Ejecutar la matemática
+        double totalDeclarado = calcularTotalDeclaradoValidado(ciclo);
+        double totalAprobado = ciclo.getTotalGastado();
+        double saldoFinal = ciclo.getSaldoInicial() - totalAprobado;
+
+        rendicionCierre.setTotalDeclarado(totalDeclarado);
+        rendicionCierre.setTotalAprobado(totalAprobado);
+        rendicionCierre.setSaldoFinal(saldoFinal);
+
+        validarMontos(rendicionCierre);
+
+        // 4. Insertar en la base de datos
+        int idGenerado = rendicionDAO.insertar(rendicionCierre);
+        rendicionCierre.setIdRendicion(idGenerado);
+
+        return rendicionCierre;
     }
     @Override
     public int insertar(Rendicion rendicion) throws Exception {
@@ -59,15 +101,32 @@ public class RendicionBOImpl implements IRendicionBO {
     }
 
     public void calcularTotales(Rendicion rendicion) throws Exception {
-        rendicion.calcularTotalDeclarado();
-        if(rendicion.getCicloCajaChica().getTotalGastado()==0)
-            cicloCajaBO.calcularTotalGastado(rendicion.getCicloCajaChica());
-        rendicion.calcularTotalAprobado(); // usa CICLOCAJA
+//        rendicion.setTotalDeclarado(calcularTotalDeclaradoValidado(rendicion));
+        cicloCajaBO.calcularTotalGastado(rendicion.getCicloCajaChica());
+        rendicion.setTotalAprobado(calcularTotalAprobado(rendicion)); // usa CICLOCAJA
         modificar(rendicion);
     }
 
+    public double calcularTotalDeclaradoValidado(CicloCajaChica ciclo)throws Exception{
+        double total = 0;
+        List<SolicitudGasto> solicitudes = solicitudGastoBO.listarPorCiclo(ciclo.getIdCicloCaja());
 
+        for(SolicitudGasto s : solicitudes){
+            if(s.getEstado() == EstadoSolicitudGasto.Aprobado) {
+                List<ComprobantePago> comprobantes = comprobantePagoBO.listarPorSolicitud(s.getIdSolicitudGasto());
+                for(ComprobantePago c : comprobantes){
+                    total += c.getTotal();
+                }
+            }
+        }
+        return total;
+    }
 
+    public double calcularTotalAprobado(Rendicion rendicion)throws Exception{
+        double total=0;
+        total = cicloCajaBO.buscarPorId(rendicion.getIdRendicion()).getTotalGastado();
+        return total;
+    }
 
     public void validarMontos(Rendicion rendicion) throws Exception {
         CicloCajaChica ciclo = rendicion.getCicloCajaChica();

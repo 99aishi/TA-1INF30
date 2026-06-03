@@ -129,14 +129,14 @@ public class CicloCajaChica{
                 '}';
     }
 
-    public void calcularTotalGastado(){
-        double total=0;
-        for (SolicitudGasto s: solicitudesDeGasto){
-            if(s.getEstado()== EstadoSolicitudGasto.Aprobado){
-                total+=s.getMontoSolicitado();
-            }
-        }
-        setTotalGastado(total);
-    }
+//    public void calcularTotalGastado(){
+//        double total=0;
+//        for (SolicitudGasto s: solicitudesDeGasto){
+//            if(s.getEstado()== EstadoSolicitudGasto.Aprobado){
+//                total+=s.getMontoSolicitado();
+//            }
+//        }
+//        setTotalGastado(total);
+//    }
 
 }
