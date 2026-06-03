@@ -105,6 +105,8 @@ CREATE TABLE IF NOT EXISTS tes_moneda (
     id_moneda INT NOT NULL AUTO_INCREMENT,
     codigo_iso CHAR(3) NOT NULL,
     simbolo VARCHAR(5) NOT NULL,
+    nombre_moneda VARCHAR (50) NOT NULL,
+    descripcion VARCHAR (350) NOT NULL,
     activa TINYINT(1) DEFAULT 1,
     
     -- Auditoría
