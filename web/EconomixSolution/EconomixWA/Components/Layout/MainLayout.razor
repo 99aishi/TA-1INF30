@@ -1,28 +1,49 @@
-﻿@inherits LayoutComponentBase
+﻿@using EconomixWS.UsuarioWS
+@inherits LayoutComponentBase
+@inject IUsuarioWS UsuarioService
+@inject NavigationManager Navigation
 
-<div class="page d-flex flex-column vh-100 overflow-hidden">
-    <header class="top-row">
-        <Encabezado/>
-    </header>
+@if (true)
+{
+    <div class="page d-flex flex-column vh-100 overflow-hidden">
+        <header class="top-row d-flex justify-content-between align-items-center px-3">
+            <Encabezado/>
+            
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-muted">USERNAME</span>
+                <span class="badge bg-primary">ROL</span>
+                <button class="btn btn-outline-danger btn-sm"> 
+                    <!----@onclick="Logout"--> 
+                    Cerrar sesion</button>
+            </div>
+        </header>
 
-    <div class="sidebar">
-        <NavMenu UsuarioCategoria="Administrador"/>
+        <div class="sidebar">
+            <NavMenu UsuarioCategoria="Categoria"/>
+        </div>
+
+        <main class="flex-fill d-flex flex-column overflow-hidden">
+            <article class="content h-100">
+                @Body
+            </article>
+        </main>
     </div>
-
-    <main class="flex-fill d-flex flex-column overflow-hidden">
-        <article class="content h-100">
-            @Body
-        </article>
-    </main>
-</div>
+}
+else
+{
+    <div class="d-flex justify-content-center align-items-center vh-100">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
     <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    <span class="dismiss">x</span>
 </div>
 
-
-
-
-
+@code {
+    private Usuario usuario { get; set;}
+}

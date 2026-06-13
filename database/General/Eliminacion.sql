@@ -8,6 +8,8 @@ DROP TABLE IF EXISTS ope_comprobante_pago;
 DROP TABLE IF EXISTS ope_solicitud_gasto;
 DROP TABLE IF EXISTS ope_ciclo_caja;
 DROP TABLE IF EXISTS ope_rendicion;
+DROP TABLE IF EXISTS ope_excepcion_fin_semana;
+DROP TABLE IF EXISTS ope_tipo_transaccion;
 
 -- ---------------------------------------------------------
 -- MÓDULO 2: Tesorería (tes)
@@ -16,6 +18,10 @@ DROP TABLE IF EXISTS tes_caja_chica;
 DROP TABLE IF EXISTS tes_fondo;
 DROP TABLE IF EXISTS tes_cuenta_bancaria;
 DROP TABLE IF EXISTS tes_moneda;
+DROP TABLE IF EXISTS tes_tipo_billetera;
+DROP TABLE IF EXISTS tes_billetera_digital;
+DROP TABLE IF EXISTS tes_medio_pago;
+DROP TABLE IF EXISTS tes_tipo_cambio;
 
 -- ---------------------------------------------------------
 -- MÓDULO 1: Recursos Humanos (rrhh)

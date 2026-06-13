@@ -27,6 +27,7 @@ public class EmpleadoDAOImpl implements IEmpleadoDAO{
         parametrosEntrada.put("p_apellido_paterno", empleado.getApellidoPaterno());
         parametrosEntrada.put("p_apellido_materno", empleado.getApellidoMaterno());
         parametrosEntrada.put("p_password_hash", empleado.getPassword());
+        parametrosEntrada.put("p_correo", empleado.getCorreo());
 
         DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_usuario", parametrosEntrada, parametrosSalida);
         empleado.setUsuarioID((int)parametrosSalida.get("p_id_generado"));
@@ -34,7 +35,6 @@ public class EmpleadoDAOImpl implements IEmpleadoDAO{
         parametrosSalida = new HashMap<>();
         parametrosEntrada = new HashMap<>();
         parametrosEntrada.put("p_id_usuario", empleado.getUsuarioID());
-        parametrosEntrada.put("p_correo_institucional", empleado.getCorreoInstitucional());
         parametrosEntrada.put("p_numero_celular", empleado.getNumeroCelular());
         parametrosEntrada.put("p_id_area", empleado.getArea().getIdArea());
         parametrosEntrada.put("p_id_rol", empleado.getRol().getRolID());
@@ -56,10 +56,11 @@ public class EmpleadoDAOImpl implements IEmpleadoDAO{
         parametrosEntrada.put("p_apellido_paterno", empleado.getApellidoPaterno());
         parametrosEntrada.put("p_apellido_materno", empleado.getApellidoMaterno());
         parametrosEntrada.put("p_password_hash", empleado.getPassword());
+        parametrosEntrada.put("p_correo", empleado.getCorreo());
         int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_usuario", parametrosEntrada, null);
+        
         parametrosEntrada = new HashMap<>();
         parametrosEntrada.put("p_id_usuario", empleado.getUsuarioID());
-        parametrosEntrada.put("p_correo_institucional", empleado.getCorreoInstitucional());
         parametrosEntrada.put("p_numero_celular", empleado.getNumeroCelular());
         parametrosEntrada.put("p_id_area", empleado.getArea().getIdArea());
         parametrosEntrada.put("p_id_rol", empleado.getRol().getRolID());
@@ -89,7 +90,7 @@ public class EmpleadoDAOImpl implements IEmpleadoDAO{
             if(rs.next()){
                 empleado = new Empleado();
                 empleado.setUsuarioID(rs.getInt("id_usuario"));
-                empleado.setCorreoInstitucional(rs.getString("correo_institucional"));
+                empleado.setCorreo(rs.getString("correo"));
                 empleado.setNumeroCelular(rs.getString("numero_celular"));
                 if(empleado.getArea() == null)
                     empleado.setArea(new Area());
@@ -124,7 +125,7 @@ public class EmpleadoDAOImpl implements IEmpleadoDAO{
                 if(empleados == null) empleados = new ArrayList<>();
                 empleado = new Empleado();
                 empleado.setUsuarioID(rs.getInt("id_usuario"));
-                empleado.setCorreoInstitucional(rs.getString("correo_institucional"));
+                empleado.setCorreo(rs.getString("correo"));
                 empleado.setNumeroCelular(rs.getString("numero_celular"));
                 if(empleado.getArea() == null)
                     empleado.setArea(new Area());
@@ -193,7 +194,7 @@ public class EmpleadoDAOImpl implements IEmpleadoDAO{
                 empleado.setNombres(rs.getString("nombres"));
                 empleado.setApellidoPaterno(rs.getString("apellido_paterno"));
                 empleado.setApellidoMaterno(rs.getString("apellido_materno"));
-                empleado.setCorreoInstitucional(rs.getString("correo"));
+                empleado.setCorreo(rs.getString("correo"));
 
                 empleado.setPasswordHash(rs.getString("password"));
 
@@ -208,6 +209,4 @@ public class EmpleadoDAOImpl implements IEmpleadoDAO{
 
         return empleados;
     }
-
-
 }

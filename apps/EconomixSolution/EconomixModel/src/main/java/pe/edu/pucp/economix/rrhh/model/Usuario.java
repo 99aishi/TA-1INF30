@@ -10,26 +10,40 @@ public abstract class Usuario{
     private String apellidoMaterno;
     private String password;
     private EstadoUsuario estado;
-    //Constructores
+    private String correo;
+
     public Usuario(){}
 
-    public Usuario(int usuarioID, String nombres, String apellidoPaterno, String apellidoMaterno, String password, EstadoUsuario estado) {
+    public Usuario(int usuarioID, String nombres, String apellidoPaterno, String apellidoMaterno, 
+                   String password, EstadoUsuario estado, String correo) {
         this.usuarioID = usuarioID;
         this.nombres = nombres;
         this.apellidoPaterno = apellidoPaterno;
         this.apellidoMaterno = apellidoMaterno;
         this.password = password;
         this.estado = estado;
+        this.correo = correo;
     }
-    public Usuario(String nombres, String apellidoPaterno, String apellidoMaterno, String password, EstadoUsuario estado) {
+    public Usuario(String nombres, String apellidoPaterno, String apellidoMaterno, 
+                   String password, EstadoUsuario estado, String correo) {
         this.nombres = nombres;
         this.apellidoPaterno = apellidoPaterno;
         this.apellidoMaterno = apellidoMaterno;
         this.password = password;
         this.estado = estado;
+        this.correo = correo;
     }
 
-    //Selectores
+    public Usuario(Usuario usuario) {
+        this.correo = usuario.correo;
+        this.password = usuario.password;
+        this.apellidoMaterno = usuario.apellidoMaterno;
+        this.estado = usuario.estado;
+        this.apellidoPaterno = usuario.apellidoPaterno;
+        this.nombres = usuario.nombres;
+        this.usuarioID = usuario.usuarioID;
+    }
+
     public int getUsuarioID(){
         return usuarioID;
     }
@@ -73,8 +87,17 @@ public abstract class Usuario{
     public void setEstado(EstadoUsuario estado) {
         this.estado = estado;
     }
+    public String getCorreo() {
+        return correo;
+    }
+    public void setCorreo(String correo) {
+        this.correo = correo;
+    }
 
-    //Metodos
+    public boolean validarPassword(String password){
+        PasswordEncoder encoder = Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
+        return encoder.matches(password, this.password);
+    }
 
     @Override
     public String toString() {
@@ -85,17 +108,7 @@ public abstract class Usuario{
                 ", apellidoMaterno='" + apellidoMaterno + '\'' +
                 ", password='" + password + '\'' +
                 ", estado=" + estado +
+                ", correo='" + correo + '\'' +
                 '}';
     }
-
-    public boolean validarPassword(String password){
-        PasswordEncoder encoder = Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
-        if (encoder.matches(password, this.password)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-
 }

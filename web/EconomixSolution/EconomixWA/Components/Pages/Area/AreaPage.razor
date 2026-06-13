@@ -2,6 +2,7 @@
 
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
+@inject IAreaWS AreaWS
 
 <div class="h-100 d-flex flex-column">
 
@@ -28,21 +29,25 @@
 
                 <div class="card rounded-4 p-3 h-100 overflow-scroll">
 
-                    @for (int i = 0; i < 10; i++)
+                    @if (Areas.Count == 0)
                     {
-                         <AreaItem OnMuestraDetalle="MostrarDetalleArea" />
+                        <p class="h2 justify-content-center align-content-center align-items-center align-self-center">No hay Areas Disponibles</p>
                     }
-
+                    else
+                    {
+                        foreach(Area area in Areas)
+                        {
+                             <AreaItem OnMuestraDetalle="MostrarDetalleArea" Area="area"/>
+                        }
+                    }
                 </div>
 
             </div>
             @if (MostrarDetalle)
             {
-
                 <div class="col-6 h-100">
                     <AreaDetalle OnCerrarDetalle="CerrarDetalleArea"/>
                 </div>
-
             }
         </div>
 
@@ -51,22 +56,43 @@
 </div>
 
 @code {
+    //Atributos
     private bool MostrarDetalle { get; set; } = false;
+    private List<Area> Areas { get; set; } = new List<Area>();
 
+    //Navegacion
     private void IrRegistrarArea()
     {
         Navigation.NavigateTo("/area/Crear");
     }
-
+    //Detalle
     private void MostrarDetalleArea()
     {
         MostrarDetalle = true;
     }
-
     private void CerrarDetalleArea()
     {
         MostrarDetalle = false;
     }
+    
+    //Al inicio
+    protected override void OnInitialized()
+    {
+        
+    }
+
+    //Listar
+    protected override async Task OnInitializedAsync()
+    {
+        await ListarAreas();   
+    }
+    protected async Task ListarAreas()
+    {
+        Areas = await Task.Run(() => 
+            new List<Area>(AreaWS.listar()));
+    }
+    
+
 }
 
 

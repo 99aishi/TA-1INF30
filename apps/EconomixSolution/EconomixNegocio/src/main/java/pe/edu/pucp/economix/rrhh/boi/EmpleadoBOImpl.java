@@ -73,7 +73,7 @@ public class EmpleadoBOImpl implements IEmpleadoBO {
         validarApellidoPaterno(empleado.getApellidoPaterno());
         validarApellidoMaterno(empleado.getApellidoMaterno());
         validarPassword(empleado.getPassword());
-        validarCorreo(empleado.getCorreoInstitucional());
+        validarCorreo(empleado.getCorreo());
         validarNumeroCelular(empleado.getNumeroCelular());
     }
     public void validarRol(Rol rol)throws Exception{

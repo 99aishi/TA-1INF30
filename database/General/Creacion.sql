@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS rrhh_usuario (
     apellido_paterno VARCHAR(40) NOT NULL,
     apellido_materno VARCHAR(40),
     password_hash VARCHAR(255) NOT NULL,
+    correo VARCHAR(255) NOT NULL UNIQUE,
     esta_activo TINYINT(1) DEFAULT 1,
     
     -- Auditoría
@@ -58,7 +59,6 @@ CREATE TABLE IF NOT EXISTS rrhh_area (
 
 CREATE TABLE IF NOT EXISTS rrhh_empleado (
     id_usuario INT NOT NULL,
-    correo_institucional VARCHAR(100) NOT NULL,
     numero_celular VARCHAR(15),
     id_area INT NULL,
     id_rol INT NULL,
@@ -71,7 +71,6 @@ CREATE TABLE IF NOT EXISTS rrhh_empleado (
     id_usuario_modificacion INT,
     
     CONSTRAINT pk_rrhh_empleado PRIMARY KEY (id_usuario),
-    CONSTRAINT uk_rrhh_empleado_correo UNIQUE (correo_institucional),
     CONSTRAINT fk_rrhh_empleado_rrhh_usuario FOREIGN KEY (id_usuario) 
         REFERENCES rrhh_usuario(id_usuario),
     CONSTRAINT fk_rrhh_empleado_rrhh_area FOREIGN KEY (id_area) 
@@ -84,7 +83,6 @@ CREATE TABLE IF NOT EXISTS rrhh_empleado (
 
 CREATE TABLE IF NOT EXISTS rrhh_administrador (
     id_usuario INT NOT NULL,
-    correo_soporte VARCHAR(100),
     
     -- Auditoría
     creado_at DATETIME,

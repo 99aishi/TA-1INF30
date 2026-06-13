@@ -6,10 +6,8 @@ import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 
 public class Empleado extends Usuario {
-    private String correoInstitucional;
     private String numeroCelular;
 
-    //Relaciones
     private Rol rol;
     private Area area;
     private Empleado jefeDirecto;
@@ -17,17 +15,14 @@ public class Empleado extends Usuario {
     private List<SolicitudGasto> solicitudesEnviadas;
     private List<CuentaBancaria> cuentas;
 
-
-
-    //Constructror
     public Empleado(){}
 
-    public Empleado(int usuarioID, String nombres, String apellidoPaterno, String apellidoMaterno, String password,
-                    EstadoUsuario estado, String correoInstitucional, String numeroCelular,
-                    Rol rol, Area area, Empleado jefeDirecto, List<SolicitudGasto> solicitudesRecibidas,
-                    List<SolicitudGasto> solicitudesEnviadas, List<CuentaBancaria> cuentas) {
-        super(usuarioID, nombres, apellidoPaterno, apellidoMaterno, password, estado);
-        this.correoInstitucional = correoInstitucional;
+    public Empleado(int usuarioID, String nombres, String apellidoPaterno, String apellidoMaterno, 
+                    String password, EstadoUsuario estado, String correo,
+                    String numeroCelular, Rol rol, Area area, Empleado jefeDirecto, 
+                    List<SolicitudGasto> solicitudesRecibidas, List<SolicitudGasto> solicitudesEnviadas, 
+                    List<CuentaBancaria> cuentas) {
+        super(usuarioID, nombres, apellidoPaterno, apellidoMaterno, password, estado, correo);
         this.numeroCelular = numeroCelular;
         this.rol = rol;
         this.area = area;
@@ -37,12 +32,12 @@ public class Empleado extends Usuario {
         this.cuentas = cuentas;
     }
 
-    public Empleado(String nombres, String apellidoPaterno, String apellidoMaterno, String password,
-                    EstadoUsuario estado, String correoInstitucional, String numeroCelular,
-                    Rol rol, Area area, Empleado jefeDirecto,
-                    List<SolicitudGasto> solicitudesRecibidas, List<SolicitudGasto> solicitudesEnviadas, List<CuentaBancaria> cuentas) {
-        super(nombres, apellidoPaterno, apellidoMaterno, password, estado);
-        this.correoInstitucional = correoInstitucional;
+    public Empleado(String nombres, String apellidoPaterno, String apellidoMaterno, 
+                    String password, EstadoUsuario estado, String correo,
+                    String numeroCelular, Rol rol, Area area, Empleado jefeDirecto, 
+                    List<SolicitudGasto> solicitudesRecibidas, List<SolicitudGasto> solicitudesEnviadas, 
+                    List<CuentaBancaria> cuentas) {
+        super(nombres, apellidoPaterno, apellidoMaterno, password, estado, correo);
         this.numeroCelular = numeroCelular;
         this.rol = rol;
         this.area = area;
@@ -52,13 +47,17 @@ public class Empleado extends Usuario {
         this.cuentas = cuentas;
     }
 
-    //Selectores
-    public String getCorreoInstitucional() {
-        return correoInstitucional;
+    public Empleado(Empleado empleado){
+        super(empleado);
+        this.numeroCelular = empleado.numeroCelular;
+        this.rol = empleado.rol;
+        this.area = empleado.area;
+        this.jefeDirecto = empleado.jefeDirecto;
+        this.solicitudesRecibidas = empleado.solicitudesRecibidas;
+        this.solicitudesEnviadas = empleado.solicitudesEnviadas;
+        this.cuentas = empleado.cuentas;
     }
-    public void setCorreoInstitucional(String correoInstitucional) {
-        this.correoInstitucional = correoInstitucional;
-    }
+
     public String getNumeroCelular() {
         return numeroCelular;
     }
@@ -102,13 +101,10 @@ public class Empleado extends Usuario {
         this.cuentas = cuentas;
     }
 
-
-    //Metodos
     @Override
     public String toString() {
         return super.toString() + " Empleado{" +
-                "correoInstitucional='" + correoInstitucional + '\'' +
-                ", numeroCelular='" + numeroCelular + '\'' +
+                "numeroCelular='" + numeroCelular + '\'' +
                 ", rol=" + rol +
                 ", area=" + area +
                 ", jefeDirecto=" + jefeDirecto +
@@ -119,35 +115,20 @@ public class Empleado extends Usuario {
     }
 
     public List<SolicitudGasto> listarSolicitudesRecibidasPendientes(){
-        List<SolicitudGasto> solicitudesPendientes = null;
-
-        //TODO: Implementar la lista de las solicitudes pendientes para un usuario - Solo no permite de los empleados regulares
-        //Dashboaard princiapl del jefe de Area
-
-        return solicitudesPendientes;
+        return new java.util.ArrayList<>();
     }
 
     public List<SolicitudGasto> listarSolicitudesEnviadas(){
-        List<SolicitudGasto> solicitudes = null;
-
-        //TODO: Implementar la lista de las solicitudes enviadas para un usuario
-        //Dashboaard princiapl del jefe de Area
-
-        return solicitudes;
+        return new java.util.ArrayList<>();
     }
 
-    // Métodos en Empleado.java
     public void registrarSolicitudFondo(String motivo, double monto, java.util.Date fecha) {
-        // TODO: Crear solicitud con estado "pendiente" automáticamente (RF_06)
     }
 
     public void solicitarEfectivoCajaChica(double monto, String motivo) {
-        // TODO: Validar disponibilidad de saldo en tiempo real < 500ms (RF_13, RNF_04)
     }
 
     public boolean puedeAprobarSolicitud(SolicitudGasto solicitud) {
-        // TODO: Bloquear si el Jefe de Área intenta aprobar su propia solicitud (RF_15)
         return false;
     }
-
 }

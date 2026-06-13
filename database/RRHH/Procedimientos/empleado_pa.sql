@@ -3,7 +3,6 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS pa_insertar_empleado $$
 CREATE PROCEDURE pa_insertar_empleado(
     IN p_id_usuario INT,
-    IN p_correo_institucional VARCHAR(100),
     IN p_numero_celular VARCHAR(15),
     IN p_id_area INT,
     IN p_id_rol INT,
@@ -16,7 +15,6 @@ BEGIN
 
     INSERT INTO rrhh_empleado(
         id_usuario,
-        correo_institucional,
         numero_celular,
         id_area,
         id_rol,
@@ -24,7 +22,6 @@ BEGIN
     )
     VALUES(
         p_id_usuario,
-        p_correo_institucional,
         p_numero_celular,
         p_id_area,
         p_id_rol,
@@ -35,7 +32,6 @@ END$$
 DROP PROCEDURE IF EXISTS pa_modificar_empleado $$
 CREATE PROCEDURE pa_modificar_empleado(
     IN p_id_usuario INT,
-    IN p_correo_institucional VARCHAR(100),
     IN p_numero_celular VARCHAR(15),
     IN p_id_area INT,
     IN p_id_rol INT,
@@ -43,12 +39,11 @@ CREATE PROCEDURE pa_modificar_empleado(
 )
 BEGIN
     IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del empleado no es válido';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del empleado no es valido';
     END IF;
 
     UPDATE rrhh_empleado
-       SET correo_institucional = p_correo_institucional,
-           numero_celular = p_numero_celular,
+       SET numero_celular = p_numero_celular,
            id_area = p_id_area,
            id_rol = p_id_rol,
            id_jefe_directo = p_id_jefe_directo
@@ -61,7 +56,7 @@ CREATE PROCEDURE pa_eliminar_empleado(
 )
 BEGIN
     IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del empleado no es válido';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del empleado no es valido';
     END IF;
 
     UPDATE rrhh_usuario
@@ -75,7 +70,7 @@ CREATE PROCEDURE pa_buscar_empleado_por_id(
 )
 BEGIN
     IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del empleado no es válido';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del empleado no es valido';
     END IF;
     SELECT 
         u.id_usuario, 
@@ -83,7 +78,7 @@ BEGIN
         u.apellido_paterno, 
         u.apellido_materno,
         u.password_hash,
-        e.correo_institucional, 
+        u.correo,
         e.numero_celular, 
         e.id_area, 
         e.id_rol, 
@@ -103,7 +98,7 @@ BEGIN
         u.apellido_paterno, 
         u.apellido_materno,
         u.password_hash,
-        e.correo_institucional, 
+        u.correo,
         e.numero_celular, 
         e.id_area, 
         e.id_rol, 

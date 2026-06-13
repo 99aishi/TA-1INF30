@@ -1,3 +1,5 @@
 <Solution>
-  <Project Path="EconomixWA/EconomixWA.csproj"/>
+  <Project Path="EconomixModel/EconomixModel.csproj" />
+  <Project Path="EconomixWA/EconomixWA.csproj" />
+  <Project Path="EconomixWS/EconomixWS.csproj" />
 </Solution>

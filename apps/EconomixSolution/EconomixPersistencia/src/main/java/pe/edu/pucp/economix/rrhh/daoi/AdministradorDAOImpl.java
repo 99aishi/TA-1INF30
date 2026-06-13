@@ -26,6 +26,7 @@ public class AdministradorDAOImpl implements IAdministradorDAO {
         parametrosEntrada.put("p_apellido_paterno", administrador.getApellidoPaterno());
         parametrosEntrada.put("p_apellido_materno", administrador.getApellidoMaterno());
         parametrosEntrada.put("p_password_hash", administrador.getPassword());
+        parametrosEntrada.put("p_correo", administrador.getCorreo());
 
         DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_usuario", parametrosEntrada, parametrosSalida);
         administrador.setUsuarioID((int)parametrosSalida.get("p_id_generado"));
@@ -33,7 +34,6 @@ public class AdministradorDAOImpl implements IAdministradorDAO {
         parametrosSalida = new HashMap<>();
         parametrosEntrada = new HashMap<>();
         parametrosEntrada.put("p_id_usuario", administrador.getUsuarioID());
-        parametrosEntrada.put("p_correo_soporte", administrador.getCorreoSoporte());
         DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_administrador", parametrosEntrada, parametrosSalida);
 
         return administrador.getUsuarioID();
@@ -46,10 +46,11 @@ public class AdministradorDAOImpl implements IAdministradorDAO {
         parametrosEntrada.put("p_apellido_paterno", administrador.getApellidoPaterno());
         parametrosEntrada.put("p_apellido_materno", administrador.getApellidoMaterno());
         parametrosEntrada.put("p_password_hash", administrador.getPassword());
+        parametrosEntrada.put("p_correo", administrador.getCorreo());
         int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_usuario", parametrosEntrada, null);
+        
         parametrosEntrada = new HashMap<>();
         parametrosEntrada.put("p_id_usuario", administrador.getUsuarioID());
-        parametrosEntrada.put("p_id_correo_soporte", administrador.getCorreoSoporte());
         DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_administrador", parametrosEntrada, null);
         return resultado;
     }
@@ -70,7 +71,7 @@ public class AdministradorDAOImpl implements IAdministradorDAO {
             if(rs.next()){
                 administrador = new Administrador();
                 administrador.setUsuarioID(rs.getInt("id_usuario"));
-                administrador.setCorreoSoporte(rs.getString("correo_soporte"));
+                administrador.setCorreo(rs.getString("correo"));
                 administrador.setEstado(EstadoUsuario.Activo);
                 administrador.setPassword(rs.getString("password_hash"));
                 administrador.setNombres(rs.getString("nombres"));
@@ -94,7 +95,7 @@ public class AdministradorDAOImpl implements IAdministradorDAO {
                 if(administradores == null) administradores = new ArrayList<>();
                 administrador = new Administrador();
                 administrador.setUsuarioID(rs.getInt("id_usuario"));
-                administrador.setCorreoSoporte(rs.getString("correo_soporte"));
+                administrador.setCorreo(rs.getString("correo"));
                 administrador.setEstado(EstadoUsuario.Activo);
                 administrador.setPassword(rs.getString("password_hash"));
                 administrador.setNombres(rs.getString("nombres"));

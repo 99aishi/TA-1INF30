@@ -11,4 +11,9 @@
     <PackageReference Include="Soenneker.Blazor.Mocks.NavigationManager" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\EconomixModel\EconomixModel.csproj" />
+    <ProjectReference Include="..\EconomixWS\EconomixWS.csproj" />
+  </ItemGroup>
+
 </Project>

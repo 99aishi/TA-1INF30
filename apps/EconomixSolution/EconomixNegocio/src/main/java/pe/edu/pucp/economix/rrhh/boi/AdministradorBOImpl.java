@@ -54,19 +54,13 @@ public class AdministradorBOImpl implements IAdministradorBO {
         }
         validarNombre(admin.getNombres());
         validarApellidoPaterno(admin.getApellidoPaterno());
-        validarApellidoMaterno(admin.getApellidoMaterno());
         validarPassword(admin.getPassword());
-        validarCorreoSoporte(admin.getCorreoSoporte());
+        validarCorreo(admin.getCorreo());
 
     }
     public void validarNombre(String nombre) throws Exception{
         if (nombre == null || nombre.trim().isEmpty()) {
             throw new Exception("El nombre del administrador es obligatorio.");
-        }
-    }
-    public void validarApellidoMaterno(String apMaterno) throws Exception{
-        if (apMaterno == null || apMaterno.trim().isEmpty()) {
-            throw new Exception("El apellido materno del administrador es obligatorio.");
         }
     }
     public void validarApellidoPaterno(String apPaterno) throws Exception{
@@ -79,14 +73,14 @@ public class AdministradorBOImpl implements IAdministradorBO {
             throw new Exception("El password del administrador es obligatorio.");
         }
     }
-    public void validarCorreoSoporte(String correo) throws Exception{
+    public void validarCorreo(String correo) throws Exception{
         if (correo == null || correo.trim().isEmpty()) {
             throw new Exception("El correo del administrador es obligatorio.");
         }
     }
     public int verificarCuenta(String correo, String password) throws Exception{
         validarPassword(password);
-        validarCorreoSoporte(correo);
+        validarCorreo(correo);
         return  administradorDAO.verificarCuenta(correo,password);
     }
 }

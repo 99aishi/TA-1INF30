@@ -17,7 +17,7 @@ public class AdministradorTest {
         admin1.setNombres("Soporte");
         admin1.setApellidoPaterno("Técnico");
         admin1.setApellidoMaterno("De TI");
-        admin1.setCorreoSoporte("soporte@empresa.com");
+        admin1.setCorreo("soporte@empresa.com");
         admin1.setPassword("TILIN");
         admin1.setEstado(EstadoUsuario.Activo);
 

@@ -3,6 +3,7 @@
 
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
+@inject IAreaWS AreaWS
 
 <div class="d-flex flex-column h-100 mb-3">
     <div class="row h-100 @(EsCreacion? "mb-3": " ")">
@@ -16,7 +17,7 @@
                         }
                         else
                         {
-                            <p class="h3"> Area Nro 4 </p>
+                            <p class="h3"> Area Nro @Area.AreaID</p>
                         }
                         <div class="d-flex flex-column justify-content-center gap-2">
                             <span class="badge text-bg-success rounded-pill px-2">
@@ -27,27 +28,42 @@
                     <div class="row">
                         <div class="col-6 mt-3">
                             <label for="NombreArea" class="form-label">Nombre del área</label>
-                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="NombreArea" placeholder="Ingrese el nombre del área">
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="NombreArea" 
+                                   placeholder="Ingrese el nombre del área" @bind="Area.Nombre">
                         </div>
                         <div class="col-6 mt-3">
                             <label for="NombreJefe" class="form-label">
                                 Nombre del jefe
                             </label>
-                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="NombreJefe" placeholder="Ingrese el nombre del jefe">
+                            @if (Area.Jefe != null)
+                            {
+                                <input type="text" 
+                                       class="form-control" 
+                                       placeholder="Ingrese el nombre del jefe" 
+                                       @bind="Area.Jefe.Nombres" />
+                            }
+                            else
+                            {
+                                <input type="text" 
+                                       class="form-control"
+                                       placeholder="Ingrese el nombre del jefe"/>
+                            }
                         </div>
 
                         <div class="col-6 mt-3">
                             <label for="FondoMaximo" class="form-label">
                                 Fondo máximo
                             </label>
-                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="FondoMaximo" placeholder="S/ 0.00"> 
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="FondoMaximo" 
+                                   placeholder="S/ 0.00"> 
                         </div>
                         
                         <div class="col-12 mt-3">
                             <label for="DescripcionArea" class="form-label">
                                 Descripción
                             </label>
-                            <textarea class="form-control bg-light rounded-4" id="DescripcionArea" rows="4" placeholder="Ingrese una descripción del área"></textarea>
+                            <textarea class="form-control bg-light rounded-4" id="DescripcionArea" rows="4" 
+                                    placeholder="Ingrese una descripción del área" @bind="@Area.Descripcion"></textarea>
                         </div>
                     </div>
                 </div>
@@ -55,7 +71,7 @@
                 <div class="d-flex justify-content-end gap-3 mt-4">
                 @if (EsCreacion)
                 {
-                    <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="IrAAreas">
+                    <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="InsertarArea">
                         Registrar
                     </button>
                     <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="IrAAreas">
@@ -86,24 +102,38 @@
 </div>
 
 @code {
+    //Parametros
     [Parameter]
     public EventCallback OnCerrarDetalle{ get; set; }
+    private bool EsCreacion { get; set; }
 
-    public async Task CerrarDetalle()
+    private Area Area { get; set;} = new Area();
+
+    //Navegacion
+    private async Task CerrarDetalle()
     {
         await OnCerrarDetalle.InvokeAsync();
     }
-    private void Guardar()
+    private void IrAAreas()
     {
-        Navigation.NavigateTo("/areas");
+         Navigation.NavigateTo("/Areas");
     }
-    private bool EsCreacion { get; set; }
+    //Inicializacion
     protected override void OnInitialized()
     {
         EsCreacion = Navigation.Uri.Contains("/Crear");
+        if (EsCreacion)
+        {
+            Area = new Area();
+            Area.Jefe = null;
+        }
     }
-    private void IrAAreas()
+
+    private async Task InsertarArea()
     {
-        Navigation.NavigateTo("/Areas");
+        await Task.Run(() => AreaWS.insertar(Area));
+        await Task.Run(() => IrAAreas());
     }
+    
+    //Servicios
 }

@@ -21,7 +21,7 @@ public class EmpleadoTest {
         jefe.setApellidoPaterno("Páramo");
         jefe.setEstado(EstadoUsuario.Activo);
         jefe.setApellidoMaterno("Galvez");
-        jefe.setCorreoInstitucional("p.paramo@acervo.com");
+        jefe.setCorreo("p.paramo@acervo.com");
         jefe.setPassword("TILIN");
         jefe.setArea(areaGerenciaGeneral);
         jefe.setRol(rolGerenteGeneral);
@@ -35,7 +35,7 @@ public class EmpleadoTest {
         emp1.setApellidoPaterno("Pérez");
         emp1.setApellidoMaterno("Niebla");
         emp1.setEstado(EstadoUsuario.Activo);
-        emp1.setCorreoInstitucional("a.perez@acervo.com");
+        emp1.setCorreo("a.perez@acervo.com");
         emp1.setPassword("TILIN");
         emp1.setNumeroCelular("993000003");
         emp1.setArea(areaTI);
@@ -49,7 +49,7 @@ public class EmpleadoTest {
         emp2.setApellidoPaterno("Trueba");
         emp2.setApellidoMaterno("Del Valle");
         emp2.setEstado(EstadoUsuario.Activo);
-        emp2.setCorreoInstitucional("e.trueba@acervo.com");
+        emp2.setCorreo("e.trueba@acervo.com");
         emp2.setPassword("TILIN");
         emp2.setNumeroCelular("999000222");
         emp2.setArea(areaFinanzas);
@@ -63,7 +63,7 @@ public class EmpleadoTest {
         emp3.setApellidoPaterno("Nasar");
         emp3.setApellidoMaterno("Linares");
         emp3.setEstado(EstadoUsuario.Activo);
-        emp3.setCorreoInstitucional("s.nasar@acervo.com");
+        emp3.setCorreo("s.nasar@acervo.com");
         emp3.setPassword("TILIN");
         emp3.setNumeroCelular("991000001");
         emp3.setArea(areaFinanzas);
@@ -115,7 +115,7 @@ public class EmpleadoTest {
                         e.getNombres(),
                         e.getApellidoPaterno(),
                         e.getApellidoMaterno() != null ? e.getApellidoMaterno() : "",
-                        e.getCorreoInstitucional(),
+                        e.getCorreo(),
                         password != null ? password : "");
             }
         }

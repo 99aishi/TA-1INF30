@@ -4,6 +4,7 @@ DELIMITER //
 -- 1. TABLA: rrhh_rol
 -- ===============================================================================
 
+DROP TRIGGER IF EXISTS trg_rrhh_rol_before_insert //
 CREATE TRIGGER trg_rrhh_rol_before_insert
 BEFORE INSERT ON rrhh_rol
 FOR EACH ROW
@@ -14,6 +15,7 @@ BEGIN
     SET NEW.id_usuario_modificacion = COALESCE(NEW.id_usuario_modificacion, @id_usuario_actual);
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_rol_before_update //
 CREATE TRIGGER trg_rrhh_rol_before_update
 BEFORE UPDATE ON rrhh_rol
 FOR EACH ROW
@@ -22,6 +24,7 @@ BEGIN
     SET NEW.id_usuario_modificacion = COALESCE(NEW.id_usuario_modificacion, @id_usuario_actual);
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_rol_after_insert //
 CREATE TRIGGER trg_rrhh_rol_after_insert
 AFTER INSERT ON rrhh_rol
 FOR EACH ROW
@@ -41,6 +44,7 @@ BEGIN
     );
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_rol_after_update //
 CREATE TRIGGER trg_rrhh_rol_after_update
 AFTER UPDATE ON rrhh_rol
 FOR EACH ROW
@@ -65,6 +69,7 @@ BEGIN
     );
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_rol_after_delete //
 CREATE TRIGGER trg_rrhh_rol_after_delete
 AFTER DELETE ON rrhh_rol
 FOR EACH ROW
@@ -88,6 +93,7 @@ END //
 -- 2. TABLA: rrhh_usuario
 -- ===============================================================================
 
+DROP TRIGGER IF EXISTS trg_rrhh_usuario_before_insert //
 CREATE TRIGGER trg_rrhh_usuario_before_insert
 BEFORE INSERT ON rrhh_usuario
 FOR EACH ROW
@@ -98,6 +104,7 @@ BEGIN
     SET NEW.id_usuario_modificacion = COALESCE(NEW.id_usuario_modificacion, @id_usuario_actual);
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_usuario_before_update //
 CREATE TRIGGER trg_rrhh_usuario_before_update
 BEFORE UPDATE ON rrhh_usuario
 FOR EACH ROW
@@ -106,6 +113,7 @@ BEGIN
     SET NEW.id_usuario_modificacion = COALESCE(NEW.id_usuario_modificacion, @id_usuario_actual);
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_usuario_after_insert //
 CREATE TRIGGER trg_rrhh_usuario_after_insert
 AFTER INSERT ON rrhh_usuario
 FOR EACH ROW
@@ -127,6 +135,7 @@ BEGIN
     );
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_usuario_after_update //
 CREATE TRIGGER trg_rrhh_usuario_after_update
 AFTER UPDATE ON rrhh_usuario
 FOR EACH ROW
@@ -155,6 +164,7 @@ BEGIN
     );
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_usuario_after_delete //
 CREATE TRIGGER trg_rrhh_usuario_after_delete
 AFTER DELETE ON rrhh_usuario
 FOR EACH ROW
@@ -180,6 +190,7 @@ END //
 -- 3. TABLA: rrhh_area
 -- ===============================================================================
 
+DROP TRIGGER IF EXISTS trg_rrhh_area_before_insert //
 CREATE TRIGGER trg_rrhh_area_before_insert
 BEFORE INSERT ON rrhh_area
 FOR EACH ROW
@@ -190,6 +201,8 @@ BEGIN
     SET NEW.id_usuario_modificacion = COALESCE(NEW.id_usuario_modificacion, @id_usuario_actual);
 END //
 
+
+DROP TRIGGER IF EXISTS trg_rrhh_area_before_update //
 CREATE TRIGGER trg_rrhh_area_before_update
 BEFORE UPDATE ON rrhh_area
 FOR EACH ROW
@@ -198,6 +211,7 @@ BEGIN
     SET NEW.id_usuario_modificacion = COALESCE(NEW.id_usuario_modificacion, @id_usuario_actual);
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_area_after_insert //
 CREATE TRIGGER trg_rrhh_area_after_insert
 AFTER INSERT ON rrhh_area
 FOR EACH ROW
@@ -218,6 +232,7 @@ BEGIN
     );
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_area_after_update //
 CREATE TRIGGER trg_rrhh_area_after_update
 AFTER UPDATE ON rrhh_area
 FOR EACH ROW
@@ -244,6 +259,7 @@ BEGIN
     );
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_area_after_delete //
 CREATE TRIGGER trg_rrhh_area_after_delete
 AFTER DELETE ON rrhh_area
 FOR EACH ROW
@@ -268,6 +284,7 @@ END //
 -- 4. TABLA: rrhh_empleado
 -- ===============================================================================
 
+DROP TRIGGER IF EXISTS trg_rrhh_empleado_before_insert //
 CREATE TRIGGER trg_rrhh_empleado_before_insert
 BEFORE INSERT ON rrhh_empleado
 FOR EACH ROW
@@ -278,6 +295,7 @@ BEGIN
     SET NEW.id_usuario_modificacion = COALESCE(NEW.id_usuario_modificacion, @id_usuario_actual);
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_empleado_before_update //
 CREATE TRIGGER trg_rrhh_empleado_before_update
 BEFORE UPDATE ON rrhh_empleado
 FOR EACH ROW
@@ -286,6 +304,7 @@ BEGIN
     SET NEW.id_usuario_modificacion = COALESCE(NEW.id_usuario_modificacion, @id_usuario_actual);
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_empleado_after_insert //
 CREATE TRIGGER trg_rrhh_empleado_after_insert
 AFTER INSERT ON rrhh_empleado
 FOR EACH ROW
@@ -297,7 +316,6 @@ BEGIN
         NULL,
         JSON_OBJECT(
             'id_usuario', NEW.id_usuario,
-            'correo_institucional', NEW.correo_institucional,
             'numero_celular', NEW.numero_celular,
             'id_area', NEW.id_area,
             'id_rol', NEW.id_rol,
@@ -307,6 +325,7 @@ BEGIN
     );
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_empleado_after_update // 
 CREATE TRIGGER trg_rrhh_empleado_after_update
 AFTER UPDATE ON rrhh_empleado
 FOR EACH ROW
@@ -317,7 +336,6 @@ BEGIN
         CAST(NEW.id_usuario AS CHAR),
         JSON_OBJECT(
             'id_usuario', OLD.id_usuario,
-            'correo_institucional', OLD.correo_institucional,
             'numero_celular', OLD.numero_celular,
             'id_area', OLD.id_area,
             'id_rol', OLD.id_rol,
@@ -325,7 +343,6 @@ BEGIN
         ),
         JSON_OBJECT(
             'id_usuario', NEW.id_usuario,
-            'correo_institucional', NEW.correo_institucional,
             'numero_celular', NEW.numero_celular,
             'id_area', NEW.id_area,
             'id_rol', NEW.id_rol,
@@ -335,6 +352,7 @@ BEGIN
     );
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_empleado_after_delete //
 CREATE TRIGGER trg_rrhh_empleado_after_delete
 AFTER DELETE ON rrhh_empleado
 FOR EACH ROW
@@ -345,7 +363,6 @@ BEGIN
         CAST(OLD.id_usuario AS CHAR),
         JSON_OBJECT(
             'id_usuario', OLD.id_usuario,
-            'correo_institucional', OLD.correo_institucional,
             'numero_celular', OLD.numero_celular,
             'id_area', OLD.id_area,
             'id_rol', OLD.id_rol,
@@ -360,6 +377,8 @@ END //
 -- 5. TABLA: rrhh_administrador
 -- ===============================================================================
 
+
+DROP TRIGGER IF EXISTS trg_rrhh_administrador_before_insert //
 CREATE TRIGGER trg_rrhh_administrador_before_insert
 BEFORE INSERT ON rrhh_administrador
 FOR EACH ROW
@@ -370,6 +389,7 @@ BEGIN
     SET NEW.id_usuario_modificacion = COALESCE(NEW.id_usuario_modificacion, @id_usuario_actual);
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_administrador_before_update //
 CREATE TRIGGER trg_rrhh_administrador_before_update
 BEFORE UPDATE ON rrhh_administrador
 FOR EACH ROW
@@ -378,6 +398,7 @@ BEGIN
     SET NEW.id_usuario_modificacion = COALESCE(NEW.id_usuario_modificacion, @id_usuario_actual);
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_administrador_after_insert //
 CREATE TRIGGER trg_rrhh_administrador_after_insert
 AFTER INSERT ON rrhh_administrador
 FOR EACH ROW
@@ -388,13 +409,13 @@ BEGIN
         CAST(NEW.id_usuario AS CHAR),
         NULL,
         JSON_OBJECT(
-            'id_usuario', NEW.id_usuario,
-            'correo_soporte', NEW.correo_soporte
+            'id_usuario', NEW.id_usuario
         ),
         NEW.id_usuario_creacion
     );
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_administrador_after_update //
 CREATE TRIGGER trg_rrhh_administrador_after_update
 AFTER UPDATE ON rrhh_administrador
 FOR EACH ROW
@@ -404,17 +425,16 @@ BEGIN
         'UPDATE',
         CAST(NEW.id_usuario AS CHAR),
         JSON_OBJECT(
-            'id_usuario', OLD.id_usuario,
-            'correo_soporte', OLD.correo_soporte
+            'id_usuario', OLD.id_usuario
         ),
         JSON_OBJECT(
-            'id_usuario', NEW.id_usuario,
-            'correo_soporte', NEW.correo_soporte
+            'id_usuario', NEW.id_usuario
         ),
         NEW.id_usuario_modificacion
     );
 END //
 
+DROP TRIGGER IF EXISTS trg_rrhh_administrador_after_delete //
 CREATE TRIGGER trg_rrhh_administrador_after_delete
 AFTER DELETE ON rrhh_administrador
 FOR EACH ROW
@@ -424,9 +444,7 @@ BEGIN
         'DELETE',
         CAST(OLD.id_usuario AS CHAR),
         JSON_OBJECT(
-            'id_usuario', OLD.id_usuario,
-            'correo_soporte', OLD.correo_soporte
-        ),
+            'id_usuario', OLD.id_usuario        ),
         NULL,
         IFNULL(@id_usuario_actual, OLD.id_usuario_modificacion)
     );

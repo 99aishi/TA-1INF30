@@ -1,5 +1,6 @@
 DELIMITER $$
 
+DROP PROCEDURE IF EXISTS pa_obtener_password_administrador_por_correo $$ 
 CREATE PROCEDURE pa_obtener_password_administrador_por_correo(
     IN p_correo VARCHAR(100)
 )
@@ -16,6 +17,7 @@ DELIMITER ;
 
 DELIMITER $$
 
+DROP PROCEDURE IF EXISTS pa_obtener_password_empleado_por_correo $$
 CREATE PROCEDURE pa_obtener_password_empleado_por_correo(
     IN p_correo VARCHAR(100)
 )
@@ -34,6 +36,7 @@ DELIMITER ;
 
 DELIMITER $$
 
+DROP PROCEDURE IF EXISTS pa_buscar_empleados_por_nombre_apellido $$
 CREATE PROCEDURE pa_buscar_empleados_por_nombre_apellido(
     IN p_busqueda VARCHAR(100)
 )

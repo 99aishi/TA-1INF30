@@ -16,11 +16,10 @@
 @code {
     public List<String> opcionesMenu = new();
 
-    [Parameter]
-    public String UsuarioCategoria { get; set; }
+    [Parameter] public String UsuarioCategoria { get; set; } = "ADministrador";
 
-    private String NombreEmpleado = "Pedro Paramo";
-    private String RolEmpleado = "Jefe de TI";
+    private String NombreEmpleado { get; set; }= "Pedro Paramo";
+    private String RolEmpleado { get; set; } = "Jefe de TI";
 
     protected override void OnInitialized()
     {

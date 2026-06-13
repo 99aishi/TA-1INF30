@@ -9,13 +9,9 @@ import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.operaciones.test.CicloCajaChicaTest;
 import pe.edu.pucp.economix.operaciones.test.ComprobantePagoTest;
 import pe.edu.pucp.economix.operaciones.test.SolicitudGastoTest;
-import pe.edu.pucp.economix.rrhh.boi.AdministradorBOImpl;
-import pe.edu.pucp.economix.rrhh.boi.EmpleadoBOImpl;
-import pe.edu.pucp.economix.rrhh.ibo.IAdministradorBO;
-import pe.edu.pucp.economix.rrhh.ibo.IEmpleadoBO;
-import pe.edu.pucp.economix.rrhh.model.Area;
-import pe.edu.pucp.economix.rrhh.model.Empleado;
-import pe.edu.pucp.economix.rrhh.model.Rol;
+import pe.edu.pucp.economix.rrhh.boi.*;
+import pe.edu.pucp.economix.rrhh.ibo.*;
+import pe.edu.pucp.economix.rrhh.model.*;
 import pe.edu.pucp.economix.rrhh.test.AdministradorTest;
 import pe.edu.pucp.economix.rrhh.test.AreaTest;
 import pe.edu.pucp.economix.rrhh.test.EmpleadoTest;
@@ -57,6 +53,55 @@ public class Main {
 //        EmpleadoTest.probarLoginEmpleado("p.paramo@acervo.com", "TILIN");
 //        AdministradorTest.probarLoginAdministrador("soporte@empresa.com", "TILIN");
 //        EmpleadoTest.probarListarPorNombreApellido("Pe");
+
+
+//        Administrador admin = new Administrador();
+//        admin.setNombres("Administrador");
+//        admin.setCorreo("administrador@economix.pe");
+//        admin.setApellidoPaterno("Principal");
+//        admin.setPassword("administrador123");
+//
+//        IAdministradorBO administradorBO = new AdministradorBOImpl();
+//        administradorBO.insertar(admin);
+
+        //IUsuarioBO usuarioBO = new UsuarioBOImpl();
+        //Usuario logeado = usuarioBO.validarUsuario("administrador@economix.pe", "administrador123");
+
+        //REtorna excepcion
+        // Usuario fallido = usuarioBO.validarUsuario("administrador@economix.pe", "administrador1234");
+
+        //System.out.println(logeado);
+        //System.out.println(fallido);
+
+        Rol rol = new Rol("PrimerArea", "Area encargada de ser la primera");
+        IRolBO rolBO = new RolBOImpl();
+        rol.setRolID(1);
+
+        Area area = new Area();
+        area.setNombre("Area1");
+        area.setDescripcion("Descripcion del area");
+
+            System.out.println(area);
+
+        IAreaBO areaBO = new AreaBOImpl();
+        area.setIdArea(1);
+
+        Empleado empleado = new Empleado();
+        empleado.setCorreo("empleado1@economix.pe");
+        empleado.setPassword("empleado123");
+        empleado.setNombres("Empleado");
+        empleado.setApellidoPaterno("Primero");
+        empleado.setApellidoMaterno("Primero");
+        empleado.setArea(area);
+        empleado.setRol(rol);
+        empleado.setNumeroCelular("999999999");
+
+
+        IEmpleadoBO empleadoBO = new EmpleadoBOImpl();
+        System.out.println(empleadoBO.insertar(empleado));
+
+
+
     }
 
 }

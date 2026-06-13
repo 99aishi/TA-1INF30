@@ -6,7 +6,7 @@
 
             <div class="d-flex justify-content-start align-items-start gap-3">
                 <p class="h5 mb-1">
-                    Recursos Humanos
+                    @Area.Nombre
                 </p>
 
                 <span class="badge bg-success-subtle text-success rounded-pill">
@@ -16,10 +16,10 @@
 
             <div class="d-flex flex-column justify-content-start">
                 <p class="text-muted m-0">
-                    Responsable: Carlos Ruiz
+                    Responsable: @Area.Jefe.Nombres.Concat(Area.Jefe.ApellidoPaterno).Concat(Area.Jefe.ApellidoMaterno)
                 </p>
                 <p class="text-muted m-0">
-                    Desripcion detallada del area qué es lo que hace al final
+                    @Area.Descripcion
                 </p>
 
             </div>
@@ -32,13 +32,11 @@
                 <p class="h4 mb-0">
                     S/ 8,000.00
                 </p>
-                <div class="progress rounded-4 w-100" style="height: 10px;"">
+                <div class="progress rounded-4 w-100" style="height: 10px">
                     <div class="progress-bar rounded-4" style="width: 67%" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
             </div>
-
-            <button class="btn btn-outline-primary"
-                    @onclick="AbrirDetalle">
+            <button class="btn btn-outline-primary" @onclick="AbrirDetalle">
                 Ver
             </button>
 
@@ -51,6 +49,9 @@
 @code {
     [Parameter]
     public EventCallback OnMuestraDetalle { get; set; }
+
+    [Parameter] 
+    public Area? Area { get; set; }
 
     public async Task AbrirDetalle()
     {
