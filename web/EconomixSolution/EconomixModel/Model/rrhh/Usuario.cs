@@ -4,7 +4,7 @@ namespace EconomixModel.Model;
 
 [JsonPolymorphic(
     TypeDiscriminatorPropertyName = "$type", 
-    UnknownDerivedTypeHandling = JsonUnknownDerivedTypeHandling.FallBackToNearestAncestor // 👈 ESTO
+    UnknownDerivedTypeHandling = JsonUnknownDerivedTypeHandling.FallBackToNearestAncestor
 )]
 [JsonDerivedType(typeof(Empleado), typeDiscriminator: "empleado")]
 [JsonDerivedType(typeof(Administrador), typeDiscriminator: "administrador")]
@@ -27,4 +27,10 @@ public abstract class Usuario
 
     [JsonPropertyName("estado")]
     public string Estado { get; set; } = string.Empty;
+
+    [JsonPropertyName("correo")]
+    public string Correo { get; set; } = string.Empty;
+
+    [JsonPropertyName("rol")]
+    public virtual Rol? Rol { get; set; }
 }

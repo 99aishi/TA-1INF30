@@ -4,5 +4,8 @@ namespace EconomixWS.UsuarioWS;
 
 public interface IUsuarioWS
 {
-    Task<Usuario?> ValidarCredencialesAsync(LoginRequest request);
+    Usuario? ValidarCredenciales(LoginRequest request);
+    bool IsAuthenticated();
+    Usuario? GetCurrentUser();
+    void Logout();
 }
