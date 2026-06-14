@@ -29,9 +29,17 @@
 
                 <div class="card rounded-4 p-3 h-100 overflow-scroll">
 
-                    @if (Areas.Count == 0)
+                    @if (Cargando)
                     {
-                        <p class="h2 justify-content-center align-content-center align-items-center align-self-center">No hay Areas Disponibles</p>
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <p class="text-muted">Cargando Areas...</p>
+                        </div>
+                    }
+                    else if (Areas.Count == 0)
+                    {
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <p class="text-muted">No existe ninguna area registrada</p>
+                        </div>
                     }
                     else
                     {
@@ -56,43 +64,37 @@
 </div>
 
 @code {
-    //Atributos
     private bool MostrarDetalle { get; set; } = false;
+    private bool Cargando { get; set; } = true;
     private List<Area> Areas { get; set; } = new List<Area>();
 
-    //Navegacion
     private void IrRegistrarArea()
     {
         Navigation.NavigateTo("/area/Crear");
     }
-    //Detalle
+
     private void MostrarDetalleArea()
     {
         MostrarDetalle = true;
     }
+
     private void CerrarDetalleArea()
     {
         MostrarDetalle = false;
     }
     
-    //Al inicio
-    protected override void OnInitialized()
-    {
-        
-    }
-
-    //Listar
     protected override async Task OnInitializedAsync()
     {
-        await ListarAreas();   
+        Cargando = true;
+        await ListarAreas();
+        Cargando = false;
     }
-    protected async Task ListarAreas()
+
+    private async Task ListarAreas()
     {
         Areas = await Task.Run(() => 
             new List<Area>(AreaWS.listar()));
     }
-    
-
 }
 
 

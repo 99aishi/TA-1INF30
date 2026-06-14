@@ -31,6 +31,22 @@ public class AreaWSImpl : IAreaWS
 
     public List<Area> listar()
     {
-        return _httpClient.GetFromJsonAsync<List<Area>> ("ListarAreas").GetAwaiter().GetResult() ?? new List<Area>();
+        try
+        {
+            var response = _httpClient.GetAsync("ListarAreas").GetAwaiter().GetResult();
+            
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                return new List<Area>();
+            
+            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            if (string.IsNullOrEmpty(json) || json == "null")
+                return new List<Area>();
+            
+            return System.Text.Json.JsonSerializer.Deserialize<List<Area>>(json) ?? new List<Area>();
+        }
+        catch
+        {
+            return new List<Area>();
+        }
     }
 }
