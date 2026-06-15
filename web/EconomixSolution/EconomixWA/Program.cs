@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using EconomixModel.Model;
 using EconomixWA.Components;
+using EconomixWS.TesoreriaWS;
 using EconomixWS.UsuarioWS;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -39,6 +40,13 @@ builder.Services.AddHttpClient<IAreaWS, AreaWSImpl>(
     client => client.BaseAddress = new Uri(baseURL)    
 );
 
+builder.Services.AddHttpClient<IRolWS, RolWSImpl>(
+    client => client.BaseAddress = new Uri(baseURL)
+);
+
+builder.Services.AddHttpClient<IMonedaWS, MonedaWSImpl>(
+    client => client.BaseAddress = new Uri(baseURL)
+);
 
 var app = builder.Build();
 

@@ -1,0 +1,122 @@
+@rendermode InteractiveServer
+
+<div class="card rounded-4 p-3 mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-4">
+            <label class="form-label small text-muted">Nombre</label>
+            <input type="text"
+                   class="form-control bg-light rounded-4"
+                   placeholder="Nombre del área"
+                   value="@FiltroNombre"
+                   @oninput="OnNombreCambiado" />
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-muted">Monto Techo Mín.</label>
+            <input type="number"
+                   class="form-control bg-light rounded-4"
+                   placeholder="-"
+                   value="@FiltroMontoMin"
+                   @oninput="OnMontoMinCambiado" />
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-muted">Monto Techo Máx.</label>
+            <input type="number"
+                   class="form-control bg-light rounded-4"
+                   placeholder="-"
+                   value="@FiltroMontoMax"
+                   @oninput="OnMontoMaxCambiado" />
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-muted">Estado</label>
+            <select class="form-select bg-light rounded-4"
+                    value="@FiltroEstado"
+                    @onchange="OnEstadoCambiado">
+                <option value="Todas">Todas</option>
+                <option value="Activa">Activa</option>
+                <option value="Inactiva">Inactiva</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2 d-grid">
+            <label class="form-label small text-muted">&nbsp;</label>
+            <button type="button" class="btn btn-secondary rounded-4" @onclick="Limpiar">
+                Limpiar
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string FiltroNombre { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> FiltroNombreChanged { get; set; }
+
+    [Parameter]
+    public double? FiltroMontoMin { get; set; }
+
+    [Parameter]
+    public EventCallback<double?> FiltroMontoMinChanged { get; set; }
+
+    [Parameter]
+    public double? FiltroMontoMax { get; set; }
+
+    [Parameter]
+    public EventCallback<double?> FiltroMontoMaxChanged { get; set; }
+
+    [Parameter]
+    public string FiltroEstado { get; set; } = "Todas";
+
+    [Parameter]
+    public EventCallback<string> FiltroEstadoChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnLimpiar { get; set; }
+
+    private async Task OnNombreCambiado(ChangeEventArgs e)
+    {
+        FiltroNombre = e.Value?.ToString() ?? string.Empty;
+        await FiltroNombreChanged.InvokeAsync(FiltroNombre);
+    }
+
+    private async Task OnMontoMinCambiado(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), out var val))
+            FiltroMontoMin = val;
+        else
+            FiltroMontoMin = null;
+        await FiltroMontoMinChanged.InvokeAsync(FiltroMontoMin);
+    }
+
+    private async Task OnMontoMaxCambiado(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), out var val))
+            FiltroMontoMax = val;
+        else
+            FiltroMontoMax = null;
+        await FiltroMontoMaxChanged.InvokeAsync(FiltroMontoMax);
+    }
+
+    private async Task OnEstadoCambiado(ChangeEventArgs e)
+    {
+        FiltroEstado = e.Value?.ToString() ?? "Todas";
+        await FiltroEstadoChanged.InvokeAsync(FiltroEstado);
+    }
+
+    private async Task Limpiar()
+    {
+        FiltroNombre = string.Empty;
+        await FiltroNombreChanged.InvokeAsync(string.Empty);
+
+        FiltroMontoMin = null;
+        await FiltroMontoMinChanged.InvokeAsync(null);
+
+        FiltroMontoMax = null;
+        await FiltroMontoMaxChanged.InvokeAsync(null);
+
+        FiltroEstado = "Todas";
+        await FiltroEstadoChanged.InvokeAsync("Todas");
+
+        await OnLimpiar.InvokeAsync();
+    }
+}

@@ -12,4 +12,7 @@ public class Rol
 
     [JsonPropertyName("descripcion")]
     public string Descripcion { get; set; } = string.Empty;
+
+    [JsonPropertyName("estaActivo")]
+    public bool EstaActivo { get; set; } = true;
 }

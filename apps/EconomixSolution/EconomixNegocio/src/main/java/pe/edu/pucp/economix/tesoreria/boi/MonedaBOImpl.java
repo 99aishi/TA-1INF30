@@ -91,4 +91,17 @@ public class MonedaBOImpl implements IMonedaBO {
     public List<Moneda> listarMonedas_X_estado(boolean activa) throws Exception {
         return daoMoneda.listarMonedas_X_estado(activa);
     }
+
+    @Override
+    public List<Moneda> listarActivas() throws Exception {
+        return daoMoneda.listarActivas();
+    }
+
+    @Override
+    public int recuperar(int id) throws Exception {
+        if (id <= 0) {
+            throw new Exception("El id de la moneda debe ser mayor que cero.");
+        }
+        return daoMoneda.recuperar(id);
+    }
 }

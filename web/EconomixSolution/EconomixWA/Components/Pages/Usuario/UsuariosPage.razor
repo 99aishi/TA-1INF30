@@ -3,7 +3,7 @@
 @inject NavigationManager Navigation
 
 <div class="h-100 d-flex flex-column">
-    
+
     <div class="d-flex flex-row justify-content-between align-items-center mb-3">
         <div>
             <p class="h3 mb-1">Gestión de Usuarios</p>
@@ -12,44 +12,123 @@
 
         <button type="button" class="btn btn-primary" @onclick="IrRegistrarUsuario"> + Agregar Usuario</button>
     </div>
-        <div class="d-flex flex-column flex-fill overflow-hidden">
-            
-            <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
 
-                <div class=" @(@MostrarDetalle? "col-6" : "col-12") h-100 d-flex flex-column overflow-hidden">
-                    
-                    <div class="card rounded-4 p-3 h-100 overflow-scroll">
-                        @for (int i = 0; i < 10; i++)
+    <div class="card rounded-4 p-3 mb-3">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-8">
+                <label class="form-label small text-muted">Buscar usuario</label>
+                <input type="text"
+                       class="form-control bg-light rounded-4"
+                       placeholder="Nombres, apellidos o correo"
+                       @bind="Busqueda"
+                       @bind:event="oninput"/>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-column flex-fill overflow-hidden">
+
+        <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
+
+            <div class=" @(@MostrarDetalle ? "col-6" : "col-12") h-100 d-flex flex-column overflow-hidden">
+
+                <div class="card rounded-4 p-3 h-100 overflow-scroll">
+
+                    @if (UsuariosFiltrados.Count() == 0)
+                    {
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <p class="text-muted">No se encontraron usuarios</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var usuario in UsuariosFiltrados)
                         {
-                             <UsuarioItem OnMuestraDetalle="MostrarDetalleUsuario" />
+                            <UsuarioItem OnMuestraDetalle="() => MostrarDetalleUsuario(usuario)" />
                         }
-                    </div>
+                    }
                 </div>
-                @if (MostrarDetalle)
-                {
-                    <div class="col-6 h-100">
-                        <UsuarioDetalle OnCerrarDetalle="CerrarDetalleUsuario"/>
-                    </div>
-                }
-         </div>
+            </div>
+            @if (MostrarDetalle && UsuarioSeleccionado != null)
+            {
+                <div class="col-6 h-100">
+                    <UsuarioDetalle OnCerrarDetalle="CerrarDetalleUsuario" />
+                </div>
+            }
+        </div>
     </div>
 </div>
 
 @code {
     private bool MostrarDetalle { get; set; } = false;
-    
+    private string Busqueda { get; set; } = string.Empty;
+    private Usuario? UsuarioSeleccionado { get; set; }
+
+    private IEnumerable<Usuario> UsuariosFiltrados => MockUsuarios
+        .Where(u => string.IsNullOrWhiteSpace(Busqueda)
+            || u.Nombres.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
+            || u.ApellidoPaterno.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
+            || u.ApellidoMaterno.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
+            || u.Correo.Contains(Busqueda, StringComparison.OrdinalIgnoreCase));
+
+    private List<Usuario> MockUsuarios { get; set; } = new()
+    {
+        new Empleado
+        {
+            UsuarioID = 1,
+            Nombres = "Robert",
+            ApellidoPaterno = "Oppenheimer",
+            ApellidoMaterno = "Rivera",
+            Correo = "yona.oppie@gmail.com",
+            Estado = "Activo",
+            Rol = new Rol { Titulo = "Empleado", EstaActivo = true }
+        },
+        new Empleado
+        {
+            UsuarioID = 2,
+            Nombres = "María",
+            ApellidoPaterno = "García",
+            ApellidoMaterno = "López",
+            Correo = "maria.garcia@email.com",
+            Estado = "Activo",
+            Rol = new Rol { Titulo = "Empleado", EstaActivo = true }
+        },
+        new Empleado
+        {
+            UsuarioID = 3,
+            Nombres = "Carlos",
+            ApellidoPaterno = "Mendoza",
+            ApellidoMaterno = "Silva",
+            Correo = "carlos.mendoza@email.com",
+            Estado = "Activo",
+            Rol = new Rol { Titulo = "Jefe", EstaActivo = true }
+        },
+        new Administrador
+        {
+            UsuarioID = 4,
+            Nombres = "Ana",
+            ApellidoPaterno = "Torres",
+            ApellidoMaterno = "Ríos",
+            Correo = "admin@economix.com",
+            Estado = "Activo",
+            Rol = new Rol { Titulo = "Administrador", EstaActivo = true }
+        }
+    };
+
     private void IrRegistrarUsuario()
     {
         Navigation.NavigateTo("/usuarios/Crear");
     }
-    
-    private void MostrarDetalleUsuario()
+
+    private void MostrarDetalleUsuario(Usuario usuario)
     {
+        UsuarioSeleccionado = usuario;
         MostrarDetalle = true;
     }
 
     private void CerrarDetalleUsuario()
     {
         MostrarDetalle = false;
+        UsuarioSeleccionado = null;
     }
 }

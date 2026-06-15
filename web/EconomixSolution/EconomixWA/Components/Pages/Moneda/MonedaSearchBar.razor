@@ -1,0 +1,70 @@
+@rendermode InteractiveServer
+
+<div class="card rounded-4 p-3 mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-8">
+            <label class="form-label small text-muted">Buscar moneda</label>
+            <input type="text"
+                   class="form-control bg-light rounded-4"
+                   placeholder="Código ISO, símbolo o nombre"
+                   value="@Busqueda"
+                   @oninput="OnBusquedaCambiada" />
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-muted">Estado</label>
+            <select class="form-select bg-light rounded-4"
+                    value="@FiltroEstado"
+                    @onchange="OnEstadoCambiado">
+                <option value="Todas">Todas</option>
+                <option value="Activa">Activa</option>
+                <option value="Inactiva">Inactiva</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2 d-grid">
+            <label class="form-label small text-muted">&nbsp;</label>
+            <button type="button" class="btn btn-secondary rounded-4" @onclick="Limpiar">
+                Limpiar
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Busqueda { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> BusquedaChanged { get; set; }
+
+    [Parameter]
+    public string FiltroEstado { get; set; } = "Todas";
+
+    [Parameter]
+    public EventCallback<string> FiltroEstadoChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnLimpiar { get; set; }
+
+    private async Task OnBusquedaCambiada(ChangeEventArgs e)
+    {
+        Busqueda = e.Value?.ToString() ?? string.Empty;
+        await BusquedaChanged.InvokeAsync(Busqueda);
+    }
+
+    private async Task OnEstadoCambiado(ChangeEventArgs e)
+    {
+        FiltroEstado = e.Value?.ToString() ?? "Todas";
+        await FiltroEstadoChanged.InvokeAsync(FiltroEstado);
+    }
+
+    private async Task Limpiar()
+    {
+        Busqueda = string.Empty;
+        await BusquedaChanged.InvokeAsync(string.Empty);
+
+        FiltroEstado = "Todas";
+        await FiltroEstadoChanged.InvokeAsync("Todas");
+
+        await OnLimpiar.InvokeAsync();
+    }
+}

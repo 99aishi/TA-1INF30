@@ -2,12 +2,6 @@ using System.Text.Json.Serialization;
 
 namespace EconomixModel.Model;
 
-[JsonPolymorphic(
-    TypeDiscriminatorPropertyName = "$type", 
-    UnknownDerivedTypeHandling = JsonUnknownDerivedTypeHandling.FallBackToNearestAncestor
-)]
-[JsonDerivedType(typeof(Empleado), typeDiscriminator: "empleado")]
-[JsonDerivedType(typeof(Administrador), typeDiscriminator: "administrador")]
 public abstract class Usuario
 {
     [JsonPropertyName("usuarioID")]

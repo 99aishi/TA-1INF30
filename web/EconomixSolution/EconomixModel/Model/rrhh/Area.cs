@@ -15,6 +15,9 @@ public class Area
     [JsonPropertyName("jefe")]
     public Empleado? Jefe { get; set; }
 
+    [JsonPropertyName("estaActivo")]
+    public bool EstaActivo { get; set; }
+
     [JsonPropertyName("cajaChica")]
     public CajaChica? CajaChica { get; set; }
 }

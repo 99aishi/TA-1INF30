@@ -17,16 +17,20 @@ DROP PROCEDURE IF EXISTS pa_modificar_moneda $$
 CREATE PROCEDURE pa_modificar_moneda(
 	IN p_id_moneda INT,
 	IN p_codigo_iso VARCHAR(30),
-	IN p_simbolo VARCHAR(5)
+	IN p_simbolo VARCHAR(5),
+	IN p_nombre VARCHAR(50),
+	IN p_descripcion VARCHAR(350)
 )
 BEGIN
 	IF p_id_moneda IS NULL OR p_id_moneda <= 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de moneda no válido';
     END IF;
 
-	UPDATE tes_moneda SET codigo_iso =p_codigo_iso, 
-	simbolo=p_simbolo
-	WHERE id_moneda=p_id_moneda;
+	UPDATE tes_moneda SET codigo_iso = p_codigo_iso, 
+	simbolo = p_simbolo,
+	nombre_moneda = p_nombre,
+	descripcion = p_descripcion
+	WHERE id_moneda = p_id_moneda;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_buscar_moneda_por_id $$
@@ -38,14 +42,14 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de moneda no válido';
     END IF;
 
-	SELECT id_moneda, codigo_iso, simbolo FROM tes_moneda
-	WHERE id_moneda=p_id_moneda and activa = 1;
+	SELECT id_moneda, codigo_iso, simbolo, nombre_moneda, descripcion, activa FROM tes_moneda
+	WHERE id_moneda=p_id_moneda;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_listar_monedas $$
 CREATE PROCEDURE pa_listar_monedas()
 BEGIN
-	SELECT id_moneda, codigo_iso,simbolo FROM tes_moneda WHERE activa = 1;
+	SELECT id_moneda, codigo_iso, simbolo, nombre_moneda, descripcion, activa FROM tes_moneda ORDER BY activa DESC;
 END$$
 
 
@@ -62,7 +66,8 @@ BEGIN
         descripcion,
         activa
     FROM tes_moneda
-    WHERE activa = p_activa;
+    WHERE activa = p_activa
+    ORDER BY activa DESC;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_listar_monedas_X_codigoISO_nombre_simbolo $$
@@ -74,7 +79,8 @@ BEGIN
     FROM tes_moneda
     WHERE codigo_iso LIKE CONCAT('%', p_comentario_busqueda, '%')
     OR simbolo LIKE CONCAT('%', p_comentario_busqueda, '%')
-    OR nombre_moneda LIKE CONCAT('%', p_comentario_busqueda, '%');
+    OR nombre_moneda LIKE CONCAT('%', p_comentario_busqueda, '%')
+    ORDER BY activa DESC;
 END $$
 
 DROP PROCEDURE IF EXISTS pa_eliminar_moneda $$
@@ -87,4 +93,16 @@ BEGIN
     END IF;
 
 	UPDATE tes_moneda SET activa = 0 WHERE id_moneda = p_id_moneda;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_reactivar_moneda $$
+CREATE PROCEDURE pa_reactivar_moneda(
+	IN p_id_moneda INT
+)
+BEGIN
+	IF p_id_moneda IS NULL OR p_id_moneda <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de moneda no válido';
+    END IF;
+
+	UPDATE tes_moneda SET activa = 1 WHERE id_moneda = p_id_moneda;
 END$$

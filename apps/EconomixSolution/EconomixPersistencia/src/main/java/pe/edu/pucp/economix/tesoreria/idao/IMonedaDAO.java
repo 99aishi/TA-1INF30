@@ -9,4 +9,6 @@ import java.util.List;
 public interface IMonedaDAO extends IDAO <Moneda> {
   List<Moneda> listarMonedas_X_codigoISO_nombre_simbolo(String busqueda) throws SQLException ;
   List<Moneda> listarMonedas_X_estado(boolean activa) throws SQLException;
+  List<Moneda> listarActivas() throws SQLException;
+  int recuperar(int id) throws SQLException;
 }

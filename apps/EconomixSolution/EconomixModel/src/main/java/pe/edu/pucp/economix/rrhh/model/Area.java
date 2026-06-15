@@ -10,6 +10,7 @@ public class Area{
     private int idArea;
     private String nombre;
     private String descripcion;
+    private boolean estaActivo;
     //Relaciones
     private Empleado jefe;
     private CajaChica cajaChica;
@@ -57,6 +58,12 @@ public class Area{
     }
     public void setJefe(Empleado jefe) {
         this.jefe = jefe;
+    }
+    public boolean isEstaActivo() {
+        return estaActivo;
+    }
+    public void setEstaActivo(boolean estaActivo) {
+        this.estaActivo = estaActivo;
     }
     public CajaChica getCajaChica() {
         return cajaChica;

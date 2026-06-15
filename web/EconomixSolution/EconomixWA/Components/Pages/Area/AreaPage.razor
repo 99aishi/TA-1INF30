@@ -20,7 +20,20 @@
 
         </button>
     </div>
-    
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+            Ocurrió un error al cargar las áreas
+            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+        </div>
+    }
+
+    <AreaSearchBar @bind-FiltroNombre="FiltroNombre"
+                   @bind-FiltroMontoMin="FiltroMontoMin"
+                   @bind-FiltroMontoMax="FiltroMontoMax"
+                   @bind-FiltroEstado="FiltroEstado" />
+
     <div class="d-flex flex-column flex-fill overflow-hidden">
 
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
@@ -35,15 +48,17 @@
                             <p class="text-muted">Cargando Areas...</p>
                         </div>
                     }
-                    else if (Areas.Count == 0)
+                    else if (AreasFiltradas.Count() == 0)
                     {
                         <div class="d-flex justify-content-center align-items-center h-100">
-                            <p class="text-muted">No existe ninguna area registrada</p>
+                            <p class="text-muted">
+                                @(HayFiltrosActivos ? "Ningún área coincide con los filtros aplicados" : "No existe ninguna area registrada")
+                            </p>
                         </div>
                     }
                     else
                     {
-                        foreach(Area area in Areas)
+                        foreach(Area area in AreasFiltradas)
                         {
                              <AreaItem OnMuestraDetalle=" () => MostrarDetalleArea(area)" Area="area"/>
                         }
@@ -66,8 +81,28 @@
 @code {
     private bool MostrarDetalle { get; set; } = false;
     private bool Cargando { get; set; } = true;
+    private string ErrorMessage { get; set; } = string.Empty;
+    private string FiltroNombre { get; set; } = string.Empty;
+    private double? FiltroMontoMin { get; set; }
+    private double? FiltroMontoMax { get; set; }
+    private string FiltroEstado { get; set; } = "Todas";
     private List<Area> Areas { get; set; } = new List<Area>();
     private Area? AreaSeleccionada { get; set; }
+
+    private bool HayFiltrosActivos =>
+        !string.IsNullOrWhiteSpace(FiltroNombre)
+        || FiltroMontoMin.HasValue
+        || FiltroMontoMax.HasValue
+        || FiltroEstado != "Todas";
+
+    private IEnumerable<Area> AreasFiltradas => Areas
+        .Where(a => string.IsNullOrWhiteSpace(FiltroNombre)
+            || a.Nombre.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase))
+        .Where(a => !FiltroMontoMin.HasValue || (a.CajaChica?.MontoTecho ?? 0) >= FiltroMontoMin.Value)
+        .Where(a => !FiltroMontoMax.HasValue || (a.CajaChica?.MontoTecho ?? 0) <= FiltroMontoMax.Value)
+        .Where(a => FiltroEstado == "Todas"
+            || (FiltroEstado == "Activa" && a.EstaActivo)
+            || (FiltroEstado == "Inactiva" && !a.EstaActivo));
 
     private void IrRegistrarArea()
     {
@@ -82,11 +117,11 @@
 
     private async Task CerrarDetalleArea()
     {
+        await ListarAreas();
         MostrarDetalle = false;
         AreaSeleccionada = null;
-        await ListarAreas();
     }
-    
+
     protected override async Task OnInitializedAsync()
     {
         Cargando = true;
@@ -96,9 +131,15 @@
 
     private async Task ListarAreas()
     {
-        Areas = await Task.Run(() => 
-            new List<Area>(AreaWS.listar()));
+        ErrorMessage = string.Empty;
+        try
+        {
+            Areas = await Task.Run(() =>
+                new List<Area>(AreaWS.listar()));
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
     }
 }
-
-

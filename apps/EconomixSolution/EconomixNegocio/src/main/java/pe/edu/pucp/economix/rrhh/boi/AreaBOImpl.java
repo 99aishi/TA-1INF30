@@ -86,6 +86,29 @@ public class AreaBOImpl implements IAreaBO {
         }
         return areas;
     }
+    @Override
+    public List<Area> listarActivas() throws Exception {
+        List<Area> areas = areaDAO.listarActivas();
+        if (areas != null) {
+            for (Area area : areas) {
+                if (area.getCajaChica() != null
+                        && area.getCajaChica().getIdFondo() > 0) {
+                    CajaChica cc = cajaChicaDAO.buscarPorId(area.getCajaChica().getIdFondo());
+                    area.setCajaChica(cc);
+                }
+            }
+        }
+        return areas;
+    }
+
+    @Override
+    public int recuperar(int id) throws Exception {
+        if (id <= 0) {
+            throw new Exception("El id del area debe ser mayor que cero.");
+        }
+        return areaDAO.recuperar(id);
+    }
+
     public void validar(Area area, boolean esModificacion) throws Exception{
         if(area==null){
             throw new Exception("El area no puede ser nulo.");

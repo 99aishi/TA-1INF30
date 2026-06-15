@@ -63,9 +63,10 @@ BEGIN
     SELECT 
         id_rol, 
         titulo_rol, 
-        descripcion_rol
+        descripcion_rol,
+        esta_activo
     FROM rrhh_rol
-    WHERE id_rol = p_id_rol and esta_activo = 1;
+    WHERE id_rol = p_id_rol;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_listar_roles $$
@@ -74,10 +75,10 @@ BEGIN
     SELECT 
         id_rol, 
         titulo_rol, 
-        descripcion_rol
+        descripcion_rol,
+        esta_activo
     FROM rrhh_rol
-    WHERE esta_activo = 1
-    ORDER BY id_rol;
+    ORDER BY esta_activo DESC, id_rol;
 END$$
 
 DELIMITER ;

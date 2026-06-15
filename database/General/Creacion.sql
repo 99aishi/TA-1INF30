@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS rrhh_usuario (
 CREATE TABLE IF NOT EXISTS rrhh_area (
     id_area INT NOT NULL AUTO_INCREMENT,
     nombre_area VARCHAR(60) NOT NULL UNIQUE,
-    descripcion_area VARCHAR(200),
+    descripcion_area VARCHAR(500),
     id_jefe INT NULL,
     esta_activo TINYINT(1) DEFAULT 1,
     

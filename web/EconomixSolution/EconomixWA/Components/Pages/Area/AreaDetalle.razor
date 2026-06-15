@@ -20,8 +20,8 @@
                             <p class="h3"> Area Nro @Area.AreaID</p>
                         }
                         <div class="d-flex flex-column justify-content-center gap-2">
-                            <span class="badge text-bg-success rounded-pill px-2">
-                                Activo
+                            <span class="badge @(Area.EstaActivo ? "text-bg-success" : "text-bg-secondary") rounded-pill px-2">
+                                @(Area.EstaActivo ? "Activo" : "Inactivo")
                             </span>
                         </div>
                     </div>
@@ -29,7 +29,7 @@
                     @if (!string.IsNullOrEmpty(ErrorMessage))
                     {
                         <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                            @ErrorMessage
+                            Ocurrió un error al procesar la solicitud
                             <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
                         </div>
                     }
@@ -115,9 +115,18 @@
                     <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="CerrarDetalle">
                         Cerrar
                     </button>
-                    <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="EliminarArea">
-                        Eliminar
-                    </button>
+                    @if (Area.EstaActivo)
+                    {
+                        <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="EliminarArea">
+                            Eliminar
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-outline-success align-self-start mt-3" @onclick="RecuperarArea">
+                            Recuperar
+                        </button>
+                    }
                     
                 }
 
@@ -153,6 +162,16 @@
     }
 
     protected override void OnInitialized()
+    {
+        Inicializar();
+    }
+
+    protected override void OnParametersSet()
+    {
+        Inicializar();
+    }
+
+    private void Inicializar()
     {
         Area.CajaChica ??= new CajaChica();
         EsCreacion = Navigation.Uri.Contains("/Crear");
@@ -198,7 +217,13 @@
 
     private async Task EliminarArea()
     {
-        await Task.Run(() => AreaWS.eliminar(Area));
+        await Task.Run(() => AreaWS.eliminar(Area.AreaID));
+        await OnCerrarDetalle.InvokeAsync();
+    }
+
+    private async Task RecuperarArea()
+    {
+        await Task.Run(() => AreaWS.recuperar(Area.AreaID));
         await OnCerrarDetalle.InvokeAsync();
     }
 }

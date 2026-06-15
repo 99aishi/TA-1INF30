@@ -38,7 +38,7 @@ public class AreaDAOImpl implements  IAreaDAO{
     public int modificar(Area area) throws SQLException {
         Map<String,Object> parametrosEntrada = new HashMap<>();
         parametrosEntrada.put("p_id_area", area.getIdArea());
-        parametrosEntrada.put("p_nombre_are", area.getNombre());
+        parametrosEntrada.put("p_nombre_area", area.getNombre());
         parametrosEntrada.put("p_descripcion_area", area.getDescripcion());
         parametrosEntrada.put("p_id_jefe", area.getJefe().getUsuarioID());
         int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_area", parametrosEntrada, null);
@@ -55,7 +55,7 @@ public class AreaDAOImpl implements  IAreaDAO{
     @Override
     public int eliminar(int idArea) throws SQLException {
         Map<String, Object> parametrosEntrada = new HashMap<>();
-        parametrosEntrada.put("p_id_usuario", idArea);
+        parametrosEntrada.put("p_id_area", idArea);
         int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_eliminar_area", parametrosEntrada, null);
         return resultado;
     }
@@ -71,6 +71,7 @@ public class AreaDAOImpl implements  IAreaDAO{
                 area.setIdArea(rs.getInt("id_area"));
                 area.setNombre(rs.getString("nombre_area"));
                 area.setDescripcion(rs.getString("descripcion_area"));
+                area.setEstaActivo(rs.getInt("esta_activo") == 1);
                 if(area.getJefe() == null)
                     area.setJefe(new Empleado());
                 area.getJefe().setUsuarioID(rs.getInt("id_jefe"));
@@ -100,6 +101,7 @@ public class AreaDAOImpl implements  IAreaDAO{
                 area.setIdArea(rs.getInt("id_area"));
                 area.setNombre(rs.getString("nombre_area"));
                 area.setDescripcion(rs.getString("descripcion_area"));
+                area.setEstaActivo(rs.getInt("esta_activo") == 1);
                 if(area.getJefe() == null)
                     area.setJefe(new Empleado());
                 area.getJefe().setUsuarioID(rs.getInt("id_jefe"));
@@ -117,5 +119,45 @@ public class AreaDAOImpl implements  IAreaDAO{
             DBManager.getDBManager().cerrarConexion();
         }
         return areas;
+    }
+
+    @Override
+    public List<Area> listarActivas() throws SQLException {
+        List<Area> areas = null;
+        Area area;
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_areas_activas", null);
+        try{
+            while(rs.next()){
+                if(areas == null) areas = new ArrayList<>();
+                area = new Area();
+                area.setIdArea(rs.getInt("id_area"));
+                area.setNombre(rs.getString("nombre_area"));
+                area.setDescripcion(rs.getString("descripcion_area"));
+                area.setEstaActivo(true);
+                if(area.getJefe() == null)
+                    area.setJefe(new Empleado());
+                area.getJefe().setUsuarioID(rs.getInt("id_jefe"));
+                int idFondo = rs.getInt("id_fondo_caja_chica");
+                if (!rs.wasNull()) {
+                    CajaChica cc = new CajaChica();
+                    cc.setIdFondo(idFondo);
+                    area.setCajaChica(cc);
+                }
+                areas.add(area);
+            }
+        }catch(SQLException ex){
+            System.out.println("Error al buscar areas activas: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
+        }
+        return areas;
+    }
+
+    @Override
+    public int recuperar(int idArea) throws SQLException {
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_area", idArea);
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_reactivar_area", parametrosEntrada, null);
+        return resultado;
     }
 }

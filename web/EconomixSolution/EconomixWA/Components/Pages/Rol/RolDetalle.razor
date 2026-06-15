@@ -1,0 +1,185 @@
+@inject IRolWS RolWS
+
+<div class="d-flex flex-column h-100">
+    <div class="card rounded-4 p-3 h-100 d-flex justify-content-between">
+                <div class="d-flex flex-column">
+                    <div class="d-flex gap-4">
+                        @if (EsCreacion)
+                        {
+                            <p class="h3"> Registrar Rol </p>
+                        }
+                        else
+                        {
+                            <p class="h3"> Rol Nro @Rol.RolID</p>
+                        }
+                        <div class="d-flex flex-column justify-content-center gap-2">
+                            <span class="badge @(Rol.EstaActivo ? "text-bg-success" : "text-bg-secondary") rounded-pill px-2">
+                                @(Rol.EstaActivo ? "Activo" : "Inactivo")
+                            </span>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                            @ErrorMessage
+                            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+                        </div>
+                    }
+
+                    <div class="row">
+                        <div class="col-6 mt-3">
+                            <label for="TituloRol" class="form-label">Título del rol</label>
+                            <input type="text"
+                                   class="form-control form-control-lg rounded-4 bg-light @(Errores.ContainsKey("Titulo") ? "is-invalid" : "")"
+                                   id="TituloRol"
+                                   placeholder="Ingrese el título del rol" @bind="Rol.Titulo">
+                            @if (Errores.ContainsKey("Titulo"))
+                            {
+                                <div class="text-danger small mt-1">@Errores["Titulo"]</div>
+                            }
+                        </div>
+
+                        <div class="col-12 mt-3">
+                            <label for="DescripcionRol" class="form-label">Descripción</label>
+                            <textarea class="form-control bg-light rounded-4 @(Errores.ContainsKey("Descripcion") ? "is-invalid" : "")"
+                                      id="DescripcionRol" rows="4"
+                                      placeholder="Ingrese una descripción del rol" @bind="@Rol.Descripcion"></textarea>
+                            @if (Errores.ContainsKey("Descripcion"))
+                            {
+                                <div class="text-danger small mt-1">@Errores["Descripcion"]</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-3 mt-4">
+                    @if (EsCreacion)
+                    {
+                        <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="InsertarRol">
+                            Registrar
+                        </button>
+                        <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="CerrarDetalle">
+                            Cerrar
+                        </button>
+                        <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="CerrarDetalle">
+                            Cancelar
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-outline-warning align-self-start mt-3" @onclick="GuardarCambios">
+                            Guardar Cambios
+                        </button>
+                        <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="CerrarDetalle">
+                            Cerrar
+                        </button>
+                        @if (Rol.EstaActivo)
+                        {
+                            <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="EliminarRol">
+                                Eliminar
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-outline-success align-self-start mt-3" @onclick="RecuperarRol">
+                                Recuperar
+                            </button>
+                        }
+                    }
+                </div>
+        </div>
+    </div>
+
+@code {
+    [Parameter]
+    public EventCallback OnCerrarDetalle { get; set; }
+    [Parameter]
+    public Rol Rol { get; set; } = new Rol();
+    private bool EsCreacion { get; set; }
+    private string ErrorMessage { get; set; } = string.Empty;
+    private Dictionary<string, string> Errores { get; set; } = new();
+
+    protected override void OnParametersSet()
+    {
+        EsCreacion = Rol.RolID == 0;
+    }
+
+    private async Task CerrarDetalle()
+    {
+        await OnCerrarDetalle.InvokeAsync();
+    }
+
+    private bool ValidarFormulario()
+    {
+        Errores.Clear();
+
+        if (string.IsNullOrWhiteSpace(Rol.Titulo))
+            Errores["Titulo"] = "El título del rol es obligatorio.";
+
+        if (string.IsNullOrWhiteSpace(Rol.Descripcion))
+            Errores["Descripcion"] = "La descripción del rol es obligatoria.";
+
+        return Errores.Count == 0;
+    }
+
+    private async Task InsertarRol()
+    {
+        ErrorMessage = string.Empty;
+        if (!ValidarFormulario()) return;
+
+        try
+        {
+            await Task.Run(() => RolWS.insertar(Rol));
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task GuardarCambios()
+    {
+        ErrorMessage = string.Empty;
+        if (!ValidarFormulario()) return;
+
+        try
+        {
+            await Task.Run(() => RolWS.actualizar(Rol));
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task EliminarRol()
+    {
+        try
+        {
+            await Task.Run(() => RolWS.eliminar(Rol.RolID));
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task RecuperarRol()
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            Rol.EstaActivo = true;
+            await Task.Run(() => RolWS.actualizar(Rol));
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+}

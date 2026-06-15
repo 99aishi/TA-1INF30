@@ -1,0 +1,10 @@
+@rendermode InteractiveServer
+
+<div class="card rounded-4 p-3 mb-3">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

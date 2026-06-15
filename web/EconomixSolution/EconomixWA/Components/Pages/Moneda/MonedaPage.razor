@@ -1,4 +1,7 @@
 @page "/Monedas"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject IMonedaWS MonedaWS
 
 <div class="h-100 d-flex flex-column">
     <div class="d-flex flex-row justify-content-between align-items-center mb-3">
@@ -12,270 +15,108 @@
         </button>
     </div>
 
-    <div class="card rounded-4 p-3 mb-3">
-        <div class="row g-3 align-items-end">
-            <div class="col-12 col-md-5">
-                <label class="form-label small text-muted">Buscar moneda</label>
-                <input type="text"
-                       class="form-control bg-light rounded-4"
-                       placeholder="Código ISO, símbolo o nombre"
-                       @bind="Busqueda"
-                       @bind:event="oninput"/>
-            </div>
-            <div class="col-6 col-md-3">
-                <label class="form-label small text-muted">Estado</label>
-                <select class="form-select bg-light rounded-4" @bind="EstadoFiltro">
-                    <option value="Todas">Todas</option>
-                    <option value="Activa">Activa</option>
-                    <option value="Inactiva">Inactiva</option>
-                </select>
-            </div>
-            <div class="col-6 col-md-2">
-                <label class="form-label small text-muted">Tipo</label>
-                <select class="form-select bg-light rounded-4" @bind="TipoFiltro">
-                    <option value="Todos">Todos</option>
-                    <option value="Principal">Principal</option>
-                    <option value="Extranjera">Extranjera</option>
-                    <option value="Referencia">Referencia</option>
-                </select>
-            </div>
-            <div class="col-12 col-md-2 d-grid">
-                <button type="button" class="btn btn-secondary rounded-4" @onclick="LimpiarFiltros">
-                    Filtrar
-                </button>
-            </div>
-        </div>
-    </div>
+    <MonedaSearchBar @bind-Busqueda="Busqueda"
+                     @bind-FiltroEstado="FiltroEstado" />
 
-    <div class="row flex-fill overflow-hidden g-3">
-        <div class="col-12 col-lg-7 h-100 d-flex flex-column overflow-hidden">
-            <div class="card rounded-4 p-3 h-100 overflow-auto moneda-list-card">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <p class="h3 mb-0">Monedas registradas</p>
-                    </div>
-                </div>
+    <div class="d-flex flex-column flex-fill overflow-hidden">
 
-                @if (!MonedasFiltradas.Any())
-                {
-                    <div class="card rounded-4 p-4 bg-light text-center">
-                        <p class="h6 mb-1">No se encontraron monedas</p>
-                        <p class="text-muted mb-0">Limpia los filtros o registra una nueva moneda.</p>
-                    </div>
-                }
-                else
-                {
-                    <div class="d-flex flex-column gap-3">
+        <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
+
+            <div class="@(@MostrarDetalle ? "col-6" : "col-12") h-100 d-flex flex-column overflow-hidden">
+
+                <div class="card rounded-4 p-3 h-100 overflow-scroll">
+
+                    @if (Cargando)
+                    {
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <p class="text-muted">Cargando monedas...</p>
+                        </div>
+                    }
+                    else if (MonedasFiltradas.Count() == 0)
+                    {
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <p class="text-muted">
+                                @(HayFiltrosActivos ? "Ninguna moneda coincide con los filtros aplicados" : "No se encontraron monedas")
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
                         @foreach (var moneda in MonedasFiltradas)
                         {
-                            <MonedaItem CodigoIso="@moneda.CodigoIso"
-                                        Simbolo="@moneda.Simbolo"
-                                        Nombre="@moneda.Nombre"
-                                        Tipo="@moneda.Tipo"
-                                        Descripcion="@moneda.Descripcion"
-                                        Uso="@moneda.Uso"
-                                        Activo="@moneda.Activo"
-                                        Seleccionada="@(MonedaSeleccionada?.CodigoIso == moneda.CodigoIso && !ModoFormulario)"
+                            <MonedaItem Moneda="moneda"
+                                        Seleccionada="@(MonedaSeleccionada?.IdMoneda == moneda.IdMoneda)"
                                         OnSeleccionar="() => SeleccionarMoneda(moneda)" />
                         }
-                    </div>
-                }
+                    }
+                </div>
+
             </div>
+            @if (MostrarDetalle && MonedaSeleccionada != null)
+            {
+                <div class="col-6 h-100">
+                    <MonedaDetalle Moneda="MonedaSeleccionada" OnCerrarDetalle="CerrarDetalleMoneda" />
+                </div>
+            }
         </div>
 
-        <div class="col-12 col-lg-5 h-100 d-flex flex-column overflow-hidden">
-            <div class="card rounded-4 p-4 h-100 overflow-auto moneda-detail-card">
-                <MonedaDetalle/>
-            </div>
-        </div>
     </div>
 </div>
 
 @code {
+    private bool MostrarDetalle { get; set; } = false;
+    private bool Cargando { get; set; } = true;
     private string Busqueda { get; set; } = string.Empty;
-    private string EstadoFiltro { get; set; } = "Todas";
-    private string TipoFiltro { get; set; } = "Todos";
-    private MonedaRegistro? MonedaSeleccionada { get; set; }
-    private bool ModoFormulario { get; set; }
-    private bool Editando { get; set; }
-    private string MensajeError { get; set; } = string.Empty;
-    private MonedaFormulario Formulario { get; set; } = new();
+    private string FiltroEstado { get; set; } = "Todas";
+    private Moneda? MonedaSeleccionada { get; set; }
+    private List<Moneda> Monedas { get; set; } = new();
 
-    private List<MonedaRegistro> Monedas { get; set; } = new()
-    {
-        new("PEN", "S/.", "Sol peruano", "Principal", "Moneda principal para solicitudes, caja chica, comprobantes de pago y transacciones locales.", "Caja chica, comprobantes y reportes", true),
-        new("USD", "$", "Dólar americano", "Extranjera", "Moneda extranjera utilizada para compras internacionales o comprobantes emitidos en dólares.", "Comprobantes y compras internacionales", true),
-        new("EUR", "€", "Euro", "Extranjera", "Moneda de referencia para comprobantes o rendiciones emitidas por proveedores europeos.", "Referencia y rendiciones especiales", true),
-        new("CLP", "$", "Peso chileno", "Referencia", "Moneda referencial para operaciones de movilidad o proveedores de Chile.", "Operaciones externas", true),
-        new("COP", "$", "Peso colombiano", "Referencia", "Moneda referencial para operaciones regionales o gastos de viaje.", "Viáticos y movilidad regional", false),
-        new("MXN", "$", "Peso mexicano", "Referencia", "Moneda referencial para gastos administrativos con proveedores internacionales.", "Proveedores internacionales", false)
-    };
+    private bool HayFiltrosActivos =>
+        !string.IsNullOrWhiteSpace(Busqueda)
+        || FiltroEstado != "Todas";
 
-    private IEnumerable<MonedaRegistro> MonedasFiltradas => Monedas
+    private IEnumerable<Moneda> MonedasFiltradas => Monedas
         .Where(m => string.IsNullOrWhiteSpace(Busqueda)
-            || m.CodigoIso.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
+            || m.CodigoISO.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
             || m.Simbolo.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
-            || m.Nombre.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
-            || m.Uso.Contains(Busqueda, StringComparison.OrdinalIgnoreCase))
-        .Where(m => EstadoFiltro == "Todas" || (EstadoFiltro == "Activa" && m.Activo) || (EstadoFiltro == "Inactiva" && !m.Activo))
-        .Where(m => TipoFiltro == "Todos" || m.Tipo == TipoFiltro);
+            || m.Nombre.Contains(Busqueda, StringComparison.OrdinalIgnoreCase))
+        .Where(m => FiltroEstado == "Todas" || (FiltroEstado == "Activa" && m.Activa) || (FiltroEstado == "Inactiva" && !m.Activa));
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        MonedaSeleccionada = Monedas.FirstOrDefault();
+        Cargando = true;
+        await ListarMonedas();
+        Cargando = false;
     }
 
-    private void SeleccionarMoneda(MonedaRegistro moneda)
+    private async Task ListarMonedas()
+    {
+        Monedas = await Task.Run(() =>
+            new List<Moneda>(MonedaWS.listar()));
+    }
+
+    private async Task CerrarDetalleMoneda()
+    {
+        await ListarMonedas();
+        MostrarDetalle = false;
+        MonedaSeleccionada = null;
+    }
+
+    private void SeleccionarMoneda(Moneda moneda)
     {
         MonedaSeleccionada = moneda;
-        ModoFormulario = false;
-        Editando = false;
-        MensajeError = string.Empty;
+        MostrarDetalle = true;
     }
 
     private void PrepararNuevaMoneda()
     {
-        Formulario = new MonedaFormulario
-        {
-            CodigoIso = string.Empty,
-            Simbolo = string.Empty,
-            Nombre = string.Empty,
-            Tipo = "Referencia",
-            ActivoTexto = "Activa",
-            Uso = string.Empty,
-            Descripcion = string.Empty
-        };
-        ModoFormulario = true;
-        Editando = false;
-        MensajeError = string.Empty;
+        MonedaSeleccionada = new Moneda();
+        MostrarDetalle = true;
     }
 
-    private void PrepararEdicion()
-    {
-        if (MonedaSeleccionada is null)
-        {
-            return;
-        }
-
-        Formulario = new MonedaFormulario
-        {
-            CodigoIso = MonedaSeleccionada.CodigoIso,
-            Simbolo = MonedaSeleccionada.Simbolo,
-            Nombre = MonedaSeleccionada.Nombre,
-            Tipo = MonedaSeleccionada.Tipo,
-            ActivoTexto = MonedaSeleccionada.Activo ? "Activa" : "Inactiva",
-            Uso = MonedaSeleccionada.Uso,
-            Descripcion = MonedaSeleccionada.Descripcion
-        };
-        ModoFormulario = true;
-        Editando = true;
-        MensajeError = string.Empty;
-    }
-
-    private void GuardarMoneda()
-    {
-        MensajeError = string.Empty;
-        var codigo = (Formulario.CodigoIso ?? string.Empty).Trim().ToUpperInvariant();
-        var simbolo = (Formulario.Simbolo ?? string.Empty).Trim();
-        var nombre = (Formulario.Nombre ?? string.Empty).Trim();
-
-        if (string.IsNullOrWhiteSpace(codigo) || codigo.Length != 3)
-        {
-            MensajeError = "El código ISO debe tener 3 letras. Ejemplo: PEN, USD, EUR.";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(simbolo) || string.IsNullOrWhiteSpace(nombre))
-        {
-            MensajeError = "Completa el símbolo y el nombre de la moneda.";
-            return;
-        }
-
-        if (!Editando && Monedas.Any(m => m.CodigoIso.Equals(codigo, StringComparison.OrdinalIgnoreCase)))
-        {
-            MensajeError = "Ya existe una moneda con ese código ISO.";
-            return;
-        }
-
-        var monedaGuardada = new MonedaRegistro(
-            codigo,
-            simbolo,
-            nombre,
-            Formulario.Tipo,
-            string.IsNullOrWhiteSpace(Formulario.Descripcion) ? "Moneda registrada para operaciones del sistema." : Formulario.Descripcion.Trim(),
-            string.IsNullOrWhiteSpace(Formulario.Uso) ? "Solicitudes, comprobantes y transacciones" : Formulario.Uso.Trim(),
-            Formulario.ActivoTexto == "Activa");
-
-        if (Editando)
-        {
-            var indice = Monedas.FindIndex(m => m.CodigoIso.Equals(codigo, StringComparison.OrdinalIgnoreCase));
-            if (indice >= 0)
-            {
-                Monedas[indice] = monedaGuardada;
-            }
-        }
-        else
-        {
-            Monedas.Insert(0, monedaGuardada);
-        }
-
-        MonedaSeleccionada = monedaGuardada;
-        ModoFormulario = false;
-        Editando = false;
-        LimpiarFiltros();
-    }
-
-    private void CancelarFormulario()
-    {
-        ModoFormulario = false;
-        Editando = false;
-        MensajeError = string.Empty;
-        if (MonedaSeleccionada is null)
-        {
-            MonedaSeleccionada = Monedas.FirstOrDefault();
-        }
-    }
-
-    private void CambiarEstado()
-    {
-        if (MonedaSeleccionada is null)
-        {
-            return;
-        }
-
-        var actualizada = MonedaSeleccionada with { Activo = !MonedaSeleccionada.Activo };
-        var indice = Monedas.FindIndex(m => m.CodigoIso == MonedaSeleccionada.CodigoIso);
-        if (indice >= 0)
-        {
-            Monedas[indice] = actualizada;
-            MonedaSeleccionada = actualizada;
-        }
-    }
-
-    private void LimpiarFiltros()
+    private async Task OnLimpiar()
     {
         Busqueda = string.Empty;
-        EstadoFiltro = "Todas";
-        TipoFiltro = "Todos";
-    }
-
-    private sealed record MonedaRegistro(
-        string CodigoIso,
-        string Simbolo,
-        string Nombre,
-        string Tipo,
-        string Descripcion,
-        string Uso,
-        bool Activo);
-
-    private sealed class MonedaFormulario
-    {
-        public string CodigoIso { get; set; } = string.Empty;
-        public string Simbolo { get; set; } = string.Empty;
-        public string Nombre { get; set; } = string.Empty;
-        public string Tipo { get; set; } = "Referencia";
-        public string ActivoTexto { get; set; } = "Activa";
-        public string Uso { get; set; } = string.Empty;
-        public string Descripcion { get; set; } = string.Empty;
+        FiltroEstado = "Todas";
     }
 }

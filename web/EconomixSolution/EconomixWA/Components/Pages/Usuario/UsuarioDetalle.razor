@@ -9,18 +9,18 @@
         <div class="col-12 h-100 mb-3">
             <div class="card rounded-4 p-3 mb-3 h-100 d-flex justify-content-between">
                 <div class="d-flex flex-column">
-                    <div class="d-flex gap-4">  
+                        <div class="d-flex gap-4">  
                         @if (EsCreacion)
                         {
                           <p class="h3"> Registrar Usuario </p>
                         }
                         else
                         {
-                            <p class="h3"> Usuario Nro 4 </p>
+                            <p class="h3"> @(Usuario?.Nombres ?? "Usuario") </p>
                         }
                         <div class="d-flex flex-column justify-content-center gap-2">
                             <span class="badge text-bg-success rounded-pill px-2">
-                                Activo
+                                @(Usuario?.Estado ?? "Activo")
                             </span>
                         </div>
                     </div>
@@ -98,6 +98,9 @@
 @code {
     [Parameter]
     public EventCallback OnCerrarDetalle{ get; set; }
+
+    [Parameter]
+    public Usuario? Usuario { get; set; }
 
     public async Task CerrarDetalle()
     {

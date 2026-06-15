@@ -9,8 +9,8 @@
                     @Area.Nombre
                 </p>
 
-                <span class="badge bg-success-subtle text-success rounded-pill">
-                    Activo
+                <span class="badge @(Area.EstaActivo ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary") rounded-pill">
+                    @(Area.EstaActivo ? "Activo" : "Inactivo")
                 </span>
             </div>
 
@@ -54,7 +54,7 @@
 
 @code {
     [Parameter]
-    public EventCallback<Area> OnMuestraDetalle { get; set; }
+    public EventCallback OnMuestraDetalle { get; set; }
 
     [Parameter] 
     public Area? Area { get; set; }
@@ -62,7 +62,6 @@
     private double? Porcentaje { get; set; } = 0;
     protected override void OnParametersSet()
     {
-        // Validamos que ni Area, ni CajaChica, ni MontoTecho sean nulos, y que el techo sea mayor a 0
         if (Area?.CajaChica?.MontoTecho > 0)
         {
             Porcentaje = (1000.0 / Area.CajaChica.MontoTecho) * 100;
@@ -72,6 +71,6 @@
     
     public async Task AbrirDetalle()
     {
-        await OnMuestraDetalle.InvokeAsync(Area);
+        await OnMuestraDetalle.InvokeAsync();
     }
 }

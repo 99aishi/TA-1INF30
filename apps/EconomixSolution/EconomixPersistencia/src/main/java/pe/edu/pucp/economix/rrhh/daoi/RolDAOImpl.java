@@ -56,6 +56,7 @@ public class RolDAOImpl implements IRolDAO{
                 rol.setRolID(rs.getInt("id_rol"));
                 rol.setTitulo(rs.getString("titulo_rol"));
                 rol.setDescripcion(rs.getString("descripcion_rol"));
+                rol.setEstaActivo(rs.getBoolean("esta_activo"));
             }
         }catch(SQLException ex){
             System.out.println("Error al buscar rol por id: " + ex.getMessage());
@@ -77,6 +78,7 @@ public class RolDAOImpl implements IRolDAO{
                 rol.setRolID(rs.getInt("id_rol"));
                 rol.setTitulo(rs.getString("titulo_rol"));
                 rol.setDescripcion(rs.getString("descripcion_rol"));
+                rol.setEstaActivo(rs.getBoolean("esta_activo"));
                 roles.add(rol);
             }
         }catch(SQLException ex){

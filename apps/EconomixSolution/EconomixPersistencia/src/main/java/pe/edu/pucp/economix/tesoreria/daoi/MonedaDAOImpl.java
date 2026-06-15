@@ -51,10 +51,28 @@ public class MonedaDAOImpl implements IMonedaDAO {
         return resultado;
     }
 
-    // no se usa este metodo
     @Override
     public Moneda buscarPorId(int id) throws SQLException {
-        return null;
+        Moneda moneda = null;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_moneda", id);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_moneda_por_id", parametrosEntrada);
+        try {
+            if (rs.next()) {
+                moneda = new Moneda();
+                moneda.setIdMoneda(rs.getInt("id_moneda"));
+                moneda.setCodigoISO(rs.getString("codigo_iso"));
+                moneda.setSimbolo(rs.getString("simbolo"));
+                moneda.setNombre(rs.getString("nombre_moneda"));
+                moneda.setDescripcion(rs.getString("descripcion"));
+                moneda.setActiva(rs.getBoolean("activa"));
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error al buscar moneda por id: " + ex.getMessage());
+        } finally {
+            DBManager.getDBManager().cerrarConexion();
+        }
+        return moneda;
     }
 
 
@@ -72,6 +90,7 @@ public class MonedaDAOImpl implements IMonedaDAO {
                 moneda.setSimbolo(rs.getString("simbolo"));
                 moneda.setNombre(rs.getString("nombre_moneda"));
                 moneda.setDescripcion(rs.getString("descripcion"));
+                moneda.setActiva(rs.getBoolean("activa"));
                 monedas.add(moneda);
             }
         }catch(SQLException ex){
@@ -103,6 +122,7 @@ public class MonedaDAOImpl implements IMonedaDAO {
                 moneda.setNombre(rs.getString("nombre_moneda"));
                 moneda.setSimbolo(rs.getString("simbolo"));
                 moneda.setDescripcion(rs.getString("descripcion"));
+                moneda.setActiva(rs.getBoolean("activa"));
                 monedas.add(moneda);
             }
         } catch (SQLException ex) {
@@ -112,6 +132,19 @@ public class MonedaDAOImpl implements IMonedaDAO {
         }
 
         return monedas;
+    }
+
+    @Override
+    public List<Moneda> listarActivas() throws SQLException {
+        return listarMonedas_X_estado(true);
+    }
+
+    @Override
+    public int recuperar(int idMoneda) throws SQLException {
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_moneda", idMoneda);
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_reactivar_moneda", parametrosEntrada, null);
+        return resultado;
     }
 
     @Override

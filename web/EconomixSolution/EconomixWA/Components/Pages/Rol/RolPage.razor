@@ -1,0 +1,101 @@
+@page "/roles"
+
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject IRolWS RolWS
+
+<div class="h-100 d-flex flex-column">
+
+    <div class="d-flex flex-row justify-content-between align-items-center mb-3">
+        <div>
+            <p class="h4 mb-1">Gestión de Roles</p>
+            <p class="text-muted mb-0">Catálogo de roles del sistema</p>
+        </div>
+
+        <button type="button"
+                class="btn btn-primary"
+                @onclick="PrepararNuevoRol">
+            + Agregar Rol
+        </button>
+    </div>
+
+    <div class="d-flex flex-column flex-fill overflow-hidden">
+
+        <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
+
+            <div class="@(@MostrarDetalle ? "col-6" : "col-12") h-100 d-flex flex-column overflow-hidden">
+
+                <div class="card rounded-4 p-3 h-100 overflow-scroll">
+
+                    @if (Cargando)
+                    {
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <p class="text-muted">Cargando Roles...</p>
+                        </div>
+                    }
+                    else if (Roles.Count == 0)
+                    {
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <p class="text-muted">No existe ningun rol registrado</p>
+                        </div>
+                    }
+                    else
+                    {
+                        foreach (Rol rol in Roles)
+                        {
+                            <RolItem OnMuestraDetalle="MostrarDetalleRol" Rol="rol" />
+                        }
+                    }
+                </div>
+
+            </div>
+            @if (MostrarDetalle && RolSeleccionado != null)
+            {
+                <div class="col-6 h-100">
+                    <RolDetalle Rol="RolSeleccionado" OnCerrarDetalle="CerrarDetalleRol" />
+                </div>
+            }
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+    private bool MostrarDetalle { get; set; } = false;
+    private bool Cargando { get; set; } = true;
+    private List<Rol> Roles { get; set; } = new List<Rol>();
+    private Rol? RolSeleccionado { get; set; }
+
+    private void PrepararNuevoRol()
+    {
+        RolSeleccionado = new Rol();
+        MostrarDetalle = true;
+    }
+
+    private void MostrarDetalleRol(Rol rol)
+    {
+        RolSeleccionado = rol;
+        MostrarDetalle = true;
+    }
+
+    private async Task CerrarDetalleRol()
+    {
+        await ListarRoles();
+        MostrarDetalle = false;
+        RolSeleccionado = null;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Cargando = true;
+        await ListarRoles();
+        Cargando = false;
+    }
+
+    private async Task ListarRoles()
+    {
+        Roles = await Task.Run(() =>
+            new List<Rol>(RolWS.listar()));
+    }
+}

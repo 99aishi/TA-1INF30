@@ -1,41 +1,238 @@
-<div class="h -100 d-flex flex-column justify-content-around">
-    <div class="d-flex justify-content-between align-items-start mb-4">
-        <div>
-            <p class="h4 mb-1">Detalle de moneda</p>
+@page "/moneda/Crear"
+@page "/moneda/detalle"
+
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject IMonedaWS MonedaWS
+
+<div class="d-flex flex-column h-100 mb-3">
+    <div class="row h-100">
+        <div class="col-12 h-100">
+            <div class="card rounded-4 p-3 h-100 d-flex justify-content-between">
+                <div class="d-flex flex-column">
+                    <div class="d-flex gap-4">
+                        @if (EsCreacion)
+                        {
+                            <p class="h3"> Registrar Moneda </p>
+                        }
+                        else
+                        {
+                            <p class="h3"> Moneda @Moneda.CodigoISO</p>
+                        }
+                        <div class="d-flex flex-column justify-content-center gap-2">
+                            <span class="badge @(Moneda.Activa ? "text-bg-success" : "text-bg-secondary") rounded-pill px-2">
+                                @(Moneda.Activa ? "Activa" : "Inactiva")
+                            </span>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                            Ocurrió un error al procesar la solicitud
+                            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+                        </div>
+                    }
+
+                    <div class="row">
+                        <div class="col-6 mt-3">
+                            <label for="CodigoISO" class="form-label">Código ISO</label>
+                            <input type="text"
+                                   class="form-control form-control-lg rounded-4 bg-light @(Errores.ContainsKey("CodigoISO") ? "is-invalid" : "")"
+                                   id="CodigoISO"
+                                   placeholder="PEN, USD, EUR"
+                                   @bind="Moneda.CodigoISO">
+                            @if (Errores.ContainsKey("CodigoISO"))
+                            {
+                                <div class="text-danger small mt-1">@Errores["CodigoISO"]</div>
+                            }
+                        </div>
+
+                        <div class="col-6 mt-3">
+                            <label for="Simbolo" class="form-label">Símbolo</label>
+                            <input type="text"
+                                   class="form-control form-control-lg rounded-4 bg-light @(Errores.ContainsKey("Simbolo") ? "is-invalid" : "")"
+                                   id="Simbolo"
+                                   placeholder="S/., $, €"
+                                   @bind="Moneda.Simbolo">
+                            @if (Errores.ContainsKey("Simbolo"))
+                            {
+                                <div class="text-danger small mt-1">@Errores["Simbolo"]</div>
+                            }
+                        </div>
+
+                        <div class="col-12 mt-3">
+                            <label for="Nombre" class="form-label">Nombre</label>
+                            <input type="text"
+                                   class="form-control form-control-lg rounded-4 bg-light @(Errores.ContainsKey("Nombre") ? "is-invalid" : "")"
+                                   id="Nombre"
+                                   placeholder="Sol peruano, Dólar americano"
+                                   @bind="Moneda.Nombre">
+                            @if (Errores.ContainsKey("Nombre"))
+                            {
+                                <div class="text-danger small mt-1">@Errores["Nombre"]</div>
+                            }
+                        </div>
+
+                        <div class="col-12 mt-3">
+                            <label for="Descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control bg-light rounded-4"
+                                      id="Descripcion" rows="4"
+                                      placeholder="Describe en qué casos se usa esta moneda dentro del sistema."
+                                      @bind="Moneda.Descripcion"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-3 mt-4">
+                    @if (EsCreacion)
+                    {
+                        <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="InsertarMoneda">
+                            Registrar
+                        </button>
+                        <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="Cerrar">
+                            Cerrar
+                        </button>
+                        <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="Cerrar">
+                            Cancelar
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-outline-warning align-self-start mt-3" @onclick="ActualizarMoneda">
+                            Guardar Cambios
+                        </button>
+                        <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="Cerrar">
+                            Cerrar
+                        </button>
+                        @if (Moneda.Activa)
+                        {
+                            <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="EliminarMoneda">
+                                Eliminar
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-outline-success align-self-start mt-3" @onclick="RecuperarMoneda">
+                                Recuperar
+                            </button>
+                        }
+                    }
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="row g-3">
-        <div class="col-6">
-            <label class="form-label small text-muted">Código ISO</label>
-            <input class="form-control bg-light rounded-4" value="ISO" readonly />
-        </div>
-        <div class="col-6">
-            <label class="form-label small text-muted">Símbolo</label>
-            <input class="form-control bg-light rounded-4" value="Simbolo" readonly />
-        </div>
-        <div class="col-12">
-            <label class="form-label small text-muted">Nombre</label>
-            <input class="form-control bg-light rounded-4" value="nombre" readonly />
-        </div>
-        <div class="col-12">
-            <label class="form-label small text-muted">Descripción</label>
-            <textarea class="form-control bg-light rounded-4"
-                        rows="4"
-                        placeholder="Describe en qué casos se usa esta moneda dentro del sistema.">
-                    </textarea>
-        </div>
-    </div>
-    <div class="d-flex justify-content-end gap-2 mt-4">
-        <button type="button" class="btn btn-outline-primary px-4">
-            Agregar Moneda
-        </button>
-        <button type="button" class="btn btn-outline-danger px-4">
-            Cancelar
-        </button>
     </div>
 </div>
 
 @code {
-    
+    [Parameter]
+    public EventCallback OnCerrarDetalle { get; set; }
 
+    [Parameter]
+    public Moneda Moneda { get; set; } = new();
+
+    private bool EsCreacion { get; set; }
+    private string ErrorMessage { get; set; } = string.Empty;
+    private Dictionary<string, string> Errores { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        CalcularEsCreacion();
+    }
+
+    protected override void OnParametersSet()
+    {
+        CalcularEsCreacion();
+    }
+
+    private void CalcularEsCreacion()
+    {
+        EsCreacion = Navigation.Uri.Contains("/Crear") || Moneda.IdMoneda == 0;
+        if (EsCreacion && Moneda.IdMoneda == 0)
+        {
+            Moneda = new Moneda();
+        }
+    }
+
+    private async Task Cerrar()
+    {
+        await OnCerrarDetalle.InvokeAsync();
+    }
+
+    private bool ValidarFormulario()
+    {
+        Errores.Clear();
+
+        if (string.IsNullOrWhiteSpace(Moneda.CodigoISO) || Moneda.CodigoISO.Trim().Length != 3)
+            Errores["CodigoISO"] = "El código ISO debe tener 3 caracteres.";
+        else
+            Moneda.CodigoISO = Moneda.CodigoISO.Trim().ToUpperInvariant();
+
+        if (string.IsNullOrWhiteSpace(Moneda.Simbolo))
+            Errores["Simbolo"] = "El símbolo de la moneda es obligatorio.";
+
+        if (string.IsNullOrWhiteSpace(Moneda.Nombre))
+            Errores["Nombre"] = "El nombre de la moneda es obligatorio.";
+
+        return Errores.Count == 0;
+    }
+
+    private async Task InsertarMoneda()
+    {
+        ErrorMessage = string.Empty;
+        if (!ValidarFormulario()) return;
+
+        try
+        {
+            await Task.Run(() => MonedaWS.insertar(Moneda));
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task ActualizarMoneda()
+    {
+        ErrorMessage = string.Empty;
+        if (!ValidarFormulario()) return;
+
+        try
+        {
+            await Task.Run(() => MonedaWS.actualizar(Moneda));
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task EliminarMoneda()
+    {
+        try
+        {
+            await Task.Run(() => MonedaWS.eliminar(Moneda.IdMoneda));
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task RecuperarMoneda()
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            await Task.Run(() => MonedaWS.recuperar(Moneda.IdMoneda));
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
 }

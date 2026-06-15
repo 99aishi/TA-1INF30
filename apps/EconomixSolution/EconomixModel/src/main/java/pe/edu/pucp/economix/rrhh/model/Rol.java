@@ -4,6 +4,7 @@ public class Rol {
     private int rolID;
     private String titulo;
     private String descripcion;
+    private boolean estaActivo;
     // Constructor
     public Rol(){}
 
@@ -11,10 +12,12 @@ public class Rol {
         this.rolID = rolID;
         this.titulo = titulo;
         this.descripcion = descripcion;
+        this.estaActivo = true;
     }
     public Rol(String titulo, String descripcion) {
         this.titulo = titulo;
         this.descripcion = descripcion;
+        this.estaActivo = true;
     }
 
     //Selectores
@@ -27,6 +30,9 @@ public class Rol {
     public String getDescripcion() {
         return descripcion;
     }
+    public boolean isEstaActivo() {
+        return estaActivo;
+    }
     public void setRolID(int rolID) {
         this.rolID = rolID;
     }
@@ -35,6 +41,9 @@ public class Rol {
     }
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
+    }
+    public void setEstaActivo(boolean estaActivo) {
+        this.estaActivo = estaActivo;
     }
 
     //Metodos

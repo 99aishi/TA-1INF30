@@ -1,58 +1,54 @@
-package pe.edu.pucp.economix.economixws.rrhh.ws;
+package pe.edu.pucp.economix.economixws.tesoreria.ws;
 
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import pe.edu.pucp.economix.rrhh.boi.AreaBOImpl;
-import pe.edu.pucp.economix.rrhh.ibo.IAreaBO;
-import pe.edu.pucp.economix.rrhh.model.Area;
+import pe.edu.pucp.economix.tesoreria.boi.MonedaBOImpl;
+import pe.edu.pucp.economix.tesoreria.ibo.IMonedaBO;
+import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 import java.util.List;
 import java.util.Map;
 
-@Path("AreaWS")
-public class AreaWS {
-    private IAreaBO areaBO = new AreaBOImpl();
-
+@Path("MonedaWS")
+public class MonedaWS {
+    private IMonedaBO monedaBO = new MonedaBOImpl();
 
     @GET
-    @Path("ListarAreas")
+    @Path("ListarMonedas")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response listarAreas() {
-        try {
-            List<Area> areas = areaBO.listarTodas();
-            return Response.ok(areas).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("error", e.getMessage()))
-                    .build();
-        }
+    public List<Moneda> listarMonedas() throws Exception {
+        return monedaBO.listarTodas();
     }
 
     @GET
     @Path("BuscarPorId")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response buscarPorId(@QueryParam("id") int id) {
-        try {
-            Area area = areaBO.buscarPorId(id);
-            if (area == null) {
-                return Response.status(Response.Status.NO_CONTENT).build();
-            }
-            return Response.ok(area).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("error", e.getMessage()))
-                    .build();
-        }
+    public Moneda buscarPorId(@QueryParam("id") int id) throws Exception {
+        return monedaBO.buscarPorId(id);
+    }
+
+    @GET
+    @Path("BuscarMonedas")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<Moneda> buscarMonedas(@QueryParam("q") String q) throws Exception {
+        return monedaBO.listarMonedas_X_codigoISO_nombre_simbolo(q);
+    }
+
+    @GET
+    @Path("ListarPorEstado")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<Moneda> listarPorEstado(@QueryParam("activa") boolean activa) throws Exception {
+        return monedaBO.listarMonedas_X_estado(activa);
     }
 
     @POST
     @Path("Insertar")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response insertarArea(Area area) {
+    public Response insertarMoneda(Moneda moneda) {
         try {
-            int id = areaBO.insertar(area);
+            int id = monedaBO.insertar(moneda);
             return Response.ok(id).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -65,9 +61,9 @@ public class AreaWS {
     @Path("Actualizar")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response actualizarArea(Area area) {
+    public Response actualizarMoneda(Moneda moneda) {
         try {
-            int result = areaBO.modificar(area);
+            int result = monedaBO.modificar(moneda);
             return Response.ok(result).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -79,9 +75,9 @@ public class AreaWS {
     @GET
     @Path("Eliminar")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response eliminarArea(@QueryParam("id") int id) {
+    public Response eliminarMoneda(@QueryParam("id") int id) {
         try {
-            int result = areaBO.eliminar(id);
+            int result = monedaBO.eliminar(id);
             return Response.ok(result).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -93,16 +89,16 @@ public class AreaWS {
     @GET
     @Path("ListarActivas")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Area> listarActivas() throws Exception {
-        return areaBO.listarActivas();
+    public List<Moneda> listarActivas() throws Exception {
+        return monedaBO.listarActivas();
     }
 
     @GET
     @Path("Recuperar")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response recuperarArea(@QueryParam("id") int id) {
+    public Response recuperarMoneda(@QueryParam("id") int id) {
         try {
-            int result = areaBO.recuperar(id);
+            int result = monedaBO.recuperar(id);
             return Response.ok(result).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
