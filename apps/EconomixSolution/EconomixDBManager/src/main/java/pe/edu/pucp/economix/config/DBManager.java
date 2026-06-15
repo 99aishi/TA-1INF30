@@ -84,13 +84,17 @@ public class DBManager {
         }catch(SQLException ex){
             System.out.println(ex.getMessage());
             throw ex;
+        }finally{
+            cerrarConexion();
         }
     }
 
     //PROCEDIMIENTOS
     //FORMACIÓN
     public CallableStatement formarLlamadaProcedimiento(String nombreProcedimiento, Map<String, Object> parametrosEntrada, Map<String, Object> parametrosSalida) throws Exception {
-        con = getConnection();
+        if (con == null || con.isClosed()) {
+            con = getConnection();
+        }
         StringBuilder call = new StringBuilder("{call " + nombreProcedimiento + "(");
         int cantParametrosEntrada = 0;
         int cantParametrosSalida = 0;
@@ -189,7 +193,9 @@ public class DBManager {
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally{
-            cerrarConexion();
+            if (con != null && con.getAutoCommit()) {
+                cerrarConexion();
+            }
         }
         return resultado;
     }

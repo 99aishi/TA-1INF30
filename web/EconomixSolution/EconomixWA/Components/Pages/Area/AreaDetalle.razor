@@ -25,11 +25,26 @@
                             </span>
                         </div>
                     </div>
+
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                            @ErrorMessage
+                            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+                        </div>
+                    }
+
                     <div class="row">
                         <div class="col-6 mt-3">
                             <label for="NombreArea" class="form-label">Nombre del área</label>
-                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="NombreArea" 
+                            <input type="text"
+                                   class="form-control form-control-lg rounded-4 bg-light @(Errores.ContainsKey("Nombre") ? "is-invalid" : "")"
+                                   id="NombreArea"
                                    placeholder="Ingrese el nombre del área" @bind="Area.Nombre">
+                            @if (Errores.ContainsKey("Nombre"))
+                            {
+                                <div class="text-danger small mt-1">@Errores["Nombre"]</div>
+                            }
                         </div>
                         <div class="col-6 mt-3">
                             <label for="NombreJefe" class="form-label">
@@ -52,18 +67,29 @@
 
                         <div class="col-6 mt-3">
                             <label for="FondoMaximo" class="form-label">
-                                Fondo máximo
+                                Fondo máximo (S/)
                             </label>
-                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="FondoMaximo" 
-                                   placeholder="S/ 0.00"> 
+                            <input type="number" step="0.01" min="0"
+                                   class="form-control form-control-lg rounded-4 bg-light @(Errores.ContainsKey("MontoTecho") ? "is-invalid" : "")"
+                                   id="FondoMaximo"
+                                   placeholder="0.00" @bind="Area.CajaChica.MontoTecho">
+                            @if (Errores.ContainsKey("MontoTecho"))
+                            {
+                                <div class="text-danger small mt-1">@Errores["MontoTecho"]</div>
+                            }
                         </div>
                         
                         <div class="col-12 mt-3">
                             <label for="DescripcionArea" class="form-label">
                                 Descripción
                             </label>
-                            <textarea class="form-control bg-light rounded-4" id="DescripcionArea" rows="4" 
-                                    placeholder="Ingrese una descripción del área" @bind="@Area.Descripcion"></textarea>
+                            <textarea class="form-control bg-light rounded-4 @(Errores.ContainsKey("Descripcion") ? "is-invalid" : "")"
+                                      id="DescripcionArea" rows="4"
+                                      placeholder="Ingrese una descripción del área" @bind="@Area.Descripcion"></textarea>
+                            @if (Errores.ContainsKey("Descripcion"))
+                            {
+                                <div class="text-danger small mt-1">@Errores["Descripcion"]</div>
+                            }
                         </div>
                     </div>
                 </div>
@@ -83,13 +109,13 @@
                 }
                 else
                 {
-                    <button type="button" class="btn btn-outline-warning align-self-start mt-3" @onclick="CerrarDetalle">
+                    <button type="button" class="btn btn-outline-warning align-self-start mt-3" @onclick="GuardarCambios">
                         Guardar Cambios
                     </button>
                     <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="CerrarDetalle">
                         Cerrar
                     </button>
-                    <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="CerrarDetalle">
+                    <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="EliminarArea">
                         Eliminar
                     </button>
                     
@@ -102,38 +128,77 @@
 </div>
 
 @code {
-    //Parametros
     [Parameter]
     public EventCallback OnCerrarDetalle{ get; set; }
+    [Parameter]
+    public Area Area { get; set; } = new Area();
     private bool EsCreacion { get; set; }
+    private string ErrorMessage { get; set; } = string.Empty;
+    private Dictionary<string, string> Errores { get; set; } = new();
 
-    private Area Area { get; set;} = new Area();
+    private bool ValidarFormulario()
+    {
+        Errores.Clear();
 
-    //Navegacion
-    private async Task CerrarDetalle()
-    {
-        await OnCerrarDetalle.InvokeAsync();
+        if (string.IsNullOrWhiteSpace(Area.Nombre))
+            Errores["Nombre"] = "El nombre del área es obligatorio.";
+
+        if (string.IsNullOrWhiteSpace(Area.Descripcion))
+            Errores["Descripcion"] = "La descripción del área es obligatoria.";
+
+        if (Area.CajaChica == null || Area.CajaChica.MontoTecho <= 0)
+            Errores["MontoTecho"] = "El fondo máximo debe ser mayor que cero.";
+
+        return Errores.Count == 0;
     }
-    private void IrAAreas()
-    {
-         Navigation.NavigateTo("/Areas");
-    }
-    //Inicializacion
+
     protected override void OnInitialized()
     {
+        Area.CajaChica ??= new CajaChica();
         EsCreacion = Navigation.Uri.Contains("/Crear");
         if (EsCreacion)
         {
             Area = new Area();
             Area.Jefe = null;
+            Area.CajaChica = new CajaChica();
         }
+    }
+
+    private async Task CerrarDetalle()
+    {
+        await OnCerrarDetalle.InvokeAsync();
+    }
+
+    private void IrAAreas()
+    {
+        Navigation.NavigateTo("/Areas");
     }
 
     private async Task InsertarArea()
     {
-        await Task.Run(() => AreaWS.insertar(Area));
-        await Task.Run(() => IrAAreas());
+        ErrorMessage = string.Empty;
+        if (!ValidarFormulario()) return;
+
+        try
+        {
+            await Task.Run(() => AreaWS.insertar(Area));
+            await Task.Run(() => IrAAreas());
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
     }
-    
-    //Servicios
+
+    private async Task GuardarCambios()
+    {
+        await Task.Run(() => AreaWS.actualizar(Area));
+        await OnCerrarDetalle.InvokeAsync();
+    }
+
+    private async Task EliminarArea()
+    {
+        await Task.Run(() => AreaWS.eliminar(Area));
+        await OnCerrarDetalle.InvokeAsync();
+    }
 }

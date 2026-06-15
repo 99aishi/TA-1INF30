@@ -3,7 +3,7 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS pa_insertar_area  $$
 CREATE PROCEDURE pa_insertar_area(
     IN p_nombre_area VARCHAR(60),
-    IN p_descripcion_area VARCHAR(200),
+    IN p_descripcion_area VARCHAR(500),
     IN p_id_jefe INT,
     OUT p_id_generado INT
 )
@@ -28,7 +28,7 @@ DROP PROCEDURE IF EXISTS pa_modificar_area $$
 CREATE PROCEDURE pa_modificar_area(
     IN p_id_area INT,
     IN p_nombre_area VARCHAR(60),
-    IN p_descripcion_area VARCHAR(200),
+    IN p_descripcion_area VARCHAR(500),
     IN p_id_jefe INT
 )
 BEGIN
@@ -85,25 +85,29 @@ BEGIN
     END IF;
 
     SELECT 
-        id_area, 
-        nombre_area, 
-        descripcion_area, 
-        id_jefe
-    FROM rrhh_area
-    WHERE id_area = p_id_area and esta_activo = 1;
+        a.id_area, 
+        a.nombre_area, 
+        a.descripcion_area, 
+        a.id_jefe,
+        cc.id_fondo AS id_fondo_caja_chica
+    FROM rrhh_area a
+    LEFT JOIN tes_caja_chica cc ON a.id_area = cc.id_area
+    WHERE a.id_area = p_id_area AND a.esta_activo = 1;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_listar_areas $$
 CREATE PROCEDURE pa_listar_areas()
 BEGIN
     SELECT 
-        id_area, 
-        nombre_area, 
-        descripcion_area, 
-        id_jefe
-    FROM rrhh_area
-    WHERE esta_activo = 1
-    ORDER BY id_area;
+        a.id_area, 
+        a.nombre_area, 
+        a.descripcion_area, 
+        a.id_jefe,
+        cc.id_fondo AS id_fondo_caja_chica
+    FROM rrhh_area a
+    LEFT JOIN tes_caja_chica cc ON a.id_area = cc.id_area
+    WHERE a.esta_activo = 1
+    ORDER BY a.id_area;
 END$$
 
 DELIMITER ;

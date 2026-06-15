@@ -12,6 +12,7 @@ import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.rrhh.idao.IAreaDAO;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
+import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 
 public class AreaDAOImpl implements  IAreaDAO{
     private ResultSet rs;
@@ -73,6 +74,12 @@ public class AreaDAOImpl implements  IAreaDAO{
                 if(area.getJefe() == null)
                     area.setJefe(new Empleado());
                 area.getJefe().setUsuarioID(rs.getInt("id_jefe"));
+                int idFondo = rs.getInt("id_fondo_caja_chica");
+                if (!rs.wasNull()) {
+                    CajaChica cc = new CajaChica();
+                    cc.setIdFondo(idFondo);
+                    area.setCajaChica(cc);
+                }
             }
         }catch(SQLException ex){
             System.out.println("Error al buscar area por id: " + ex.getMessage());
@@ -96,6 +103,12 @@ public class AreaDAOImpl implements  IAreaDAO{
                 if(area.getJefe() == null)
                     area.setJefe(new Empleado());
                 area.getJefe().setUsuarioID(rs.getInt("id_jefe"));
+                int idFondo = rs.getInt("id_fondo_caja_chica");
+                if (!rs.wasNull()) {
+                    CajaChica cc = new CajaChica();
+                    cc.setIdFondo(idFondo);
+                    area.setCajaChica(cc);
+                }
                 areas.add(area);
             }
         }catch(SQLException ex){

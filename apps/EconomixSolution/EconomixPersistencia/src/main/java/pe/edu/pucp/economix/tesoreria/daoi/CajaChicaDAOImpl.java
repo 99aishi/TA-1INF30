@@ -72,7 +72,7 @@ public class CajaChicaDAOImpl implements ICajaChicaDAO{
         CajaChica caja=null;
         Map<String, Object> parametrosEntrada = new HashMap<>();
         parametrosEntrada.put("p_id_fondo", idCajaChica);
-        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_caja_chica_por_id", parametrosEntrada);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_por_id_caja_chica", parametrosEntrada);
         try{
             if(rs.next()){
                 caja = new CajaChica();
@@ -117,4 +117,5 @@ public class CajaChicaDAOImpl implements ICajaChicaDAO{
         }
         return cajas;
     }
+
 }

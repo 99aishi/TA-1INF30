@@ -16,7 +16,12 @@ public class AreaWSImpl : IAreaWS
 
     public void insertar(Area area)
     {
-        _httpClient.PostAsJsonAsync("Insertar",area).GetAwaiter().GetResult();
+        var response = _httpClient.PostAsJsonAsync("Insertar", area).GetAwaiter().GetResult();
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            throw new Exception(error);
+        }
     }
 
     public void actualizar(Area area)
@@ -47,6 +52,27 @@ public class AreaWSImpl : IAreaWS
         catch
         {
             return new List<Area>();
+        }
+    }
+
+    public Area? obtenerPorId(int id)
+    {
+        try
+        {
+            var response = _httpClient.GetAsync($"BuscarPorId?id={id}").GetAwaiter().GetResult();
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                return null;
+
+            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            if (string.IsNullOrEmpty(json) || json == "null")
+                return null;
+
+            return System.Text.Json.JsonSerializer.Deserialize<Area>(json);
+        }
+        catch
+        {
+            return null;
         }
     }
 }

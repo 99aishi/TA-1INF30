@@ -45,16 +45,16 @@
                     {
                         foreach(Area area in Areas)
                         {
-                             <AreaItem OnMuestraDetalle="MostrarDetalleArea" Area="area"/>
+                             <AreaItem OnMuestraDetalle=" () => MostrarDetalleArea(area)" Area="area"/>
                         }
                     }
                 </div>
 
             </div>
-            @if (MostrarDetalle)
+            @if (MostrarDetalle && AreaSeleccionada != null)
             {
                 <div class="col-6 h-100">
-                    <AreaDetalle OnCerrarDetalle="CerrarDetalleArea"/>
+                    <AreaDetalle Area="AreaSeleccionada" OnCerrarDetalle="CerrarDetalleArea"/>
                 </div>
             }
         </div>
@@ -67,20 +67,24 @@
     private bool MostrarDetalle { get; set; } = false;
     private bool Cargando { get; set; } = true;
     private List<Area> Areas { get; set; } = new List<Area>();
+    private Area? AreaSeleccionada { get; set; }
 
     private void IrRegistrarArea()
     {
         Navigation.NavigateTo("/area/Crear");
     }
 
-    private void MostrarDetalleArea()
+    private void MostrarDetalleArea(Area area)
     {
+        AreaSeleccionada = area;
         MostrarDetalle = true;
     }
 
-    private void CerrarDetalleArea()
+    private async Task CerrarDetalleArea()
     {
         MostrarDetalle = false;
+        AreaSeleccionada = null;
+        await ListarAreas();
     }
     
     protected override async Task OnInitializedAsync()
