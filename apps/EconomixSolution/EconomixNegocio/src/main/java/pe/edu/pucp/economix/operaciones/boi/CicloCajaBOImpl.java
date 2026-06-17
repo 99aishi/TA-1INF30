@@ -2,27 +2,44 @@ package pe.edu.pucp.economix.operaciones.boi;
 
 import pe.edu.pucp.economix.operaciones.ibo.ICicloCajaBO;
 import pe.edu.pucp.economix.operaciones.ibo.ISolicitudGastoBO;
+import pe.edu.pucp.economix.operaciones.ibo.ITransaccionBO;
 import pe.edu.pucp.economix.operaciones.idao.ICicloCajaChicaDAO;
 import pe.edu.pucp.economix.operaciones.daoi.CicloCajaChicaDAOImpl;
 import pe.edu.pucp.economix.operaciones.idao.ISolicitudGastoDAO;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
+import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
+import pe.edu.pucp.economix.operaciones.model.Transaccion;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoComprobante;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoCicloCaja;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoTransaccion;
+import pe.edu.pucp.economix.operaciones.model.enums.MedioPago;
+import pe.edu.pucp.economix.operaciones.model.enums.TipoTransaccion;
 import pe.edu.pucp.economix.tesoreria.boi.CajaChicaBOImpl;
+import pe.edu.pucp.economix.tesoreria.boi.CuentaBancariaBOImpl;
 import pe.edu.pucp.economix.tesoreria.ibo.ICajaChicaBO;
+import pe.edu.pucp.economix.tesoreria.ibo.ICuentaBancariaBO;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
+import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
+import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
+import java.util.Date;
 import java.util.List;
 
 public class CicloCajaBOImpl implements ICicloCajaBO {
     private final ICicloCajaChicaDAO cicloCajaChicaDAO;
     private final ICajaChicaBO cajaBO;
     private final ISolicitudGastoBO solicitudGastoBO;
+    private final ITransaccionBO transaccionBO;
+    private final ICuentaBancariaBO cuentaBancariaBO;
     public CicloCajaBOImpl(){
 
         cicloCajaChicaDAO= new CicloCajaChicaDAOImpl();
         cajaBO = new CajaChicaBOImpl();
         solicitudGastoBO=new SolicitudGastoBOImpl();
+        transaccionBO=new TransaccionBOImpl();
+        cuentaBancariaBO=new CuentaBancariaBOImpl();
     }
 
     private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
@@ -126,5 +143,83 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
         }
     }
 
+    @Override
+    public int cerrarCiclo(int idCicloCaja, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
+        if (idCicloCaja <= 0) throw new Exception("El id del ciclo debe ser mayor que cero.");
+
+        CicloCajaChica ciclo = cicloCajaChicaDAO.buscarPorId(idCicloCaja);
+        if (ciclo == null) throw new Exception("El ciclo de caja chica no existe.");
+        if (ciclo.getEstado() == EstadoCicloCaja.CERRADO || ciclo.getEstado() == EstadoCicloCaja.LIQUIDADO) {
+            throw new Exception("El ciclo ya está cerrado o liquidado.");
+        }
+
+        calcularTotalGastado(ciclo, idUsuarioAccion);
+
+        CajaChica cajaChica = ciclo.getCajaChica();
+        if (cajaChica == null) throw new Exception("El ciclo no tiene caja chica asignada.");
+
+        CuentaBancaria cuentaArea = cajaChica.getCuentaOrigen();
+        if (cuentaArea == null || cuentaArea.getIdCuenta() <= 0) {
+            throw new Exception("La caja chica no tiene cuenta bancaria origen.");
+        }
+
+        // Calcular monto consumido real a partir de comprobantes aprobados
+        double totalComprobantesAprobados = 0;
+        List<SolicitudGasto> solicitudes = solicitudGastoBO.listarPorCiclo(idCicloCaja);
+        for (SolicitudGasto s : solicitudes) {
+            if (s.getEstado() == EstadoSolicitudGasto.APROBADO || s.getEstado() == EstadoSolicitudGasto.PAGADO || s.getEstado() == EstadoSolicitudGasto.RENDIDO) {
+                List<ComprobantePago> comprobantes = listarComprobantesPorSolicitud(s.getIdSolicitudGasto());
+                for (ComprobantePago c : comprobantes) {
+                    if (c.getEstado() == EstadoComprobante.APROBADO) {
+                        totalComprobantesAprobados += c.getTotal();
+                    }
+                }
+            }
+        }
+
+        double totalDesembolsado = ciclo.getTotalGastado(); // aprobado
+        double saldoFinal = totalDesembolsado - totalComprobantesAprobados;
+
+        if (saldoFinal > 0) {
+            // El empleado gastó menos de lo desembolsado -> devolución de sobrante
+            generarTransaccionCierre(TipoTransaccion.DEVOLUCION_SOBRANTE, saldoFinal, cuentaArea, null, cajaChica.getMoneda(), idUsuarioAccion);
+        } else if (saldoFinal < 0) {
+            // El empleado gastó más de lo desembolsado -> reembolso por déficit
+            generarTransaccionCierre(TipoTransaccion.REEMBOLSO_DEFICIT, Math.abs(saldoFinal), cuentaArea, null, cajaChica.getMoneda(), idUsuarioAccion);
+        }
+
+        ciclo.setEstado(EstadoCicloCaja.CERRADO);
+        ciclo.setFechaCierre(new Date());
+        return cicloCajaChicaDAO.modificar(ciclo, idUsuarioAccion);
+    }
+
+    private List<ComprobantePago> listarComprobantesPorSolicitud(int idSolicitud) throws Exception {
+        // Acceso directo al DAO para evitar referencia circular
+        return new pe.edu.pucp.economix.operaciones.daoi.ComprobantePagoDAOImpl().listarPorSolicitud(idSolicitud);
+    }
+
+    private void generarTransaccionCierre(TipoTransaccion tipo, double monto, CuentaBancaria cuentaArea, CuentaBancaria cuentaEmpleado, Moneda moneda, int idUsuarioAccion) throws Exception {
+        Transaccion transaccion = new Transaccion();
+        transaccion.setTipoTransaccion(tipo);
+        transaccion.setFecha(new Date());
+        transaccion.setMonto(monto);
+        transaccion.setNumeroOperacionBancaria("AUTO-" + System.currentTimeMillis());
+        transaccion.setMedioPago(MedioPago.TRANSFERENCIA);
+
+        if (tipo == TipoTransaccion.DEVOLUCION_SOBRANTE) {
+            // El empleado devuelve a la cuenta del área
+            transaccion.setCuentaOrigen(cuentaEmpleado);
+            transaccion.setCuentaDestino(cuentaArea);
+        } else {
+            // El área reembolsa el déficit
+            transaccion.setCuentaOrigen(cuentaArea);
+            transaccion.setCuentaDestino(cuentaEmpleado);
+        }
+
+        transaccion.setMoneda(moneda);
+        transaccion.setEstadoTransaccion(EstadoTransaccion.COMPLETADA);
+        transaccionBO.insertar(transaccion, idUsuarioAccion);
+    }
 
 }

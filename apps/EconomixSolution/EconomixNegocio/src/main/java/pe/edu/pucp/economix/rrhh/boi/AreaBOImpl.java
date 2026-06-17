@@ -7,21 +7,15 @@ import pe.edu.pucp.economix.rrhh.idao.IEmpleadoDAO;
 import pe.edu.pucp.economix.rrhh.daoi.AreaDAOImpl;
 import pe.edu.pucp.economix.rrhh.daoi.EmpleadoDAOImpl;
 import pe.edu.pucp.economix.rrhh.model.Area;
-import pe.edu.pucp.economix.tesoreria.idao.ICajaChicaDAO;
-import pe.edu.pucp.economix.tesoreria.daoi.CajaChicaDAOImpl;
-import pe.edu.pucp.economix.tesoreria.model.CajaChica;
-import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
 
 import java.util.List;
 
 public class AreaBOImpl implements IAreaBO {
     private final IAreaDAO areaDAO;
     private final IEmpleadoDAO empleadoDAO;
-    private final ICajaChicaDAO cajaChicaDAO;
     public AreaBOImpl(){
         areaDAO=new AreaDAOImpl();
         empleadoDAO=new EmpleadoDAOImpl();
-        cajaChicaDAO=new CajaChicaDAOImpl();
     }
     private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
         if (idUsuarioAccion <= 0) {
@@ -33,21 +27,7 @@ public class AreaBOImpl implements IAreaBO {
     public int insertar(Area area, int idUsuarioAccion) throws Exception {
         validarIdUsuarioAccion(idUsuarioAccion);
         validar(area,false);
-        validarCajaChica(area.getCajaChica());
-        try {
-            DBManager.getDBManager().iniciarTransaccion();
-            areaDAO.insertar(area, idUsuarioAccion);
-            CajaChica cc = area.getCajaChica();
-            cc.setAreaAsignada(area);
-            cc.setNombre("Fondo - " + area.getNombre());
-            cc.setEstado(EstadoFondo.ACTIVO);
-            cajaChicaDAO.insertar(cc, idUsuarioAccion);
-            DBManager.getDBManager().confirmarTransaccion();
-        } catch (Exception ex) {
-            DBManager.getDBManager().cancelarTransaccion();
-            throw ex;
-        }
-        return area.getIdArea();
+        return areaDAO.insertar(area, idUsuarioAccion);
     }
 
     @Override
@@ -118,14 +98,4 @@ public class AreaBOImpl implements IAreaBO {
             throw new Exception("La descripcion del area es obligatoria.");
         }
     }
-    public void validarCajaChica(CajaChica cc) throws Exception{
-        if (cc == null) {
-            throw new Exception("La caja chica es obligatoria para crear un area.");
-        }
-        if (cc.getMontoTecho() <= 0) {
-            throw new Exception("El monto techo de la caja chica debe ser mayor que cero.");
-        }
-    }
-
-
 }

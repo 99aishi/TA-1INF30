@@ -92,4 +92,17 @@ public class CicloCajaWS {
                     .entity(Map.of("error", e.getMessage())).build();
         }
     }
+
+    @POST
+    @Path("CerrarCiclo")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response cerrarCiclo(@QueryParam("id") int id, @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
+        try {
+            int r = cicloBO.cerrarCiclo(id, idUsuarioAccion);
+            return Response.ok(r).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage())).build();
+        }
+    }
 }

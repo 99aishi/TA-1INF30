@@ -117,4 +117,15 @@ public class ComprobantePagoWSImpl : IComprobantePagoWS
         }
     }
 
+    public void evaluar(int idComprobante, bool aprobar, string observacion, int idUsuarioAccion)
+    {
+        var url = $"Evaluar?idComprobante={idComprobante}&aprobar={aprobar.ToString().ToLowerInvariant()}&observacion={Uri.EscapeDataString(observacion ?? "")}&idUsuarioAccion={idUsuarioAccion}";
+        var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            throw new Exception(error);
+        }
+    }
+
 }

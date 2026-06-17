@@ -9,4 +9,5 @@ public interface ISolicitudGastoWS : IWS<SolicitudGasto>
     List<SolicitudGasto> listarPorSolicitante(int idSolicitante);
     List<SolicitudGasto> listarPendientesJefe(int idJefe);
     List<SolicitudGasto> listarPorCiclo(int idCiclo);
+    void evaluar(int idSolicitudGasto, bool aprobado, string comentario, int idJefeEvaluador, string numeroOperacionBancaria, int idUsuarioAccion);
 }

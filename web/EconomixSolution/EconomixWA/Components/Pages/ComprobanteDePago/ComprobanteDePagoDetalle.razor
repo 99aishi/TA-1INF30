@@ -1,17 +1,19 @@
-@page "/Comprobantes de Pago/Detalle"
-@page "/Comprobantes de Pago/Evaluar/{IdSolicitud:int}"
+@page "/Comprobantes de Pago/Detalle/{IdComprobante:int}"
+@page "/Comprobantes de Pago/Evaluar/{IdComprobante:int}"
 @page "/Comprobantes de Pago/Crear"
 @page "/Comprobantes de Pago/Asociar/{IdSolicitud:int}"
 @inject NavigationManager Navigation
+@inject IComprobantePagoWS ComprobantePagoWS
 
 <div class="rounded-4 mb-3 p-3 h-100">
 
     <div class="row h-100">
         <div class="col-4 h-100">
             <ComprobanteDePagoSustento EsCreacion="EsCreacion" EsEvaluacion="EsEvaluacion" EsAsociacion="EsAsociacion"/>
-        </div>    
+        </div>
         <div class="col-8 h-100">
-            <ComprobanteDePagoDatos EsCreacion="EsCreacion" EsEvaluacion="EsEvaluacion" EsAsociacion="EsAsociacion"/>
+            <ComprobanteDePagoDatos EsCreacion="EsCreacion" EsEvaluacion="EsEvaluacion" EsAsociacion="EsAsociacion"
+                                    Comprobante="Comprobante" OnEvaluado="VolverALista"/>
         </div>
     </div>
 </div>
@@ -21,18 +23,32 @@
     private bool EsCreacion { get; set; }
     private bool EsAsociacion { get; set; }
     private bool EsEvaluacion { get; set; }
+    private ComprobantePago? Comprobante { get; set; }
 
-    
+    [Parameter]
+    public int IdComprobante { get; set; }
+
     [Parameter]
     public int IdSolicitud { get; set; }
+
     protected override void OnInitialized()
     {
-
         EsCreacion = Navigation.Uri.EndsWith("/Crear");
         EsAsociacion = Navigation.Uri.Contains("/Asociar");
         EsEvaluacion = Navigation.Uri.Contains("/Evaluar");
-        
     }
 
+    protected override void OnParametersSet()
+    {
+        if (!EsCreacion && !EsAsociacion && IdComprobante > 0)
+        {
+            Comprobante = ComprobantePagoWS.obtenerPorId(IdComprobante);
+        }
+    }
+
+    private void VolverALista()
+    {
+        Navigation.NavigateTo("/Comprobantes de Pago");
+    }
 
 }

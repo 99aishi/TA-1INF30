@@ -83,4 +83,20 @@ public class ComprobantePagoWS {
                     .entity(Map.of("error", e.getMessage())).build();
         }
     }
+
+    @POST
+    @Path("Evaluar")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response evaluar(@QueryParam("idComprobante") int idComprobante,
+                            @QueryParam("aprobar") boolean aprobar,
+                            @QueryParam("observacion") String observacion,
+                            @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
+        try {
+            int r = comprobanteBO.evaluar(idComprobante, aprobar, observacion, idUsuarioAccion);
+            return Response.ok(r).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage())).build();
+        }
+    }
 }

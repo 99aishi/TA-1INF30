@@ -5,6 +5,9 @@
 @inject NavigationManager Navigation
 @inject IAreaWS AreaWS
 @inject IUsuarioWS UsuarioWS
+@inject ICuentaBancariaWS CuentaBancariaWS
+@inject IMonedaWS MonedaWS
+@inject IEmpleadoWS EmpleadoWS
 
 <div class="d-flex flex-column h-100 mb-3">
     <div class="row h-100 @(EsCreacion? "mb-3": " ")">
@@ -30,7 +33,7 @@
                     @if (!string.IsNullOrEmpty(ErrorMessage))
                     {
                         <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                            Ocurrió un error al procesar la solicitud
+                            @ErrorMessage
                             <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
                         </div>
                     }
@@ -48,53 +51,86 @@
                             }
                         </div>
                         <div class="col-6 mt-3">
-                            <label for="NombreJefe" class="form-label">
-                                Nombre del jefe
-                            </label>
-                            @if (Area.Jefe != null)
-                            {
-                                <input type="text" 
-                                       class="form-control" 
-                                       placeholder="Ingrese el nombre del jefe" 
-                                       @bind="Area.Jefe.Nombres" />
-                            }
-                            else
-                            {
-                                <input type="text" 
-                                       class="form-control"
-                                       placeholder="Ingrese el nombre del jefe"/>
-                            }
+                            <label for="NombreJefe" class="form-label">Jefe del área</label>
+                            <select id="NombreJefe" class="form-select form-select-lg rounded-4 bg-light"
+                                    @bind="JefeSeleccionadoId">
+                                <option value="0">Sin jefe asignado</option>
+                                @foreach (var jefe in Jefes)
+                                {
+                                    <option value="@jefe.UsuarioID">@jefe.Nombres @jefe.ApellidoPaterno</option>
+                                }
+                            </select>
                         </div>
 
-                        <div class="col-6 mt-3">
-                            <label for="FondoMaximo" class="form-label">
-                                Fondo máximo (S/)
-                            </label>
-                            <input type="number" step="0.01" min="0"
-                                   class="form-control form-control-lg rounded-4 bg-light @(Errores.ContainsKey("MontoTecho") ? "is-invalid" : "")"
-                                   id="FondoMaximo"
-                                   placeholder="0.00" @bind="Area.CajaChica.MontoTecho">
-                            @if (Errores.ContainsKey("MontoTecho"))
-                            {
-                                <div class="text-danger small mt-1">@Errores["MontoTecho"]</div>
-                            }
-                        </div>
-                        
                         <div class="col-12 mt-3">
-                            <label for="DescripcionArea" class="form-label">
-                                Descripción
-                            </label>
+                            <label for="DescripcionArea" class="form-label">Descripción</label>
                             <textarea class="form-control bg-light rounded-4 @(Errores.ContainsKey("Descripcion") ? "is-invalid" : "")"
-                                      id="DescripcionArea" rows="4"
+                                      id="DescripcionArea" rows="3"
                                       placeholder="Ingrese una descripción del área" @bind="@Area.Descripcion"></textarea>
                             @if (Errores.ContainsKey("Descripcion"))
                             {
                                 <div class="text-danger small mt-1">@Errores["Descripcion"]</div>
                             }
                         </div>
+
+                        @if (!EsCreacion)
+                        {
+                            <div class="col-6 mt-3">
+                                <label for="FondoMaximo" class="form-label">Fondo máximo (S/)</label>
+                                <input type="number" step="0.01" min="0"
+                                       class="form-control form-control-lg rounded-4 bg-light @(Errores.ContainsKey("MontoTecho") ? "is-invalid" : "")"
+                                       id="FondoMaximo"
+                                       placeholder="0.00" @bind="Area.CajaChica.MontoTecho">
+                                @if (Errores.ContainsKey("MontoTecho"))
+                                {
+                                    <div class="text-danger small mt-1">@Errores["MontoTecho"]</div>
+                                }
+                            </div>
+
+                            <div class="col-6 mt-3">
+                                <label for="MonedaCajaChica" class="form-label">Moneda de la caja chica</label>
+                                <select id="MonedaCajaChica" class="form-select form-select-lg rounded-4 bg-light"
+                                        @bind="MonedaSeleccionadaId">
+                                    <option value="0">Seleccione moneda</option>
+                                    @foreach (var moneda in Monedas)
+                                    {
+                                        <option value="@moneda.IdMoneda">@moneda.Simbolo - @moneda.Nombre</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-12 mt-3">
+                                <label for="CuentaOrigen" class="form-label">Cuenta bancaria origen de la caja chica</label>
+                                <select id="CuentaOrigen" class="form-select form-select-lg rounded-4 bg-light"
+                                        @bind="CuentaOrigenSeleccionadaId">
+                                    <option value="0">Seleccione cuenta</option>
+                                    @foreach (var cuenta in CuentasArea)
+                                    {
+                                        <option value="@cuenta.IdCuenta">@cuenta.NombreBanco - @cuenta.NumeroBancario (@(cuenta.Moneda?.Simbolo ?? "-"))</option>
+                                    }
+                                </select>
+                            </div>
+                        }
                     </div>
                 </div>
                
+                @if (!EsCreacion)
+                {
+                    @if (!string.IsNullOrEmpty(ErrorCuenta))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                            @ErrorCuenta
+                            <button type="button" class="btn-close" @onclick="() => ErrorCuenta = string.Empty" aria-label="close"></button>
+                        </div>
+                    }
+
+                    <CuentaBancariaListado Titulo="Cuentas bancarias del área"
+                                           Cuentas="Area.CuentasBancarias"
+                                           Monedas="Monedas"
+                                           OnGuardar="GuardarCuentaArea"
+                                           OnEliminar="EliminarCuentaArea" />
+                }
+
                 <div class="d-flex justify-content-end gap-3 mt-4">
                 @if (EsCreacion)
                 {
@@ -139,12 +175,44 @@
 
 @code {
     [Parameter]
-    public EventCallback OnCerrarDetalle{ get; set; }
+    public EventCallback OnCerrarDetalle { get; set; }
+
     [Parameter]
     public Area Area { get; set; } = new Area();
+
     private bool EsCreacion { get; set; }
     private string ErrorMessage { get; set; } = string.Empty;
+    private string ErrorCuenta { get; set; } = string.Empty;
     private Dictionary<string, string> Errores { get; set; } = new();
+    private List<Moneda> Monedas { get; set; } = new();
+    private List<Empleado> Jefes { get; set; } = new();
+    private List<CuentaBancaria> CuentasArea { get; set; } = new();
+
+    private int JefeSeleccionadoId
+    {
+        get => Area.Jefe?.UsuarioID ?? 0;
+        set => Area.Jefe = value == 0 ? null : Jefes.FirstOrDefault(j => j.UsuarioID == value);
+    }
+
+    private int MonedaSeleccionadaId
+    {
+        get => Area.CajaChica?.Moneda?.IdMoneda ?? 0;
+        set
+        {
+            if (Area.CajaChica != null)
+                Area.CajaChica.Moneda = value == 0 ? null : Monedas.FirstOrDefault(m => m.IdMoneda == value);
+        }
+    }
+
+    private int CuentaOrigenSeleccionadaId
+    {
+        get => Area.CajaChica?.CuentaOrigen?.IdCuenta ?? 0;
+        set
+        {
+            if (Area.CajaChica != null)
+                Area.CajaChica.CuentaOrigen = value == 0 ? null : CuentasArea.FirstOrDefault(c => c.IdCuenta == value);
+        }
+    }
 
     private bool ValidarFormulario()
     {
@@ -156,15 +224,16 @@
         if (string.IsNullOrWhiteSpace(Area.Descripcion))
             Errores["Descripcion"] = "La descripción del área es obligatoria.";
 
-        if (Area.CajaChica == null || Area.CajaChica.MontoTecho <= 0)
+        if (!EsCreacion && (Area.CajaChica == null || Area.CajaChica.MontoTecho <= 0))
             Errores["MontoTecho"] = "El fondo máximo debe ser mayor que cero.";
 
         return Errores.Count == 0;
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Inicializar();
+        await CargarCatalogos();
     }
 
     protected override void OnParametersSet()
@@ -180,7 +249,72 @@
         {
             Area = new Area();
             Area.Jefe = null;
-            Area.CajaChica = new CajaChica();
+            Area.CajaChica = null;
+        }
+    }
+
+    private async Task CargarCatalogos()
+    {
+        try { Monedas = await Task.Run(() => new List<Moneda>(MonedaWS.listar())); } catch { Monedas = new List<Moneda>(); }
+        try
+        {
+            var empleados = await Task.Run(() => new List<Empleado>(EmpleadoWS.listar()));
+            Jefes = empleados.Where(e => e.RolFlujo == RolFlujo.JEFE_AREA).ToList();
+        }
+        catch { Jefes = new List<Empleado>(); }
+        try
+        {
+            var cuentas = await Task.Run(() => new List<CuentaBancaria>(CuentaBancariaWS.listar()));
+            CuentasArea = cuentas.Where(c => c.AreaAdministradora != null).ToList();
+        }
+        catch { CuentasArea = new List<CuentaBancaria>(); }
+    }
+
+    private async Task GuardarCuentaArea(CuentaBancaria cuenta)
+    {
+        ErrorCuenta = string.Empty;
+
+        try
+        {
+            cuenta.AreaAdministradora = Area;
+            cuenta.EmpleadoAdministrador = null;
+
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            if (cuenta.IdCuenta > 0)
+            {
+                await Task.Run(() => CuentaBancariaWS.actualizar(cuenta, idUsuarioAccion));
+            }
+            else
+            {
+                await Task.Run(() => CuentaBancariaWS.insertar(cuenta, idUsuarioAccion));
+            }
+
+            var actualizadas = await Task.Run(() =>
+                new List<CuentaBancaria>(CuentaBancariaWS.listar()
+                    .Where(c => c.AreaAdministradora?.AreaID == Area.AreaID)));
+            Area.CuentasBancarias = actualizadas;
+            await CargarCatalogos();
+        }
+        catch (Exception ex)
+        {
+            ErrorCuenta = ex.Message;
+        }
+    }
+
+    private async Task EliminarCuentaArea(CuentaBancaria cuenta)
+    {
+        ErrorCuenta = string.Empty;
+        if (cuenta.IdCuenta <= 0) return;
+
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => CuentaBancariaWS.eliminar(cuenta.IdCuenta, idUsuarioAccion));
+            Area.CuentasBancarias.Remove(cuenta);
+        }
+        catch (Exception ex)
+        {
+            ErrorCuenta = ex.Message;
         }
     }
 
@@ -213,22 +347,48 @@
 
     private async Task GuardarCambios()
     {
-        var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-        await Task.Run(() => AreaWS.actualizar(Area, idUsuarioAccion));
-        await OnCerrarDetalle.InvokeAsync();
+        ErrorMessage = string.Empty;
+        if (!ValidarFormulario()) return;
+
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => AreaWS.actualizar(Area, idUsuarioAccion));
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
     }
 
     private async Task EliminarArea()
     {
-        var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-        await Task.Run(() => AreaWS.eliminar(Area.AreaID, idUsuarioAccion));
-        await OnCerrarDetalle.InvokeAsync();
+        ErrorMessage = string.Empty;
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => AreaWS.eliminar(Area.AreaID, idUsuarioAccion));
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
     }
 
     private async Task RecuperarArea()
     {
-        var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-        await Task.Run(() => AreaWS.recuperar(Area.AreaID, idUsuarioAccion));
-        await OnCerrarDetalle.InvokeAsync();
+        ErrorMessage = string.Empty;
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => AreaWS.recuperar(Area.AreaID, idUsuarioAccion));
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
     }
 }

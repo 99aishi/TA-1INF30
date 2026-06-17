@@ -24,5 +24,11 @@ public class Main {
         } else {
             System.out.println("Administrador ya existe: " + admin.getNombres());
         }
+
+        IAreaBO areaBO = new AreaBOImpl();
+        List<Area> areas = areaBO.listarTodas();
+        for(Area area : areas){
+            System.out.println(area);
+        }
     }
 }

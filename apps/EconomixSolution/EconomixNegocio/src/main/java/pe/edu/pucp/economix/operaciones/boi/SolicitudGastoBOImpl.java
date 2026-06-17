@@ -3,14 +3,25 @@ package pe.edu.pucp.economix.operaciones.boi;
 import pe.edu.pucp.economix.operaciones.ibo.ICicloCajaBO;
 import pe.edu.pucp.economix.operaciones.ibo.IComprobantePagoBO;
 import pe.edu.pucp.economix.operaciones.ibo.ISolicitudGastoBO;
+import pe.edu.pucp.economix.operaciones.ibo.ITransaccionBO;
 import pe.edu.pucp.economix.operaciones.idao.IComprobantePagoDAO;
 import pe.edu.pucp.economix.operaciones.idao.ISolicitudGastoDAO;
 import pe.edu.pucp.economix.operaciones.daoi.SolicitudGastoDAOImpl;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
 import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
+import pe.edu.pucp.economix.operaciones.model.Transaccion;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoTransaccion;
+import pe.edu.pucp.economix.operaciones.model.enums.MedioPago;
+import pe.edu.pucp.economix.operaciones.model.enums.TipoTransaccion;
+import pe.edu.pucp.economix.rrhh.idao.IEmpleadoDAO;
+import pe.edu.pucp.economix.rrhh.daoi.EmpleadoDAOImpl;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
+import pe.edu.pucp.economix.tesoreria.boi.CuentaBancariaBOImpl;
+import pe.edu.pucp.economix.tesoreria.ibo.ICuentaBancariaBO;
+import pe.edu.pucp.economix.tesoreria.model.CajaChica;
+import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -21,10 +32,16 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
     private final ISolicitudGastoDAO solicitudGastoDAO;
     private final ICicloCajaBO cicloCajaBO ;
     private final IComprobantePagoBO comprobantePagoBO;
+    private final ITransaccionBO transaccionBO;
+    private final ICuentaBancariaBO cuentaBancariaBO;
+    private final IEmpleadoDAO empleadoDAO;
     public SolicitudGastoBOImpl(){
         solicitudGastoDAO= new SolicitudGastoDAOImpl();
         cicloCajaBO =  new CicloCajaBOImpl();
         comprobantePagoBO=new ComprobantePagoBOImpl();
+        transaccionBO=new TransaccionBOImpl();
+        cuentaBancariaBO=new CuentaBancariaBOImpl();
+        empleadoDAO=new EmpleadoDAOImpl();
     }
     private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
         if (idUsuarioAccion <= 0) {
@@ -214,6 +231,90 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
                 throw new Exception("Necesita ingresar un comentario justificando el rechazo.");
             }
         }
+    }
+
+    @Override
+    public int evaluar(int idSolicitudGasto, boolean aprobado, String comentario, int idJefeEvaluador, String numeroOperacionBancaria, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
+        if (idSolicitudGasto <= 0) throw new Exception("El id de la solicitud debe ser mayor que cero.");
+        if (idJefeEvaluador <= 0) throw new Exception("El id del jefe evaluador debe ser mayor que cero.");
+
+        SolicitudGasto solicitud = solicitudGastoDAO.buscarPorId(idSolicitudGasto);
+        if (solicitud == null) throw new Exception("La solicitud de gasto no existe.");
+        if (solicitud.getEstado() != EstadoSolicitudGasto.PENDIENTE) {
+            throw new Exception("Solo se puede evaluar una solicitud en estado PENDIENTE.");
+        }
+
+        Empleado jefe = empleadoDAO.buscarPorId(idJefeEvaluador);
+        if (jefe == null) throw new Exception("El jefe evaluador no existe.");
+
+        if (aprobado) {
+            if (numeroOperacionBancaria == null || numeroOperacionBancaria.trim().isEmpty()) {
+                throw new Exception("Debe ingresar el número de operación bancaria para aprobar el desembolso.");
+            }
+            solicitud.setEstado(EstadoSolicitudGasto.APROBADO);
+            solicitud.setJefeAprobador(jefe);
+            solicitud.setComentarioDecision(comentario);
+
+            int idModificado = solicitudGastoDAO.modificar(solicitud, idUsuarioAccion);
+
+            // Generar transacción de desembolso
+            generarTransaccionDesembolso(solicitud, numeroOperacionBancaria, idUsuarioAccion);
+
+            // Actualizar total gastado del ciclo
+            if (solicitud.getCiclo() != null) {
+                cicloCajaBO.calcularTotalGastado(solicitud.getCiclo(), idUsuarioAccion);
+            }
+
+            return idModificado;
+        } else {
+            if (comentario == null || comentario.trim().isEmpty()) {
+                throw new Exception("Debe ingresar un comentario justificando el rechazo.");
+            }
+            solicitud.setEstado(EstadoSolicitudGasto.RECHAZADO);
+            solicitud.setJefeAprobador(jefe);
+            solicitud.setComentarioDecision(comentario);
+            return solicitudGastoDAO.modificar(solicitud, idUsuarioAccion);
+        }
+    }
+
+    private void generarTransaccionDesembolso(SolicitudGasto solicitud, String numeroOperacionBancaria, int idUsuarioAccion) throws Exception {
+        CicloCajaChica ciclo = solicitud.getCiclo();
+        if (ciclo == null || ciclo.getCajaChica() == null) {
+            throw new Exception("La solicitud no tiene un ciclo/caja chica asignado.");
+        }
+
+        CajaChica cajaChica = ciclo.getCajaChica();
+        CuentaBancaria cuentaOrigen = cajaChica.getCuentaOrigen();
+        if (cuentaOrigen == null || cuentaOrigen.getIdCuenta() <= 0) {
+            throw new Exception("La caja chica no tiene una cuenta origen configurada.");
+        }
+
+        Empleado solicitante = solicitud.getSolicitante();
+        if (solicitante == null) throw new Exception("La solicitud no tiene solicitante.");
+
+        List<CuentaBancaria> cuentasEmpleado = cuentaBancariaBO.listarTodas().stream()
+                .filter(c -> c.getEmpleadoAdministrador() != null
+                        && c.getEmpleadoAdministrador().getUsuarioID() == solicitante.getUsuarioID())
+                .toList();
+        if (cuentasEmpleado.isEmpty()) {
+            throw new Exception("El solicitante no tiene cuentas bancarias registradas.");
+        }
+        CuentaBancaria cuentaDestino = cuentasEmpleado.get(0);
+
+        Transaccion transaccion = new Transaccion();
+        transaccion.setTipoTransaccion(TipoTransaccion.DESEMBOLSO);
+        transaccion.setFecha(new Date());
+        transaccion.setMonto(solicitud.getMontoSolicitado());
+        transaccion.setNumeroOperacionBancaria(numeroOperacionBancaria);
+        transaccion.setMedioPago(solicitud.getMedioDesembolso() != null ? solicitud.getMedioDesembolso() : MedioPago.TRANSFERENCIA);
+        transaccion.setCuentaOrigen(cuentaOrigen);
+        transaccion.setCuentaDestino(cuentaDestino);
+        transaccion.setMoneda(solicitud.getMonedaOriginal() != null ? solicitud.getMonedaOriginal() : cajaChica.getMoneda());
+        transaccion.setBeneficiario(solicitante);
+        transaccion.setEstadoTransaccion(EstadoTransaccion.COMPLETADA);
+
+        transaccionBO.insertar(transaccion, idUsuarioAccion);
     }
 
 }

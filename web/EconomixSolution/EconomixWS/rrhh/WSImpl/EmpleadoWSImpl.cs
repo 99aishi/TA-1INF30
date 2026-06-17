@@ -66,20 +66,18 @@ public class EmpleadoWSImpl : IEmpleadoWS
 
     public List<Empleado> listar()
     {
-        try
+        var response = _httpClient.GetAsync("ListarEmpleados").GetAwaiter().GetResult();
+        if (!response.IsSuccessStatusCode)
         {
-            var response = _httpClient.GetAsync("Listar").GetAwaiter().GetResult();
-            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
-                return new List<Empleado>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            if (string.IsNullOrEmpty(json) || json == "null")
-                return new List<Empleado>();
-            return JsonSerializer.Deserialize<List<Empleado>>(json) ?? new List<Empleado>();
+            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            throw new Exception($"Error al listar empleados: {error}");
         }
-        catch
-        {
+        if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
             return new List<Empleado>();
-        }
+        var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+        if (string.IsNullOrEmpty(json) || json == "null")
+            return new List<Empleado>();
+        return JsonSerializer.Deserialize<List<Empleado>>(json) ?? new List<Empleado>();
     }
 
     public Empleado? obtenerPorId(int id)

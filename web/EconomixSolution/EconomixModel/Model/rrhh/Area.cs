@@ -20,4 +20,7 @@ public class Area
 
     [JsonPropertyName("cajaChica")]
     public CajaChica? CajaChica { get; set; }
+
+    [JsonPropertyName("cuentasBancarias")]
+    public List<CuentaBancaria> CuentasBancarias { get; set; } = new();
 }

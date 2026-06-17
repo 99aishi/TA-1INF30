@@ -25,11 +25,14 @@ public class SolicitudGasto
     [JsonPropertyName("motivoSolicitud")]
     public string MotivoSolicitud { get; set; } = string.Empty;
 
+    [JsonPropertyName("comentarioDecision")]
+    public string? ComentarioDecision { get; set; }
+
     [JsonPropertyName("estado")]
     public string Estado { get; set; } = "PENDIENTE";
 
     [JsonPropertyName("medioDesembolso")]
-    public string MedioDesembolso { get; set; } = string.Empty;
+    public string MedioDesembolso { get; set; } = "TRANSFERENCIA";
 
     [JsonPropertyName("solicitante")]
     public Empleado? Solicitante { get; set; }

@@ -153,4 +153,15 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
         }
     }
 
+    public void evaluar(int idSolicitudGasto, bool aprobado, string comentario, int idJefeEvaluador, string numeroOperacionBancaria, int idUsuarioAccion)
+    {
+        var url = $"Evaluar?idSolicitudGasto={idSolicitudGasto}&aprobado={aprobado.ToString().ToLowerInvariant()}&comentario={Uri.EscapeDataString(comentario ?? "")}&idJefeEvaluador={idJefeEvaluador}&numeroOperacionBancaria={Uri.EscapeDataString(numeroOperacionBancaria ?? "")}&idUsuarioAccion={idUsuarioAccion}";
+        var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            throw new Exception(error);
+        }
+    }
+
 }

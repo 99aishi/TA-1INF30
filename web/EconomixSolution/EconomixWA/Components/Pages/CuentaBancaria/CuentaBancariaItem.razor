@@ -1,0 +1,41 @@
+<div class="card rounded-4 p-3 mb-2 @(Seleccionada ? "border-primary" : "")" @onclick="OnSeleccionar">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <p class="h6 mb-1">@Cuenta.NombreBanco</p>
+            <p class="text-muted small mb-0">
+                @Cuenta.NumeroBancario · CCI: @Cuenta.Cci
+            </p>
+            <p class="text-muted small mb-0">
+                Moneda: @(Cuenta.Moneda?.Simbolo ?? "-")
+                · Dueño: @(ObtenerNombreDueno())
+            </p>
+        </div>
+        <span class="badge @(Cuenta.Moneda?.Activa == true ? "text-bg-success" : "text-bg-secondary") rounded-pill">
+            @(Cuenta.Moneda?.CodigoISO ?? "-")
+        </span>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public CuentaBancaria Cuenta { get; set; } = new();
+
+    [Parameter]
+    public bool Seleccionada { get; set; }
+
+    [Parameter]
+    public EventCallback OnSeleccionar { get; set; }
+
+    private string ObtenerNombreDueno()
+    {
+        if (Cuenta.EmpleadoAdministrador != null)
+        {
+            return $"{Cuenta.EmpleadoAdministrador.Nombres} {Cuenta.EmpleadoAdministrador.ApellidoPaterno}".Trim();
+        }
+        if (Cuenta.AreaAdministradora != null)
+        {
+            return Cuenta.AreaAdministradora.Nombre;
+        }
+        return "Sin dueño";
+    }
+}

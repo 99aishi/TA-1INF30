@@ -23,7 +23,10 @@ public class Transaccion
     public string MedioPago { get; set; } = "TRANSFERENCIA";
 
     [JsonPropertyName("tipoCambio")]
-    public double TipoCambio { get; set; } = 1.0;
+    public TipoCambio? TipoCambio { get; set; }
+
+    [JsonPropertyName("estadoTransaccion")]
+    public string EstadoTransaccion { get; set; } = "REGISTRADA";
 
     [JsonPropertyName("cuentaOrigen")]
     public CuentaBancaria? CuentaOrigen { get; set; }

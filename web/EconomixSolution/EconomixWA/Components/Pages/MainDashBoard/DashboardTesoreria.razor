@@ -1,45 +1,49 @@
 @page "/DashboardTesoreria"
+@rendermode InteractiveServer
 @inject NavigationManager Navigation
+@inject ICajaChicaWS CajaChicaWS
+@inject ICicloCajaWS CicloCajaWS
+@using EconomixWA.Components.Pages.CajaChica
 
 <div id="cards-container" class="row">
-        <div id="card-container" class="col-3">
-            <div class="card rounded-4 h-100" >
-                <div class="card-body ">
-                    <h6 class="card-subtitle mb-2 text-body-primary">Fondos Totales</h6>
-                    <p class="card-text h2">s/. 670,400.00</p>
+    <div id="card-container" class="col-3">
+        <div class="card rounded-4 h-100">
+            <div class="card-body ">
+                <h6 class="card-subtitle mb-2 text-body-primary">Fondos Totales</h6>
+                <p class="card-text h2">@FormatearSoles(FondosTotales)</p>
+            </div>
+        </div>
+    </div>
+    <div id="card-container" class="col-3">
+        <div class="card rounded-4 h-100">
+            <div class="card-body d-flex flex-column justify-content-between">
+                <div>
+                    <h6 class="card-subtitle mb-2 text-body-primary">Fondos utilizados</h6>
+                    <p class="card-text h2">@FormatearSoles(FondosUtilizados)</p>
+                </div>
+                <div class="progress rounded-4" style="height: 10px">
+                    <div class="progress-bar rounded-4" style="width: @PorcentajeUtilizado%" role="progressbar" aria-valuenow="@PorcentajeUtilizado" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
             </div>
         </div>
-        <div id="card-container" class="col-3">
-            <div class="card rounded-4 h-100" >
-                <div class="card-body d-flex flex-column justify-content-between">
-                    <div >
-                        <h6 class="card-subtitle mb-2 text-body-primary">Fondos utilizados</h6>
-                        <p class="card-text h2">s/. 4.200.00</p>
-                    </div>
-                    <div class="progress rounded-4" style="height: 10px">
-                        <div class="progress-bar rounded-4" style="width: 25%" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                </div>
+    </div>
+    <div id="card-container" class="col-3">
+        <div class="card rounded-4 h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-body-primary">Saldo disponible</h6>
+                <p class="card-text h2">@FormatearSoles(SaldoDisponible)</p>
             </div>
         </div>
-        <div id="card-container" class="col-3">
-            <div class="card rounded-4 h-100">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-body-primary">Saldo disponible</h6>
-                    <p class="card-text h2">s/. 6,700.00</p>
-                </div>
+    </div>
+    <div id="card-container" class="col-3">
+        <div class="card rounded-4 h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-body-primary">Ciclos Activos</h6>
+                <p class="card-text h2">@CiclosActivos</p>
+                <p class="card-text" style="color: rgb(188, 94, 53)">@CiclosRevision requieren revisión</p>
             </div>
         </div>
-        <div id="card-container" class="col-3">
-            <div class="card rounded-4 h-100" >
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-body-primary">Ciclos Activos</h6>
-                    <p class="card-text h2">5</p>
-                    <p class="card-text" style="color: rgb(188, 94, 53)" >2 requieren revisión</p>
-                </div>
-            </div>
-        </div>
+    </div>
 </div>
 
 
@@ -56,16 +60,15 @@
         <div class="overflow-scroll overflow-x-hidden" style="max-height: 330px;">
             @foreach (var ciclo in CiclosCajaChica)
             {
-                 <CajaChicaItem Area="@ciclo.Area"
-                       Responsable="@ciclo.Responsable"
-                       PorcentajeUso="@ciclo.PorcentajeUso"
-                       MontoTotal="@ciclo.MontoTotal"
-                       Gastado="@ciclo.Gastado"
-                       Disponible="@ciclo.Disponible"
-                       ProximoCierre="@ciclo.ProximoCierre"
-                       CerrarPronto="@ciclo.CerrarPronto"
-                       OnMuestraDetalle="IrADashboard" />
-                
+                <CajaChicaItem Area="@ciclo.Area"
+                               Responsable="@ciclo.Responsable"
+                               PorcentajeUso="@ciclo.PorcentajeUso"
+                               MontoTotal="@ciclo.MontoTotal"
+                               Gastado="@ciclo.Gastado"
+                               Disponible="@ciclo.Disponible"
+                               ProximoCierre="@ciclo.ProximoCierre"
+                               CerrarPronto="@ciclo.CerrarPronto"
+                               OnMuestraDetalle="IrADashboard" />
             }
         </div>
 
@@ -74,56 +77,84 @@
 
 
 @code {
+    private double FondosTotales { get; set; }
+    private double FondosUtilizados { get; set; }
+    private double SaldoDisponible => FondosTotales - FondosUtilizados;
+    private int PorcentajeUtilizado => FondosTotales > 0 ? (int)((FondosUtilizados / FondosTotales) * 100) : 0;
+    private int CiclosActivos { get; set; }
+    private int CiclosRevision { get; set; }
+
+    private List<CicloCajaChica> CiclosCajaChica { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(
+            CargarFondos(),
+            CargarCiclos());
+    }
+
+    private async Task CargarFondos()
+    {
+        try
+        {
+            var cajas = await Task.Run(() => CajaChicaWS.listar());
+            FondosTotales = cajas.Sum(c => c.MontoTecho);
+        }
+        catch
+        {
+            FondosTotales = 0;
+        }
+    }
+
+    private async Task CargarCiclos()
+    {
+        try
+        {
+            var ciclos = await Task.Run(() => CicloCajaWS.listar());
+            FondosUtilizados = ciclos.Sum(c => c.TotalGastado);
+            CiclosActivos = ciclos.Count(c => c.Estado.Equals("ABIERTO", StringComparison.OrdinalIgnoreCase));
+            CiclosRevision = ciclos.Count(c => c.TotalGastado > c.SaldoInicial * 0.8);
+
+            CiclosCajaChica = ciclos.Select(c =>
+            {
+                var montoTotal = (decimal)c.SaldoInicial;
+                var gastado = (decimal)c.TotalGastado;
+                var disponible = montoTotal - gastado;
+                var porcentaje = montoTotal > 0 ? (int)((gastado / montoTotal) * 100) : 0;
+                var fechaCierre = c.FechaCierre;
+                var cerrarPronto = fechaCierre.HasValue && fechaCierre.Value.Date <= DateTime.Now.AddDays(3).Date;
+
+                return new CicloCajaChica
+                {
+                    Area = c.CajaChica?.AreaAsignada?.Nombre ?? "Sin área",
+                    Responsable = c.CajaChica?.AreaAsignada?.Jefe?.Nombres ?? "Sin responsable",
+                    PorcentajeUso = porcentaje,
+                    MontoTotal = montoTotal,
+                    Gastado = gastado,
+                    Disponible = disponible,
+                    ProximoCierre = fechaCierre?.ToString("dd 'de' MMMM") ?? "Sin fecha",
+                    CerrarPronto = cerrarPronto
+                };
+            }).ToList();
+        }
+        catch
+        {
+            FondosUtilizados = 0;
+            CiclosActivos = 0;
+            CiclosRevision = 0;
+            CiclosCajaChica = new();
+        }
+    }
 
     private void IrADashboard()
     {
         Navigation.NavigateTo("/Dashboard");
     }
 
-    private List<CicloCajaChica> CiclosCajaChica = new()
+    private string FormatearSoles(double monto)
     {
-        new CicloCajaChica
-        {
-            Area = "Caja Administración",
-            Responsable = "Ana Mendoza",
-            PorcentajeUso = 72,
-            MontoTotal = 5000,
-            Gastado = 3600,
-            Disponible = 1400,
-            ProximoCierre = "30 de Mayo"
-        },
-        new CicloCajaChica
-        {
-            Area = "Caja Logística",
-            Responsable = "Luis García",
-            PorcentajeUso = 45,
-            MontoTotal = 8000,
-            Gastado = 3600,
-            Disponible = 4400,
-            ProximoCierre = "28 de Mayo"
-        },
-        new CicloCajaChica
-        {
-            Area = "Caja Marketing",
-            Responsable = "Roberto Díaz",
-            PorcentajeUso = 95,
-            MontoTotal = 3500,
-            Gastado = 3325,
-            Disponible = 175,
-            ProximoCierre = "25 de Mayo",
-            CerrarPronto = true
-        },
-        new CicloCajaChica
-        {
-            Area = "Caja Operaciones",
-            Responsable = "Elena Ruiz",
-            PorcentajeUso = 72,
-            MontoTotal = 5000,
-            Gastado = 3600,
-            Disponible = 1400,
-            ProximoCierre = "30 de Mayo"
-        }
-    };
+        return $"S/ {monto:N2}";
+    }
 
     public class CicloCajaChica
     {

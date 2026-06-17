@@ -97,4 +97,22 @@ public class SolicitudGastoWS {
                     .entity(Map.of("error", e.getMessage())).build();
         }
     }
+
+    @POST
+    @Path("Evaluar")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response evaluar(@QueryParam("idSolicitudGasto") int idSolicitudGasto,
+                            @QueryParam("aprobado") boolean aprobado,
+                            @QueryParam("comentario") String comentario,
+                            @QueryParam("idJefeEvaluador") int idJefeEvaluador,
+                            @QueryParam("numeroOperacionBancaria") String numeroOperacionBancaria,
+                            @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
+        try {
+            int r = solicitudBO.evaluar(idSolicitudGasto, aprobado, comentario, idJefeEvaluador, numeroOperacionBancaria, idUsuarioAccion);
+            return Response.ok(r).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage())).build();
+        }
+    }
 }

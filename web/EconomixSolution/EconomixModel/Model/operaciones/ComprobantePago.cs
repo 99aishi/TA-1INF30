@@ -10,7 +10,7 @@ public class ComprobantePago
     [JsonPropertyName("tipoDocumento")]
     public string TipoDocumento { get; set; } = "FACTURA";
 
-    [JsonPropertyName("rucProveedor")]
+    [JsonPropertyName("RUCProveedor")]
     public string? RucProveedor { get; set; }
 
     [JsonPropertyName("razonSocial")]
@@ -44,7 +44,7 @@ public class ComprobantePago
     public double Total { get; set; }
 
     [JsonPropertyName("estado")]
-    public string Estado { get; set; } = "PorRevisar";
+    public string Estado { get; set; } = "POR_REVISAR";
 
     [JsonPropertyName("solicitud")]
     public SolicitudGasto? Solicitud { get; set; }

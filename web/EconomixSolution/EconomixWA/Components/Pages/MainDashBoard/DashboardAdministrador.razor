@@ -1,41 +1,126 @@
+@rendermode InteractiveServer
+@inject IEmpleadoWS EmpleadoWS
+@inject IAreaWS AreaWS
+@inject ISolicitudGastoWS SolicitudGastoWS
+@inject ICajaChicaWS CajaChicaWS
+
 <div id="cards-container" class="row">
-        <div id="card-container" class="col-3">
-            <div class="card rounded-4 h-100" >
-                <div class="card-body ">
-                    <h6 class="card-subtitle mb-2 text-body-primary">Usuarios Activos</h6>
-                    <p class="card-text h2">48</p>
-                    <p class="card-text" style="color: rgb(188, 94, 53)">6 nuevos este mes</p>
-                </div>
-            </div>
-        </div>
-        <div id="card-container" class="col-3">
-            <div class="card rounded-4 h-100" >
-                <div class="card-body ">
-                    <h6 class="card-subtitle mb-2 text-body-primary">Áreas activas</h6>
-                    <p class="card-text h2">7</p>
-                    <p class="card-text" style="color: rgb(188, 94, 53)">2 en revision</p>
-                </div>
-            </div>
-        </div>
-        <div id="card-container" class="col-3">
-            <div class="card rounded-4 h-100" >
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-body-primary">Solicitudes del mes</h6>
-                        <p class="card-text h2">126</p>
-                        <p class="card-text" style="color: rgb(188, 94, 53)">18 pendientes</p>
-                </div>
-            </div>
-        </div>
-        <div id="card-container" class="col-3">
-            <div class="card rounded-4 h-100">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-body-primary">Fondos administrados</h6>
-                        <p class="card-text h2">s/. 6,700.00</p>
-                </div>
+    <div id="card-container" class="col-3">
+        <div class="card rounded-4 h-100">
+            <div class="card-body ">
+                <h6 class="card-subtitle mb-2 text-body-primary">Usuarios Activos</h6>
+                <p class="card-text h2">@UsuariosActivos</p>
+                <p class="card-text" style="color: rgb(188, 94, 53)">@UsuariosNuevos nuevos este mes</p>
             </div>
         </div>
     </div>
+    <div id="card-container" class="col-3">
+        <div class="card rounded-4 h-100">
+            <div class="card-body ">
+                <h6 class="card-subtitle mb-2 text-body-primary">Áreas activas</h6>
+                <p class="card-text h2">@AreasActivas</p>
+                <p class="card-text" style="color: rgb(188, 94, 53)">@AreasRevision en revisión</p>
+            </div>
+        </div>
+    </div>
+    <div id="card-container" class="col-3">
+        <div class="card rounded-4 h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-body-primary">Solicitudes del mes</h6>
+                <p class="card-text h2">@SolicitudesMes</p>
+                <p class="card-text" style="color: rgb(188, 94, 53)">@SolicitudesPendientes pendientes</p>
+            </div>
+        </div>
+    </div>
+    <div id="card-container" class="col-3">
+        <div class="card rounded-4 h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-body-primary">Fondos administrados</h6>
+                <p class="card-text h2">@FormatearSoles(FondosAdministrados)</p>
+            </div>
+        </div>
+    </div>
+</div>
 
 @code {
-    
+    private int UsuariosActivos { get; set; }
+    private int UsuariosNuevos { get; set; }
+    private int AreasActivas { get; set; }
+    private int AreasRevision { get; set; }
+    private int SolicitudesMes { get; set; }
+    private int SolicitudesPendientes { get; set; }
+    private double FondosAdministrados { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(
+            CargarUsuarios(),
+            CargarAreas(),
+            CargarSolicitudes(),
+            CargarFondos());
+    }
+
+    private async Task CargarUsuarios()
+    {
+        try
+        {
+            var usuarios = await Task.Run(() => EmpleadoWS.listar());
+            UsuariosActivos = usuarios.Count(u => u.Estado == EstadoUsuario.ACTIVO);
+            UsuariosNuevos = usuarios.Count(u => u.UsuarioID > 0);
+        }
+        catch
+        {
+            UsuariosActivos = 0;
+            UsuariosNuevos = 0;
+        }
+    }
+
+    private async Task CargarAreas()
+    {
+        try
+        {
+            var areas = await Task.Run(() => AreaWS.listar());
+            AreasActivas = areas.Count(a => a.EstaActivo);
+            AreasRevision = areas.Count(a => !a.EstaActivo);
+        }
+        catch
+        {
+            AreasActivas = 0;
+            AreasRevision = 0;
+        }
+    }
+
+    private async Task CargarSolicitudes()
+    {
+        try
+        {
+            var solicitudes = await Task.Run(() => SolicitudGastoWS.listar());
+            var hoy = DateTime.Now;
+            SolicitudesMes = solicitudes.Count(s => s.FechaSolicitud.Month == hoy.Month && s.FechaSolicitud.Year == hoy.Year);
+            SolicitudesPendientes = solicitudes.Count(s => s.Estado.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase));
+        }
+        catch
+        {
+            SolicitudesMes = 0;
+            SolicitudesPendientes = 0;
+        }
+    }
+
+    private async Task CargarFondos()
+    {
+        try
+        {
+            var cajas = await Task.Run(() => CajaChicaWS.listar());
+            FondosAdministrados = cajas.Sum(c => c.MontoTecho);
+        }
+        catch
+        {
+            FondosAdministrados = 0;
+        }
+    }
+
+    private string FormatearSoles(double monto)
+    {
+        return $"S/ {monto:N2}";
+    }
 }

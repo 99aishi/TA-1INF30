@@ -1,40 +1,133 @@
+@rendermode InteractiveServer
+@inject IUsuarioWS UsuarioWS
+@inject ISolicitudGastoWS SolicitudGastoWS
+@inject ICajaChicaWS CajaChicaWS
+@inject ICicloCajaWS CicloCajaWS
+
 <div id="cards-container" class="row">
-        <div id="card-container" class="col-3">
-            <div class="card rounded-4 h-100" >
-                <div class="card-body ">
-                    <h6 class="card-subtitle mb-2 text-body-primary">Saldo de Caja Chica</h6>
-                    <p class="card-text h2">s/. 15,400.00</p>
-                </div>
-            </div>
-        </div>
-        <div id="card-container" class="col-3">
-            <div class="card rounded-4 h-100" >
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-body-primary">Pendientes de Aprobación</h6>
-                    <p class="card-text h2">8</p>
-                    <p class="card-text text-warning">3 Urgente</p>
-                </div>
-            </div>
-        </div>
-        <div id="card-container" class="col-3">
-            <div class="card rounded-4 h-100">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-body-primary">Gastos del Ciclo</h6>
-                    <p class="card-text h2">s/. 6,700.00</p>
-                    <p class="card-text">18 Transacciones</p>
-                </div>
-            </div>
-        </div>
-        <div id="card-container" class="col-3">
-            <div class="card rounded-4 h-100" >
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-body-primary">Rendiciones Completadas</h6>
-                    <p class="card-text h2">2</p>
-                </div>
+    <div id="card-container" class="col-3">
+        <div class="card rounded-4 h-100">
+            <div class="card-body ">
+                <h6 class="card-subtitle mb-2 text-body-primary">Saldo de Caja Chica</h6>
+                <p class="card-text h2">@FormatearSoles(SaldoCajaChica)</p>
             </div>
         </div>
     </div>
+    <div id="card-container" class="col-3">
+        <div class="card rounded-4 h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-body-primary">Pendientes de Aprobación</h6>
+                <p class="card-text h2">@PendientesAprobacion</p>
+                <p class="card-text text-warning">@Urgentes urgentes</p>
+            </div>
+        </div>
+    </div>
+    <div id="card-container" class="col-3">
+        <div class="card rounded-4 h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-body-primary">Gastos del Ciclo</h6>
+                <p class="card-text h2">@FormatearSoles(GastosCiclo)</p>
+                <p class="card-text">@TransaccionesCiclo transacciones</p>
+            </div>
+        </div>
+    </div>
+    <div id="card-container" class="col-3">
+        <div class="card rounded-4 h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-body-primary">Solicitudes Aprobadas</h6>
+                <p class="card-text h2">@SolicitudesAprobadas</p>
+            </div>
+        </div>
+    </div>
+</div>
 
 @code {
-    
+    private double SaldoCajaChica { get; set; }
+    private int PendientesAprobacion { get; set; }
+    private int Urgentes { get; set; }
+    private double GastosCiclo { get; set; }
+    private int TransaccionesCiclo { get; set; }
+    private int SolicitudesAprobadas { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        int idJefe;
+        try
+        {
+            idJefe = UsuarioWS.GetCurrentUserId();
+        }
+        catch
+        {
+            idJefe = 0;
+        }
+
+        await Task.WhenAll(
+            CargarCajaChica(),
+            CargarPendientes(idJefe),
+            CargarCiclos(),
+            CargarAprobadas(idJefe));
+    }
+
+    private async Task CargarCajaChica()
+    {
+        try
+        {
+            var cajas = await Task.Run(() => CajaChicaWS.listar());
+            SaldoCajaChica = cajas.Sum(c => c.MontoTecho);
+        }
+        catch
+        {
+            SaldoCajaChica = 0;
+        }
+    }
+
+    private async Task CargarPendientes(int idJefe)
+    {
+        try
+        {
+            var pendientes = await Task.Run(() => SolicitudGastoWS.listarPendientesJefe(idJefe));
+            PendientesAprobacion = pendientes.Count;
+            Urgentes = pendientes.Count(s => s.FechaSolicitud < DateTime.Now.AddDays(-2));
+        }
+        catch
+        {
+            PendientesAprobacion = 0;
+            Urgentes = 0;
+        }
+    }
+
+    private async Task CargarCiclos()
+    {
+        try
+        {
+            var ciclos = await Task.Run(() => CicloCajaWS.listar());
+            GastosCiclo = ciclos.Sum(c => c.TotalGastado);
+            TransaccionesCiclo = ciclos.Sum(c => c.SolicitudesDeGasto?.Count ?? 0);
+        }
+        catch
+        {
+            GastosCiclo = 0;
+            TransaccionesCiclo = 0;
+        }
+    }
+
+    private async Task CargarAprobadas(int idJefe)
+    {
+        try
+        {
+            var aprobadas = await Task.Run(() => SolicitudGastoWS.listarPendientesJefe(idJefe)
+                .Where(s => s.Estado.Equals("APROBADA", StringComparison.OrdinalIgnoreCase))
+                .ToList());
+            SolicitudesAprobadas = aprobadas.Count;
+        }
+        catch
+        {
+            SolicitudesAprobadas = 0;
+        }
+    }
+
+    private string FormatearSoles(double monto)
+    {
+        return $"S/ {monto:N2}";
+    }
 }

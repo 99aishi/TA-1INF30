@@ -1,28 +1,34 @@
 <div class="card rounded-4 p-3 mb-3">
-    <div class="row g-3 align-items-end">
+    <div class="row g-2 align-items-end">
         <div class="col-12 col-md-4">
             <label class="form-label small text-muted">Nombre</label>
             <input type="text" class="form-control bg-light rounded-4"
                    placeholder="Buscar caja chica..."
                    @bind="FiltroNombre" @bind:event="oninput" />
         </div>
-        <div class="col-12 col-md-3">
-            <label class="form-label small text-muted">Monto mínimo</label>
+        <div class="col-3 col-md-2">
+            <label class="form-label small text-muted">Monto mín.</label>
             <input type="number" step="0.01" class="form-control bg-light rounded-4"
                    placeholder="0.00" @bind="FiltroMontoMin" />
         </div>
-        <div class="col-12 col-md-3">
-            <label class="form-label small text-muted">Monto máximo</label>
+        <div class="col-3 col-md-2">
+            <label class="form-label small text-muted">Monto máx.</label>
             <input type="number" step="0.01" class="form-control bg-light rounded-4"
                    placeholder="0.00" @bind="FiltroMontoMax" />
         </div>
-        <div class="col-12 col-md-2">
+        <div class="col-3 col-md-2">
             <label class="form-label small text-muted">Estado</label>
             <select class="form-select bg-light rounded-4" @bind="FiltroEstado">
                 <option value="Todas">Todas</option>
                 <option value="Activo">Activo</option>
                 <option value="Inactivo">Inactivo</option>
             </select>
+        </div>
+        <div class="col-3 col-md-2 d-grid">
+            <label class="form-label small text-muted">&nbsp;</label>
+            <button type="button" class="btn btn-secondary rounded-4" @onclick="Limpiar">
+                Limpiar
+            </button>
         </div>
     </div>
 </div>
@@ -39,4 +45,23 @@
 
     [Parameter] public string FiltroEstado { get; set; } = "Todas";
     [Parameter] public EventCallback<string> FiltroEstadoChanged { get; set; }
+
+    [Parameter] public EventCallback OnLimpiar { get; set; }
+
+    private async Task Limpiar()
+    {
+        FiltroNombre = string.Empty;
+        await FiltroNombreChanged.InvokeAsync(string.Empty);
+
+        FiltroMontoMin = null;
+        await FiltroMontoMinChanged.InvokeAsync(null);
+
+        FiltroMontoMax = null;
+        await FiltroMontoMaxChanged.InvokeAsync(null);
+
+        FiltroEstado = "Todas";
+        await FiltroEstadoChanged.InvokeAsync("Todas");
+
+        await OnLimpiar.InvokeAsync();
+    }
 }

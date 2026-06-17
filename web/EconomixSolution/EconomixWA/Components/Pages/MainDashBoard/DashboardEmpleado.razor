@@ -1,33 +1,114 @@
+@rendermode InteractiveServer
+@inject IUsuarioWS UsuarioWS
+@inject ISolicitudGastoWS SolicitudGastoWS
+@inject IComprobantePagoWS ComprobantePagoWS
+@inject ICicloCajaWS CicloCajaWS
+
 <div id="cards-container" class="row">
-        <div id="card-container" class="col-4">
-            <div class="card rounded-4 h-100" >
-                <div class="card-body ">
-                    <h6 class="card-subtitle mb-2 text-body-primary">Mis solicitudes pendientes</h6>
-                    <p class="card-text h2">3</p>
-                    <p class="card-text text-warning">2 Urgentes</p>
-                </div>
-            </div>
-        </div>
-        <div id="card-container" class="col-4">
-            <div class="card rounded-4 h-100" >
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-body-primary">Comprobantes por subir</h6>
-                    <p class="card-text h2">2</p>
-                    <p class="card-text text-primary">pendientes de sustento</p>
-                    </div>
-                </div>
-            </div>
-            <div id="card-container" class="col-4">
-                <div class="card rounded-4 h-100">
-                    <div class="card-body">
-                        <h6 class="card-subtitle mb-2 text-body-primary">Gastos del Ciclo</h6>
-                            <p class="card-text h2">s/. 6,700.00</p>
-                            <p class="card-text text-primary"> 4 solicitudes</p>
-                </div>
+    <div id="card-container" class="col-4">
+        <div class="card rounded-4 h-100">
+            <div class="card-body ">
+                <h6 class="card-subtitle mb-2 text-body-primary">Mis solicitudes pendientes</h6>
+                <p class="card-text h2">@MisSolicitudesPendientes</p>
+                <p class="card-text text-warning">@Urgentes urgentes</p>
             </div>
         </div>
     </div>
+    <div id="card-container" class="col-4">
+        <div class="card rounded-4 h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-body-primary">Comprobantes por subir</h6>
+                <p class="card-text h2">@ComprobantesPendientes</p>
+                <p class="card-text text-primary">pendientes de sustento</p>
+            </div>
+        </div>
+    </div>
+    <div id="card-container" class="col-4">
+        <div class="card rounded-4 h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-body-primary">Gastos del Ciclo</h6>
+                <p class="card-text h2">@FormatearSoles(GastosCiclo)</p>
+                <p class="card-text text-primary">@MisSolicitudesCiclo solicitudes</p>
+            </div>
+        </div>
+    </div>
+</div>
 
 @code {
-    
+    private int MisSolicitudesPendientes { get; set; }
+    private int Urgentes { get; set; }
+    private int ComprobantesPendientes { get; set; }
+    private double GastosCiclo { get; set; }
+    private int MisSolicitudesCiclo { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        int idEmpleado;
+        try
+        {
+            idEmpleado = UsuarioWS.GetCurrentUserId();
+        }
+        catch
+        {
+            idEmpleado = 0;
+        }
+
+        await Task.WhenAll(
+            CargarMisSolicitudes(idEmpleado),
+            CargarComprobantesPendientes(idEmpleado),
+            CargarGastosCiclo(idEmpleado));
+    }
+
+    private async Task CargarMisSolicitudes(int idEmpleado)
+    {
+        try
+        {
+            var solicitudes = await Task.Run(() => SolicitudGastoWS.listarPorSolicitante(idEmpleado));
+            MisSolicitudesPendientes = solicitudes.Count(s => s.Estado.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase));
+            Urgentes = solicitudes.Count(s => s.Estado.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase) && s.FechaSolicitud < DateTime.Now.AddDays(-2));
+        }
+        catch
+        {
+            MisSolicitudesPendientes = 0;
+            Urgentes = 0;
+        }
+    }
+
+    private async Task CargarComprobantesPendientes(int idEmpleado)
+    {
+        try
+        {
+            var solicitudes = await Task.Run(() => SolicitudGastoWS.listarPorSolicitante(idEmpleado));
+            ComprobantesPendientes = solicitudes
+                .Where(s => s.Estado.Equals("APROBADA", StringComparison.OrdinalIgnoreCase))
+                .Count(s => s.Comprobantes == null || s.Comprobantes.Count == 0);
+        }
+        catch
+        {
+            ComprobantesPendientes = 0;
+        }
+    }
+
+    private async Task CargarGastosCiclo(int idEmpleado)
+    {
+        try
+        {
+            var ciclos = await Task.Run(() => CicloCajaWS.listar());
+            var misCiclos = ciclos
+                .Where(c => c.SolicitudesDeGasto?.Any(s => s.Solicitante?.UsuarioID == idEmpleado) == true)
+                .ToList();
+            GastosCiclo = misCiclos.Sum(c => c.TotalGastado);
+            MisSolicitudesCiclo = misCiclos.Sum(c => c.SolicitudesDeGasto?.Count(s => s.Solicitante?.UsuarioID == idEmpleado) ?? 0);
+        }
+        catch
+        {
+            GastosCiclo = 0;
+            MisSolicitudesCiclo = 0;
+        }
+    }
+
+    private string FormatearSoles(double monto)
+    {
+        return $"S/ {monto:N2}";
+    }
 }

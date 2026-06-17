@@ -9,4 +9,5 @@ public interface ICicloCajaBO extends IBaseBO<CicloCajaChica> {
 
     void calcularTotalGastado(CicloCajaChica cicloCajaChica, int idUsuarioAccion) throws Exception;
     List<CicloCajaChica> listarActivos() throws Exception;
+    int cerrarCiclo(int idCicloCaja, int idUsuarioAccion) throws Exception;
 }

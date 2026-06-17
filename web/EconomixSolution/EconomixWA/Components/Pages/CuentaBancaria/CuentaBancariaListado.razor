@@ -1,0 +1,117 @@
+<div class="card rounded-4 p-3 mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <p class="h5 mb-0">@Titulo</p>
+        <button type="button" class="btn btn-sm btn-outline-primary" @onclick="IniciarNueva">
+            + Agregar cuenta
+        </button>
+    </div>
+
+    @if (MostrarEditor)
+    {
+        <CuentaBancariaEditor Cuenta="CuentaEnEdicion"
+                              Monedas="Monedas"
+                              OnGuardar="GuardarCuenta"
+                              OnCancelar="CancelarEdicion" />
+    }
+
+    @if (Cuentas.Count == 0 && !MostrarEditor)
+    {
+        <p class="text-muted mb-0">No hay cuentas bancarias registradas.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Banco</th>
+                        <th>Número</th>
+                        <th>CCI</th>
+                        <th>Moneda</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var cuenta in Cuentas)
+                    {
+                        <tr>
+                            <td>@cuenta.NombreBanco</td>
+                            <td>@cuenta.NumeroBancario</td>
+                            <td>@cuenta.Cci</td>
+                            <td>@(cuenta.Moneda?.Simbolo ?? "-")</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-warning me-1" @onclick="() => Editar(cuenta)">
+                                    Editar
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(cuenta)">
+                                    Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Titulo { get; set; } = "Cuentas bancarias";
+
+    [Parameter]
+    public List<CuentaBancaria> Cuentas { get; set; } = new();
+
+    [Parameter]
+    public List<Moneda> Monedas { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<CuentaBancaria> OnGuardar { get; set; }
+
+    [Parameter]
+    public EventCallback<CuentaBancaria> OnEliminar { get; set; }
+
+    private bool MostrarEditor { get; set; }
+    private CuentaBancaria CuentaEnEdicion { get; set; } = new();
+
+    private void IniciarNueva()
+    {
+        CuentaEnEdicion = new CuentaBancaria();
+        MostrarEditor = true;
+    }
+
+    private void Editar(CuentaBancaria cuenta)
+    {
+        CuentaEnEdicion = new CuentaBancaria
+        {
+            IdCuenta = cuenta.IdCuenta,
+            NombreBanco = cuenta.NombreBanco,
+            NumeroBancario = cuenta.NumeroBancario,
+            Cci = cuenta.Cci,
+            Moneda = cuenta.Moneda != null
+                ? new Moneda { IdMoneda = cuenta.Moneda.IdMoneda, Nombre = cuenta.Moneda.Nombre, Simbolo = cuenta.Moneda.Simbolo, CodigoISO = cuenta.Moneda.CodigoISO }
+                : null,
+            EmpleadoAdministrador = cuenta.EmpleadoAdministrador,
+            AreaAdministradora = cuenta.AreaAdministradora
+        };
+        MostrarEditor = true;
+    }
+
+    private async Task GuardarCuenta(CuentaBancaria cuenta)
+    {
+        await OnGuardar.InvokeAsync(cuenta);
+        MostrarEditor = false;
+        CuentaEnEdicion = new CuentaBancaria();
+    }
+
+    private async Task Eliminar(CuentaBancaria cuenta)
+    {
+        await OnEliminar.InvokeAsync(cuenta);
+    }
+
+    private void CancelarEdicion()
+    {
+        MostrarEditor = false;
+        CuentaEnEdicion = new CuentaBancaria();
+    }
+}

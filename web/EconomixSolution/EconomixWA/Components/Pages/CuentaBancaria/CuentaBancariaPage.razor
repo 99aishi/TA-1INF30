@@ -1,0 +1,435 @@
+@page "/Cuentas Bancarias"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject ICuentaBancariaWS CuentaBancariaWS
+@inject IMonedaWS MonedaWS
+@inject IEmpleadoWS EmpleadoWS
+@inject IAreaWS AreaWS
+@inject IUsuarioWS UsuarioWS
+
+<div class="h-100 d-flex flex-column">
+    <div class="d-flex flex-row justify-content-between align-items-center mb-3">
+        <div>
+            <p class="h3 mb-1">Cuentas Bancarias</p>
+            <p class="text-muted mb-0">Administración de cuentas bancarias de empleados y áreas.</p>
+        </div>
+
+        <button type="button" class="btn btn-primary" @onclick="PrepararNueva">
+            + Agregar cuenta
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+            @ErrorMessage
+            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+        </div>
+    }
+
+    <CuentaBancariaSearchBar @bind-Busqueda="Busqueda"
+                             @bind-MonedaSeleccionadaId="FiltroMonedaId"
+                             @bind-TipoDueno="FiltroTipoDueno"
+                             Monedas="Monedas"
+                             OnBuscar="Filtrar" />
+
+    <div class="d-flex flex-column flex-fill overflow-hidden">
+        <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
+
+            <div class="@(MostrarEditor ? "col-6" : "col-12") h-100 d-flex flex-column overflow-hidden">
+                <div class="card rounded-4 p-3 h-100 overflow-scroll">
+
+                    @if (Cargando)
+                    {
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <p class="text-muted">Cargando cuentas...</p>
+                        </div>
+                    }
+                    else if (CuentasFiltradas.Count() == 0)
+                    {
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <p class="text-muted">
+                                @(HayFiltrosActivos ? "Ninguna cuenta coincide con los filtros" : "No se encontraron cuentas bancarias")
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var cuenta in CuentasFiltradas)
+                        {
+                            <CuentaBancariaItem Cuenta="cuenta"
+                                                Seleccionada="@(CuentaSeleccionada?.IdCuenta == cuenta.IdCuenta)"
+                                                OnSeleccionar="() => Seleccionar(cuenta)" />
+                        }
+                    }
+                </div>
+            </div>
+
+            @if (MostrarEditor && CuentaEnEdicion != null)
+            {
+                <div class="col-6 h-100 overflow-auto">
+                    <div class="card rounded-4 p-3 h-100">
+                        <p class="h5 mb-3">@(CuentaEnEdicion.IdCuenta > 0 ? "Editar cuenta" : "Nueva cuenta")</p>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label mb-1">Banco</label>
+                                <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("NombreBanco") ? "is-invalid" : "")"
+                                       placeholder="Nombre del banco" @bind="CuentaEnEdicion.NombreBanco">
+                                @if (Errores.ContainsKey("NombreBanco"))
+                                {
+                                    <div class="text-danger small mt-1">@Errores["NombreBanco"]</div>
+                                }
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label mb-1">Número de cuenta</label>
+                                <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("NumeroBancario") ? "is-invalid" : "")"
+                                       placeholder="Mínimo 10 dígitos" @bind="CuentaEnEdicion.NumeroBancario">
+                                @if (Errores.ContainsKey("NumeroBancario"))
+                                {
+                                    <div class="text-danger small mt-1">@Errores["NumeroBancario"]</div>
+                                }
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label mb-1">CCI</label>
+                                <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("Cci") ? "is-invalid" : "")"
+                                       placeholder="20 dígitos" @bind="CuentaEnEdicion.Cci">
+                                @if (Errores.ContainsKey("Cci"))
+                                {
+                                    <div class="text-danger small mt-1">@Errores["Cci"]</div>
+                                }
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label mb-1">Moneda</label>
+                                <select class="form-select rounded-4 @(Errores.ContainsKey("Moneda") ? "is-invalid" : "")"
+                                        @bind="MonedaSeleccionadaId">
+                                    <option value="0">Seleccione una moneda</option>
+                                    @foreach (var moneda in Monedas)
+                                    {
+                                        <option value="@moneda.IdMoneda">@moneda.Simbolo - @moneda.Nombre</option>
+                                    }
+                                </select>
+                                @if (Errores.ContainsKey("Moneda"))
+                                {
+                                    <div class="text-danger small mt-1">@Errores["Moneda"]</div>
+                                }
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label mb-1">Dueño</label>
+                                <select class="form-select rounded-4 mb-2"
+                                        @bind="TipoDuenoEdicion">
+                                    <option value="">Seleccione tipo de dueño</option>
+                                    <option value="Empleado">Empleado</option>
+                                    <option value="Area">Área</option>
+                                </select>
+
+                                @if (TipoDuenoEdicion == "Empleado")
+                                {
+                                    <select class="form-select rounded-4 @(Errores.ContainsKey("Dueno") ? "is-invalid" : "")"
+                                            @bind="EmpleadoSeleccionadoId">
+                                        <option value="0">Seleccione un empleado</option>
+                                        @foreach (var emp in Empleados)
+                                        {
+                                            <option value="@emp.UsuarioID">@emp.Nombres @emp.ApellidoPaterno</option>
+                                        }
+                                    </select>
+                                }
+                                else if (TipoDuenoEdicion == "Area")
+                                {
+                                    <select class="form-select rounded-4 @(Errores.ContainsKey("Dueno") ? "is-invalid" : "")"
+                                            @bind="AreaSeleccionadaId">
+                                        <option value="0">Seleccione un área</option>
+                                        @foreach (var area in Areas)
+                                        {
+                                            <option value="@area.AreaID">@area.Nombre</option>
+                                        }
+                                    </select>
+                                }
+                                @if (Errores.ContainsKey("Dueno"))
+                                {
+                                    <div class="text-danger small mt-1">@Errores["Dueno"]</div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="button" class="btn btn-outline-success" @onclick="Guardar">
+                                Guardar
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" @onclick="CerrarEditor">
+                                Cancelar
+                            </button>
+                            @if (CuentaEnEdicion.IdCuenta > 0)
+                            {
+                                <button type="button" class="btn btn-outline-danger" @onclick="Eliminar">
+                                    Eliminar
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool Cargando { get; set; } = true;
+    private bool MostrarEditor { get; set; }
+    private string ErrorMessage { get; set; } = string.Empty;
+    private string Busqueda { get; set; } = string.Empty;
+    private int FiltroMonedaId { get; set; }
+    private string FiltroTipoDueno { get; set; } = "Todos";
+
+    private List<CuentaBancaria> Cuentas { get; set; } = new();
+    private List<Moneda> Monedas { get; set; } = new();
+    private List<Empleado> Empleados { get; set; } = new();
+    private List<Area> Areas { get; set; } = new();
+
+    private CuentaBancaria? CuentaSeleccionada { get; set; }
+    private CuentaBancaria CuentaEnEdicion { get; set; } = new();
+    private Dictionary<string, string> Errores { get; set; } = new();
+
+    private string TipoDuenoEdicion { get; set; } = string.Empty;
+    private int EmpleadoSeleccionadoId { get; set; }
+    private int AreaSeleccionadaId { get; set; }
+
+    private int MonedaSeleccionadaId
+    {
+        get => CuentaEnEdicion.Moneda?.IdMoneda ?? 0;
+        set
+        {
+            CuentaEnEdicion.Moneda = value == 0
+                ? null
+                : Monedas.FirstOrDefault(m => m.IdMoneda == value);
+        }
+    }
+
+    private bool HayFiltrosActivos =>
+        !string.IsNullOrWhiteSpace(Busqueda)
+        || FiltroMonedaId > 0
+        || FiltroTipoDueno != "Todos";
+
+    private IEnumerable<CuentaBancaria> CuentasFiltradas => Cuentas
+        .Where(c => string.IsNullOrWhiteSpace(Busqueda)
+            || c.NombreBanco.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
+            || c.NumeroBancario.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
+            || (c.Cci?.Contains(Busqueda, StringComparison.OrdinalIgnoreCase) ?? false)
+            || ObtenerNombreDueno(c).Contains(Busqueda, StringComparison.OrdinalIgnoreCase))
+        .Where(c => FiltroMonedaId == 0 || c.Moneda?.IdMoneda == FiltroMonedaId)
+        .Where(c => FiltroTipoDueno == "Todos"
+            || (FiltroTipoDueno == "Empleado" && c.EmpleadoAdministrador != null)
+            || (FiltroTipoDueno == "Area" && c.AreaAdministradora != null));
+
+    protected override async Task OnInitializedAsync()
+    {
+        Cargando = true;
+        await CargarCatalogos();
+        await ListarCuentas();
+        Cargando = false;
+    }
+
+    private async Task CargarCatalogos()
+    {
+        try
+        {
+            Monedas = await Task.Run(() => new List<Moneda>(MonedaWS.listar()));
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error al cargar monedas: {ex.Message}";
+        }
+
+        try
+        {
+            Empleados = await Task.Run(() => new List<Empleado>(EmpleadoWS.listar()));
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error al cargar empleados: {ex.Message}";
+        }
+
+        try
+        {
+            Areas = await Task.Run(() => new List<Area>(AreaWS.listar()));
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error al cargar áreas: {ex.Message}";
+        }
+    }
+
+    private async Task ListarCuentas()
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            Cuentas = await Task.Run(() => new List<CuentaBancaria>(CuentaBancariaWS.listar()));
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private void Filtrar()
+    {
+        // El binding actualiza las propiedades y la UI se refresca automáticamente.
+    }
+
+    private void Seleccionar(CuentaBancaria cuenta)
+    {
+        CuentaSeleccionada = cuenta;
+        CuentaEnEdicion = new CuentaBancaria
+        {
+            IdCuenta = cuenta.IdCuenta,
+            NombreBanco = cuenta.NombreBanco,
+            NumeroBancario = cuenta.NumeroBancario,
+            Cci = cuenta.Cci,
+            Moneda = cuenta.Moneda != null
+                ? new Moneda { IdMoneda = cuenta.Moneda.IdMoneda, Nombre = cuenta.Moneda.Nombre, Simbolo = cuenta.Moneda.Simbolo, CodigoISO = cuenta.Moneda.CodigoISO }
+                : null
+        };
+
+        if (cuenta.EmpleadoAdministrador != null)
+        {
+            TipoDuenoEdicion = "Empleado";
+            EmpleadoSeleccionadoId = cuenta.EmpleadoAdministrador.UsuarioID;
+            AreaSeleccionadaId = 0;
+        }
+        else if (cuenta.AreaAdministradora != null)
+        {
+            TipoDuenoEdicion = "Area";
+            AreaSeleccionadaId = cuenta.AreaAdministradora.AreaID;
+            EmpleadoSeleccionadoId = 0;
+        }
+        else
+        {
+            TipoDuenoEdicion = string.Empty;
+            EmpleadoSeleccionadoId = 0;
+            AreaSeleccionadaId = 0;
+        }
+
+        MostrarEditor = true;
+        Errores.Clear();
+    }
+
+    private void PrepararNueva()
+    {
+        CuentaSeleccionada = null;
+        CuentaEnEdicion = new CuentaBancaria();
+        TipoDuenoEdicion = string.Empty;
+        EmpleadoSeleccionadoId = 0;
+        AreaSeleccionadaId = 0;
+        MostrarEditor = true;
+        Errores.Clear();
+    }
+
+    private bool Validar()
+    {
+        Errores.Clear();
+
+        if (string.IsNullOrWhiteSpace(CuentaEnEdicion.NombreBanco))
+            Errores["NombreBanco"] = "El nombre del banco es obligatorio.";
+
+        if (string.IsNullOrWhiteSpace(CuentaEnEdicion.NumeroBancario))
+            Errores["NumeroBancario"] = "El número de cuenta es obligatorio.";
+        else if (CuentaEnEdicion.NumeroBancario.Trim().Length < 10)
+            Errores["NumeroBancario"] = "El número de cuenta debe tener al menos 10 caracteres.";
+
+        if (string.IsNullOrWhiteSpace(CuentaEnEdicion.Cci))
+            Errores["Cci"] = "El CCI es obligatorio.";
+        else if (CuentaEnEdicion.Cci.Trim().Length != 20)
+            Errores["Cci"] = "El CCI debe tener exactamente 20 caracteres.";
+
+        if (CuentaEnEdicion.Moneda == null || CuentaEnEdicion.Moneda.IdMoneda <= 0)
+            Errores["Moneda"] = "Debe seleccionar una moneda.";
+
+        if (TipoDuenoEdicion == "Empleado" && EmpleadoSeleccionadoId <= 0)
+            Errores["Dueno"] = "Debe seleccionar un empleado.";
+        else if (TipoDuenoEdicion == "Area" && AreaSeleccionadaId <= 0)
+            Errores["Dueno"] = "Debe seleccionar un área.";
+        else if (string.IsNullOrEmpty(TipoDuenoEdicion))
+            Errores["Dueno"] = "Debe seleccionar el tipo de dueño.";
+
+        return Errores.Count == 0;
+    }
+
+    private async Task Guardar()
+    {
+        if (!Validar()) return;
+
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            if (TipoDuenoEdicion == "Empleado")
+            {
+                CuentaEnEdicion.EmpleadoAdministrador = Empleados.First(e => e.UsuarioID == EmpleadoSeleccionadoId);
+                CuentaEnEdicion.AreaAdministradora = null;
+            }
+            else
+            {
+                CuentaEnEdicion.AreaAdministradora = Areas.First(a => a.AreaID == AreaSeleccionadaId);
+                CuentaEnEdicion.EmpleadoAdministrador = null;
+            }
+
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            if (CuentaEnEdicion.IdCuenta > 0)
+            {
+                await Task.Run(() => CuentaBancariaWS.actualizar(CuentaEnEdicion, idUsuarioAccion));
+            }
+            else
+            {
+                await Task.Run(() => CuentaBancariaWS.insertar(CuentaEnEdicion, idUsuarioAccion));
+            }
+
+            await ListarCuentas();
+            CerrarEditor();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task Eliminar()
+    {
+        ErrorMessage = string.Empty;
+        if (CuentaEnEdicion.IdCuenta <= 0) return;
+
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => CuentaBancariaWS.eliminar(CuentaEnEdicion.IdCuenta, idUsuarioAccion));
+            await ListarCuentas();
+            CerrarEditor();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private void CerrarEditor()
+    {
+        MostrarEditor = false;
+        CuentaSeleccionada = null;
+        CuentaEnEdicion = new CuentaBancaria();
+        Errores.Clear();
+    }
+
+    private string ObtenerNombreDueno(CuentaBancaria cuenta)
+    {
+        if (cuenta.EmpleadoAdministrador != null)
+        {
+            return $"{cuenta.EmpleadoAdministrador.Nombres} {cuenta.EmpleadoAdministrador.ApellidoPaterno}".Trim();
+        }
+        if (cuenta.AreaAdministradora != null)
+        {
+            return cuenta.AreaAdministradora.Nombre;
+        }
+        return "Sin dueño";
+    }
+}

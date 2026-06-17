@@ -3,69 +3,170 @@
 
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
+@inject IEmpleadoWS EmpleadoWS
+@inject ICuentaBancariaWS CuentaBancariaWS
+@inject IMonedaWS MonedaWS
+@inject IRolWS RolWS
+@inject IAreaWS AreaWS
+@inject IUsuarioWS UsuarioWS
 
 <div class="d-flex flex-column h-100 mb-3">
     <div class="row h-100 @(EsCreacion? "mb-3": " ")">
         <div class="col-12 h-100 mb-3">
             <div class="card rounded-4 p-3 mb-3 h-100 d-flex justify-content-between">
                 <div class="d-flex flex-column">
-                        <div class="d-flex gap-4">  
+                    <div class="d-flex gap-4">
                         @if (EsCreacion)
                         {
-                          <p class="h3"> Registrar Usuario </p>
+                            <p class="h3"> Registrar Usuario </p>
                         }
                         else
                         {
                             <p class="h3"> @(Usuario?.Nombres ?? "Usuario") </p>
                         }
                         <div class="d-flex flex-column justify-content-center gap-2">
-                            <span class="badge text-bg-success rounded-pill px-2">
-                                @((Usuario?.Estado ?? EstadoUsuario.ACTIVO) == EstadoUsuario.ACTIVO ? "Activo" : "Inactivo")
+                            <span class="badge @(EstadoActivo ? "text-bg-success" : "text-bg-secondary") rounded-pill px-2">
+                                @(EstadoActivo ? "Activo" : "Inactivo")
                             </span>
                         </div>
                     </div>
+
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                            @ErrorMessage
+                            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+                        </div>
+                    }
+
                     <div class="row">
                         <div class="col-12 mt-3">
                             <label for="Nombres" class="form-label mb-1">Nombres</label>
                             <input type="text" id="Nombres" placeholder="Nombres"
-                                class="form-control form-control-lg rounded-4 bg-light">
+                                   class="form-control form-control-lg rounded-4 bg-light"
+                                   @bind="UsuarioEdicion.Nombres">
                         </div>
 
                         <div class="col-6 mt-3">
                             <label for="ApellidoPaterno" class="form-label mb-1">Apellido Paterno</label>
-                            <input type="text" id="ApellidoPaterno" placeholder="Apellido paterno" 
-                                class="form-control form-control-lg rounded-4 bg-light">
+                            <input type="text" id="ApellidoPaterno" placeholder="Apellido paterno"
+                                   class="form-control form-control-lg rounded-4 bg-light"
+                                   @bind="UsuarioEdicion.ApellidoPaterno">
                         </div>
                         <div class="col-6 mt-3">
                             <label for="ApellidoMaterno" class="form-label mb-1">Apellido Materno</label>
                             <input type="text"
-                                class="form-control form-control-lg rounded-4 bg-light"
-                                id="ApellidoMaterno"
-                                placeholder="Apellido materno">
+                                   class="form-control form-control-lg rounded-4 bg-light"
+                                   id="ApellidoMaterno"
+                                   placeholder="Apellido materno"
+                                   @bind="UsuarioEdicion.ApellidoMaterno">
                         </div>
 
-                        <div class="col-8 mt-3">
+                        <div class="col-6 mt-3">
                             <label for="Correo" class="form-label mb-1">Correo electronico</label>
                             <input type="email"
-                                class="form-control form-control-lg rounded-4 bg-light"
-                                id="Correo"
-                                placeholder="ejemplo@correo.com">
+                                   class="form-control form-control-lg rounded-4 bg-light"
+                                   id="Correo"
+                                   placeholder="ejemplo@correo.com"
+                                   @bind="UsuarioEdicion.Correo">
                         </div>
-                        <div class="col-4 mt-3">
-                            <label for="Contrasena" class="form-label mb-1" >Contrasena</label>
+                        <div class="col-6 mt-3">
+                            <label for="Contrasena" class="form-label mb-1">Contrasena</label>
                             <input type="password"
-                                class="form-control form-control-lg rounded-4 bg-light"
-                                id="Contrasena"
-                                placeholder="Contrasena">
+                                   class="form-control form-control-lg rounded-4 bg-light"
+                                   id="Contrasena"
+                                   placeholder="Contrasena"
+                                   @bind="UsuarioEdicion.Password">
+                        </div>
+
+                        @if (EmpleadoEdicion != null)
+                        {
+                            <div class="col-6 mt-3">
+                                <label for="NumeroCelular" class="form-label mb-1">Celular</label>
+                                <input type="text" id="NumeroCelular" placeholder="999999999"
+                                       class="form-control form-control-lg rounded-4 bg-light"
+                                       @bind="EmpleadoEdicion.NumeroCelular">
+                            </div>
+
+                            <div class="col-6 mt-3">
+                                <label for="RolFlujo" class="form-label mb-1">Rol en flujo</label>
+                                <select id="RolFlujo" class="form-select form-select-lg rounded-4 bg-light"
+                                        @bind="EmpleadoEdicion.RolFlujo">
+                                    <option value="@RolFlujo.EMPLEADO">Empleado</option>
+                                    <option value="@RolFlujo.JEFE_AREA">Jefe de Área</option>
+                                </select>
+                            </div>
+
+                            <div class="col-6 mt-3">
+                                <label for="Area" class="form-label mb-1">Área</label>
+                                <select id="Area" class="form-select form-select-lg rounded-4 bg-light"
+                                        @bind="AreaSeleccionadaId">
+                                    <option value="0">Sin área</option>
+                                    @foreach (var area in Areas)
+                                    {
+                                        <option value="@area.AreaID">@area.Nombre</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-6 mt-3">
+                                <label for="Rol" class="form-label mb-1">Rol</label>
+                                <select id="Rol" class="form-select form-select-lg rounded-4 bg-light"
+                                        @bind="RolSeleccionadoId">
+                                    <option value="0">Sin rol</option>
+                                    @foreach (var rol in Roles)
+                                    {
+                                        <option value="@rol.RolID">@rol.Titulo</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-6 mt-3">
+                                <label for="JefeDirecto" class="form-label mb-1">Jefe directo</label>
+                                <select id="JefeDirecto" class="form-select form-select-lg rounded-4 bg-light"
+                                        @bind="JefeDirectoSeleccionadoId">
+                                    <option value="0">Sin jefe directo</option>
+                                    @foreach (var emp in Jefes)
+                                    {
+                                        <option value="@emp.UsuarioID">@emp.Nombres @emp.ApellidoPaterno</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+
+                        <div class="col-6 mt-3">
+                            <label for="Estado" class="form-label mb-1">Estado</label>
+                            <select id="Estado" class="form-select form-select-lg rounded-4 bg-light"
+                                    @bind="UsuarioEdicion.Estado">
+                                <option value="@EstadoUsuario.ACTIVO">Activo</option>
+                                <option value="@EstadoUsuario.INACTIVO">Inactivo</option>
+                            </select>
                         </div>
                     </div>
                 </div>
+
+                @if (!EsCreacion && EmpleadoEdicion != null)
+                {
+                    @if (!string.IsNullOrEmpty(ErrorCuenta))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                            @ErrorCuenta
+                            <button type="button" class="btn-close" @onclick="() => ErrorCuenta = string.Empty" aria-label="close"></button>
+                        </div>
+                    }
+
+                    <CuentaBancariaListado Titulo="Cuentas bancarias del empleado"
+                                           Cuentas="EmpleadoEdicion.Cuentas"
+                                           Monedas="Monedas"
+                                           OnGuardar="GuardarCuentaEmpleado"
+                                           OnEliminar="EliminarCuentaEmpleado" />
+                }
 
                 <div class="d-flex justify-content-end gap-3 mt-4">
 
                     @if (EsCreacion)
                     {
-                        <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="IrAUsuarios">
+                        <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="Insertar">
                             Registrar
                         </button>
                         <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="IrAUsuarios">
@@ -77,16 +178,16 @@
                     }
                     else
                     {
-                        <button type="button" class="btn btn-outline-warning align-self-start mt-3" @onclick="CerrarDetalle">
+                        <button type="button" class="btn btn-outline-warning align-self-start mt-3" @onclick="GuardarCambios">
                             Guardar Cambios
                         </button>
                         <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="CerrarDetalle">
                             Cerrar
                         </button>
-                        <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="CerrarDetalle">
+                        <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="Eliminar">
                             Eliminar
                         </button>
-                        
+
                     }
                 </div>
 
@@ -97,33 +198,199 @@
 </div>
 @code {
     [Parameter]
-    public EventCallback OnCerrarDetalle{ get; set; }
+    public EventCallback OnCerrarDetalle { get; set; }
 
     [Parameter]
     public Usuario? Usuario { get; set; }
+
+    private Usuario UsuarioEdicion { get; set; } = new Empleado();
+    private Empleado? EmpleadoEdicion => UsuarioEdicion as Empleado;
+    private bool EsCreacion { get; set; }
+    private string ErrorMessage { get; set; } = string.Empty;
+    private string ErrorCuenta { get; set; } = string.Empty;
+
+    private List<Moneda> Monedas { get; set; } = new();
+    private List<Rol> Roles { get; set; } = new();
+    private List<Area> Areas { get; set; } = new();
+    private List<Empleado> Jefes { get; set; } = new();
+
+    private bool EstadoActivo => UsuarioEdicion.Estado == EstadoUsuario.ACTIVO;
+
+    private int AreaSeleccionadaId
+    {
+        get => EmpleadoEdicion?.Area?.AreaID ?? 0;
+        set
+        {
+            if (EmpleadoEdicion != null)
+                EmpleadoEdicion.Area = value == 0 ? null : Areas.FirstOrDefault(a => a.AreaID == value);
+        }
+    }
+
+    private int RolSeleccionadoId
+    {
+        get => EmpleadoEdicion?.Rol?.RolID ?? 0;
+        set
+        {
+            if (EmpleadoEdicion != null)
+                EmpleadoEdicion.Rol = value == 0 ? null : Roles.FirstOrDefault(r => r.RolID == value);
+        }
+    }
+
+    private int JefeDirectoSeleccionadoId
+    {
+        get => EmpleadoEdicion?.JefeDirecto?.UsuarioID ?? 0;
+        set
+        {
+            if (EmpleadoEdicion != null)
+                EmpleadoEdicion.JefeDirecto = value == 0 ? null : Jefes.FirstOrDefault(e => e.UsuarioID == value);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        EsCreacion = Navigation.Uri.Contains("/Crear");
+        if (EsCreacion)
+        {
+            UsuarioEdicion = new Empleado();
+        }
+        else if (Usuario != null)
+        {
+            UsuarioEdicion = Usuario;
+        }
+
+        await CargarCatalogos();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (!EsCreacion && Usuario != null && UsuarioEdicion != Usuario)
+        {
+            UsuarioEdicion = Usuario;
+        }
+    }
+
+    private async Task CargarCatalogos()
+    {
+        try { Monedas = await Task.Run(() => new List<Moneda>(MonedaWS.listar())); } catch { Monedas = new List<Moneda>(); }
+        try { Roles = await Task.Run(() => new List<Rol>(RolWS.listar())); } catch { Roles = new List<Rol>(); }
+        try { Areas = await Task.Run(() => new List<Area>(AreaWS.listar())); } catch { Areas = new List<Area>(); }
+        try
+        {
+            var empleados = await Task.Run(() => new List<Empleado>(EmpleadoWS.listar()));
+            Jefes = empleados.Where(e => e.RolFlujo == RolFlujo.JEFE_AREA).ToList();
+        }
+        catch { Jefes = new List<Empleado>(); }
+    }
 
     public async Task CerrarDetalle()
     {
         await OnCerrarDetalle.InvokeAsync();
     }
-    private void Registrar()
-    {
-        // Redirigir a la lista de usuarios (o la ruta que manejes)
-        Navigation.NavigateTo("/usuarios");
-    }
-    private void Cancelar()
-    {
-        // Redirigir a la lista de usuarios (o la ruta que manejes)
-        Navigation.NavigateTo("/usuarios");
-    }
-    private bool EsCreacion { get; set; }
-    protected override void OnInitialized()
-    {
-        EsCreacion = Navigation.Uri.Contains("/Crear");
-    }
+
     private void IrAUsuarios()
     {
-        Navigation.NavigateTo("/Usuarios");
+        Navigation.NavigateTo("/usuarios");
     }
 
+    private async Task Insertar()
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            if (EmpleadoEdicion != null)
+            {
+                await Task.Run(() => EmpleadoWS.insertar(EmpleadoEdicion, idUsuarioAccion));
+            }
+            IrAUsuarios();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task GuardarCambios()
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            if (EmpleadoEdicion != null)
+            {
+                await Task.Run(() => EmpleadoWS.actualizar(EmpleadoEdicion, idUsuarioAccion));
+            }
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task Eliminar()
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            if (EmpleadoEdicion != null)
+            {
+                await Task.Run(() => EmpleadoWS.eliminar(EmpleadoEdicion.UsuarioID, idUsuarioAccion));
+            }
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task GuardarCuentaEmpleado(CuentaBancaria cuenta)
+    {
+        ErrorCuenta = string.Empty;
+        if (EmpleadoEdicion == null) return;
+
+        try
+        {
+            cuenta.EmpleadoAdministrador = EmpleadoEdicion;
+            cuenta.AreaAdministradora = null;
+
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            if (cuenta.IdCuenta > 0)
+            {
+                await Task.Run(() => CuentaBancariaWS.actualizar(cuenta, idUsuarioAccion));
+            }
+            else
+            {
+                await Task.Run(() => CuentaBancariaWS.insertar(cuenta, idUsuarioAccion));
+            }
+
+            var actualizadas = await Task.Run(() =>
+                new List<CuentaBancaria>(CuentaBancariaWS.listar()
+                    .Where(c => c.EmpleadoAdministrador?.UsuarioID == EmpleadoEdicion.UsuarioID)));
+            EmpleadoEdicion.Cuentas = actualizadas;
+        }
+        catch (Exception ex)
+        {
+            ErrorCuenta = ex.Message;
+        }
+    }
+
+    private async Task EliminarCuentaEmpleado(CuentaBancaria cuenta)
+    {
+        ErrorCuenta = string.Empty;
+        if (EmpleadoEdicion == null || cuenta.IdCuenta <= 0) return;
+
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => CuentaBancariaWS.eliminar(cuenta.IdCuenta, idUsuarioAccion));
+            EmpleadoEdicion.Cuentas.Remove(cuenta);
+        }
+        catch (Exception ex)
+        {
+            ErrorCuenta = ex.Message;
+        }
+    }
 }

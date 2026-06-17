@@ -1,4 +1,6 @@
 @inject NavigationManager Navigation
+@inject ISolicitudGastoWS SolicitudGastoWS
+@inject IUsuarioWS UsuarioWS
 
 <div class="d-flex flex-column h-100 mb-3">
     <div class="row h-100 mb-3">
@@ -35,21 +37,33 @@
                     </div>
 
                 </div>
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                        @ErrorMessage
+                        <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+                    </div>
+                }
+
+                <div class="col-12 mt-3">
+                    <label for="NumeroOperacion" class="form-label">Número de operación bancaria</label>
+                    <input type="text" class="form-control bg-light rounded-4" id="NumeroOperacion" placeholder="OP-12345678" @bind="NumeroOperacionBancaria">
+                </div>
+
                 <div class="d-flex justify-content-end gap-3 mt-3">
                     <button type="button" class="btn btn-success align-self-start mt-3"
-                                    @onclick="CerrarDetalle">
+                            @onclick="Aprobar">
                         Confirmar
-
                     </button>
-                    
-                        <button type="button" class="btn btn-outline-warning align-self-start mt-3"
-                                        @onclick="CerrarDetalle">
-                            Observar
-                        </button>
-                    
+
+                    <button type="button" class="btn btn-outline-warning align-self-start mt-3"
+                            @onclick="Observar">
+                        Observar
+                    </button>
+
                     <button type="button" class="btn btn-outline-danger align-self-start mt-3"
-                                    @onclick="CerrarDetalle">
-                            Rechazar
+                            @onclick="Rechazar">
+                        Rechazar
                     </button>
                 </div>
 
@@ -64,15 +78,73 @@
 
 
 @code {
-    private string SimboloMoneda { get; set; } = "S/.";  
+    private string SimboloMoneda { get; set; } = "S/.";
+    private string ErrorMessage { get; set; } = string.Empty;
+    private string NumeroOperacionBancaria { get; set; } = string.Empty;
+
+    [Parameter]
+    public SolicitudGasto? Solicitud { get; set; }
 
     [Parameter]
     public EventCallback OnCierraDetalle { get; set; }
+
     public async Task CerrarDetalle()
     {
         Navigation.NavigateTo("/Solicitudes De Gasto");
         await OnCierraDetalle.InvokeAsync();
     }
+
+    private async Task Aprobar()
+    {
+        ErrorMessage = string.Empty;
+        if (Solicitud == null) return;
+
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, true, string.Empty, idUsuarioAccion, NumeroOperacionBancaria, idUsuarioAccion));
+            await OnCierraDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task Observar()
+    {
+        ErrorMessage = string.Empty;
+        if (Solicitud == null) return;
+
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, false, "Observado", idUsuarioAccion, string.Empty, idUsuarioAccion));
+            await OnCierraDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task Rechazar()
+    {
+        ErrorMessage = string.Empty;
+        if (Solicitud == null) return;
+
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, false, "Rechazado", idUsuarioAccion, string.Empty, idUsuarioAccion));
+            await OnCierraDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
     private void MostrarItemsSolicitud()
     {
         Navigation.NavigateTo("/Solicitudes De Gasto");

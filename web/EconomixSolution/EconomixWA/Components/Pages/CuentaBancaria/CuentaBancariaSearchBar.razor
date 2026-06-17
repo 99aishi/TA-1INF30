@@ -1,0 +1,69 @@
+<div class="card rounded-4 p-3 mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-3">
+            <label class="form-label mb-1">Banco / Cuenta / CCI</label>
+            <input type="text" class="form-control rounded-4" placeholder="Buscar..."
+                   @bind="Busqueda" @bind:after="() => OnBuscar.InvokeAsync()">
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label mb-1">Moneda</label>
+            <select class="form-select rounded-4" @bind="MonedaSeleccionadaId" @bind:after="() => OnBuscar.InvokeAsync()">
+                <option value="0">Todas</option>
+                @foreach (var moneda in Monedas)
+                {
+                    <option value="@moneda.IdMoneda">@moneda.Simbolo - @moneda.Nombre</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label mb-1">Tipo de dueño</label>
+            <select class="form-select rounded-4" @bind="TipoDueno" @bind:after="() => OnBuscar.InvokeAsync()">
+                <option value="Todos">Todos</option>
+                <option value="Empleado">Empleado</option>
+                <option value="Area">Área</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-3">
+            <button type="button" class="btn btn-outline-secondary w-100 rounded-4" @onclick="Limpiar">
+                Limpiar filtros
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Busqueda { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> BusquedaChanged { get; set; }
+
+    [Parameter]
+    public int MonedaSeleccionadaId { get; set; }
+
+    [Parameter]
+    public EventCallback<int> MonedaSeleccionadaIdChanged { get; set; }
+
+    [Parameter]
+    public string TipoDueno { get; set; } = "Todos";
+
+    [Parameter]
+    public EventCallback<string> TipoDuenoChanged { get; set; }
+
+    [Parameter]
+    public List<Moneda> Monedas { get; set; } = new();
+
+    [Parameter]
+    public EventCallback OnBuscar { get; set; }
+
+    private async Task Limpiar()
+    {
+        Busqueda = string.Empty;
+        MonedaSeleccionadaId = 0;
+        TipoDueno = "Todos";
+        await BusquedaChanged.InvokeAsync(Busqueda);
+        await MonedaSeleccionadaIdChanged.InvokeAsync(MonedaSeleccionadaId);
+        await TipoDuenoChanged.InvokeAsync(TipoDueno);
+        await OnBuscar.InvokeAsync();
+    }
+}

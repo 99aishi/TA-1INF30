@@ -2,6 +2,7 @@ package pe.edu.pucp.economix.rrhh.model;
 
 import java.util.List;
 
+import jakarta.json.bind.annotation.JsonbTransient;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
@@ -53,6 +54,7 @@ public class Area{
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
     }
+    @JsonbTransient
     public Empleado getJefe() {
         return jefe;
     }

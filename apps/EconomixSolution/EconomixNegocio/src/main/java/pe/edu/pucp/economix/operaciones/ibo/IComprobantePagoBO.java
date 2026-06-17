@@ -8,4 +8,5 @@ import java.util.List;
 public interface IComprobantePagoBO extends IBaseBO<ComprobantePago> {
     List<ComprobantePago> listarPorSolicitud(int idSolicitud) throws Exception;
     List<ComprobantePago> listarActivas() throws Exception;
+    int evaluar(int idComprobante, boolean aprobar, String observacion, int idUsuarioAccion) throws Exception;
 }

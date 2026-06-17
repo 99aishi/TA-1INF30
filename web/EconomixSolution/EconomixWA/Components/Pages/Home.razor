@@ -65,7 +65,6 @@
 </div>
 
 @code{
-    public String Rol {get;set;} = "Jefe";
     public List<String> Nombres = new List<String>(){"Mario Hugo", "Tulio Tribiño", "Gregorio Samsaaaa", "Juan Carlos BOdoque",
                                                         "Mario Hugo", "Tulio Tribiño", "Gregorio Samsaaaa", "Juan Carlos BOdoque",
     
@@ -73,6 +72,7 @@
                                                     string.Empty};
 
     private EconomixModel.Model.Usuario? UsuarioActual { get; set; }
+    private string Rol => ObtenerRol();
     private string Saludo => ObtenerSaludo();
     private string FechaHoy => DateTime.Now.ToString("d/M/yyyy");
     private string AreaUsuario => UsuarioActual switch
@@ -92,6 +92,27 @@
         {
             UsuarioActual = null;
         }
+    }
+
+    private string ObtenerRol()
+    {
+        return UsuarioActual switch
+        {
+            Administrador => "Administrador",
+            Empleado emp => DeterminarRolEmpleado(emp),
+            _ => "Empleado"
+        };
+    }
+
+    private string DeterminarRolEmpleado(Empleado emp)
+    {
+        if (emp.Area != null && !string.IsNullOrEmpty(emp.Area.Nombre) &&
+            emp.Area.Nombre.Contains("Tesorer", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Tesoreria";
+        }
+
+        return emp.RolFlujo == RolFlujo.JEFE_AREA ? "Jefe" : "Empleado";
     }
 
     private string ObtenerSaludo()

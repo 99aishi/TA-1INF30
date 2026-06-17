@@ -1,4 +1,6 @@
 @inject NavigationManager Navigation
+@inject IComprobantePagoWS ComprobantePagoWS
+@inject IUsuarioWS UsuarioWS
 
 <div class="card p-3 h-100 rounded-4 d-flex justify-content-between flex-column">
     
@@ -50,68 +52,138 @@
         </div>
     </div>
 
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+            @ErrorMessage
+            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+        </div>
+    }
+
     <div class="d-flex justify-content-end gap-3 mt-3">
         <div class="d-flex justify-content-end gap-3 mt-4">
             @if (EsCreacion || EsAsociacion)
             {
                 <button type="button" class="btn btn-outline-primary align-self-start mt-3"
-                                @onclick="MostrarItemsComprobante">
+                        @onclick="MostrarItemsComprobante">
                     Registrar Comprobante
-        
+
                 </button>
                 <button type="button" class="btn btn-outline-info align-self-start mt-3"
-                                @onclick="MostrarItemsComprobante">
+                        @onclick="MostrarItemsComprobante">
                     Cerrar
                 </button>
                 <button type="button" class="btn btn-outline-danger align-self-start mt-3"
-                                @onclick="MostrarItemsComprobante">
+                        @onclick="MostrarItemsComprobante">
                     Cancelar
                 </button>
             }
             else if (EsEvaluacion)
             {
                 <button type="button" class="btn btn-outline-success align-self-start mt-3"
-                                @onclick="MostrarItemsComprobante">
+                        @onclick="Aprobar">
                     Aprobar
                 </button>
                 <button type="button" class="btn btn-outline-warning align-self-start mt-3"
-                                @onclick="MostrarItemsComprobante">
+                        @onclick="Observar">
                     Observar
                 </button>
                 <button type="button" class="btn btn-outline-info align-self-start mt-3"
-                                @onclick="MostrarItemsComprobante">
+                        @onclick="MostrarItemsComprobante">
                     Cerrar
                 </button>
                 <button type="button" class="btn btn-outline-danger align-self-start mt-3"
-                                @onclick="MostrarItemsComprobante">
+                        @onclick="Rechazar">
                     Rechazar
                 </button>
             }
             else
             {
                 <button type="button" class="btn btn-outline-info align-self-start mt-3"
-                                @onclick="MostrarItemsComprobante">
+                        @onclick="MostrarItemsComprobante">
                     Volver
                 </button>
                 <button type="button" class="btn btn-outline-danger align-self-start mt-3"
-                                @onclick="MostrarItemsComprobante">
+                        @onclick="MostrarItemsComprobante">
                     Eliminar
                 </button>
             }
         </div>
     </div>
-</div>    
+</div>
 
 @code {
     [Parameter]
-    public bool EsCreacion { get; set;}
+    public bool EsCreacion { get; set; }
+
     [Parameter]
-    public bool EsEvaluacion { get; set;}
+    public bool EsEvaluacion { get; set; }
+
     [Parameter]
-    public bool EsAsociacion { get; set;}
+    public bool EsAsociacion { get; set; }
+
+    [Parameter]
+    public ComprobantePago? Comprobante { get; set; }
+
+    [Parameter]
+    public EventCallback OnEvaluado { get; set; }
+
     private string SimboloMoneda = "S/.";
+    private string ErrorMessage { get; set; } = string.Empty;
+
     public void MostrarItemsComprobante()
     {
         Navigation.NavigateTo("/Comprobantes de Pago");
+    }
+
+    private async Task Aprobar()
+    {
+        ErrorMessage = string.Empty;
+        if (Comprobante == null) return;
+
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => ComprobantePagoWS.evaluar(Comprobante.IdComprobante, true, string.Empty, idUsuarioAccion));
+            await OnEvaluado.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task Observar()
+    {
+        ErrorMessage = string.Empty;
+        if (Comprobante == null) return;
+
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => ComprobantePagoWS.evaluar(Comprobante.IdComprobante, false, "Observado", idUsuarioAccion));
+            await OnEvaluado.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task Rechazar()
+    {
+        ErrorMessage = string.Empty;
+        if (Comprobante == null) return;
+
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => ComprobantePagoWS.evaluar(Comprobante.IdComprobante, false, "Rechazado", idUsuarioAccion));
+            await OnEvaluado.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
     }
 }

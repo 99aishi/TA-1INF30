@@ -24,4 +24,7 @@ public class CuentaBancaria
 
     [JsonPropertyName("areaAdministradora")]
     public Area? AreaAdministradora { get; set; }
+
+    [JsonPropertyName("activa")]
+    public bool Activa { get; set; } = true;
 }

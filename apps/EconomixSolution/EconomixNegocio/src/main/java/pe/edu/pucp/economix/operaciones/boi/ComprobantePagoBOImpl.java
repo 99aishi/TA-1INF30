@@ -7,6 +7,7 @@ import pe.edu.pucp.economix.operaciones.idao.IComprobantePagoDAO;
 import pe.edu.pucp.economix.operaciones.daoi.ComprobantePagoDAOImpl;
 import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoComprobante;
 import pe.edu.pucp.economix.tesoreria.boi.MonedaBOImpl;
 import pe.edu.pucp.economix.tesoreria.ibo.IMonedaBO;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
@@ -203,6 +204,36 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         if (fechaEmision.before(inicioCiclo) || (finCiclo != null && fechaEmision.after(finCiclo))) {
             throw new Exception("La fecha del comprobante no pertenece al ciclo activo de la caja chica.");
         }
+    }
+
+    @Override
+    public int evaluar(int idComprobante, boolean aprobar, String observacion, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
+        if (idComprobante <= 0) throw new Exception("El id del comprobante debe ser mayor que cero.");
+
+        ComprobantePago comprobante = comprobantePagoDAO.buscarPorId(idComprobante);
+        if (comprobante == null) throw new Exception("El comprobante de pago no existe.");
+
+        EstadoComprobante estadoActual = comprobante.getEstado();
+        if (estadoActual == EstadoComprobante.ANULADO) {
+            throw new Exception("No se puede evaluar un comprobante anulado.");
+        }
+
+        if (aprobar) {
+            if (estadoActual != EstadoComprobante.POR_REVISAR && estadoActual != EstadoComprobante.OBSERVADO) {
+                throw new Exception("Solo se puede aprobar un comprobante POR_REVISAR u OBSERVADO.");
+            }
+            comprobante.setEstado(EstadoComprobante.APROBADO);
+        } else {
+            if (estadoActual == EstadoComprobante.APROBADO) {
+                throw new Exception("No se puede observar un comprobante ya aprobado.");
+            }
+            comprobante.setEstado(EstadoComprobante.OBSERVADO);
+        }
+
+        // La observación se almacena en el nombre del archivo comprobante como comentario temporal
+        // o se ignora si no hay campo. Se deja para extensión futura.
+        return comprobantePagoDAO.modificar(comprobante, idUsuarioAccion);
     }
 
 }

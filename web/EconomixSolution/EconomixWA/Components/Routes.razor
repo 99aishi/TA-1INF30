@@ -26,14 +26,4 @@
 @code {
     [Inject]
     private NavigationManager Navigation { get; set; } = default!;
-
-    private class RedirectToLogin : ComponentBase
-    {
-        [Inject] private NavigationManager Navigation { get; set; } = default!;
-
-        protected override void OnInitialized()
-        {
-            Navigation.NavigateTo($"/?returnUrl={Uri.EscapeDataString(Navigation.ToBaseRelativePath(Navigation.Uri))}", forceLoad: true);
-        }
-    }
 }

@@ -100,4 +100,14 @@ public class CicloCajaWSImpl : ICicloCajaWS
         }
     }
 
+    public void cerrarCiclo(int id, int idUsuarioAccion)
+    {
+        var response = _httpClient.PostAsync($"CerrarCiclo?id={id}&idUsuarioAccion={idUsuarioAccion}", null).GetAwaiter().GetResult();
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            throw new Exception(error);
+        }
+    }
+
 }
