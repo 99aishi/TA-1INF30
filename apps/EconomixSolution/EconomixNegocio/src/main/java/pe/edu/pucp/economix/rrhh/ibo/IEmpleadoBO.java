@@ -10,4 +10,5 @@ import java.util.List;
 public interface IEmpleadoBO extends IBaseBO<Empleado> {
     int verificarCuenta(String correo, String password) throws Exception;
     List<Empleado> listarPorNombreApellido(String busqueda) throws Exception;
+    List<Empleado> listarActivas() throws Exception;
 }

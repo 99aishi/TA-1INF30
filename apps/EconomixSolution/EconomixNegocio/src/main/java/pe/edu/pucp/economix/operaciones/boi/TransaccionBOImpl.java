@@ -28,26 +28,35 @@ public class TransaccionBOImpl implements ITransaccionBO {
     }
 
 
+    private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
+        if (idUsuarioAccion <= 0) {
+            throw new Exception("El usuario de acción debe ser mayor que cero.");
+        }
+    }
+
     @Override
-    public int insertar(Transaccion transaccion) throws Exception {
+    public int insertar(Transaccion transaccion, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(transaccion,false);
-        int resultado= transaccionDAO.insertar(transaccion);
+        int resultado= transaccionDAO.insertar(transaccion, idUsuarioAccion);
 
         return resultado;
     }
 
     @Override
-    public int modificar(Transaccion transaccion) throws Exception {
+    public int modificar(Transaccion transaccion, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(transaccion,true);
-        return transaccionDAO.modificar(transaccion);
+        return transaccionDAO.modificar(transaccion, idUsuarioAccion);
     }
 
     @Override
-    public int eliminar(int id) throws Exception {
+    public int eliminar(int id, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         if (id <= 0) {
             throw new Exception("El id de la transaccion debe ser mayor que cero.");
         }
-        return transaccionDAO.eliminar(id);
+        return transaccionDAO.eliminar(id, idUsuarioAccion);
     }
 
     @Override
@@ -58,6 +67,11 @@ public class TransaccionBOImpl implements ITransaccionBO {
     @Override
     public List<Transaccion> listarTodas() throws Exception {
         return transaccionDAO.listarTodas();
+    }
+
+    @Override
+    public List<Transaccion> listarActivas() throws Exception {
+        return transaccionDAO.listarActivas();
     }
 
     public void validar(Transaccion transaccion, boolean esModificacion) throws Exception{
@@ -87,7 +101,7 @@ public class TransaccionBOImpl implements ITransaccionBO {
         }
 
         // Si es un medio digital, el código de operación es obligatorio
-        if (transaccion.getMedioPago() == MedioPago.YAPE || transaccion.getMedioPago() == MedioPago.Transferencia) {
+        if (transaccion.getMedioPago() == MedioPago.YAPE || transaccion.getMedioPago() == MedioPago.TRANSFERENCIA) {
             String numOperacion = transaccion.getNumeroOperacionBancaria();
             if (numOperacion == null || numOperacion.trim().isEmpty()) {
                 throw new Exception("El código de operación es obligatorio para transferencias y billeteras digitales.");
@@ -99,8 +113,8 @@ public class TransaccionBOImpl implements ITransaccionBO {
             throw new Exception("Se debe especificar que tipo de transaccion es.");
     }
     public void validarMontoTransaccion(double monto) throws Exception{
-        if(monto==0)
-            throw new Exception("El monto de la transaccion no puede ser nulo.");
+        if(monto <= 0)
+            throw new Exception("El monto de la transaccion debe ser mayor que cero.");
     }
 
     public void validarCuentaOrigen(CuentaBancaria cb)    throws  Exception{

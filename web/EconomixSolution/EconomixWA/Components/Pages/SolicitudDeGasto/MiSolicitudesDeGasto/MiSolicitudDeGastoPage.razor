@@ -1,14 +1,29 @@
 @page "/Mis Solicitudes De Gasto"
+@rendermode InteractiveServer
 @inject NavigationManager Navigation
+@inject ISolicitudGastoWS SolicitudGastoWS
 
 <div class="h-100 d-flex flex-column">
     <div class="d-flex flex-row justify-content-between">
-        <p class="h4">Solicitudes de gasto de Isabel Allende</p>
-        <button type="button" class="btn btn-primary" @onclick="IrCrearSolicitud"> + Agregas Solicitud</button>
+        <p class="h4">Mis Solicitudes de Gasto</p>
+        <button type="button" class="btn btn-primary" @onclick="IrCrearSolicitud"> + Agregar Solicitud</button>
     </div>
 
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+            @ErrorMessage
+            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+        </div>
+    }
+
     <div class="d-flex flex-column flex-fill overflow-hidden">
-        <SolicitudDeGastoBusqueda/>
+        <SolicitudGastoSearchBar @bind-FiltroTexto="FiltroTexto"
+                                 @bind-FiltroMontoMin="FiltroMontoMin"
+                                 @bind-FiltroMontoMax="FiltroMontoMax"
+                                 @bind-FiltroEstado="FiltroEstado"
+                                 @bind-FiltroFechaInicio="FiltroFechaInicio"
+                                 @bind-FiltroFechaFin="FiltroFechaFin" />
         
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
 
@@ -16,25 +31,23 @@
             {
                 <div class="col-6 h-100 d-flex flex-column overflow-hidden">    
                     <div class="card rounded-4 p-3 h-100 overflow-scroll">
-                        @for(int i = 0; i<10; i++){
-                            <MiSolicitudDeGastoItem OnMuestraDetalle="MostrarDetalleSolicitud"/>
-                        }           
+                        @if (Cargando) { <p class="text-muted text-center mt-5">Cargando solicitudes...</p> }
+                        else if (SolicitudesFiltradas.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ninguna solicitud coincide con los filtros" : "No tienes solicitudes de gasto")</p> }
+                        else { @foreach (var s in SolicitudesFiltradas) { <MiSolicitudDeGastoItem Solicitud="s" OnMuestraDetalle="() => MostrarDetalleSolicitud()"/> } }
                     </div>
                 </div>
             
                 <div class="col-6 h-100">
                     <MiSolicitudDeGastoDetalle OnCierraDetalle="CerrarDetalleSolicitud" IdSolicitud="1"/>
                 </div>
-                
             }
             else
             {
                 <div class="col-12 h-100 d-flex flex-column overflow-hidden">
-
                     <div class="card rounded-4 mt-3 mb-3 p-3 flex-fill overflow-scroll">
-                        @for(int i = 0; i<10; i++){
-                            <MiSolicitudDeGastoItem OnMuestraDetalle="MostrarDetalleSolicitud"/>
-                        }           
+                        @if (Cargando) { <p class="text-muted text-center mt-5">Cargando solicitudes...</p> }
+                        else if (SolicitudesFiltradas.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ninguna solicitud coincide con los filtros" : "No tienes solicitudes de gasto")</p> }
+                        else { @foreach (var s in SolicitudesFiltradas) { <MiSolicitudDeGastoItem Solicitud="s" OnMuestraDetalle="() => MostrarDetalleSolicitud()"/> } }
                     </div>
                 </div>
             }
@@ -43,23 +56,55 @@
 </div>
 
 @code {
-    private String Nombre{get;set;} = "a";
-    private void IrDetalleSolicitud()
+    private bool MostrarDetalle { get; set; } = false;
+    private bool Cargando { get; set; } = true;
+    private string ErrorMessage { get; set; } = string.Empty;
+    private string FiltroTexto { get; set; } = string.Empty;
+    private double? FiltroMontoMin { get; set; }
+    private double? FiltroMontoMax { get; set; }
+    private string FiltroEstado { get; set; } = "Todas";
+    private DateTime? FiltroFechaInicio { get; set; }
+    private DateTime? FiltroFechaFin { get; set; }
+    private List<SolicitudGasto> Solicitudes { get; set; } = new();
+
+    private bool HayFiltrosActivos =>
+        !string.IsNullOrWhiteSpace(FiltroTexto)
+        || FiltroMontoMin.HasValue
+        || FiltroMontoMax.HasValue
+        || FiltroEstado != "Todas"
+        || FiltroFechaInicio.HasValue
+        || FiltroFechaFin.HasValue;
+
+    private IEnumerable<SolicitudGasto> SolicitudesFiltradas => Solicitudes
+        .Where(s => string.IsNullOrWhiteSpace(FiltroTexto)
+            || (s.Solicitante?.Nombres.Contains(FiltroTexto, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (s.Solicitante?.ApellidoPaterno.Contains(FiltroTexto, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (s.MotivoSolicitud?.Contains(FiltroTexto, StringComparison.OrdinalIgnoreCase) ?? false))
+        .Where(s => !FiltroMontoMin.HasValue || s.MontoSolicitado >= FiltroMontoMin.Value)
+        .Where(s => !FiltroMontoMax.HasValue || s.MontoSolicitado <= FiltroMontoMax.Value)
+        .Where(s => FiltroEstado == "Todas" || s.Estado.Equals(FiltroEstado, StringComparison.OrdinalIgnoreCase))
+        .Where(s => !FiltroFechaInicio.HasValue || s.FechaSolicitud.Date >= FiltroFechaInicio.Value.Date)
+        .Where(s => !FiltroFechaFin.HasValue || s.FechaSolicitud.Date <= FiltroFechaFin.Value.Date);
+
+    private void IrCrearSolicitud() => Navigation.NavigateTo("/Mis Solicitudes De Gasto/Crear");
+    public void MostrarDetalleSolicitud() => MostrarDetalle = true;
+    public async Task CerrarDetalleSolicitud()
     {
-        Navigation.NavigateTo("/Mis Solicitudes De Gasto/Detalle");
-    }
-    private void IrCrearSolicitud()
-    {
-        Navigation.NavigateTo("/Mis Solicitudes De Gasto/Crear");
-    }
-    private bool MostrarDetalle{get;set;} = false;
-    public void MostrarDetalleSolicitud()
-    {
-        MostrarDetalle = true;
-    }
-    public void CerrarDetalleSolicitud()
-    {
+        await ListarSolicitudes();
         MostrarDetalle = false;
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        Cargando = true;
+        await ListarSolicitudes();
+        Cargando = false;
+    }
+
+    private async Task ListarSolicitudes()
+    {
+        ErrorMessage = string.Empty;
+        try { Solicitudes = await Task.Run(() => new List<SolicitudGasto>(SolicitudGastoWS.listar())); }
+        catch (Exception ex) { ErrorMessage = ex.Message; }
+    }
 }

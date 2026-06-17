@@ -12,24 +12,33 @@ public class RolBOImpl implements IRolBO {
     public RolBOImpl(){
         rolDAO=new RolDAOImpl();
     }
+    private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
+        if (idUsuarioAccion <= 0) {
+            throw new Exception("El usuario de acción debe ser mayor que cero.");
+        }
+    }
+
     @Override
-    public int insertar(Rol rol) throws Exception {
+    public int insertar(Rol rol, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(rol,false);
-        return rolDAO.insertar(rol);
+        return rolDAO.insertar(rol, idUsuarioAccion);
     }
 
     @Override
-    public int modificar(Rol rol) throws Exception {
+    public int modificar(Rol rol, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(rol,true);
-        return rolDAO.modificar(rol);
+        return rolDAO.modificar(rol, idUsuarioAccion);
     }
 
     @Override
-    public int eliminar(int id) throws Exception {
+    public int eliminar(int id, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         if (id <= 0) {
             throw new Exception("El id del rol debe ser mayor que cero.");
         }
-        return  rolDAO.eliminar(id);
+        return  rolDAO.eliminar(id, idUsuarioAccion);
     }
 
     @Override

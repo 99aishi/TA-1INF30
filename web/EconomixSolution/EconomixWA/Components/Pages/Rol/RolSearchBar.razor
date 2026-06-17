@@ -1,0 +1,93 @@
+@rendermode InteractiveServer
+
+<div class="card rounded-4 p-3 mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-4">
+            <label class="form-label small text-muted">Título</label>
+            <input type="text"
+                   class="form-control bg-light rounded-4"
+                   placeholder="Título del rol"
+                   value="@FiltroTitulo"
+                   @oninput="OnTituloCambiado" />
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label small text-muted">Descripción</label>
+            <input type="text"
+                   class="form-control bg-light rounded-4"
+                   placeholder="Descripción del rol"
+                   value="@FiltroDescripcion"
+                   @oninput="OnDescripcionCambiado" />
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label small text-muted">Estado</label>
+            <select class="form-select bg-light rounded-4"
+                    value="@FiltroEstado"
+                    @onchange="OnEstadoCambiado">
+                <option value="Todas">Todas</option>
+                <option value="Activo">Activo</option>
+                <option value="Inactivo">Inactivo</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2 d-grid">
+            <label class="form-label small text-muted">&nbsp;</label>
+            <button type="button" class="btn btn-secondary rounded-4" @onclick="Limpiar">
+                Limpiar
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string FiltroTitulo { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> FiltroTituloChanged { get; set; }
+
+    [Parameter]
+    public string FiltroDescripcion { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> FiltroDescripcionChanged { get; set; }
+
+    [Parameter]
+    public string FiltroEstado { get; set; } = "Todas";
+
+    [Parameter]
+    public EventCallback<string> FiltroEstadoChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnLimpiar { get; set; }
+
+    private async Task OnTituloCambiado(ChangeEventArgs e)
+    {
+        FiltroTitulo = e.Value?.ToString() ?? string.Empty;
+        await FiltroTituloChanged.InvokeAsync(FiltroTitulo);
+    }
+
+    private async Task OnDescripcionCambiado(ChangeEventArgs e)
+    {
+        FiltroDescripcion = e.Value?.ToString() ?? string.Empty;
+        await FiltroDescripcionChanged.InvokeAsync(FiltroDescripcion);
+    }
+
+    private async Task OnEstadoCambiado(ChangeEventArgs e)
+    {
+        FiltroEstado = e.Value?.ToString() ?? "Todas";
+        await FiltroEstadoChanged.InvokeAsync(FiltroEstado);
+    }
+
+    private async Task Limpiar()
+    {
+        FiltroTitulo = string.Empty;
+        await FiltroTituloChanged.InvokeAsync(string.Empty);
+
+        FiltroDescripcion = string.Empty;
+        await FiltroDescripcionChanged.InvokeAsync(string.Empty);
+
+        FiltroEstado = "Todas";
+        await FiltroEstadoChanged.InvokeAsync("Todas");
+
+        await OnLimpiar.InvokeAsync();
+    }
+}

@@ -20,7 +20,7 @@ public abstract class Usuario
     public string Password { get; set; } = string.Empty;
 
     [JsonPropertyName("estado")]
-    public string Estado { get; set; } = string.Empty;
+    public EstadoUsuario Estado { get; set; } = EstadoUsuario.ACTIVO;
 
     [JsonPropertyName("correo")]
     public string Correo { get; set; } = string.Empty;

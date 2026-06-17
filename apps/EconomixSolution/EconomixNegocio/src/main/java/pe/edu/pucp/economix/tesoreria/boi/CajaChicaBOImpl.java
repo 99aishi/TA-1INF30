@@ -17,24 +17,33 @@ public class CajaChicaBOImpl implements ICajaChicaBO {
         cajaDAO=new CajaChicaDAOImpl();
         areaDAO=new AreaDAOImpl();
     }
+    private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
+        if (idUsuarioAccion <= 0) {
+            throw new Exception("El usuario de acción debe ser mayor que cero.");
+        }
+    }
+
     @Override
-    public int insertar(CajaChica caja) throws Exception {
+    public int insertar(CajaChica caja, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(caja,false);
-        return cajaDAO.insertar(caja);
+        return cajaDAO.insertar(caja, idUsuarioAccion);
     }
 
     @Override
-    public int modificar(CajaChica caja) throws Exception {
+    public int modificar(CajaChica caja, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(caja,true);
-        return cajaDAO.modificar(caja);
+        return cajaDAO.modificar(caja, idUsuarioAccion);
     }
 
     @Override
-    public int eliminar(int id) throws Exception {
+    public int eliminar(int id, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         if (id <= 0) {
             throw new Exception("El id de la caja chica debe ser mayor que cero.");
         }
-        return cajaDAO.eliminar(id);
+        return cajaDAO.eliminar(id, idUsuarioAccion);
     }
 
     @Override
@@ -48,6 +57,11 @@ public class CajaChicaBOImpl implements ICajaChicaBO {
     @Override
     public List<CajaChica> listarTodas() throws Exception {
         return cajaDAO.listarTodas();
+    }
+
+    @Override
+    public List<CajaChica> listarActivas() throws Exception {
+        return cajaDAO.listarActivas();
     }
     public void validar(CajaChica caja,boolean esModificacion) throws Exception{
         if(caja==null){

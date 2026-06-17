@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using EconomixModel.Model;
 using EconomixWA.Components;
+using EconomixWS.OperacionesWS;
 using EconomixWS.TesoreriaWS;
 using EconomixWS.UsuarioWS;
 using Microsoft.AspNetCore.Authentication;
@@ -25,7 +26,14 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SlidingExpiration = true;
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("IsAdministrador", policy => policy.RequireRole("Administrador"));
+    options.AddPolicy("IsJefe", policy => policy.RequireRole("Jefe", "Jefe de Área", "Jefe de Area"));
+    options.AddPolicy("IsEmpleado", policy => policy.RequireRole("Empleado"));
+    options.AddPolicy("IsTesoreria", policy => policy.RequireRole("Tesorero", "Tesorero y Finanzas", "Tesoreria"));
+});
+builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 
@@ -45,6 +53,34 @@ builder.Services.AddHttpClient<IRolWS, RolWSImpl>(
 );
 
 builder.Services.AddHttpClient<IMonedaWS, MonedaWSImpl>(
+    client => client.BaseAddress = new Uri(baseURL)
+);
+
+builder.Services.AddHttpClient<IEmpleadoWS, EmpleadoWSImpl>(
+    client => client.BaseAddress = new Uri(baseURL)
+);
+
+builder.Services.AddHttpClient<ICajaChicaWS, CajaChicaWSImpl>(
+    client => client.BaseAddress = new Uri(baseURL)
+);
+
+builder.Services.AddHttpClient<ICuentaBancariaWS, CuentaBancariaWSImpl>(
+    client => client.BaseAddress = new Uri(baseURL)
+);
+
+builder.Services.AddHttpClient<ISolicitudGastoWS, SolicitudGastoWSImpl>(
+    client => client.BaseAddress = new Uri(baseURL)
+);
+
+builder.Services.AddHttpClient<IComprobantePagoWS, ComprobantePagoWSImpl>(
+    client => client.BaseAddress = new Uri(baseURL)
+);
+
+builder.Services.AddHttpClient<ITransaccionWS, TransaccionWSImpl>(
+    client => client.BaseAddress = new Uri(baseURL)
+);
+
+builder.Services.AddHttpClient<ICicloCajaWS, CicloCajaWSImpl>(
     client => client.BaseAddress = new Uri(baseURL)
 );
 
@@ -97,7 +133,26 @@ app.MapPost("/auth/login", async (HttpContext context, IUsuarioWS usuarioWS) =>
     }
     else if (usuarioEncontrado is Empleado emp)
     {
-        claims.Add(new Claim(ClaimTypes.Role, emp.Rol?.Titulo ?? "Empleado"));
+        string rol;
+        if (emp.Area != null && !string.IsNullOrEmpty(emp.Area.Nombre) &&
+            emp.Area.Nombre.Contains("Tesorer", StringComparison.OrdinalIgnoreCase))
+        {
+            rol = "Tesoreria";
+        }
+        else if (emp.RolFlujo == RolFlujo.EMPLEADO)
+        {
+            rol = "Empleado";
+        }
+        else if (emp.RolFlujo == RolFlujo.JEFE_AREA)
+        {
+            rol = "Jefe";
+        }
+        else
+        {
+            rol = "Empleado";
+        }
+
+        claims.Add(new Claim(ClaimTypes.Role, rol));
     }
 
     var identidad = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

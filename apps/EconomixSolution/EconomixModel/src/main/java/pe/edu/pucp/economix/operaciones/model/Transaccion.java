@@ -4,8 +4,11 @@ import java.util.Date;
 
 import pe.edu.pucp.economix.operaciones.model.enums.MedioPago;
 import pe.edu.pucp.economix.operaciones.model.enums.TipoTransaccion;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoTransaccion;
+import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
+import pe.edu.pucp.economix.tesoreria.model.TipoCambio;
 
 public class Transaccion{
     private int idTransaccion;
@@ -14,18 +17,21 @@ public class Transaccion{
     private double monto;
     private String numeroOperacionBancaria;
     private MedioPago medioPago;
-    private double tipoCambio;
+    private TipoCambio tipoCambio;
     private CuentaBancaria cuentaOrigen;
     private CuentaBancaria cuentaDestino;
     private Moneda moneda;
+    private Empleado beneficiario;
+    private EstadoTransaccion estadoTransaccion;
 
     //COnstructores
     public Transaccion(){}
 
     public Transaccion(int idTransaccion, TipoTransaccion
                 tipoTransaccion, Date fecha, double monto, String numeroOperacionBancaria,
-               MedioPago medioPago, double tipoCambio, CuentaBancaria cuentaOrigen,
-               CuentaBancaria cuentaDestino, Moneda moneda) {
+               MedioPago medioPago, TipoCambio tipoCambio, CuentaBancaria cuentaOrigen,
+               CuentaBancaria cuentaDestino, Moneda moneda, Empleado beneficiario,
+               EstadoTransaccion estadoTransaccion) {
         this.idTransaccion = idTransaccion;
         this.tipoTransaccion = tipoTransaccion;
         this.fecha = fecha;
@@ -36,10 +42,13 @@ public class Transaccion{
         this.cuentaOrigen = cuentaOrigen;
         this.cuentaDestino = cuentaDestino;
         this.moneda = moneda;
+        this.beneficiario = beneficiario;
+        this.estadoTransaccion = estadoTransaccion;
     }
     public Transaccion(TipoTransaccion tipo, Date fecha, double monto,
-                       String numeroOperacionBancaria, MedioPago medioPago, double tipoCambio,
-                       CuentaBancaria origen, CuentaBancaria destino, Moneda moneda){
+                       String numeroOperacionBancaria, MedioPago medioPago, TipoCambio tipoCambio,
+                       CuentaBancaria origen, CuentaBancaria destino, Moneda moneda,
+                       Empleado beneficiario, EstadoTransaccion estadoTransaccion){
         this.tipoTransaccion = tipo;
         this.fecha=fecha;
         this.monto=monto;
@@ -49,6 +58,8 @@ public class Transaccion{
         this.cuentaOrigen = origen;
         this.cuentaDestino = destino;
         this.moneda = moneda;
+        this.beneficiario = beneficiario;
+        this.estadoTransaccion = estadoTransaccion;
     }
 
     // Selectores
@@ -70,7 +81,7 @@ public class Transaccion{
     public MedioPago getMedioPago() {
         return medioPago;
     }
-    public double getTipoCambio() {
+    public TipoCambio getTipoCambio() {
         return tipoCambio;
     }
     public CuentaBancaria getCuentaOrigen(){
@@ -100,7 +111,7 @@ public class Transaccion{
     public void setMedioPago(MedioPago medioPago) {
         this.medioPago = medioPago;
     }
-    public void setTipoCambio(double tipoCambio) {
+    public void setTipoCambio(TipoCambio tipoCambio) {
         this.tipoCambio = tipoCambio;
     }
     public void setCuentaOrigen(CuentaBancaria cuenta){
@@ -111,6 +122,18 @@ public class Transaccion{
     }
     public void setMoneda(Moneda moneda){
         this.moneda = moneda;
+    }
+    public Empleado getBeneficiario() {
+        return beneficiario;
+    }
+    public void setBeneficiario(Empleado beneficiario) {
+        this.beneficiario = beneficiario;
+    }
+    public EstadoTransaccion getEstadoTransaccion() {
+        return estadoTransaccion;
+    }
+    public void setEstadoTransaccion(EstadoTransaccion estadoTransaccion) {
+        this.estadoTransaccion = estadoTransaccion;
     }
 
     //Metodos
@@ -127,6 +150,8 @@ public class Transaccion{
                 ", cuentaOrigen=" + cuentaOrigen +
                 ", cuentaDestino=" + cuentaDestino +
                 ", moneda=" + moneda +
+                ", estadoTransaccion=" + estadoTransaccion +
+                ", beneficiario=" + beneficiario +
                 '}';
     }
 

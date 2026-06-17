@@ -1,0 +1,176 @@
+@rendermode InteractiveServer
+
+<div class="card rounded-4 p-3 mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-4">
+            <label class="form-label small text-muted">Solicitante / Motivo</label>
+            <input type="text"
+                   class="form-control bg-light rounded-4"
+                   placeholder="Nombre del solicitante o motivo"
+                   value="@FiltroTexto"
+                   @oninput="OnTextoCambiado" />
+        </div>
+        <div class="col-3 col-md-1">
+            <label class="form-label small text-muted">Monto mínimo</label>
+            <input type="number"
+                   step="0.01"
+                   class="form-control bg-light rounded-4"
+                   placeholder="0.00"
+                   value="@FiltroMontoMin"
+                   @oninput="OnMontoMinCambiado" />
+        </div>
+        <div class="col-3 col-md-1">
+            <label class="form-label small text-muted">Monto máximo</label>
+            <input type="number"
+                   step="0.01"
+                   class="form-control bg-light rounded-4"
+                   placeholder="0.00"
+                   value="@FiltroMontoMax"
+                   @oninput="OnMontoMaxCambiado" />
+        </div>
+        <div class="col-3 col-md-1">
+            <label class="form-label small text-muted">Estado</label>
+            <select class="form-select bg-light rounded-4"
+                    value="@FiltroEstado"
+                    @onchange="OnEstadoCambiado">
+                <option value="Todas">Todas</option>
+                <option value="PENDIENTE">Pendiente</option>
+                <option value="APROBADA">Aprobada</option>
+                <option value="RECHAZADA">Rechazada</option>
+                <option value="OBSERVADA">Observada</option>
+            </select>
+        </div>
+        <div class="col-3 col-md-2">
+            <label class="form-label small text-muted">Fecha inicio</label>
+            <input type="date"
+                   class="form-control bg-light rounded-4"
+                   value="@FiltroFechaInicio?.ToString("yyyy-MM-dd")"
+                   @onchange="OnFechaInicioCambiada" />
+        </div>
+        <div class="col-3 col-md-2">
+            <label class="form-label small text-muted">Fecha fin</label>
+            <input type="date"
+                   class="form-control bg-light rounded-4"
+                   value="@FiltroFechaFin?.ToString("yyyy-MM-dd")"
+                   @onchange="OnFechaFinCambiada" />
+        </div>
+        <div class="col-3 col-md-1 d-grid">
+            <label class="form-label small text-muted">&nbsp;</label>
+            <button type="button" class="btn btn-secondary rounded-4" @onclick="Limpiar">
+                Limpiar
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string FiltroTexto { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> FiltroTextoChanged { get; set; }
+
+    [Parameter]
+    public double? FiltroMontoMin { get; set; }
+
+    [Parameter]
+    public EventCallback<double?> FiltroMontoMinChanged { get; set; }
+
+    [Parameter]
+    public double? FiltroMontoMax { get; set; }
+
+    [Parameter]
+    public EventCallback<double?> FiltroMontoMaxChanged { get; set; }
+
+    [Parameter]
+    public string FiltroEstado { get; set; } = "Todas";
+
+    [Parameter]
+    public EventCallback<string> FiltroEstadoChanged { get; set; }
+
+    [Parameter]
+    public DateTime? FiltroFechaInicio { get; set; }
+
+    [Parameter]
+    public EventCallback<DateTime?> FiltroFechaInicioChanged { get; set; }
+
+    [Parameter]
+    public DateTime? FiltroFechaFin { get; set; }
+
+    [Parameter]
+    public EventCallback<DateTime?> FiltroFechaFinChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnLimpiar { get; set; }
+
+    private async Task OnTextoCambiado(ChangeEventArgs e)
+    {
+        FiltroTexto = e.Value?.ToString() ?? string.Empty;
+        await FiltroTextoChanged.InvokeAsync(FiltroTexto);
+    }
+
+    private async Task OnMontoMinCambiado(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), out var val))
+            FiltroMontoMin = val;
+        else
+            FiltroMontoMin = null;
+        await FiltroMontoMinChanged.InvokeAsync(FiltroMontoMin);
+    }
+
+    private async Task OnMontoMaxCambiado(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), out var val))
+            FiltroMontoMax = val;
+        else
+            FiltroMontoMax = null;
+        await FiltroMontoMaxChanged.InvokeAsync(FiltroMontoMax);
+    }
+
+    private async Task OnEstadoCambiado(ChangeEventArgs e)
+    {
+        FiltroEstado = e.Value?.ToString() ?? "Todas";
+        await FiltroEstadoChanged.InvokeAsync(FiltroEstado);
+    }
+
+    private async Task OnFechaInicioCambiada(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var val))
+            FiltroFechaInicio = val.Date;
+        else
+            FiltroFechaInicio = null;
+        await FiltroFechaInicioChanged.InvokeAsync(FiltroFechaInicio);
+    }
+
+    private async Task OnFechaFinCambiada(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var val))
+            FiltroFechaFin = val.Date;
+        else
+            FiltroFechaFin = null;
+        await FiltroFechaFinChanged.InvokeAsync(FiltroFechaFin);
+    }
+
+    private async Task Limpiar()
+    {
+        FiltroTexto = string.Empty;
+        await FiltroTextoChanged.InvokeAsync(string.Empty);
+
+        FiltroMontoMin = null;
+        await FiltroMontoMinChanged.InvokeAsync(null);
+
+        FiltroMontoMax = null;
+        await FiltroMontoMaxChanged.InvokeAsync(null);
+
+        FiltroEstado = "Todas";
+        await FiltroEstadoChanged.InvokeAsync("Todas");
+
+        FiltroFechaInicio = null;
+        await FiltroFechaInicioChanged.InvokeAsync(null);
+
+        FiltroFechaFin = null;
+        await FiltroFechaFinChanged.InvokeAsync(null);
+
+        await OnLimpiar.InvokeAsync();
+    }
+}

@@ -11,8 +11,8 @@
                     @Usuario.Nombres @Usuario.ApellidoPaterno @Usuario.ApellidoMaterno
                 </p>
 
-                <span class="badge @(Usuario.Estado == "Activo" ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger") rounded-pill">
-                    @Usuario.Estado
+                <span class="badge @(Usuario.Estado == EstadoUsuario.ACTIVO ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger") rounded-pill">
+                    @(Usuario.Estado == EstadoUsuario.ACTIVO ? "Activo" : "Inactivo")
                 </span>
             </div>
 

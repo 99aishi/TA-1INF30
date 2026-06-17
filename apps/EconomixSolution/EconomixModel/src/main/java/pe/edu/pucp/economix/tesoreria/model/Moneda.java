@@ -59,13 +59,11 @@ public class Moneda{
     }
 
     public double convertirA(double monto, Moneda monedaDestino, double factorCambio) {
-        // TODO: Aplicar el factor de cambio para reportes consolidados (RF_21)
-        return 0.0;
+        return monto * factorCambio;
     }
 
     public String formatearMonto(double monto) {
-        // TODO: Retornar el monto con el símbolo correspondiente (ej: "S/ 100.00")
-        return "";
+        return (simbolo != null ? simbolo : "") + " " + String.format("%.2f", monto);
     }
 
     public String getNombre() {

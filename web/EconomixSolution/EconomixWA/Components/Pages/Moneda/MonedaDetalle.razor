@@ -4,6 +4,7 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject IMonedaWS MonedaWS
+@inject IUsuarioWS UsuarioWS
 
 <div class="d-flex flex-column h-100 mb-3">
     <div class="row h-100">
@@ -184,7 +185,8 @@
 
         try
         {
-            await Task.Run(() => MonedaWS.insertar(Moneda));
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => MonedaWS.insertar(Moneda, idUsuarioAccion));
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
@@ -200,7 +202,8 @@
 
         try
         {
-            await Task.Run(() => MonedaWS.actualizar(Moneda));
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => MonedaWS.actualizar(Moneda, idUsuarioAccion));
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
@@ -213,7 +216,8 @@
     {
         try
         {
-            await Task.Run(() => MonedaWS.eliminar(Moneda.IdMoneda));
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => MonedaWS.eliminar(Moneda.IdMoneda, idUsuarioAccion));
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
@@ -227,7 +231,8 @@
         ErrorMessage = string.Empty;
         try
         {
-            await Task.Run(() => MonedaWS.recuperar(Moneda.IdMoneda));
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => MonedaWS.recuperar(Moneda.IdMoneda, idUsuarioAccion));
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)

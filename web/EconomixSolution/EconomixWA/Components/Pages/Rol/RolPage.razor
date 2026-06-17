@@ -19,6 +19,10 @@
         </button>
     </div>
 
+    <RolSearchBar @bind-FiltroTitulo="FiltroTitulo"
+                  @bind-FiltroDescripcion="FiltroDescripcion"
+                  @bind-FiltroEstado="FiltroEstado" />
+
     <div class="d-flex flex-column flex-fill overflow-hidden">
 
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
@@ -33,15 +37,17 @@
                             <p class="text-muted">Cargando Roles...</p>
                         </div>
                     }
-                    else if (Roles.Count == 0)
+                    else if (RolesFiltrados.Count() == 0)
                     {
                         <div class="d-flex justify-content-center align-items-center h-100">
-                            <p class="text-muted">No existe ningun rol registrado</p>
+                            <p class="text-muted">
+                                @(HayFiltrosActivos ? "Ningún rol coincide con los filtros" : "No existe ningun rol registrado")
+                            </p>
                         </div>
                     }
                     else
                     {
-                        foreach (Rol rol in Roles)
+                        foreach (Rol rol in RolesFiltrados)
                         {
                             <RolItem OnMuestraDetalle="MostrarDetalleRol" Rol="rol" />
                         }
@@ -64,8 +70,25 @@
 @code {
     private bool MostrarDetalle { get; set; } = false;
     private bool Cargando { get; set; } = true;
+    private string FiltroTitulo { get; set; } = string.Empty;
+    private string FiltroDescripcion { get; set; } = string.Empty;
+    private string FiltroEstado { get; set; } = "Todas";
     private List<Rol> Roles { get; set; } = new List<Rol>();
     private Rol? RolSeleccionado { get; set; }
+
+    private bool HayFiltrosActivos =>
+        !string.IsNullOrWhiteSpace(FiltroTitulo)
+        || !string.IsNullOrWhiteSpace(FiltroDescripcion)
+        || FiltroEstado != "Todas";
+
+    private IEnumerable<Rol> RolesFiltrados => Roles
+        .Where(r => string.IsNullOrWhiteSpace(FiltroTitulo)
+            || r.Titulo.Contains(FiltroTitulo, StringComparison.OrdinalIgnoreCase))
+        .Where(r => string.IsNullOrWhiteSpace(FiltroDescripcion)
+            || r.Descripcion.Contains(FiltroDescripcion, StringComparison.OrdinalIgnoreCase))
+        .Where(r => FiltroEstado == "Todas"
+            || (FiltroEstado == "Activo" && r.EstaActivo)
+            || (FiltroEstado == "Inactivo" && !r.EstaActivo));
 
     private void PrepararNuevoRol()
     {

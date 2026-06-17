@@ -132,7 +132,7 @@ public class CicloCajaChica{
 //    public void calcularTotalGastado(){
 //        double total=0;
 //        for (SolicitudGasto s: solicitudesDeGasto){
-//            if(s.getEstado()== EstadoSolicitudGasto.Aprobado){
+//            if(s.getEstado()== EstadoSolicitudGasto.APROBADO){
 //                total+=s.getMontoSolicitado();
 //            }
 //        }

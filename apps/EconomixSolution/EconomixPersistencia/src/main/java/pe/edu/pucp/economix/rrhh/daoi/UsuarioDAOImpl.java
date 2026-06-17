@@ -54,7 +54,7 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
         empleado.setCorreo(rs.getString("correo"));
         
         String estadoStr = rs.getString("estado");
-        empleado.setEstado("ACTIVO".equals(estadoStr) ? EstadoUsuario.Activo : EstadoUsuario.Inactivo);
+        empleado.setEstado("ACTIVO".equals(estadoStr) ? EstadoUsuario.ACTIVO : EstadoUsuario.INACTIVO);
         
         int idArea = rs.getInt("id_area");
         if (!rs.wasNull()) {
@@ -85,7 +85,7 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
         admin.setCorreo(rs.getString("correo"));
         
         String estadoStr = rs.getString("estado");
-        admin.setEstado("ACTIVO".equals(estadoStr) ? EstadoUsuario.Activo : EstadoUsuario.Inactivo);
+        admin.setEstado("ACTIVO".equals(estadoStr) ? EstadoUsuario.ACTIVO : EstadoUsuario.INACTIVO);
         
         return admin;
     }

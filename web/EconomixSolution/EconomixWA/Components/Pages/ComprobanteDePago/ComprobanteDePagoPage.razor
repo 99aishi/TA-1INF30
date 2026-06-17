@@ -1,5 +1,7 @@
 @page "/Comprobantes de Pago"
+@rendermode InteractiveServer
 @inject NavigationManager Navigation
+@inject IComprobantePagoWS ComprobantePagoWS
 
 <div class="h-100 d-flex flex-column">
     
@@ -10,49 +12,105 @@
         </button>
     </div>
 
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+            @ErrorMessage
+            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+        </div>
+    }
+
     <div class="d-flex flex-column flex-fill overflow-hidden">
-        <ComprobanteDePagoBusqueda/>
+        <ComprobantePagoSearchBar @bind-FiltroTexto="FiltroTexto"
+                                  @bind-FiltroTipo="FiltroTipo"
+                                  @bind-FiltroEstado="FiltroEstado"
+                                  @bind-FiltroMontoMin="FiltroMontoMin"
+                                  @bind-FiltroMontoMax="FiltroMontoMax"
+                                  @bind-FiltroFechaInicio="FiltroFechaInicio"
+                                  @bind-FiltroFechaFin="FiltroFechaFin" />
     
-        @if(MostrarDetalle)
-        {
-            <div class="row h-100 overflow-hidden mt-3 mb-3 flex-fill">
+        <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
+            
+            @if(MostrarDetalle)
+            {
                 <div class="col-6 h-100">
                     <div class="card rounded-4 p-3 h-100 overflow-scroll">
-                        @for(int i = 0; i<10; i++){
-                            <ComprobanteDePagoItem/>
-                        }           
+                        @if (Cargando) { <p class="text-muted text-center mt-5">Cargando comprobantes...</p> }
+                        else if (ComprobantesFiltrados.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ningún comprobante coincide con los filtros" : "No se encontraron comprobantes")</p> }
+                        else { @foreach (var cp in ComprobantesFiltrados) { <ComprobanteDePagoItem Comprobante="cp" OnMuestraDetalle="() => MostrarDetalleComprobante()"/> } }
                     </div>
                 </div>
                 <div class="col-6 h-100">
                     <ComprobanteDePagoDetalle/>
                 </div>
-            </div>
-        }
-        else
-        {
-            <div class="card rounded-4 mt-3 mb-3 p-3 flex-fill overflow-scroll">
-                @for(int i = 0; i<10; i++){
-                    <ComprobanteDePagoItem/>
-                }           
-            </div>
-        }
-
+            }
+            else
+            {
+                <div class="col-12 h-100">
+                    <div class="card rounded-4 p-3 h-100 overflow-scroll">
+                        @if (Cargando) { <p class="text-muted text-center mt-5">Cargando comprobantes...</p> }
+                        else if (ComprobantesFiltrados.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ningún comprobante coincide con los filtros" : "No se encontraron comprobantes")</p> }
+                        else { @foreach (var cp in ComprobantesFiltrados) { <ComprobanteDePagoItem Comprobante="cp" OnMuestraDetalle="() => MostrarDetalleComprobante()"/> } }
+                    </div>
+                </div>
+            }
+        </div>
     </div>
-
 </div>
 
 @code {
-    private bool MostrarDetalle{ get; set; } = false;
-    public void MostrarDetalleComprobante()
+    private bool MostrarDetalle { get; set; } = false;
+    private bool Cargando { get; set; } = true;
+    private string ErrorMessage { get; set; } = string.Empty;
+    private string FiltroTexto { get; set; } = string.Empty;
+    private string FiltroTipo { get; set; } = "Todos";
+    private string FiltroEstado { get; set; } = "Todas";
+    private double? FiltroMontoMin { get; set; }
+    private double? FiltroMontoMax { get; set; }
+    private DateTime? FiltroFechaInicio { get; set; }
+    private DateTime? FiltroFechaFin { get; set; }
+    private List<ComprobantePago> Comprobantes { get; set; } = new();
+
+    private bool HayFiltrosActivos =>
+        !string.IsNullOrWhiteSpace(FiltroTexto)
+        || FiltroTipo != "Todos"
+        || FiltroEstado != "Todas"
+        || FiltroMontoMin.HasValue
+        || FiltroMontoMax.HasValue
+        || FiltroFechaInicio.HasValue
+        || FiltroFechaFin.HasValue;
+
+    private IEnumerable<ComprobantePago> ComprobantesFiltrados => Comprobantes
+        .Where(c => string.IsNullOrWhiteSpace(FiltroTexto)
+            || (c.RazonSocial?.Contains(FiltroTexto, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (c.Solicitud?.Solicitante?.Nombres.Contains(FiltroTexto, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (c.Solicitud?.Solicitante?.ApellidoPaterno.Contains(FiltroTexto, StringComparison.OrdinalIgnoreCase) ?? false))
+        .Where(c => FiltroTipo == "Todos" || c.TipoDocumento.Equals(FiltroTipo, StringComparison.OrdinalIgnoreCase))
+        .Where(c => FiltroEstado == "Todas" || c.Estado.Equals(FiltroEstado, StringComparison.OrdinalIgnoreCase))
+        .Where(c => !FiltroMontoMin.HasValue || c.MontoTotal >= FiltroMontoMin.Value)
+        .Where(c => !FiltroMontoMax.HasValue || c.MontoTotal <= FiltroMontoMax.Value)
+        .Where(c => !FiltroFechaInicio.HasValue || (c.FechaEmision?.Date >= FiltroFechaInicio.Value.Date))
+        .Where(c => !FiltroFechaFin.HasValue || (c.FechaEmision?.Date <= FiltroFechaFin.Value.Date));
+
+    public void MostrarDetalleComprobante() => MostrarDetalle = true;
+    public async Task CerrarDetalleComprobante()
     {
-        MostrarDetalle = true;
-    }
-    public void CierraDetalleComprobante()
-    {
+        await ListarComprobantes();
         MostrarDetalle = false;
     }
-    private void CrearDetalleComprobante()
+    private void CrearDetalleComprobante() => Navigation.NavigateTo("/Comprobantes de Pago/Crear");
+
+    protected override async Task OnInitializedAsync()
     {
-        Navigation.NavigateTo("/Comprobantes de Pago/Crear");
+        Cargando = true;
+        await ListarComprobantes();
+        Cargando = false;
+    }
+
+    private async Task ListarComprobantes()
+    {
+        ErrorMessage = string.Empty;
+        try { Comprobantes = await Task.Run(() => new List<ComprobantePago>(ComprobantePagoWS.listar())); }
+        catch (Exception ex) { ErrorMessage = ex.Message; }
     }
 }

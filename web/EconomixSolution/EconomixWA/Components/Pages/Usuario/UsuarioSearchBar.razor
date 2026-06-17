@@ -1,0 +1,123 @@
+@rendermode InteractiveServer
+
+<div class="card rounded-4 p-3 mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-3">
+            <label class="form-label small text-muted">Nombre / Apellido</label>
+            <input type="text"
+                   class="form-control bg-light rounded-4"
+                   placeholder="Nombres o apellidos"
+                   value="@FiltroNombre"
+                   @oninput="OnNombreCambiado" />
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label small text-muted">Correo</label>
+            <input type="text"
+                   class="form-control bg-light rounded-4"
+                   placeholder="correo@economix.pe"
+                   value="@FiltroCorreo"
+                   @oninput="OnCorreoCambiado" />
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-muted">Rol</label>
+            <select class="form-select bg-light rounded-4"
+                    value="@FiltroRol"
+                    @onchange="OnRolCambiado">
+                <option value="Todos">Todos</option>
+                @foreach (var rol in Roles)
+                {
+                    <option value="@rol.Titulo">@rol.Titulo</option>
+                }
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-muted">Estado</label>
+            <select class="form-select bg-light rounded-4"
+                    value="@FiltroEstado"
+                    @onchange="OnEstadoCambiado">
+                <option value="Todas">Todas</option>
+                <option value="Activo">Activo</option>
+                <option value="Inactivo">Inactivo</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2 d-grid">
+            <label class="form-label small text-muted">&nbsp;</label>
+            <button type="button" class="btn btn-secondary rounded-4" @onclick="Limpiar">
+                Limpiar
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string FiltroNombre { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> FiltroNombreChanged { get; set; }
+
+    [Parameter]
+    public string FiltroCorreo { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> FiltroCorreoChanged { get; set; }
+
+    [Parameter]
+    public string FiltroRol { get; set; } = "Todos";
+
+    [Parameter]
+    public EventCallback<string> FiltroRolChanged { get; set; }
+
+    [Parameter]
+    public string FiltroEstado { get; set; } = "Todas";
+
+    [Parameter]
+    public EventCallback<string> FiltroEstadoChanged { get; set; }
+
+    [Parameter]
+    public List<Rol> Roles { get; set; } = new();
+
+    [Parameter]
+    public EventCallback OnLimpiar { get; set; }
+
+    private async Task OnNombreCambiado(ChangeEventArgs e)
+    {
+        FiltroNombre = e.Value?.ToString() ?? string.Empty;
+        await FiltroNombreChanged.InvokeAsync(FiltroNombre);
+    }
+
+    private async Task OnCorreoCambiado(ChangeEventArgs e)
+    {
+        FiltroCorreo = e.Value?.ToString() ?? string.Empty;
+        await FiltroCorreoChanged.InvokeAsync(FiltroCorreo);
+    }
+
+    private async Task OnRolCambiado(ChangeEventArgs e)
+    {
+        FiltroRol = e.Value?.ToString() ?? "Todos";
+        await FiltroRolChanged.InvokeAsync(FiltroRol);
+    }
+
+    private async Task OnEstadoCambiado(ChangeEventArgs e)
+    {
+        FiltroEstado = e.Value?.ToString() ?? "Todas";
+        await FiltroEstadoChanged.InvokeAsync(FiltroEstado);
+    }
+
+    private async Task Limpiar()
+    {
+        FiltroNombre = string.Empty;
+        await FiltroNombreChanged.InvokeAsync(string.Empty);
+
+        FiltroCorreo = string.Empty;
+        await FiltroCorreoChanged.InvokeAsync(string.Empty);
+
+        FiltroRol = "Todos";
+        await FiltroRolChanged.InvokeAsync("Todos");
+
+        FiltroEstado = "Todas";
+        await FiltroEstadoChanged.InvokeAsync("Todas");
+
+        await OnLimpiar.InvokeAsync();
+    }
+}

@@ -82,7 +82,7 @@ public class UsuarioWS : IUsuarioWS
         var paternoClaim = user.FindFirst("ApellidoPaterno");
         var maternoClaim = user.FindFirst("ApellidoMaterno");
         var emailClaim = user.FindFirst(ClaimTypes.Email);
-        
+
         if (nameClaim == null)
             return null;
 
@@ -112,6 +112,18 @@ public class UsuarioWS : IUsuarioWS
                 Rol = new Rol { Titulo = rol }
             };
         }
+    }
+
+    public int GetCurrentUserId()
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true)
+            throw new UnauthorizedAccessException("No hay una sesión activa.");
+
+        var nameClaim = user.FindFirst(ClaimTypes.NameIdentifier)
+            ?? throw new UnauthorizedAccessException("No se encontró el identificador de usuario en la sesión.");
+
+        return int.Parse(nameClaim.Value);
     }
 
     public void Logout()

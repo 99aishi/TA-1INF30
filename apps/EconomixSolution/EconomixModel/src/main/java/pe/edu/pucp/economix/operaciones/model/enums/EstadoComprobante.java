@@ -1,22 +1,20 @@
 package pe.edu.pucp.economix.operaciones.model.enums;
 
 public enum EstadoComprobante {
-    PorRevisar, Anulado, Aprobado, Observado;
+    POR_REVISAR,
+    ANULADO,
+    APROBADO,
+    OBSERVADO;
 
     public boolean puedeTransicionarA(EstadoComprobante nuevo) {
         switch (this) {
-            case PorRevisar:
-                // Desde revisión puede ir a cualquier otro estado
-                return nuevo == Aprobado || nuevo == Observado || nuevo == Anulado;
-            case Observado:
-                // Si fue observado, debe volver a revisión o anularse
-                return nuevo == PorRevisar || nuevo == Anulado;
-            case Aprobado:
-                // Un comprobante aprobado normalmente ya no debería cambiar,
-                // a menos que el negocio permita anularlo.
-                return nuevo == Anulado;
-            case Anulado:
-                // Estado final, no debería cambiar a nada más
+            case POR_REVISAR:
+                return nuevo == APROBADO || nuevo == OBSERVADO || nuevo == ANULADO;
+            case OBSERVADO:
+                return nuevo == POR_REVISAR || nuevo == ANULADO;
+            case APROBADO:
+                return nuevo == ANULADO;
+            case ANULADO:
                 return false;
             default:
                 return false;

@@ -25,22 +25,31 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         solicitudGastoBO=new SolicitudGastoBOImpl();
         cicloBO= new CicloCajaBOImpl();
     }
-    @Override
-    public int insertar(ComprobantePago comprobante) throws Exception {
-        validar(comprobante,false);
-        return comprobantePagoDAO.insertar(comprobante);
+    private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
+        if (idUsuarioAccion <= 0) {
+            throw new Exception("El usuario de acción debe ser mayor que cero.");
+        }
     }
 
     @Override
-    public int modificar(ComprobantePago comprobante) throws Exception {
+    public int insertar(ComprobantePago comprobante, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
+        validar(comprobante,false);
+        return comprobantePagoDAO.insertar(comprobante, idUsuarioAccion);
+    }
+
+    @Override
+    public int modificar(ComprobantePago comprobante, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(comprobante,true);
 
-        return comprobantePagoDAO.modificar(comprobante);
+        return comprobantePagoDAO.modificar(comprobante, idUsuarioAccion);
     }
 
     @Override
-    public int eliminar(int id) throws Exception {
-        return comprobantePagoDAO.eliminar(id);
+    public int eliminar(int id, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
+        return comprobantePagoDAO.eliminar(id, idUsuarioAccion);
     }
 
     @Override
@@ -51,6 +60,11 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
     @Override
     public List<ComprobantePago> listarTodas() throws Exception {
         return comprobantePagoDAO.listarTodas();
+    }
+
+    @Override
+    public List<ComprobantePago> listarActivas() throws Exception {
+        return comprobantePagoDAO.listarActivas();
     }
 
     public List<ComprobantePago> listarPorSolicitud(int idSolicitud)throws Exception {
@@ -67,6 +81,7 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         validarSolicitud(comprobante.getSolicitud());
         validarMoneda(comprobante.getMoneda());
         validarFecha(comprobante);
+        validarContraSolicitud(comprobante, EsModificacion);
 
         SolicitudGasto soli = solicitudGastoBO.buscarPorId(comprobante.getSolicitud().getIdSolicitudGasto());
         boolean esGastoExcepcional = soli.getMontoSolicitado() <= 50;
@@ -80,6 +95,28 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
             validarProveedor(comprobante);
         }
 
+    }
+
+    public void validarContraSolicitud(ComprobantePago comprobante, boolean esModificacion) throws Exception {
+        SolicitudGasto soli = solicitudGastoBO.buscarPorId(comprobante.getSolicitud().getIdSolicitudGasto());
+        List<ComprobantePago> comprobantesExistentes = comprobantePagoDAO.listarPorSolicitud(soli.getIdSolicitudGasto());
+
+        double montoComprobantes = 0;
+        for (ComprobantePago c : comprobantesExistentes) {
+            if (c.getEstado() != null && c.getEstado().toString().equals("ANULADO")) {
+                continue;
+            }
+            if (esModificacion && c.getIdComprobante() == comprobante.getIdComprobante()) {
+                continue;
+            }
+            montoComprobantes += c.getTotal();
+        }
+
+        double montoDisponible = soli.getMontoSolicitado() - montoComprobantes;
+        if (comprobante.getTotal() > montoDisponible) {
+            throw new Exception("El total del comprobante (" + String.format("%.2f", comprobante.getTotal())
+                    + ") excede el monto disponible de la solicitud (" + String.format("%.2f", montoDisponible) + ").");
+        }
     }
 
 

@@ -1,26 +1,42 @@
+using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using EconomixModel.Model;
+using Microsoft.AspNetCore.Http;
 
 namespace EconomixWS.UsuarioWS;
 
 public class AreaWSImpl : IAreaWS
 {
     private readonly HttpClient _httpClient;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         ReferenceHandler = ReferenceHandler.IgnoreCycles
     };
 
-    public AreaWSImpl(HttpClient httpClient)
+    public AreaWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(httpClient.BaseAddress + "AreaWS/");
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    private int ObtenerIdUsuarioAccion()
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true)
+            throw new UnauthorizedAccessException("No hay una sesión activa.");
+
+        var nameClaim = user.FindFirst(ClaimTypes.NameIdentifier)
+            ?? throw new UnauthorizedAccessException("No se encontró el identificador de usuario en la sesión.");
+
+        return int.Parse(nameClaim.Value);
     }
     
-    public void insertar(Area area)
+    public void insertar(Area area, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync("Insertar", area, _jsonOptions).GetAwaiter().GetResult();
+        var response = _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", area, _jsonOptions).GetAwaiter().GetResult();
         if (!response.IsSuccessStatusCode)
         {
             var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
@@ -28,9 +44,9 @@ public class AreaWSImpl : IAreaWS
         }
     }
 
-    public void actualizar(Area area)
+    public void actualizar(Area area, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync("Actualizar", area, _jsonOptions).GetAwaiter().GetResult();
+        var response = _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", area, _jsonOptions).GetAwaiter().GetResult();
         if (!response.IsSuccessStatusCode)
         {
             var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
@@ -38,9 +54,9 @@ public class AreaWSImpl : IAreaWS
         }
     }
 
-    public void eliminar(int id)
+    public void eliminar(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Eliminar?id={id}").GetAwaiter().GetResult();
+        var response = _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
         if (!response.IsSuccessStatusCode)
         {
             var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
@@ -88,9 +104,9 @@ public class AreaWSImpl : IAreaWS
         return System.Text.Json.JsonSerializer.Deserialize<List<Area>>(json) ?? new List<Area>();
     }
 
-    public int recuperar(int id)
+    public int recuperar(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Recuperar?id={id}").GetAwaiter().GetResult();
+        var response = _httpClient.GetAsync($"Recuperar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
         if (!response.IsSuccessStatusCode)
         {
             var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();

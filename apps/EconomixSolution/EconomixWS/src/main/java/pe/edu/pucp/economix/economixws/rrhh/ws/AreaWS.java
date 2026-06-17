@@ -50,9 +50,9 @@ public class AreaWS {
     @Path("Insertar")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response insertarArea(Area area) {
+    public Response insertarArea(Area area, @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
         try {
-            int id = areaBO.insertar(area);
+            int id = areaBO.insertar(area, idUsuarioAccion);
             return Response.ok(id).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -65,9 +65,9 @@ public class AreaWS {
     @Path("Actualizar")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response actualizarArea(Area area) {
+    public Response actualizarArea(Area area, @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
         try {
-            int result = areaBO.modificar(area);
+            int result = areaBO.modificar(area, idUsuarioAccion);
             return Response.ok(result).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -79,9 +79,9 @@ public class AreaWS {
     @GET
     @Path("Eliminar")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response eliminarArea(@QueryParam("id") int id) {
+    public Response eliminarArea(@QueryParam("id") int id, @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
         try {
-            int result = areaBO.eliminar(id);
+            int result = areaBO.eliminar(id, idUsuarioAccion);
             return Response.ok(result).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -100,9 +100,9 @@ public class AreaWS {
     @GET
     @Path("Recuperar")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response recuperarArea(@QueryParam("id") int id) {
+    public Response recuperarArea(@QueryParam("id") int id, @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
         try {
-            int result = areaBO.recuperar(id);
+            int result = areaBO.recuperar(id, idUsuarioAccion);
             return Response.ok(result).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)

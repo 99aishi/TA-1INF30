@@ -24,24 +24,33 @@ public class EmpleadoBOImpl implements IEmpleadoBO {
         rolDAO=new RolDAOImpl();
         areaDAO=new AreaDAOImpl();
     }
+    private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
+        if (idUsuarioAccion <= 0) {
+            throw new Exception("El usuario de acción debe ser mayor que cero.");
+        }
+    }
+
     @Override
-    public int insertar(Empleado empleado) throws Exception {
+    public int insertar(Empleado empleado, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(empleado,false);
-        return empleadoDAO.insertar(empleado);
+        return empleadoDAO.insertar(empleado, idUsuarioAccion);
     }
 
     @Override
-    public int modificar(Empleado empleado) throws Exception {
+    public int modificar(Empleado empleado, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(empleado,true);
-        return empleadoDAO.modificar(empleado);
+        return empleadoDAO.modificar(empleado, idUsuarioAccion);
     }
 
     @Override
-    public int eliminar(int id) throws Exception {
+    public int eliminar(int id, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         if (id <= 0) {
             throw new Exception("El id del empleado debe ser mayor que cero.");
         }
-        return  empleadoDAO.eliminar(id);
+        return  empleadoDAO.eliminar(id, idUsuarioAccion);
     }
 
     @Override
@@ -56,6 +65,11 @@ public class EmpleadoBOImpl implements IEmpleadoBO {
     public List<Empleado> listarTodas() throws Exception {
         return empleadoDAO.listarTodas();
     }
+
+    @Override
+    public List<Empleado> listarActivas() throws Exception {
+        return empleadoDAO.listarActivas();
+    }
     public void validar(Empleado empleado,boolean esModificacion) throws Exception{
         if(empleado==null){
             throw new Exception("El empleado no puede ser nulo.");
@@ -66,7 +80,7 @@ public class EmpleadoBOImpl implements IEmpleadoBO {
         }
         validarRol(empleado.getRol());
         validarArea(empleado.getArea());
-        if(empleadoDAO.listarTodas()!=null) {
+        if(empleadoDAO.listarActivas()!=null) {
             validarJefe(empleado.getJefeDirecto());
         }
         validarNombre(empleado.getNombres());

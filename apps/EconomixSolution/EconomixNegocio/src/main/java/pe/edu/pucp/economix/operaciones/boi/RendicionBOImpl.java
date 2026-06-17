@@ -30,9 +30,10 @@ public class RendicionBOImpl implements IRendicionBO {
         comprobantePagoBO=new ComprobantePagoBOImpl();
     }
 
-    public Rendicion generarRendicionDeCiclo(int idCiclo) throws Exception {
+    public Rendicion generarRendicionDeCiclo(int idCiclo, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         CicloCajaChica ciclo = cicloCajaBO.buscarPorId(idCiclo);
-        cicloCajaBO.calcularTotalGastado(ciclo);
+        cicloCajaBO.calcularTotalGastado(ciclo, idUsuarioAccion);
         if(ciclo == null){
             throw new Exception("El ciclo no existe.");
         }
@@ -41,7 +42,7 @@ public class RendicionBOImpl implements IRendicionBO {
         Rendicion rendicionCierre = new Rendicion();
         rendicionCierre.setCicloCajaChica(ciclo);
         rendicionCierre.setFechaPresentacion(new Date());
-        rendicionCierre.setEstado(EstadoRendicion.EnEspera);
+        rendicionCierre.setEstado(EstadoRendicion.EN_ESPERA);
 
         // 2. Ejecutar la matemática
         double totalDeclarado = calcularTotalDeclaradoValidado(ciclo);
@@ -55,27 +56,36 @@ public class RendicionBOImpl implements IRendicionBO {
         validarMontos(rendicionCierre);
 
         // 4. Insertar en la base de datos
-        int idGenerado = rendicionDAO.insertar(rendicionCierre);
+        int idGenerado = rendicionDAO.insertar(rendicionCierre, idUsuarioAccion);
         rendicionCierre.setIdRendicion(idGenerado);
 
         return rendicionCierre;
     }
+    private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
+        if (idUsuarioAccion <= 0) {
+            throw new Exception("El usuario de acción debe ser mayor que cero.");
+        }
+    }
+
     @Override
-    public int insertar(Rendicion rendicion) throws Exception {
+    public int insertar(Rendicion rendicion, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(rendicion,false);
-        return rendicionDAO.insertar(rendicion);
+        return rendicionDAO.insertar(rendicion, idUsuarioAccion);
     }
 
     @Override
-    public int modificar(Rendicion rendicion) throws Exception {
+    public int modificar(Rendicion rendicion, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(rendicion,true);
-        return rendicionDAO.modificar(rendicion);
+        return rendicionDAO.modificar(rendicion, idUsuarioAccion);
     }
 
     @Override
-    public int eliminar(int id) throws Exception {
+    public int eliminar(int id, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
 
-        return rendicionDAO.eliminar(id);
+        return rendicionDAO.eliminar(id, idUsuarioAccion);
     }
 
     @Override
@@ -86,6 +96,11 @@ public class RendicionBOImpl implements IRendicionBO {
     @Override
     public List<Rendicion> listarTodas() throws Exception {
         return rendicionDAO.listarTodas();
+    }
+
+    @Override
+    public List<Rendicion> listarActivas() throws Exception {
+        return rendicionDAO.listarActivas();
     }
 
     public void validar(Rendicion rendicion, boolean esModificacion) throws Exception{
@@ -100,11 +115,12 @@ public class RendicionBOImpl implements IRendicionBO {
         validarMontos(rendicion);
     }
 
-    public void calcularTotales(Rendicion rendicion) throws Exception {
+    public void calcularTotales(Rendicion rendicion, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
 //        rendicion.setTotalDeclarado(calcularTotalDeclaradoValidado(rendicion));
-        cicloCajaBO.calcularTotalGastado(rendicion.getCicloCajaChica());
+        cicloCajaBO.calcularTotalGastado(rendicion.getCicloCajaChica(), idUsuarioAccion);
         rendicion.setTotalAprobado(calcularTotalAprobado(rendicion)); // usa CICLOCAJA
-        modificar(rendicion);
+        modificar(rendicion, idUsuarioAccion);
     }
 
     public double calcularTotalDeclaradoValidado(CicloCajaChica ciclo)throws Exception{
@@ -112,7 +128,7 @@ public class RendicionBOImpl implements IRendicionBO {
         List<SolicitudGasto> solicitudes = solicitudGastoBO.listarPorCiclo(ciclo.getIdCicloCaja());
 
         for(SolicitudGasto s : solicitudes){
-            if(s.getEstado() == EstadoSolicitudGasto.Aprobado) {
+            if(s.getEstado() == EstadoSolicitudGasto.APROBADO) {
                 List<ComprobantePago> comprobantes = comprobantePagoBO.listarPorSolicitud(s.getIdSolicitudGasto());
                 for(ComprobantePago c : comprobantes){
                     total += c.getTotal();
@@ -131,8 +147,12 @@ public class RendicionBOImpl implements IRendicionBO {
     public void validarMontos(Rendicion rendicion) throws Exception {
         CicloCajaChica ciclo = rendicion.getCicloCajaChica();
 
-        if (rendicion.getTotalDeclarado() < 0) {
-            throw new Exception("El monto total declarado debe ser valido.");
+        if (rendicion.getTotalDeclarado() <= 0) {
+            throw new Exception("El monto total declarado debe ser mayor que cero.");
+        }
+
+        if (rendicion.getTotalAprobado() < 0) {
+            throw new Exception("El monto total aprobado no puede ser negativo.");
         }
 
         if (rendicion.getTotalDeclarado() > ciclo.getSaldoInicial()) {
@@ -142,6 +162,10 @@ public class RendicionBOImpl implements IRendicionBO {
 
         if (rendicion.getTotalAprobado() > rendicion.getTotalDeclarado()) {
             throw new Exception("El monto aprobado no puede ser mayor al monto declarado.");
+        }
+
+        if (rendicion.getSaldoFinal() < 0) {
+            throw new Exception("El saldo final de la rendicion no puede ser negativo.");
         }
     }
 

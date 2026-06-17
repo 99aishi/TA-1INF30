@@ -11,6 +11,7 @@ public class CuentaBancaria {
     private String nombreBanco;
     private String numeroBancario;
     private String cci;
+    private boolean activa;
 
     //Relaciones
     private Moneda moneda;
@@ -72,6 +73,12 @@ public class CuentaBancaria {
     }
     public void setCci(String cci) {
         this.cci = cci;
+    }
+    public boolean isActiva() {
+        return activa;
+    }
+    public void setActiva(boolean activa) {
+        this.activa = activa;
     }
     public Moneda getMoneda() {
         return moneda;

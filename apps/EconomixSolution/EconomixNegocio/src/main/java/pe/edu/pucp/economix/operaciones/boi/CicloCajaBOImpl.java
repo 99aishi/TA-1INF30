@@ -25,24 +25,33 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
         solicitudGastoBO=new SolicitudGastoBOImpl();
     }
 
+    private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
+        if (idUsuarioAccion <= 0) {
+            throw new Exception("El usuario de acción debe ser mayor que cero.");
+        }
+    }
+
     @Override
-    public int insertar(CicloCajaChica ciclo) throws Exception {
+    public int insertar(CicloCajaChica ciclo, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(ciclo,false);
-        return cicloCajaChicaDAO.insertar(ciclo);
+        return cicloCajaChicaDAO.insertar(ciclo, idUsuarioAccion);
     }
 
     @Override
-    public int modificar(CicloCajaChica ciclo) throws Exception {
+    public int modificar(CicloCajaChica ciclo, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(ciclo,true);
-        return cicloCajaChicaDAO.modificar(ciclo);
+        return cicloCajaChicaDAO.modificar(ciclo, idUsuarioAccion);
     }
 
     @Override
-    public int eliminar(int id) throws Exception {
+    public int eliminar(int id, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         if(id<=0){
             throw new Exception("Debe ingresar el ID del ciclo.");
         }
-        return cicloCajaChicaDAO.eliminar(id);
+        return cicloCajaChicaDAO.eliminar(id, idUsuarioAccion);
     }
 
     @Override
@@ -58,6 +67,11 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
         return cicloCajaChicaDAO.listarTodas();
     }
 
+    @Override
+    public List<CicloCajaChica> listarActivos() throws Exception {
+        return cicloCajaChicaDAO.listarActivos();
+    }
+
     public void validar (CicloCajaChica ciclo, boolean esModificacion) throws Exception{
         if(ciclo == null ){
             throw new Exception("El ciclo de caja chica no puede ser nulo.");
@@ -69,18 +83,19 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
         validarSemana(ciclo.getNumeroSemana());
         validarMontos(ciclo);
     }
-    public void calcularTotalGastado(CicloCajaChica ciclo) throws Exception {
+    public void calcularTotalGastado(CicloCajaChica ciclo, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
 
         double total=0;
         List<SolicitudGasto> solicitudesDeGasto= solicitudGastoBO.listarPorCiclo(ciclo.getIdCicloCaja());
         for (SolicitudGasto s: solicitudesDeGasto){
-            if(s.getEstado()== EstadoSolicitudGasto.Aprobado){
+            if(s.getEstado()== EstadoSolicitudGasto.APROBADO){
                 total+=s.getMontoSolicitado();
             }
         }
         CicloCajaChica ciclito= buscarPorId(ciclo.getIdCicloCaja());
         ciclito.setTotalGastado(total);
-        modificar(ciclito);
+        modificar(ciclito, idUsuarioAccion);
     }
 
 

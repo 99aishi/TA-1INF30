@@ -1,26 +1,42 @@
+using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using EconomixModel.Model;
+using Microsoft.AspNetCore.Http;
 
 namespace EconomixWS.TesoreriaWS;
 
 public class MonedaWSImpl : IMonedaWS
 {
     private readonly HttpClient _httpClient;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         ReferenceHandler = ReferenceHandler.IgnoreCycles
     };
 
-    public MonedaWSImpl(HttpClient httpClient)
+    public MonedaWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(httpClient.BaseAddress + "MonedaWS/");
+        _httpContextAccessor = httpContextAccessor;
     }
 
-    public void insertar(Moneda moneda)
+    private int ObtenerIdUsuarioAccion()
     {
-        var response = _httpClient.PostAsJsonAsync("Insertar", moneda, _jsonOptions).GetAwaiter().GetResult();
+        var user = _httpContextAccessor.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true)
+            throw new UnauthorizedAccessException("No hay una sesión activa.");
+
+        var nameClaim = user.FindFirst(ClaimTypes.NameIdentifier)
+            ?? throw new UnauthorizedAccessException("No se encontró el identificador de usuario en la sesión.");
+
+        return int.Parse(nameClaim.Value);
+    }
+
+    public void insertar(Moneda moneda, int idUsuarioAccion)
+    {
+        var response = _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", moneda, _jsonOptions).GetAwaiter().GetResult();
         if (!response.IsSuccessStatusCode)
         {
             var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
@@ -28,9 +44,9 @@ public class MonedaWSImpl : IMonedaWS
         }
     }
 
-    public void actualizar(Moneda moneda)
+    public void actualizar(Moneda moneda, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync("Actualizar", moneda, _jsonOptions).GetAwaiter().GetResult();
+        var response = _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", moneda, _jsonOptions).GetAwaiter().GetResult();
         if (!response.IsSuccessStatusCode)
         {
             var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
@@ -38,9 +54,9 @@ public class MonedaWSImpl : IMonedaWS
         }
     }
 
-    public void eliminar(int id)
+    public void eliminar(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Eliminar?id={id}").GetAwaiter().GetResult();
+        var response = _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
         if (!response.IsSuccessStatusCode)
         {
             var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
@@ -111,9 +127,9 @@ public class MonedaWSImpl : IMonedaWS
         }
     }
 
-    public int recuperar(int id)
+    public int recuperar(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Recuperar?id={id}").GetAwaiter().GetResult();
+        var response = _httpClient.GetAsync($"Recuperar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
         if (!response.IsSuccessStatusCode)
         {
             var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();

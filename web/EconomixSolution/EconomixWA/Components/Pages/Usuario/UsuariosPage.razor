@@ -1,6 +1,8 @@
 @page "/usuarios"
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
+@inject IEmpleadoWS EmpleadoWS
+@inject IRolWS RolWS
 
 <div class="h-100 d-flex flex-column">
 
@@ -13,38 +15,47 @@
         <button type="button" class="btn btn-primary" @onclick="IrRegistrarUsuario"> + Agregar Usuario</button>
     </div>
 
-    <div class="card rounded-4 p-3 mb-3">
-        <div class="row g-3 align-items-end">
-            <div class="col-12 col-md-8">
-                <label class="form-label small text-muted">Buscar usuario</label>
-                <input type="text"
-                       class="form-control bg-light rounded-4"
-                       placeholder="Nombres, apellidos o correo"
-                       @bind="Busqueda"
-                       @bind:event="oninput"/>
-            </div>
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+            @ErrorMessage
+            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
         </div>
-    </div>
+    }
+
+    <UsuarioSearchBar @bind-FiltroNombre="FiltroNombre"
+                      @bind-FiltroCorreo="FiltroCorreo"
+                      @bind-FiltroRol="FiltroRol"
+                      @bind-FiltroEstado="FiltroEstado"
+                      Roles="Roles" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
 
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
 
-            <div class=" @(@MostrarDetalle ? "col-6" : "col-12") h-100 d-flex flex-column overflow-hidden">
+            <div class=" @(MostrarDetalle ? "col-6" : "col-12") h-100 d-flex flex-column overflow-hidden">
 
                 <div class="card rounded-4 p-3 h-100 overflow-scroll">
 
-                    @if (UsuariosFiltrados.Count() == 0)
+                    @if (Cargando)
                     {
                         <div class="d-flex justify-content-center align-items-center h-100">
-                            <p class="text-muted">No se encontraron usuarios</p>
+                            <p class="text-muted">Cargando usuarios...</p>
+                        </div>
+                    }
+                    else if (UsuariosFiltrados.Count() == 0)
+                    {
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <p class="text-muted">
+                                @(HayFiltrosActivos ? "Ningún usuario coincide con los filtros" : "No se encontraron usuarios")
+                            </p>
                         </div>
                     }
                     else
                     {
                         @foreach (var usuario in UsuariosFiltrados)
                         {
-                            <UsuarioItem OnMuestraDetalle="() => MostrarDetalleUsuario(usuario)" />
+                            <UsuarioItem Usuario="usuario" OnMuestraDetalle="() => MostrarDetalleUsuario(usuario)" />
                         }
                     }
                 </div>
@@ -52,7 +63,7 @@
             @if (MostrarDetalle && UsuarioSeleccionado != null)
             {
                 <div class="col-6 h-100">
-                    <UsuarioDetalle OnCerrarDetalle="CerrarDetalleUsuario" />
+                    <UsuarioDetalle Usuario="UsuarioSeleccionado" OnCerrarDetalle="CerrarDetalleUsuario" />
                 </div>
             }
         </div>
@@ -61,59 +72,33 @@
 
 @code {
     private bool MostrarDetalle { get; set; } = false;
-    private string Busqueda { get; set; } = string.Empty;
+    private bool Cargando { get; set; } = true;
+    private string ErrorMessage { get; set; } = string.Empty;
+    private string FiltroNombre { get; set; } = string.Empty;
+    private string FiltroCorreo { get; set; } = string.Empty;
+    private string FiltroRol { get; set; } = "Todos";
+    private string FiltroEstado { get; set; } = "Todas";
+    private List<Usuario> Usuarios { get; set; } = new();
+    private List<Rol> Roles { get; set; } = new();
     private Usuario? UsuarioSeleccionado { get; set; }
 
-    private IEnumerable<Usuario> UsuariosFiltrados => MockUsuarios
-        .Where(u => string.IsNullOrWhiteSpace(Busqueda)
-            || u.Nombres.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
-            || u.ApellidoPaterno.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
-            || u.ApellidoMaterno.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
-            || u.Correo.Contains(Busqueda, StringComparison.OrdinalIgnoreCase));
+    private bool HayFiltrosActivos =>
+        !string.IsNullOrWhiteSpace(FiltroNombre)
+        || !string.IsNullOrWhiteSpace(FiltroCorreo)
+        || FiltroRol != "Todos"
+        || FiltroEstado != "Todas";
 
-    private List<Usuario> MockUsuarios { get; set; } = new()
-    {
-        new Empleado
-        {
-            UsuarioID = 1,
-            Nombres = "Robert",
-            ApellidoPaterno = "Oppenheimer",
-            ApellidoMaterno = "Rivera",
-            Correo = "yona.oppie@gmail.com",
-            Estado = "Activo",
-            Rol = new Rol { Titulo = "Empleado", EstaActivo = true }
-        },
-        new Empleado
-        {
-            UsuarioID = 2,
-            Nombres = "María",
-            ApellidoPaterno = "García",
-            ApellidoMaterno = "López",
-            Correo = "maria.garcia@email.com",
-            Estado = "Activo",
-            Rol = new Rol { Titulo = "Empleado", EstaActivo = true }
-        },
-        new Empleado
-        {
-            UsuarioID = 3,
-            Nombres = "Carlos",
-            ApellidoPaterno = "Mendoza",
-            ApellidoMaterno = "Silva",
-            Correo = "carlos.mendoza@email.com",
-            Estado = "Activo",
-            Rol = new Rol { Titulo = "Jefe", EstaActivo = true }
-        },
-        new Administrador
-        {
-            UsuarioID = 4,
-            Nombres = "Ana",
-            ApellidoPaterno = "Torres",
-            ApellidoMaterno = "Ríos",
-            Correo = "admin@economix.com",
-            Estado = "Activo",
-            Rol = new Rol { Titulo = "Administrador", EstaActivo = true }
-        }
-    };
+    private IEnumerable<Usuario> UsuariosFiltrados => Usuarios
+        .Where(u => string.IsNullOrWhiteSpace(FiltroNombre)
+            || u.Nombres.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase)
+            || u.ApellidoPaterno.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase)
+            || u.ApellidoMaterno.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase))
+        .Where(u => string.IsNullOrWhiteSpace(FiltroCorreo)
+            || u.Correo.Contains(FiltroCorreo, StringComparison.OrdinalIgnoreCase))
+        .Where(u => FiltroRol == "Todos" || u.Rol?.Titulo == FiltroRol)
+        .Where(u => FiltroEstado == "Todas"
+            || (FiltroEstado == "Activo" && u.Estado == EstadoUsuario.ACTIVO)
+            || (FiltroEstado == "Inactivo" && u.Estado == EstadoUsuario.INACTIVO));
 
     private void IrRegistrarUsuario()
     {
@@ -126,9 +111,43 @@
         MostrarDetalle = true;
     }
 
-    private void CerrarDetalleUsuario()
+    private async Task CerrarDetalleUsuario()
     {
+        await ListarUsuarios();
         MostrarDetalle = false;
         UsuarioSeleccionado = null;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Cargando = true;
+        await CargarRoles();
+        await ListarUsuarios();
+        Cargando = false;
+    }
+
+    private async Task CargarRoles()
+    {
+        try
+        {
+            Roles = await Task.Run(() => new List<Rol>(RolWS.listar()));
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task ListarUsuarios()
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            Usuarios = await Task.Run(() => new List<Usuario>(EmpleadoWS.listar()));
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
     }
 }

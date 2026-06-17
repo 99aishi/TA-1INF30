@@ -46,9 +46,9 @@ public class MonedaWS {
     @Path("Insertar")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response insertarMoneda(Moneda moneda) {
+    public Response insertarMoneda(Moneda moneda, @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
         try {
-            int id = monedaBO.insertar(moneda);
+            int id = monedaBO.insertar(moneda, idUsuarioAccion);
             return Response.ok(id).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -61,9 +61,9 @@ public class MonedaWS {
     @Path("Actualizar")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response actualizarMoneda(Moneda moneda) {
+    public Response actualizarMoneda(Moneda moneda, @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
         try {
-            int result = monedaBO.modificar(moneda);
+            int result = monedaBO.modificar(moneda, idUsuarioAccion);
             return Response.ok(result).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -75,9 +75,9 @@ public class MonedaWS {
     @GET
     @Path("Eliminar")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response eliminarMoneda(@QueryParam("id") int id) {
+    public Response eliminarMoneda(@QueryParam("id") int id, @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
         try {
-            int result = monedaBO.eliminar(id);
+            int result = monedaBO.eliminar(id, idUsuarioAccion);
             return Response.ok(result).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -96,9 +96,9 @@ public class MonedaWS {
     @GET
     @Path("Recuperar")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response recuperarMoneda(@QueryParam("id") int id) {
+    public Response recuperarMoneda(@QueryParam("id") int id, @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
         try {
-            int result = monedaBO.recuperar(id);
+            int result = monedaBO.recuperar(id, idUsuarioAccion);
             return Response.ok(result).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)

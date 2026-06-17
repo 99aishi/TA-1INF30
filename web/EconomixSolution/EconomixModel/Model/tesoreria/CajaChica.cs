@@ -16,6 +16,12 @@ public class CajaChica
     [JsonPropertyName("estado")]
     public string Estado { get; set; } = "Activo";
 
+    [JsonPropertyName("moneda")]
+    public Moneda? Moneda { get; set; }
+
+    [JsonPropertyName("cuentaOrigen")]
+    public CuentaBancaria? CuentaOrigen { get; set; }
+
     [JsonPropertyName("areaAsignada")]
     public Area? AreaAsignada { get; set; }
 }

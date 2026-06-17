@@ -26,24 +26,33 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         cicloCajaBO =  new CicloCajaBOImpl();
         comprobantePagoBO=new ComprobantePagoBOImpl();
     }
+    private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
+        if (idUsuarioAccion <= 0) {
+            throw new Exception("El usuario de acción debe ser mayor que cero.");
+        }
+    }
+
     @Override
-    public int insertar(SolicitudGasto solicitud) throws Exception {
+    public int insertar(SolicitudGasto solicitud, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(solicitud,false);
-        return solicitudGastoDAO.insertar(solicitud);
+        return solicitudGastoDAO.insertar(solicitud, idUsuarioAccion);
     }
 
     @Override
-    public int modificar(SolicitudGasto solicitud) throws Exception {
+    public int modificar(SolicitudGasto solicitud, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(solicitud,true);
-        return solicitudGastoDAO.modificar(solicitud);
+        return solicitudGastoDAO.modificar(solicitud, idUsuarioAccion);
     }
 
     @Override
-    public int eliminar(int id) throws Exception {
+    public int eliminar(int id, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         if(id <=0 ){
             throw new Exception("Debe ingresar un ID de Solicitud de Gasto valido.");
         }
-        return solicitudGastoDAO.eliminar(id);
+        return solicitudGastoDAO.eliminar(id, idUsuarioAccion);
     }
 
     @Override
@@ -57,6 +66,11 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
     @Override
     public List<SolicitudGasto> listarTodas() throws Exception {
         return solicitudGastoDAO.listarTodas();
+    }
+
+    @Override
+    public List<SolicitudGasto> listarActivas() throws Exception {
+        return solicitudGastoDAO.listarActivas();
     }
 
     public List<SolicitudGasto> listarPorSolicitante(int idSolicitante) throws Exception {
@@ -136,22 +150,66 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
     }
 
     public void validarMonto(SolicitudGasto solicitudGasto)throws Exception{
-        if(solicitudGasto.getMontoSolicitado()==0){
-            throw new Exception("El monto solicitado no puede ser cero.");
+        if(solicitudGasto.getMontoSolicitado() <= 0){
+            throw new Exception("El monto solicitado debe ser mayor que cero.");
         }
 
-        if(solicitudGasto.getMontoSolicitado()>solicitudGasto.getCiclo().getSaldoInicial()-solicitudGasto.getCiclo().getTotalGastado()){
+        double saldoDisponible = solicitudGasto.getCiclo().getSaldoInicial()
+                - solicitudGasto.getCiclo().getTotalGastado();
+        if(saldoDisponible < 0){
+            throw new Exception("El ciclo no tiene saldo disponible.");
+        }
+        if(solicitudGasto.getMontoSolicitado() > saldoDisponible){
             throw new Exception("El monto solicitado no se puede otorgar. Fondos Insuficientes.");
+        }
+
+        double limiteMaximo = saldoDisponible * 0.50;
+        if(solicitudGasto.getMontoSolicitado() > limiteMaximo){
+            throw new Exception("El monto solicitado supera el limite del 50% del saldo disponible ("
+                    + String.format("%.2f", limiteMaximo) + ").");
+        }
+
+        verificarLimiteAcumulado(solicitudGasto, saldoDisponible);
+    }
+
+    private void verificarLimiteAcumulado(SolicitudGasto solicitudGasto,
+                                          double saldoDisponible) throws Exception {
+        if(solicitudGasto.getSolicitante() == null) return;
+
+        List<SolicitudGasto> solicitudesDelEmpleado =
+                solicitudGastoDAO.listarPorSolicitante(
+                        solicitudGasto.getSolicitante().getUsuarioID());
+
+        Date hace24Horas = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000);
+        double acumulado = 0;
+
+        for(SolicitudGasto s : solicitudesDelEmpleado){
+            if(s.getEstado() == EstadoSolicitudGasto.PENDIENTE
+                    || s.getEstado() == EstadoSolicitudGasto.APROBADO){
+                if(s.getFechaSolicitud() != null
+                        && s.getFechaSolicitud().after(hace24Horas)){
+                    acumulado += s.getMontoSolicitado();
+                }
+            }
+        }
+
+        double totalAcumulado = acumulado + solicitudGasto.getMontoSolicitado();
+        double limiteMaximo = saldoDisponible * 0.50;
+
+        if(totalAcumulado > limiteMaximo){
+            throw new Exception("La suma acumulada de solicitudes PENDIENTE/APROBADO "
+                    + "en las ultimas 24 horas (S/ " + String.format("%.2f", totalAcumulado)
+                    + ") supera el 50% del saldo disponible.");
         }
     }
 
     public void validarCambioEstado(SolicitudGasto solicitudGasto)throws Exception{
         SolicitudGasto soliAModificar =solicitudGastoDAO.buscarPorId(solicitudGasto.getIdSolicitudGasto());
-        if(soliAModificar.getEstado() == EstadoSolicitudGasto.Aprobado ||soliAModificar.getEstado() == EstadoSolicitudGasto.Rechazado){
+        if(soliAModificar.getEstado() == EstadoSolicitudGasto.APROBADO ||soliAModificar.getEstado() == EstadoSolicitudGasto.RECHAZADO){
             throw new Exception("No se puede modificar una solicitud Aprobada o Rechazada");
         }
 
-        if(solicitudGasto.getEstado() == EstadoSolicitudGasto.Rechazado ){
+        if(solicitudGasto.getEstado() == EstadoSolicitudGasto.RECHAZADO ){
             if(solicitudGasto.getComentarioDecision()==null){
                 throw new Exception("Necesita ingresar un comentario justificando el rechazo.");
             }

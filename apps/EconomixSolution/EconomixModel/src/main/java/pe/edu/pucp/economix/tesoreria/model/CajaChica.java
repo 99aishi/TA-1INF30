@@ -5,6 +5,8 @@ import java.util.List;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
+import pe.edu.pucp.economix.tesoreria.model.Moneda;
+import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 
 public class CajaChica extends Fondo{
     private double montoTecho;
@@ -12,22 +14,30 @@ public class CajaChica extends Fondo{
     //Relaciones
     private List<CicloCajaChica> ciclos;
     private Area areaAsignada;
+    private Moneda moneda;
+    private CuentaBancaria cuentaOrigen;
     //Constructores
     public CajaChica(){
     }
     public CajaChica(int idFondo, String nombre, double saldoActual, EstadoFondo estado,
-                     double montoTecho, List<CicloCajaChica> ciclos, Area areaAsignada) {
+                     double montoTecho, List<CicloCajaChica> ciclos, Area areaAsignada,
+                     Moneda moneda, CuentaBancaria cuentaOrigen) {
         super(idFondo, nombre, saldoActual, estado);
         this.montoTecho = montoTecho;
         this.ciclos = ciclos;
         this.areaAsignada = areaAsignada;
+        this.moneda = moneda;
+        this.cuentaOrigen = cuentaOrigen;
     }
     public CajaChica(String nombre, EstadoFondo estado, double montoTecho,
-                     List<CicloCajaChica> ciclos, Area areaAsignada) {
+                     List<CicloCajaChica> ciclos, Area areaAsignada,
+                     Moneda moneda, CuentaBancaria cuentaOrigen) {
         super(nombre, estado);
         this.montoTecho = montoTecho;
         this.ciclos = ciclos;
         this.areaAsignada = areaAsignada;
+        this.moneda = moneda;
+        this.cuentaOrigen = cuentaOrigen;
     }
 
     //Selectores
@@ -49,6 +59,18 @@ public class CajaChica extends Fondo{
     public void setAreaAsignada(Area area) {
         this.areaAsignada = area;
     }
+    public Moneda getMoneda() {
+        return moneda;
+    }
+    public void setMoneda(Moneda moneda) {
+        this.moneda = moneda;
+    }
+    public CuentaBancaria getCuentaOrigen() {
+        return cuentaOrigen;
+    }
+    public void setCuentaOrigen(CuentaBancaria cuentaOrigen) {
+        this.cuentaOrigen = cuentaOrigen;
+    }
 
     //Métodos
 
@@ -59,17 +81,19 @@ public class CajaChica extends Fondo{
                 "montoTecho=" + montoTecho +
                 ", ciclos=" + ciclos +
                 ", areaAsignada=" + areaAsignada +
+                ", moneda=" + moneda +
+                ", cuentaOrigen=" + cuentaOrigen +
                 '}';
     }
 
     public double obtenerTotalCicloActivo(){
-        //TODO: Devuelve el valor total del ciclo de caja chica más reciente que se tiene
-        //Dashboard Princiapl Jefe de Area
-        return 0;
+        if (ciclos == null || ciclos.isEmpty()) return 0;
+        CicloCajaChica ultimo = ciclos.get(ciclos.size() - 1);
+        return ultimo.getSaldoInicial() - ultimo.getTotalGastado();
     }
     public double obtenerTotalGastoCicloActual(){
-        //TODO: Devuelve el valor total de lo gastado durante el ciclo más reciente
-        //Dashboard Princiapl Jefe de Area
-        return 0;
+        if (ciclos == null || ciclos.isEmpty()) return 0;
+        CicloCajaChica ultimo = ciclos.get(ciclos.size() - 1);
+        return ultimo.getTotalGastado();
     }
 }

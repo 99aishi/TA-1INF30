@@ -4,19 +4,27 @@ import java.util.Date;
 import java.util.List;
 
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
+import pe.edu.pucp.economix.operaciones.model.enums.MedioPago;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
+import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 public class SolicitudGasto{
     private int idSolicitudGasto;
     private Date fechaSolicitud;
     private double montoSolicitado;
+    private Moneda monedaOriginal;
+    private double tipoCambio;
+    private double montoConvertido;
     private String motivoSolicitud;
     private EstadoSolicitudGasto estado;
+    private MedioPago medioDesembolso;
     private String comentarioDecision;
     //Relaciones
     private Empleado solicitante;
     private Empleado destinatario;
+    private Empleado jefeAprobador;
+    private Empleado tesoreroAprobador;
     private List<ComprobantePago> comprobantes;
     private CicloCajaChica ciclo;
 
@@ -76,27 +84,36 @@ public class SolicitudGasto{
     public void setMotivoSolicitud(String motivoSolicitud) {
         this.motivoSolicitud = motivoSolicitud;
     }
+    public Moneda getMonedaOriginal() {
+        return monedaOriginal;
+    }
+    public void setMonedaOriginal(Moneda monedaOriginal) {
+        this.monedaOriginal = monedaOriginal;
+    }
+    public double getTipoCambio() {
+        return tipoCambio;
+    }
+    public void setTipoCambio(double tipoCambio) {
+        this.tipoCambio = tipoCambio;
+    }
+    public double getMontoConvertido() {
+        return montoConvertido;
+    }
+    public void setMontoConvertido(double montoConvertido) {
+        this.montoConvertido = montoConvertido;
+    }
     public EstadoSolicitudGasto getEstado() {
         return estado;
     }
-    public void setEstado(EstadoSolicitudGasto nuevoEstado) {
-        if (this.estado == EstadoSolicitudGasto.Aprobado) {
-            System.out.println("No se puede modificar una solicitud que ya ha sido aprobada.");
-            return;
-        }
+    public MedioPago getMedioDesembolso() {
+        return medioDesembolso;
+    }
+    public void setMedioDesembolso(MedioPago medioDesembolso) {
+        this.medioDesembolso = medioDesembolso;
+    }
 
-        if (this.estado == EstadoSolicitudGasto.Pendiente) {
-            if (nuevoEstado == EstadoSolicitudGasto.Aprobado || nuevoEstado == EstadoSolicitudGasto.Observado) {
-                this.estado = nuevoEstado;
-            }
-        }
-        else if (this.estado == EstadoSolicitudGasto.Observado) {
-            if (nuevoEstado == EstadoSolicitudGasto.Pendiente) {
-                this.estado = nuevoEstado;
-            }
-        }else{
-            this.estado=nuevoEstado;
-        }
+    public void setEstado(EstadoSolicitudGasto nuevoEstado) {
+        this.estado = nuevoEstado;
     }
     public String getComentarioDecision(){
         return comentarioDecision;
@@ -116,6 +133,18 @@ public class SolicitudGasto{
     }
     public void setDestinatario(Empleado destinatario) {
         this.destinatario = destinatario;
+    }
+    public Empleado getJefeAprobador() {
+        return jefeAprobador;
+    }
+    public void setJefeAprobador(Empleado jefeAprobador) {
+        this.jefeAprobador = jefeAprobador;
+    }
+    public Empleado getTesoreroAprobador() {
+        return tesoreroAprobador;
+    }
+    public void setTesoreroAprobador(Empleado tesoreroAprobador) {
+        this.tesoreroAprobador = tesoreroAprobador;
     }
     public CicloCajaChica getCiclo() {
         return ciclo;
@@ -137,17 +166,33 @@ public class SolicitudGasto{
                 "idSolicitudGasto=" + idSolicitudGasto +
                 ", fechaSolicitud=" + fechaSolicitud +
                 ", montoSolicitado=" + montoSolicitado +
+                ", monedaOriginal=" + monedaOriginal +
+                ", tipoCambio=" + tipoCambio +
+                ", montoConvertido=" + montoConvertido +
                 ", motivoSolicitud='" + motivoSolicitud + '\'' +
                 ", estado=" + estado +
+                ", medioDesembolso=" + medioDesembolso +
+                ", comentarioDecision='" + comentarioDecision + '\'' +
                 ", solicitante=" + solicitante +
                 ", destinatario=" + destinatario +
+                ", jefeAprobador=" + jefeAprobador +
+                ", tesoreroAprobador=" + tesoreroAprobador +
                 ", comprobantes=" + comprobantes +
                 ", ciclo=" + ciclo +
                 '}';
     }
 
     public void evaluarSolicitud(Empleado jefe, boolean aprobado, String comentario) {
-        // TODO: Registro obligatorio de fecha y sustento (RF_07)
+        if (jefe == null) {
+            throw new IllegalArgumentException("El jefe evaluador no puede ser nulo");
+        }
+        this.comentarioDecision = comentario;
+        this.jefeAprobador = jefe;
+        if (aprobado) {
+            this.estado = EstadoSolicitudGasto.APROBADO;
+        } else {
+            this.estado = EstadoSolicitudGasto.RECHAZADO;
+        }
     }
     public double sumaComprobantes(){
         double suma=0;
@@ -157,8 +202,10 @@ public class SolicitudGasto{
         return suma;
     }
     public void registrarDesembolso(String nroOperacion, CuentaBancaria destino) {
-        // TODO: Cambiar estado a "desembolsado" y vincular transacción (RF_08)
-
+        if (nroOperacion == null || nroOperacion.isEmpty()) {
+            throw new IllegalArgumentException("El número de operación es obligatorio");
+        }
+        this.estado = EstadoSolicitudGasto.PAGADO;
     }
 
 }

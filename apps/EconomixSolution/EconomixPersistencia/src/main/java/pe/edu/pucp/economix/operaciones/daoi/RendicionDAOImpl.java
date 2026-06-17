@@ -7,22 +7,29 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.operaciones.idao.IRendicionDAO;
+import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoCicloCaja;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoRendicion;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
+import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 
 public class RendicionDAOImpl implements IRendicionDAO{
     private ResultSet rs;
 
     @Override
-    public int insertar(Rendicion rendicion) throws SQLException{
+    public int insertar(Rendicion rendicion, int idUsuarioAccion) throws SQLException{
         Map<String,Object> parametrosSalida = new HashMap<>();
         Map<String,Object> parametrosEntrada = new HashMap<>();
         parametrosSalida.put("p_id_generado", Types.INTEGER);
-        parametrosEntrada.put("p_fecha_presentacion", rendicion.getFechaPresentacion().getTime());
-        parametrosEntrada.put("p_fecha_aprobacion", rendicion.getFechaAprobacion().getTime());
+        parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
+        parametrosEntrada.put("p_fecha_presentacion", rendicion.getFechaPresentacion() != null
+            ? new java.sql.Date(rendicion.getFechaPresentacion().getTime()) : null);
+        parametrosEntrada.put("p_fecha_aprobacion", rendicion.getFechaAprobacion() != null
+            ? new java.sql.Date(rendicion.getFechaAprobacion().getTime()) : null);
         parametrosEntrada.put("p_monto_total_declarado", rendicion.getTotalDeclarado());
         parametrosEntrada.put("p_monto_total_aprobado", rendicion.getTotalAprobado());
         parametrosEntrada.put("p_monto_saldo_final", rendicion.getSaldoFinal());
@@ -35,11 +42,14 @@ public class RendicionDAOImpl implements IRendicionDAO{
         return rendicion.getIdRendicion();
     }
     @Override
-    public int modificar(Rendicion rendicion) throws SQLException{
+    public int modificar(Rendicion rendicion, int idUsuarioAccion) throws SQLException{
         Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_id_rendicion", rendicion.getIdRendicion());
-        parametrosEntrada.put("p_fecha_presentacion", rendicion.getFechaPresentacion().getTime());
-        parametrosEntrada.put("p_fecha_aprobacion", rendicion.getFechaAprobacion().getTime());
+        parametrosEntrada.put("p_fecha_presentacion", rendicion.getFechaPresentacion() != null
+            ? new java.sql.Date(rendicion.getFechaPresentacion().getTime()) : null);
+        parametrosEntrada.put("p_fecha_aprobacion", rendicion.getFechaAprobacion() != null
+            ? new java.sql.Date(rendicion.getFechaAprobacion().getTime()) : null);
         parametrosEntrada.put("p_monto_total_declarado", rendicion.getTotalDeclarado());
         parametrosEntrada.put("p_monto_total_aprobado", rendicion.getTotalAprobado());
         parametrosEntrada.put("p_monto_saldo_final", rendicion.getSaldoFinal());
@@ -50,8 +60,9 @@ public class RendicionDAOImpl implements IRendicionDAO{
         return resultado;
     }
     @Override
-    public int eliminar(int idRendicion) throws SQLException{
+    public int eliminar(int idRendicion, int idUsuarioAccion) throws SQLException{
         Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_id_rendicion", idRendicion);
         int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_eliminar_rendicion", parametrosEntrada, null);
         return resultado;
@@ -64,48 +75,112 @@ public class RendicionDAOImpl implements IRendicionDAO{
         rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_rendicion_por_id", parametrosEntrada);
         try{
             if(rs.next()){
-                rendicion = new Rendicion();
-                rendicion.setIdRendicion(rs.getInt("id_rendicion"));
-                rendicion.setFechaPresentacion(rs.getDate("fecha_presentacion"));
-                rendicion.setFechaAprobacion(rs.getDate("fecha_aprobacion"));
-                rendicion.setTotalDeclarado(rs.getDouble("monto_total_declarado"));
-                rendicion.setTotalAprobado(rs.getDouble("monto_total_aprobado"));
-                rendicion.setSaldoFinal(rs.getDouble("monto_saldo_final"));
-                rendicion.setEstado(EstadoRendicion.valueOf(rs.getString("estado_rendicion")));
-                rendicion.setComentario(rs.getString("comentario"));
+                rendicion = mapearRendicionPorId(rs, new HashMap<>());
             }
         }catch(SQLException ex){
-            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+            System.out.println("Error al buscar rendicion por id: " + ex.getMessage());
         }finally{
             DBManager.getDBManager().cerrarConexion();
         }
 
         return rendicion;
     }
+
+    @SuppressWarnings("unchecked")
+    private <T> T getOrCreate(Map<Class<?>, Map<Integer, Object>> cache, Class<T> type, int id, Supplier<T> factory) {
+        if (id <= 0) return null;
+        return (T) cache.computeIfAbsent(type, k -> new HashMap<>())
+                .computeIfAbsent(id, k -> factory.get());
+    }
+
+    private Rendicion mapearRendicionPorId(ResultSet rs, Map<Class<?>, Map<Integer, Object>> cache) throws SQLException {
+        int id = rs.getInt("id_rendicion");
+        Rendicion rendicion = getOrCreate(cache, Rendicion.class, id, () -> new Rendicion());
+        rendicion.setIdRendicion(id);
+        rendicion.setFechaPresentacion(rs.getDate("fecha_presentacion"));
+        rendicion.setFechaAprobacion(rs.getDate("fecha_aprobacion"));
+        rendicion.setTotalDeclarado(rs.getDouble("monto_total_declarado"));
+        rendicion.setTotalAprobado(rs.getDouble("monto_total_aprobado"));
+        rendicion.setSaldoFinal(rs.getDouble("monto_saldo_final"));
+        rendicion.setEstado(EstadoRendicion.valueOf(rs.getString("estado_rendicion")));
+        rendicion.setComentario(rs.getString("comentario"));
+
+        CicloCajaChica ciclo = mapearCicloCajaChicaBasico(rs, "cc_", cache);
+        if (ciclo != null) {
+            ciclo.setRendicion(rendicion);
+            rendicion.setCicloCajaChica(ciclo);
+        }
+
+        return rendicion;
+    }
+
+    private CicloCajaChica mapearCicloCajaChicaBasico(ResultSet rs, String prefijo, Map<Class<?>, Map<Integer, Object>> cache) throws SQLException {
+        int id = rs.getInt(prefijo + "id_ciclo_caja");
+        if (rs.wasNull() || id <= 0) return null;
+        CicloCajaChica ciclo = getOrCreate(cache, CicloCajaChica.class, id, () -> new CicloCajaChica());
+        ciclo.setIdCicloCaja(id);
+        ciclo.setNumeroSemana(rs.getInt(prefijo + "numero_semana"));
+        ciclo.setFechaApertura(rs.getDate(prefijo + "fecha_apertura"));
+        ciclo.setFechaCierre(rs.getDate(prefijo + "fecha_cierre"));
+        ciclo.setSaldoInicial(rs.getDouble(prefijo + "monto_saldo_inicial"));
+        ciclo.setTotalGastado(rs.getDouble(prefijo + "monto_total_gastado"));
+        String estadoCiclo = rs.getString(prefijo + "estado_ciclo");
+        if(estadoCiclo != null)
+            ciclo.setEstado(EstadoCicloCaja.valueOf(estadoCiclo));
+
+        int idCajaChica = rs.getInt(prefijo + "id_caja_chica");
+        if (!rs.wasNull() && idCajaChica > 0) {
+            CajaChica cc = getOrCreate(cache, CajaChica.class, idCajaChica, () -> new CajaChica());
+            cc.setIdFondo(idCajaChica);
+            ciclo.setCajaChica(cc);
+        }
+
+        int idRendicion = rs.getInt(prefijo + "id_rendicion");
+        if (!rs.wasNull() && idRendicion > 0) {
+            Rendicion ren = getOrCreate(cache, Rendicion.class, idRendicion, () -> new Rendicion());
+            ren.setIdRendicion(idRendicion);
+            ciclo.setRendicion(ren);
+        }
+
+        return ciclo;
+    }
+
     @Override
     public List<Rendicion> listarTodas() throws SQLException{
         List<Rendicion> rendiciones = null;
         Rendicion rendicion;
-        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_rendicion_por_id", null);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_rendiciones", null);
         try{
             while(rs.next()){
                 if(rendiciones == null) rendiciones = new ArrayList<>();
-                rendicion = new Rendicion();
-                rendicion.setIdRendicion(rs.getInt("id_rendicion"));
-                rendicion.setFechaPresentacion(rs.getDate("fecha_presentacion"));
-                rendicion.setFechaAprobacion(rs.getDate("fecha_aprobacion"));
-                rendicion.setTotalDeclarado(rs.getDouble("monto_total_declarado"));
-                rendicion.setTotalAprobado(rs.getDouble("monto_total_aprobado"));
-                rendicion.setSaldoFinal(rs.getDouble("monto_saldo_final"));
-                rendicion.setEstado(EstadoRendicion.valueOf(rs.getString("estado_rendicion")));
-                rendicion.setComentario(rs.getString("comentario"));
+                rendicion = mapearRendicionPorId(rs, new HashMap<>());
                 rendiciones.add(rendicion);
             }
         }catch(SQLException ex){
-            System.out.println("Error al buscar caja chica por id: " + ex.getMessage());
+            System.out.println("Error al listar rendiciones: " + ex.getMessage());
         }finally{
             DBManager.getDBManager().cerrarConexion();
-        }        return rendiciones;
+        }
+        return rendiciones;
+    }
+
+    @Override
+    public List<Rendicion> listarActivas() throws SQLException{
+        List<Rendicion> rendiciones = null;
+        Rendicion rendicion;
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_rendiciones_activas", null);
+        try{
+            while(rs.next()){
+                if(rendiciones == null) rendiciones = new ArrayList<>();
+                rendicion = mapearRendicionPorId(rs, new HashMap<>());
+                rendiciones.add(rendicion);
+            }
+        }catch(SQLException ex){
+            System.out.println("Error al listar rendiciones activas: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
+        }
+        return rendiciones;
     }
 
 }

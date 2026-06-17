@@ -1,47 +1,44 @@
-@inject NavigationManager Navigation
-
-<div class="card rounded-4 mt-3 p-3 bg-light">
-    <div class="d-flex flex-row 
-                    justify-content-between align-items-center gap-3">
+<div class="card rounded-4 p-3 bg-light mb-2">
+    <div class="d-flex flex-row justify-content-between align-items-center gap-3">
         <div class="d-flex flex-column gap-1">
-            <p class="h6">CP-340</p>
-            <div class="d-flex @(EsParteDeSolicitud? "flex-column gap-3":"flex-row gap-3 ") justify-content-start">
-                <p class="text-muted mb-0">Factura</p>
-                <p class="text-muted mb-0">Distribuidora Lima SAC</p>
+            <p class="h6">CP-@Comprobante?.IdComprobante</p>
+            <div class="d-flex @(EsParteDeSolicitud ? "flex-column gap-3" : "flex-row gap-3") justify-content-start">
+                <p class="text-muted mb-0">@Comprobante?.TipoDocumento</p>
+                <p class="text-muted mb-0">@Comprobante?.RazonSocial</p>
             </div>
             @if (!EsParteDeSolicitud)
             {
-            <div class="d-flex flex-row gap-3 justify-content-center">
-                <p class="text-muted mb-0">SG-1025</p>
-                <p class="text-muted mb-0">Juan Preciado</p>
-                <p class="text- mb-0">s/. 2500.00</p>
+            <div class="d-flex flex-row gap-3 justify-content-start">
+                <p class="text-muted mb-0">SG-@Comprobante?.Solicitud?.IdSolicitudGasto</p>
+                <p class="text-muted mb-0">@Comprobante?.Solicitud?.Solicitante?.Nombres</p>
             </div>
             }
-            
         </div>
         <div class="d-flex flex-row align-items-center gap-3">
-            <p class="h6">11/05/2026</p>
-            <span class="badge h-100 bg-warning-subtle text-warning-emphasis rounded-pill px-2">Pendiente</span>
-            <p class="h6">s/. 4500.00</p>
-
+            <p class="h6">@Comprobante?.FechaEmision?.ToString("dd/MM/yyyy")</p>
+            <span class="badge h-100 bg-warning-subtle text-warning-emphasis rounded-pill px-2">@Comprobante?.Estado</span>
+            <p class="h6">@(Comprobante?.Moneda?.Simbolo ?? "S/") @Comprobante?.MontoTotal.ToString("N2")</p>
             <div class="d-flex align-items-center">
-                <button type="button" class="btn btn-outline-primary align-self-start" 
-                            @onclick="MostrarDetalleComprobante">
-                    Ver <!--Debe de ser el icon de ojo-->
+                <button type="button" class="btn btn-outline-primary align-self-start" @onclick="AbrirDetalle">
+                    Ver
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-
-
 @code {
-    private void MostrarDetalleComprobante()
-    {
-        Navigation.NavigateTo("/Comprobantes de Pago/Detalle");
-    }
     [Parameter]
     public bool EsParteDeSolicitud { get; set; } = false;
-    
+
+    [Parameter]
+    public EventCallback OnMuestraDetalle { get; set; }
+
+    [Parameter]
+    public ComprobantePago? Comprobante { get; set; }
+
+    public async Task AbrirDetalle()
+    {
+        await OnMuestraDetalle.InvokeAsync();
+    }
 }

@@ -25,24 +25,33 @@ public class CuentaBancariaBOImpl implements ICuentaBancariaBO {
         areaDAO=new AreaDAOImpl();
         monedaDAO=new MonedaDAOImpl();
     }
+    private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
+        if (idUsuarioAccion <= 0) {
+            throw new Exception("El usuario de acción debe ser mayor que cero.");
+        }
+    }
+
     @Override
-    public int insertar(CuentaBancaria cuenta) throws Exception {
+    public int insertar(CuentaBancaria cuenta, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(cuenta,false);
-        return cuentaDAO.insertar(cuenta);
+        return cuentaDAO.insertar(cuenta, idUsuarioAccion);
     }
 
     @Override
-    public int modificar(CuentaBancaria cuenta) throws Exception {
+    public int modificar(CuentaBancaria cuenta, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(cuenta,true);
-        return cuentaDAO.modificar(cuenta);
+        return cuentaDAO.modificar(cuenta, idUsuarioAccion);
     }
 
     @Override
-    public int eliminar(int id) throws Exception {
+    public int eliminar(int id, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         if (id <= 0) {
             throw new Exception("El id de la cuenta bancaria debe ser mayor que cero.");
         }
-        return cuentaDAO.eliminar(id);
+        return cuentaDAO.eliminar(id, idUsuarioAccion);
     }
 
     @Override
@@ -56,6 +65,11 @@ public class CuentaBancariaBOImpl implements ICuentaBancariaBO {
     @Override
     public List<CuentaBancaria> listarTodas() throws Exception {
         return cuentaDAO.listarTodas();
+    }
+
+    @Override
+    public List<CuentaBancaria> listarActivas() throws Exception {
+        return cuentaDAO.listarActivas();
     }
     public void validar(CuentaBancaria cuenta, boolean esModificacion)throws Exception{
         if(cuenta==null){

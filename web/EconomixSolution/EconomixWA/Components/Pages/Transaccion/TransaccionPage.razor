@@ -1,12 +1,28 @@
 @page "/Transacciones"
+@rendermode InteractiveServer
+@inject ITransaccionWS TransaccionWS
 
 <div class="h-100 d-flex flex-column">
     <div class="d-flex flex-row justify-content-between mb-2">
         <p class="h4">Transacciones</p>
     </div>
 
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+            @ErrorMessage
+            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+        </div>
+    }
+
     <div class="d-flex flex-column flex-fill overflow-hidden">
-        <TransaccionBusqueda/>
+        <TransaccionSearchBar @bind-FiltroBeneficiario="FiltroBeneficiario"
+                              @bind-FiltroMedio="FiltroMedio"
+                              @bind-FiltroTipo="FiltroTipo"
+                              @bind-FiltroMontoMin="FiltroMontoMin"
+                              @bind-FiltroMontoMax="FiltroMontoMax"
+                              @bind-FiltroFechaInicio="FiltroFechaInicio"
+                              @bind-FiltroFechaFin="FiltroFechaFin" />
 
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
             
@@ -15,9 +31,23 @@
                 <div class="col-6 h-100 d-flex flex-column overflow-hidden">
                 
                     <div class="card h-100 rounded-4 p-3 overflow-auto gap-3">
-                        @for(int i = 0; i < 20; i++){
-                            <TransaccionItem OnMuestraDetalle="MostrarDetalleTransaccion"/>
-                        }   
+                        @if (Cargando)
+                        {
+                            <p class="text-muted text-center">Cargando transacciones...</p>
+                        }
+                        else if (TransaccionesFiltradas.Count() == 0)
+                        {
+                            <p class="text-muted text-center">
+                                @(HayFiltrosActivos ? "Ninguna transacción coincide con los filtros" : "No se encontraron transacciones")
+                            </p>
+                        }
+                        else
+                        {
+                            @foreach (var t in TransaccionesFiltradas)
+                            {
+                                <TransaccionItem Transaccion="t" OnMuestraDetalle="() => MostrarDetalleTransaccion()"/>
+                            }   
+                        }
                     </div>
                 </div>
                 
@@ -30,26 +60,92 @@
                 <div class="col-12 h-100 d-flex flex-column overflow-hidden">
                 
                     <div class="card h-100 rounded-4 p-3 overflow-auto gap-3">
-                        @for(int i = 0; i < 20; i++){
-                            <TransaccionItem OnMuestraDetalle="MostrarDetalleTransaccion"/>
-                        }   
+                        @if (Cargando)
+                        {
+                            <p class="text-muted text-center">Cargando transacciones...</p>
+                        }
+                        else if (TransaccionesFiltradas.Count() == 0)
+                        {
+                            <p class="text-muted text-center">
+                                @(HayFiltrosActivos ? "Ninguna transacción coincide con los filtros" : "No se encontraron transacciones")
+                            </p>
+                        }
+                        else
+                        {
+                            @foreach (var t in TransaccionesFiltradas)
+                            {
+                                <TransaccionItem Transaccion="t" OnMuestraDetalle="() => MostrarDetalleTransaccion()"/>
+                            }   
+                        }
                     </div>
                 </div>
-                
             }
-
         </div>
     </div>
 </div>
 
 @code {
     private bool MuestraDetalle { get; set; } = false;
+    private bool Cargando { get; set; } = true;
+    private string ErrorMessage { get; set; } = string.Empty;
+    private string FiltroBeneficiario { get; set; } = string.Empty;
+    private string FiltroMedio { get; set; } = "Todos";
+    private string FiltroTipo { get; set; } = "Todos";
+    private double? FiltroMontoMin { get; set; }
+    private double? FiltroMontoMax { get; set; }
+    private DateTime? FiltroFechaInicio { get; set; }
+    private DateTime? FiltroFechaFin { get; set; }
+    private List<Transaccion> Transacciones { get; set; } = new();
+
+    private bool HayFiltrosActivos =>
+        !string.IsNullOrWhiteSpace(FiltroBeneficiario)
+        || FiltroMedio != "Todos"
+        || FiltroTipo != "Todos"
+        || FiltroMontoMin.HasValue
+        || FiltroMontoMax.HasValue
+        || FiltroFechaInicio.HasValue
+        || FiltroFechaFin.HasValue;
+
+    private IEnumerable<Transaccion> TransaccionesFiltradas => Transacciones
+        .Where(t => string.IsNullOrWhiteSpace(FiltroBeneficiario)
+            || (t.Beneficiario?.Nombres.Contains(FiltroBeneficiario, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (t.Beneficiario?.ApellidoPaterno.Contains(FiltroBeneficiario, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (t.Beneficiario?.ApellidoMaterno.Contains(FiltroBeneficiario, StringComparison.OrdinalIgnoreCase) ?? false))
+        .Where(t => FiltroMedio == "Todos" || t.MedioPago.Equals(FiltroMedio, StringComparison.OrdinalIgnoreCase))
+        .Where(t => FiltroTipo == "Todos" || t.TipoTransaccion.Equals(FiltroTipo, StringComparison.OrdinalIgnoreCase))
+        .Where(t => !FiltroMontoMin.HasValue || t.Monto >= FiltroMontoMin.Value)
+        .Where(t => !FiltroMontoMax.HasValue || t.Monto <= FiltroMontoMax.Value)
+        .Where(t => !FiltroFechaInicio.HasValue || t.Fecha.Date >= FiltroFechaInicio.Value.Date)
+        .Where(t => !FiltroFechaFin.HasValue || t.Fecha.Date <= FiltroFechaFin.Value.Date);
+
     private void MostrarDetalleTransaccion()
     {
         MuestraDetalle = true;
     }
-    private void CierraDetalleTransaccion()
+
+    private async Task CierraDetalleTransaccion()
     {
+        await ListarTransacciones();
         MuestraDetalle = false;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Cargando = true;
+        await ListarTransacciones();
+        Cargando = false;
+    }
+
+    private async Task ListarTransacciones()
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            Transacciones = await Task.Run(() => new List<Transaccion>(TransaccionWS.listar()));
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
     }
 }

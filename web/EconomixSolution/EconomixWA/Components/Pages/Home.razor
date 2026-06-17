@@ -1,5 +1,6 @@
 ﻿@page "/dashboard"
-@page "/caja chica"
+@rendermode InteractiveServer
+@inject IUsuarioWS UsuarioWS
 @using System.Collections.Generic;
 @using EconomixWA.Components.Pages.MainDashBoard;
 @using EconomixWA.Components.Pages.SolicitudDeGasto.SolicitudRecibida;
@@ -12,9 +13,14 @@
 
 <div class ="d-flex flex-column h-100">
     
-    <div class="d-flex flex-column pb-3">
-        <p class="h4">Buenos días Isabel Allende</p>    
-        <p class="h6">Area de: Recursos Humanos</p>
+    <div class="d-flex flex-row justify-content-between pb-3">
+        <div class="d-flex flex-column">
+            <p class="h4">@Saludo, @(UsuarioActual?.Nombres ?? "Usuario")</p>    
+            <p class="h6">Área: @(AreaUsuario)</p>
+        </div>
+        <div class="d-flex flex-column align-items-end">
+            <p class="h5 mb-0">@FechaHoy</p>
+        </div>
     </div>
 
     
@@ -66,6 +72,38 @@
                                                     
                                                     string.Empty};
 
+    private EconomixModel.Model.Usuario? UsuarioActual { get; set; }
+    private string Saludo => ObtenerSaludo();
+    private string FechaHoy => DateTime.Now.ToString("d/M/yyyy");
+    private string AreaUsuario => UsuarioActual switch
+    {
+        Empleado emp when emp.Area != null => emp.Area.Nombre,
+        Administrador => "Administración",
+        _ => "Sin área asignada"
+    };
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            UsuarioActual = UsuarioWS.GetCurrentUser();
+        }
+        catch
+        {
+            UsuarioActual = null;
+        }
+    }
+
+    private string ObtenerSaludo()
+    {
+        var hora = DateTime.Now.Hour;
+        return hora switch
+        {
+            >= 6 and < 12 => "Buenos días",
+            >= 12 and < 19 => "Buenas tardes",
+            _ => "Buenas noches"
+        };
+    }
 }
 
 

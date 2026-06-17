@@ -9,5 +9,5 @@ public interface IMonedaBO extends IBaseBO<Moneda> {
     List<Moneda> listarMonedas_X_codigoISO_nombre_simbolo(String busqueda) throws Exception;
     List<Moneda> listarMonedas_X_estado(boolean activa) throws Exception;
     List<Moneda> listarActivas() throws Exception;
-    int recuperar(int id) throws Exception;
+    int recuperar(int id, int idUsuarioAccion) throws Exception;
 }

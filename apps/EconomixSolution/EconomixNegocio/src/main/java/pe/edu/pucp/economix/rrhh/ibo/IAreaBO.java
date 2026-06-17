@@ -7,5 +7,5 @@ import pe.edu.pucp.economix.rrhh.model.Area;
 
 public interface IAreaBO extends IBaseBO<Area> {
     List<Area> listarActivas() throws Exception;
-    int recuperar(int id) throws Exception;
+    int recuperar(int id, int idUsuarioAccion) throws Exception;
 }

@@ -1,18 +1,20 @@
 package pe.edu.pucp.economix.operaciones.model.enums;
 
 public enum EstadoRendicion {
-    Aceptado, EnEspera, Denegado;
+    ACEPTADO,
+    EN_ESPERA,
+    DENEGADO,
+    ANULADO;
 
     public boolean puedeTransicionarA(EstadoRendicion nuevo) {
         switch (this) {
-            case EnEspera:
-                // Una rendición pendiente puede ser aprobada o rechazada
-                return nuevo == Aceptado || nuevo == Denegado;
-            case Denegado:
-                // Si fue denegada, quizás se permita volver a ponerla "EnEspera" tras correcciones
-                return nuevo == EnEspera;
-            case Aceptado:
-                // Una vez aceptada, suele ser un estado final (no debería cambiar)
+            case EN_ESPERA:
+                return nuevo == ACEPTADO || nuevo == DENEGADO || nuevo == ANULADO;
+            case DENEGADO:
+                return nuevo == EN_ESPERA;
+            case ACEPTADO:
+                return false;
+            case ANULADO:
                 return false;
             default:
                 return false;

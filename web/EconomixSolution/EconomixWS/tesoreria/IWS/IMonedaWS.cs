@@ -9,5 +9,5 @@ public interface IMonedaWS : IWS<Moneda>
     List<Moneda> buscarMonedas(string q);
     List<Moneda> listarPorEstado(bool activa);
     List<Moneda> listarActivas();
-    int recuperar(int id);
+    int recuperar(int id, int idUsuarioAccion);
 }

@@ -1,0 +1,42 @@
+<div class="card rounded-4 p-3 mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-4">
+            <label class="form-label small text-muted">Nombre</label>
+            <input type="text" class="form-control bg-light rounded-4"
+                   placeholder="Buscar caja chica..."
+                   @bind="FiltroNombre" @bind:event="oninput" />
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label small text-muted">Monto mínimo</label>
+            <input type="number" step="0.01" class="form-control bg-light rounded-4"
+                   placeholder="0.00" @bind="FiltroMontoMin" />
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label small text-muted">Monto máximo</label>
+            <input type="number" step="0.01" class="form-control bg-light rounded-4"
+                   placeholder="0.00" @bind="FiltroMontoMax" />
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label small text-muted">Estado</label>
+            <select class="form-select bg-light rounded-4" @bind="FiltroEstado">
+                <option value="Todas">Todas</option>
+                <option value="Activo">Activo</option>
+                <option value="Inactivo">Inactivo</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string FiltroNombre { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> FiltroNombreChanged { get; set; }
+
+    [Parameter] public double? FiltroMontoMin { get; set; }
+    [Parameter] public EventCallback<double?> FiltroMontoMinChanged { get; set; }
+
+    [Parameter] public double? FiltroMontoMax { get; set; }
+    [Parameter] public EventCallback<double?> FiltroMontoMaxChanged { get; set; }
+
+    [Parameter] public string FiltroEstado { get; set; } = "Todas";
+    [Parameter] public EventCallback<string> FiltroEstadoChanged { get; set; }
+}

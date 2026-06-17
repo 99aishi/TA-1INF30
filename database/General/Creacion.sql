@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS rrhh_area (
 CREATE TABLE IF NOT EXISTS rrhh_empleado (
     id_usuario INT NOT NULL,
     numero_celular VARCHAR(15),
+    rol_flujo ENUM('EMPLEADO', 'JEFE_AREA') DEFAULT 'EMPLEADO',
     id_area INT NULL,
     id_rol INT NULL,
     id_jefe_directo INT NULL,
@@ -116,6 +117,26 @@ CREATE TABLE IF NOT EXISTS tes_moneda (
     CONSTRAINT pk_tes_moneda PRIMARY KEY (id_moneda)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS tes_tipo_cambio (
+    id_tipo_cambio INT NOT NULL AUTO_INCREMENT,
+    id_moneda_origen INT NOT NULL,
+    id_moneda_destino INT NOT NULL,
+    valor_tipo_cambio DECIMAL(10,4) NOT NULL,
+    fecha_tipo_cambio DATE NOT NULL,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+    
+    CONSTRAINT pk_tes_tipo_cambio PRIMARY KEY (id_tipo_cambio),
+    CONSTRAINT fk_tes_tipo_cambio_tes_moneda_ori FOREIGN KEY (id_moneda_origen) 
+        REFERENCES tes_moneda(id_moneda),
+    CONSTRAINT fk_tes_tipo_cambio_tes_moneda_des FOREIGN KEY (id_moneda_destino) 
+        REFERENCES tes_moneda(id_moneda)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS tes_cuenta_bancaria (
     id_cuenta_bancaria INT NOT NULL AUTO_INCREMENT,
     nombre_banco VARCHAR(50) NOT NULL,
@@ -145,7 +166,7 @@ CREATE TABLE IF NOT EXISTS tes_cuenta_bancaria (
 CREATE TABLE IF NOT EXISTS tes_fondo (
     id_fondo INT NOT NULL AUTO_INCREMENT,
     nombre_fondo VARCHAR(100) NOT NULL,
-    estado_fondo VARCHAR(20) NOT NULL DEFAULT 'Activo',
+    estado_fondo ENUM('ACTIVO', 'INACTIVO') NOT NULL DEFAULT 'ACTIVO',
     
     -- Auditoría
     creado_at DATETIME,
@@ -160,6 +181,8 @@ CREATE TABLE IF NOT EXISTS tes_caja_chica (
     id_fondo INT NOT NULL,
     monto_techo DECIMAL(12,2) NOT NULL,
     id_area INT NOT NULL,
+    id_moneda INT NULL,
+    id_cuenta_origen INT NULL,
     
     -- Auditoría
     creado_at DATETIME,
@@ -171,7 +194,11 @@ CREATE TABLE IF NOT EXISTS tes_caja_chica (
     CONSTRAINT fk_tes_caja_chica_tes_fondo FOREIGN KEY (id_fondo) 
         REFERENCES tes_fondo(id_fondo),
     CONSTRAINT fk_tes_caja_chica_rrhh_area FOREIGN KEY (id_area) 
-        REFERENCES rrhh_area(id_area)
+        REFERENCES rrhh_area(id_area),
+    CONSTRAINT fk_tes_caja_chica_tes_moneda FOREIGN KEY (id_moneda) 
+        REFERENCES tes_moneda(id_moneda),
+    CONSTRAINT fk_tes_caja_chica_cuenta_bancaria FOREIGN KEY (id_cuenta_origen) 
+        REFERENCES tes_cuenta_bancaria(id_cuenta_bancaria)
 ) ENGINE=InnoDB;
 -- ===============================================================================
 -- 3. MÓDULO: ope (Operaciones)
@@ -184,7 +211,7 @@ CREATE TABLE IF NOT EXISTS ope_ciclo_caja (
     fecha_cierre DATE NULL,
     monto_saldo_inicial DECIMAL(12,2) DEFAULT 0.00,
     monto_total_gastado DECIMAL(12,2) DEFAULT 0.00,
-    estado_ciclo VARCHAR(20) DEFAULT 'Abierto',
+    estado_ciclo ENUM('ABIERTO', 'CERRADO', 'LIQUIDADO') DEFAULT 'ABIERTO',
     id_caja_chica INT NOT NULL,
     id_rendicion INT NULL,
     
@@ -208,7 +235,7 @@ CREATE TABLE IF NOT EXISTS ope_rendicion (
     monto_total_declarado DECIMAL(12,2) DEFAULT 0.00,
     monto_total_aprobado DECIMAL(12,2) DEFAULT 0.00,
     monto_saldo_final DECIMAL(12,2) DEFAULT 0.00,
-    estado_rendicion VARCHAR(20) NOT NULL,
+    estado_rendicion ENUM('ACEPTADO', 'EN_ESPERA', 'DENEGADO', 'ANULADO') NOT NULL,
     comentario VARCHAR(500),
     id_ciclo_caja INT NULL,
     
@@ -228,11 +255,18 @@ CREATE TABLE IF NOT EXISTS ope_solicitud_gasto (
     id_solicitud_gasto INT NOT NULL AUTO_INCREMENT,
     fecha_solicitud DATE NOT NULL,
     monto_solicitado DECIMAL(12,2) NOT NULL,
+    id_moneda_original INT NULL,
+    tipo_cambio DECIMAL(10,4) DEFAULT 1.0000,
+    monto_convertido DECIMAL(12,2) DEFAULT 0.00,
     motivo_solicitud VARCHAR(200),
-    estado_solicitud VARCHAR(20) DEFAULT 'Pendiente',
+    estado_solicitud ENUM('PENDIENTE', 'APROBADO', 'PAGADO', 'RENDIDO', 'RECHAZADO', 'ANULADO') DEFAULT 'PENDIENTE',
+    medio_desembolso ENUM('YAPE', 'PLIN', 'TRANSFERENCIA', 'EFECTIVO'),
+    comentario_decision VARCHAR(500),
     
     id_usuario_solicitante INT NOT NULL,
     id_usuario_destinatario INT NULL,
+    id_jefe_aprobador INT NULL,
+    id_tesorero_aprobador INT NULL,
     id_ciclo_caja INT NULL,
     
     -- Auditoría
@@ -242,9 +276,15 @@ CREATE TABLE IF NOT EXISTS ope_solicitud_gasto (
     id_usuario_modificacion INT,
     
     CONSTRAINT pk_ope_solicitud_gasto PRIMARY KEY (id_solicitud_gasto),
+    CONSTRAINT fk_ope_solicitud_gasto_tes_moneda FOREIGN KEY (id_moneda_original) 
+        REFERENCES tes_moneda(id_moneda),
     CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_sol FOREIGN KEY (id_usuario_solicitante) 
         REFERENCES rrhh_empleado(id_usuario),
     CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_des FOREIGN KEY (id_usuario_destinatario) 
+        REFERENCES rrhh_empleado(id_usuario),
+    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_jefe FOREIGN KEY (id_jefe_aprobador) 
+        REFERENCES rrhh_empleado(id_usuario),
+    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_tes FOREIGN KEY (id_tesorero_aprobador) 
         REFERENCES rrhh_empleado(id_usuario),
     CONSTRAINT fk_ope_solicitud_gasto_ope_ciclo_caja FOREIGN KEY (id_ciclo_caja) 
         REFERENCES ope_ciclo_caja(id_ciclo_caja)
@@ -252,7 +292,7 @@ CREATE TABLE IF NOT EXISTS ope_solicitud_gasto (
 
 CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
     id_comprobante INT NOT NULL AUTO_INCREMENT,
-    tipo_documento VARCHAR(20) NOT NULL,
+    tipo_documento ENUM('FACTURA', 'BOLETA', 'DJ_EXCEPCIONAL') NOT NULL,
     ruc_proveedor CHAR(11),
     razon_social VARCHAR(150),
     numero_serie VARCHAR(30),
@@ -260,7 +300,10 @@ CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
     monto_subtotal DECIMAL(12,2),
     monto_igv DECIMAL(12,2),
     monto_total DECIMAL(12,2) NOT NULL,
-    estado_comprobante VARCHAR(20) DEFAULT 'Por Revisar',
+    tipo_cambio DECIMAL(10,4) DEFAULT 1.0000,
+    monto_convertido DECIMAL(12,2) DEFAULT 0.00,
+    nombre_archivo_comprobante VARCHAR(500),
+    estado_comprobante ENUM('POR_REVISAR', 'ANULADO', 'APROBADO', 'OBSERVADO') DEFAULT 'POR_REVISAR',
     id_solicitud_gasto INT NOT NULL,
     id_moneda INT NOT NULL,
     
@@ -279,30 +322,35 @@ CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
 
 CREATE TABLE IF NOT EXISTS ope_transaccion (
     id_transaccion INT NOT NULL AUTO_INCREMENT,
-    tipo_operacion VARCHAR(30) NOT NULL,
-    fecha_operacion DATETIME, 
+    tipo_operacion ENUM('DESEMBOLSO', 'DEVOLUCION_SOBRANTE', 'REEMBOLSO_DEFICIT', 'REPOSICION_FONDO') NOT NULL,
+    momento_operacion DATETIME,
     monto_transaccion DECIMAL(12,2) NOT NULL,
     numero_operacion_bancaria VARCHAR(30),
-    medio_pago VARCHAR(30),
-    valor_tipo_cambio DECIMAL(10,4) DEFAULT 1.0000,
-    estado_transaccion VARCHAR(20) DEFAULT 'Registrada',
+    medio_pago ENUM('YAPE', 'PLIN', 'TRANSFERENCIA', 'EFECTIVO'),
+    id_tipo_cambio INT NULL,
+    estado_transaccion ENUM('REGISTRADA', 'COMPLETADA', 'ANULADA') DEFAULT 'REGISTRADA',
     id_cuenta_origen INT NULL,
     id_cuenta_destino INT NULL,
     id_moneda INT NOT NULL,
-    
+    id_beneficiario INT NULL,
+
     -- Auditoría
     creado_at DATETIME,
     actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
-    
+
     CONSTRAINT pk_ope_transaccion PRIMARY KEY (id_transaccion),
-    CONSTRAINT fk_ope_transaccion_tes_cuenta_bancaria_ori FOREIGN KEY (id_cuenta_origen) 
+    CONSTRAINT fk_ope_transaccion_tes_tipo_cambio FOREIGN KEY (id_tipo_cambio)
+        REFERENCES tes_tipo_cambio(id_tipo_cambio),
+    CONSTRAINT fk_ope_transaccion_tes_cuenta_bancaria_ori FOREIGN KEY (id_cuenta_origen)
         REFERENCES tes_cuenta_bancaria(id_cuenta_bancaria),
-    CONSTRAINT fk_ope_transaccion_tes_cuenta_bancaria_des FOREIGN KEY (id_cuenta_destino) 
+    CONSTRAINT fk_ope_transaccion_tes_cuenta_bancaria_des FOREIGN KEY (id_cuenta_destino)
         REFERENCES tes_cuenta_bancaria(id_cuenta_bancaria),
-    CONSTRAINT fk_ope_transaccion_tes_moneda FOREIGN KEY (id_moneda) 
-        REFERENCES tes_moneda(id_moneda)
+    CONSTRAINT fk_ope_transaccion_tes_moneda FOREIGN KEY (id_moneda)
+        REFERENCES tes_moneda(id_moneda),
+    CONSTRAINT fk_ope_transaccion_rrhh_empleado_ben FOREIGN KEY (id_beneficiario)
+        REFERENCES rrhh_empleado(id_usuario)
 ) ENGINE=InnoDB;
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -27,15 +27,15 @@ CREATE PROCEDURE pa_insertar_auditoria (
     IN p_id_registro VARCHAR(50),
     IN p_valores_antiguos JSON,
     IN p_valores_nuevos JSON,
-    IN p_id_usuario INT
+    IN p_id_usuario_accion INT
 )
 BEGIN
     INSERT INTO log_auditoria (
-        nombre_tabla, 
-        tipo_evento, 
-        id_registro_afectado, 
-        valores_antiguos, 
-        valores_nuevos, 
+        nombre_tabla,
+        tipo_evento,
+        id_registro_afectado,
+        valores_antiguos,
+        valores_nuevos,
         id_usuario_auditoria
     ) VALUES (
         p_nombre_tabla,
@@ -43,7 +43,7 @@ BEGIN
         p_id_registro,
         p_valores_antiguos,
         p_valores_nuevos,
-        p_id_usuario
+        p_id_usuario_accion
     );
 END //
 

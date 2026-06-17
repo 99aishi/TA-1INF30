@@ -7,21 +7,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.rrhh.idao.IAreaDAO;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
+import pe.edu.pucp.economix.rrhh.model.RolFlujo;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
+import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
+import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
+import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 public class AreaDAOImpl implements  IAreaDAO{
     private ResultSet rs;
 
     @Override
-    public int insertar(Area area) throws SQLException {
+    public int insertar(Area area, int idUsuarioAccion) throws SQLException {
         Map<String,Object> parametrosSalida = new HashMap<>();
         Map<String,Object> parametrosEntrada = new HashMap<>();
         parametrosSalida.put("p_id_generado", Types.INTEGER);
+        parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_nombre_area", area.getNombre());
         parametrosEntrada.put("p_descripcion_area", area.getDescripcion());
         if(area.getJefe() != null)
@@ -35,26 +41,32 @@ public class AreaDAOImpl implements  IAreaDAO{
         return area.getIdArea();
     }
     @Override
-    public int modificar(Area area) throws SQLException {
+    public int modificar(Area area, int idUsuarioAccion) throws SQLException {
         Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_id_area", area.getIdArea());
         parametrosEntrada.put("p_nombre_area", area.getNombre());
         parametrosEntrada.put("p_descripcion_area", area.getDescripcion());
-        parametrosEntrada.put("p_id_jefe", area.getJefe().getUsuarioID());
+        if(area.getJefe() != null)
+            parametrosEntrada.put("p_id_jefe", area.getJefe().getUsuarioID());
+        else
+            parametrosEntrada.put("p_id_jefe", null);
         int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_area", parametrosEntrada, null);
         return resultado;
     }
     @Override
-    public int asignarJefe(Area area, Empleado empleado) throws SQLException {
+    public int asignarJefe(Area area, Empleado empleado, int idUsuarioAccion) throws SQLException {
         Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_id_area", area.getIdArea());
         parametrosEntrada.put("p_id_jefe", empleado.getUsuarioID());
         int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_asignar_jefe_area", parametrosEntrada, null);
         return resultado;
     }
     @Override
-    public int eliminar(int idArea) throws SQLException {
+    public int eliminar(int idArea, int idUsuarioAccion) throws SQLException {
         Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_id_area", idArea);
         int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_eliminar_area", parametrosEntrada, null);
         return resultado;
@@ -67,20 +79,7 @@ public class AreaDAOImpl implements  IAreaDAO{
         rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_buscar_area_por_id", parametrosEntrada);
         try{
             if(rs.next()){
-                area = new Area();
-                area.setIdArea(rs.getInt("id_area"));
-                area.setNombre(rs.getString("nombre_area"));
-                area.setDescripcion(rs.getString("descripcion_area"));
-                area.setEstaActivo(rs.getInt("esta_activo") == 1);
-                if(area.getJefe() == null)
-                    area.setJefe(new Empleado());
-                area.getJefe().setUsuarioID(rs.getInt("id_jefe"));
-                int idFondo = rs.getInt("id_fondo_caja_chica");
-                if (!rs.wasNull()) {
-                    CajaChica cc = new CajaChica();
-                    cc.setIdFondo(idFondo);
-                    area.setCajaChica(cc);
-                }
+                area = mapearArea(rs, new HashMap<>());
             }
         }catch(SQLException ex){
             System.out.println("Error al buscar area por id: " + ex.getMessage());
@@ -97,20 +96,7 @@ public class AreaDAOImpl implements  IAreaDAO{
         try{
             while(rs.next()){
                 if(areas == null) areas = new ArrayList<>();
-                area = new Area();
-                area.setIdArea(rs.getInt("id_area"));
-                area.setNombre(rs.getString("nombre_area"));
-                area.setDescripcion(rs.getString("descripcion_area"));
-                area.setEstaActivo(rs.getInt("esta_activo") == 1);
-                if(area.getJefe() == null)
-                    area.setJefe(new Empleado());
-                area.getJefe().setUsuarioID(rs.getInt("id_jefe"));
-                int idFondo = rs.getInt("id_fondo_caja_chica");
-                if (!rs.wasNull()) {
-                    CajaChica cc = new CajaChica();
-                    cc.setIdFondo(idFondo);
-                    area.setCajaChica(cc);
-                }
+                area = mapearArea(rs, new HashMap<>());
                 areas.add(area);
             }
         }catch(SQLException ex){
@@ -129,20 +115,7 @@ public class AreaDAOImpl implements  IAreaDAO{
         try{
             while(rs.next()){
                 if(areas == null) areas = new ArrayList<>();
-                area = new Area();
-                area.setIdArea(rs.getInt("id_area"));
-                area.setNombre(rs.getString("nombre_area"));
-                area.setDescripcion(rs.getString("descripcion_area"));
-                area.setEstaActivo(true);
-                if(area.getJefe() == null)
-                    area.setJefe(new Empleado());
-                area.getJefe().setUsuarioID(rs.getInt("id_jefe"));
-                int idFondo = rs.getInt("id_fondo_caja_chica");
-                if (!rs.wasNull()) {
-                    CajaChica cc = new CajaChica();
-                    cc.setIdFondo(idFondo);
-                    area.setCajaChica(cc);
-                }
+                area = mapearArea(rs, new HashMap<>());
                 areas.add(area);
             }
         }catch(SQLException ex){
@@ -153,9 +126,83 @@ public class AreaDAOImpl implements  IAreaDAO{
         return areas;
     }
 
+    @SuppressWarnings("unchecked")
+    private <T> T getOrCreate(Map<Class<?>, Map<Integer, Object>> cache, Class<T> type, int id, Supplier<T> factory) {
+        if (id <= 0) return null;
+        return (T) cache.computeIfAbsent(type, k -> new HashMap<>())
+                .computeIfAbsent(id, k -> factory.get());
+    }
+
+    private Area mapearArea(ResultSet rs, Map<Class<?>, Map<Integer, Object>> cache) throws SQLException {
+        int idArea = rs.getInt("id_area");
+        Area area = getOrCreate(cache, Area.class, idArea, () -> new Area());
+        area.setIdArea(idArea);
+        area.setNombre(rs.getString("nombre_area"));
+        area.setDescripcion(rs.getString("descripcion_area"));
+        area.setEstaActivo(rs.getBoolean("esta_activo"));
+
+        Empleado jefe = mapearEmpleadoBasico(rs, "jefe_", cache);
+        if (jefe != null) {
+            jefe.setArea(area); // back-ref
+            area.setJefe(jefe);
+        }
+
+        int idFondo = rs.getInt("id_fondo_caja_chica");
+        if (!rs.wasNull()) {
+            CajaChica cc = getOrCreate(cache, CajaChica.class, idFondo, () -> new CajaChica());
+            cc.setIdFondo(idFondo);
+            cc.setNombre(rs.getString("cc_nombre_fondo"));
+            cc.setMontoTecho(rs.getDouble("cc_monto_techo"));
+            String estadoFondo = rs.getString("cc_estado_fondo");
+            if(estadoFondo != null)
+                cc.setEstado(EstadoFondo.valueOf(estadoFondo));
+            cc.setAreaAsignada(area); // back-ref
+
+            int idMoneda = rs.getInt("cc_id_moneda");
+            if (!rs.wasNull()) {
+                Moneda mon = getOrCreate(cache, Moneda.class, idMoneda, () -> new Moneda());
+                mon.setIdMoneda(idMoneda);
+                cc.setMoneda(mon);
+            }
+
+            int idCuentaOrigen = rs.getInt("cc_id_cuenta_origen");
+            if (!rs.wasNull()) {
+                CuentaBancaria cb = getOrCreate(cache, CuentaBancaria.class, idCuentaOrigen, () -> new CuentaBancaria());
+                cb.setIdCuenta(idCuentaOrigen);
+                cc.setCuentaOrigen(cb);
+            }
+
+            area.setCajaChica(cc);
+        }
+        return area;
+    }
+
+    private Empleado mapearEmpleadoBasico(ResultSet rs, String prefijo, Map<Class<?>, Map<Integer, Object>> cache) throws SQLException {
+        int id = rs.getInt(prefijo + "id_usuario");
+        if (rs.wasNull() || id <= 0) return null;
+        return getOrCreate(cache, Empleado.class, id, () -> {
+            Empleado e = new Empleado();
+            e.setUsuarioID(id);
+            try {
+                e.setNombres(rs.getString(prefijo + "nombres"));
+                e.setApellidoPaterno(rs.getString(prefijo + "apellido_paterno"));
+                e.setApellidoMaterno(rs.getString(prefijo + "apellido_materno"));
+                e.setCorreo(rs.getString(prefijo + "correo"));
+                e.setNumeroCelular(rs.getString(prefijo + "numero_celular"));
+                String rolFlujo = rs.getString(prefijo + "rol_flujo");
+                if (rolFlujo != null)
+                    e.setRolFlujo(RolFlujo.valueOf(rolFlujo));
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+            return e;
+        });
+    }
+
     @Override
-    public int recuperar(int idArea) throws SQLException {
+    public int recuperar(int idArea, int idUsuarioAccion) throws SQLException {
         Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_id_area", idArea);
         int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_reactivar_area", parametrosEntrada, null);
         return resultado;

@@ -14,24 +14,33 @@ public class MonedaBOImpl implements IMonedaBO {
     public MonedaBOImpl(){
         daoMoneda= new MonedaDAOImpl();
     }
+    private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
+        if (idUsuarioAccion <= 0) {
+            throw new Exception("El usuario de acción debe ser mayor que cero.");
+        }
+    }
+
     @Override
-    public int insertar(Moneda moneda) throws Exception {
+    public int insertar(Moneda moneda, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(moneda,false);
-        return  daoMoneda.insertar(moneda);
+        return  daoMoneda.insertar(moneda, idUsuarioAccion);
     }
 
     @Override
-    public int modificar(Moneda moneda) throws Exception {
+    public int modificar(Moneda moneda, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(moneda,true);
-        return  daoMoneda.modificar(moneda);
+        return  daoMoneda.modificar(moneda, idUsuarioAccion);
     }
 
     @Override
-    public int eliminar(int id) throws Exception {
+    public int eliminar(int id, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         if (id <= 0) {
             throw new Exception("El id de la moneda debe ser mayor que cero.");
         }
-        return daoMoneda.eliminar(id);
+        return daoMoneda.eliminar(id, idUsuarioAccion);
     }
 
     @Override
@@ -98,10 +107,11 @@ public class MonedaBOImpl implements IMonedaBO {
     }
 
     @Override
-    public int recuperar(int id) throws Exception {
+    public int recuperar(int id, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         if (id <= 0) {
             throw new Exception("El id de la moneda debe ser mayor que cero.");
         }
-        return daoMoneda.recuperar(id);
+        return daoMoneda.recuperar(id, idUsuarioAccion);
     }
 }

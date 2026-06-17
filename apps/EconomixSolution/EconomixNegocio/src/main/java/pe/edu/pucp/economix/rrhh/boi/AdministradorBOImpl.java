@@ -12,24 +12,33 @@ public class AdministradorBOImpl implements IAdministradorBO {
     public AdministradorBOImpl(){
         administradorDAO=new AdministradorDAOImpl();
     }
+    private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
+        if (idUsuarioAccion <= 0) {
+            throw new Exception("El usuario de acción debe ser mayor que cero.");
+        }
+    }
+
     @Override
-    public int insertar(Administrador admin) throws Exception {
+    public int insertar(Administrador admin, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(admin,false);
-        return administradorDAO.insertar(admin);
+        return administradorDAO.insertar(admin, idUsuarioAccion);
     }
 
     @Override
-    public int modificar(Administrador admin) throws Exception {
+    public int modificar(Administrador admin, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(admin,true);
-        return administradorDAO.modificar(admin);
+        return administradorDAO.modificar(admin, idUsuarioAccion);
     }
 
     @Override
-    public int eliminar(int id) throws Exception {
+    public int eliminar(int id, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         if (id <= 0) {
             throw new Exception("El id del administrador debe ser mayor que cero.");
         }
-        return  administradorDAO.eliminar(id);
+        return  administradorDAO.eliminar(id, idUsuarioAccion);
     }
 
     @Override
@@ -43,6 +52,11 @@ public class AdministradorBOImpl implements IAdministradorBO {
     @Override
     public List<Administrador> listarTodas() throws Exception {
         return administradorDAO.listarTodas();
+    }
+
+    @Override
+    public List<Administrador> listarActivas() throws Exception {
+        return administradorDAO.listarActivas();
     }
     public void validar(Administrador admin,boolean esModificacion) throws Exception{
         if(admin==null){

@@ -32,9 +32,9 @@ public class RolWS {
     @Path("Insertar")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response insertarRol(Rol rol) {
+    public Response insertarRol(Rol rol, @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
         try {
-            int id = rolBO.insertar(rol);
+            int id = rolBO.insertar(rol, idUsuarioAccion);
             return Response.ok(id).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -47,16 +47,16 @@ public class RolWS {
     @Path("Actualizar")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public int actualizarRol(Rol rol) throws Exception {
-        return rolBO.modificar(rol);
+    public int actualizarRol(Rol rol, @QueryParam("idUsuarioAccion") int idUsuarioAccion) throws Exception {
+        return rolBO.modificar(rol, idUsuarioAccion);
     }
 
     @GET
     @Path("Eliminar")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response eliminarRol(@QueryParam("id") int id) {
+    public Response eliminarRol(@QueryParam("id") int id, @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
         try {
-            int result = rolBO.eliminar(id);
+            int result = rolBO.eliminar(id, idUsuarioAccion);
             return Response.ok(result).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)

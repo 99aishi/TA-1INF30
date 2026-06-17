@@ -1,9 +1,143 @@
+@page "/Caja Chica"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject ICajaChicaWS CajaChicaWS
 
+<div class="h-100 d-flex flex-column">
 
-<h3>CajaChicaPage</h3>
+    <div class="d-flex flex-row justify-content-between align-items-center mb-3">
+        <div>
+            <p class="h4 mb-1">Cajas Chicas</p>
+            <p class="text-muted mb-0">Configuración de fondos fijos y techos presupuestales por área</p>
+        </div>
 
-<p>This is the CajaChicaPage component.</p>
+        <button type="button" class="btn btn-primary" @onclick="IrRegistrarCajaChica">
+            + Agregar Caja Chica
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+            @ErrorMessage
+            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+        </div>
+    }
+
+    <CajaChicaSearchBar @bind-FiltroNombre="FiltroNombre"
+                        @bind-FiltroMontoMin="FiltroMontoMin"
+                        @bind-FiltroMontoMax="FiltroMontoMax"
+                        @bind-FiltroEstado="FiltroEstado" />
+
+    <div class="d-flex flex-column flex-fill overflow-hidden">
+
+        <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
+
+            <div class="@(MostrarDetalle ? "col-6" : "col-12") h-100 d-flex flex-column overflow-hidden">
+
+                <div class="card rounded-4 p-3 h-100 overflow-scroll">
+
+                    @if (Cargando)
+                    {
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <p class="text-muted">Cargando cajas chicas...</p>
+                        </div>
+                    }
+                    else if (CajasFiltradas.Count() == 0)
+                    {
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <p class="text-muted">
+                                @(HayFiltrosActivos ? "Ninguna caja chica coincide con los filtros" : "No hay cajas chicas registradas")
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var cc in CajasFiltradas)
+                        {
+                            <CajaChicaItem Area="@(cc.AreaAsignada?.Nombre ?? "Sin área")"
+                                           Responsable="@(cc.AreaAsignada?.Jefe?.Nombres ?? "Sin asignar")"
+                                           PorcentajeUso="50"
+                                           MontoTecho="@((decimal)cc.MontoTecho)"
+                                           Gastado="0"
+                                           Disponible="@((decimal)cc.MontoTecho)"
+                                           ProximoCierre="Viernes 18:00"
+                                           CerrarPronto="false"
+                                           OnMuestraDetalle="() => SeleccionarCajaChica(cc)" />
+                        }
+                    }
+                </div>
+            </div>
+
+            @if (MostrarDetalle && CajaSeleccionada != null)
+            {
+                <div class="col-6 h-100">
+                    <CajaChicaDetalle CajaChica="CajaSeleccionada" OnCerrarDetalle="CerrarDetalleCajaChica" />
+                </div>
+            }
+        </div>
+    </div>
+</div>
 
 @code {
-    
+    private bool MostrarDetalle { get; set; } = false;
+    private bool Cargando { get; set; } = true;
+    private string ErrorMessage { get; set; } = string.Empty;
+    private string FiltroNombre { get; set; } = string.Empty;
+    private double? FiltroMontoMin { get; set; }
+    private double? FiltroMontoMax { get; set; }
+    private string FiltroEstado { get; set; } = "Todas";
+    private List<CajaChica> Cajas { get; set; } = new();
+    private CajaChica? CajaSeleccionada { get; set; }
+
+    private bool HayFiltrosActivos =>
+        !string.IsNullOrWhiteSpace(FiltroNombre)
+        || FiltroMontoMin.HasValue
+        || FiltroMontoMax.HasValue
+        || FiltroEstado != "Todas";
+
+    private IEnumerable<CajaChica> CajasFiltradas => Cajas
+        .Where(c => string.IsNullOrWhiteSpace(FiltroNombre)
+            || c.Nombre.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase)
+            || (c.AreaAsignada?.Nombre ?? "").Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase))
+        .Where(c => !FiltroMontoMin.HasValue || c.MontoTecho >= FiltroMontoMin.Value)
+        .Where(c => !FiltroMontoMax.HasValue || c.MontoTecho <= FiltroMontoMax.Value);
+
+    private void IrRegistrarCajaChica()
+    {
+        Navigation.NavigateTo("/Caja Chica/Crear");
+    }
+
+    private void SeleccionarCajaChica(CajaChica cc)
+    {
+        CajaSeleccionada = cc;
+        MostrarDetalle = true;
+    }
+
+    private async Task CerrarDetalleCajaChica()
+    {
+        await ListarCajas();
+        MostrarDetalle = false;
+        CajaSeleccionada = null;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Cargando = true;
+        await ListarCajas();
+        Cargando = false;
+    }
+
+    private async Task ListarCajas()
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            Cajas = await Task.Run(() => new List<CajaChica>(CajaChicaWS.listar()));
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
 }

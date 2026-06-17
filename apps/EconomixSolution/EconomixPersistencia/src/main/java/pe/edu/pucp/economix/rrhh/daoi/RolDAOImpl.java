@@ -16,10 +16,11 @@ public class RolDAOImpl implements IRolDAO{
     private ResultSet rs;
 
     @Override
-    public int insertar(Rol rol) throws SQLException {
+    public int insertar(Rol rol, int idUsuarioAccion) throws SQLException {
         Map<String,Object> parametrosSalida = new HashMap<>();
         Map<String,Object> parametrosEntrada = new HashMap<>();
         parametrosSalida.put("p_id_generado", Types.INTEGER);
+        parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_titulo_rol", rol.getTitulo());
         parametrosEntrada.put("p_descripcion_rol", rol.getDescripcion());
 
@@ -29,8 +30,9 @@ public class RolDAOImpl implements IRolDAO{
         return rol.getRolID();
     }
     @Override
-    public int modificar(Rol rol) throws SQLException {
+    public int modificar(Rol rol, int idUsuarioAccion) throws SQLException {
         Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_id_rol", rol.getRolID());
         parametrosEntrada.put("p_titulo_rol", rol.getTitulo());
         parametrosEntrada.put("p_descripcion_rol", rol.getDescripcion());
@@ -38,10 +40,11 @@ public class RolDAOImpl implements IRolDAO{
         return resultado;
     }
     @Override
-    public int eliminar(int idRol) throws SQLException {
+    public int eliminar(int idRol, int idUsuarioAccion) throws SQLException {
         Map<String, Object> parametrosEntrada = new HashMap<>();
-        parametrosEntrada.put("p_id_usuario", idRol);
-        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_eliminar_administrador", parametrosEntrada, null);
+        parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
+        parametrosEntrada.put("p_id_rol", idRol);
+        int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_eliminar_rol", parametrosEntrada, null);
         return resultado;
     }
     @Override

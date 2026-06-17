@@ -1,0 +1,5543 @@
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ---------------------------------------------------------
+-- MÓDULO 3: Operaciones (ope)
+-- ---------------------------------------------------------
+DROP TABLE IF EXISTS ope_transaccion;
+DROP TABLE IF EXISTS ope_comprobante_pago;
+DROP TABLE IF EXISTS ope_solicitud_gasto;
+DROP TABLE IF EXISTS ope_ciclo_caja;
+DROP TABLE IF EXISTS ope_rendicion;
+
+-- ---------------------------------------------------------
+-- MÓDULO 2: Tesorería (tes)
+-- ---------------------------------------------------------
+DROP TABLE IF EXISTS tes_caja_chica;
+DROP TABLE IF EXISTS tes_fondo;
+DROP TABLE IF EXISTS tes_cuenta_bancaria;
+DROP TABLE IF EXISTS tes_tipo_cambio;
+DROP TABLE IF EXISTS tes_moneda;
+
+-- ---------------------------------------------------------
+-- MÓDULO 1: Recursos Humanos (rrhh)
+-- ---------------------------------------------------------
+DROP TABLE IF EXISTS rrhh_administrador;
+DROP TABLE IF EXISTS rrhh_empleado;
+DROP TABLE IF EXISTS rrhh_area;
+DROP TABLE IF EXISTS rrhh_usuario;
+DROP TABLE IF EXISTS rrhh_rol;
+
+SET FOREIGN_KEY_CHECKS = 1;SET FOREIGN_KEY_CHECKS = 0;
+
+-- ===============================================================================
+-- 1. MÓDULO: rrhh (Recursos Humanos y Accesos)
+-- ===============================================================================
+
+CREATE TABLE IF NOT EXISTS rrhh_rol (
+    id_rol INT NOT NULL AUTO_INCREMENT,
+    titulo_rol VARCHAR(50) NOT NULL UNIQUE,
+    descripcion_rol VARCHAR(200),
+    esta_activo TINYINT(1) DEFAULT 1,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+    
+    CONSTRAINT pk_rrhh_rol PRIMARY KEY (id_rol)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS rrhh_usuario (
+    id_usuario INT NOT NULL AUTO_INCREMENT,
+    nombres VARCHAR(60) NOT NULL,
+    apellido_paterno VARCHAR(40) NOT NULL,
+    apellido_materno VARCHAR(40),
+    password_hash VARCHAR(255) NOT NULL,
+    correo VARCHAR(255) NOT NULL UNIQUE,
+    esta_activo TINYINT(1) DEFAULT 1,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+    
+    CONSTRAINT pk_rrhh_usuario PRIMARY KEY (id_usuario)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS rrhh_area (
+    id_area INT NOT NULL AUTO_INCREMENT,
+    nombre_area VARCHAR(60) NOT NULL UNIQUE,
+    descripcion_area VARCHAR(500),
+    id_jefe INT NULL,
+    esta_activo TINYINT(1) DEFAULT 1,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+
+    CONSTRAINT pk_rrhh_area PRIMARY KEY (id_area),
+    CONSTRAINT fk_rrhh_area_rrhh_empleado FOREIGN KEY (id_jefe) 
+        REFERENCES rrhh_empleado(id_usuario) 
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS rrhh_empleado (
+    id_usuario INT NOT NULL,
+    numero_celular VARCHAR(15),
+    rol_flujo ENUM('EMPLEADO', 'JEFE_AREA') DEFAULT 'EMPLEADO',
+    id_area INT NULL,
+    id_rol INT NULL,
+    id_jefe_directo INT NULL,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+    
+    CONSTRAINT pk_rrhh_empleado PRIMARY KEY (id_usuario),
+    CONSTRAINT fk_rrhh_empleado_rrhh_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES rrhh_usuario(id_usuario),
+    CONSTRAINT fk_rrhh_empleado_rrhh_area FOREIGN KEY (id_area) 
+        REFERENCES rrhh_area(id_area),
+    CONSTRAINT fk_rrhh_empleado_rrhh_rol FOREIGN KEY (id_rol) 
+        REFERENCES rrhh_rol(id_rol),
+    CONSTRAINT fk_rrhh_empleado_rrhh_empleado_jefe FOREIGN KEY (id_jefe_directo) 
+        REFERENCES rrhh_empleado(id_usuario)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS rrhh_administrador (
+    id_usuario INT NOT NULL,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+    
+    CONSTRAINT pk_rrhh_administrador PRIMARY KEY (id_usuario),
+    CONSTRAINT fk_rrhh_administrador_rrhh_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES rrhh_usuario(id_usuario)
+) ENGINE=InnoDB;
+
+-- ===============================================================================
+-- 2. MÓDULO: tes (Tesorería)
+-- ===============================================================================
+
+CREATE TABLE IF NOT EXISTS tes_moneda (
+    id_moneda INT NOT NULL AUTO_INCREMENT,
+    codigo_iso CHAR(3) NOT NULL,
+    simbolo VARCHAR(5) NOT NULL,
+    nombre_moneda VARCHAR (50) NOT NULL,
+    descripcion VARCHAR (350) NOT NULL,
+    activa TINYINT(1) DEFAULT 1,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+    
+    CONSTRAINT pk_tes_moneda PRIMARY KEY (id_moneda)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS tes_tipo_cambio (
+    id_tipo_cambio INT NOT NULL AUTO_INCREMENT,
+    id_moneda_origen INT NOT NULL,
+    id_moneda_destino INT NOT NULL,
+    valor_tipo_cambio DECIMAL(10,4) NOT NULL,
+    fecha_tipo_cambio DATE NOT NULL,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+    
+    CONSTRAINT pk_tes_tipo_cambio PRIMARY KEY (id_tipo_cambio),
+    CONSTRAINT fk_tes_tipo_cambio_tes_moneda_ori FOREIGN KEY (id_moneda_origen) 
+        REFERENCES tes_moneda(id_moneda),
+    CONSTRAINT fk_tes_tipo_cambio_tes_moneda_des FOREIGN KEY (id_moneda_destino) 
+        REFERENCES tes_moneda(id_moneda)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS tes_cuenta_bancaria (
+    id_cuenta_bancaria INT NOT NULL AUTO_INCREMENT,
+    nombre_banco VARCHAR(50) NOT NULL,
+    numero_cuenta VARCHAR(30) NOT NULL,
+    cci CHAR(20), 
+    
+    id_moneda INT NOT NULL,
+    id_area INT NULL,
+    id_usuario INT NULL,
+    activa TINYINT(1) DEFAULT 1, 
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+    
+    CONSTRAINT pk_tes_cuenta_bancaria PRIMARY KEY (id_cuenta_bancaria),
+    CONSTRAINT fk_tes_cuenta_bancaria_tes_moneda FOREIGN KEY (id_moneda) 
+        REFERENCES tes_moneda(id_moneda),
+    CONSTRAINT fk_tes_cuenta_bancaria_rrhh_area FOREIGN KEY (id_area) 
+        REFERENCES rrhh_area(id_area),
+    CONSTRAINT fk_tes_cuenta_bancaria_rrhh_empleado FOREIGN KEY (id_usuario) 
+        REFERENCES rrhh_empleado(id_usuario)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS tes_fondo (
+    id_fondo INT NOT NULL AUTO_INCREMENT,
+    nombre_fondo VARCHAR(100) NOT NULL,
+    estado_fondo ENUM('ACTIVO', 'INACTIVO') NOT NULL DEFAULT 'ACTIVO',
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+    
+    CONSTRAINT pk_tes_fondo PRIMARY KEY (id_fondo)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS tes_caja_chica (
+    id_fondo INT NOT NULL,
+    monto_techo DECIMAL(12,2) NOT NULL,
+    id_area INT NOT NULL,
+    id_moneda INT NULL,
+    id_cuenta_origen INT NULL,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+    
+    CONSTRAINT pk_tes_caja_chica PRIMARY KEY (id_fondo),
+    CONSTRAINT fk_tes_caja_chica_tes_fondo FOREIGN KEY (id_fondo) 
+        REFERENCES tes_fondo(id_fondo),
+    CONSTRAINT fk_tes_caja_chica_rrhh_area FOREIGN KEY (id_area) 
+        REFERENCES rrhh_area(id_area),
+    CONSTRAINT fk_tes_caja_chica_tes_moneda FOREIGN KEY (id_moneda) 
+        REFERENCES tes_moneda(id_moneda),
+    CONSTRAINT fk_tes_caja_chica_cuenta_bancaria FOREIGN KEY (id_cuenta_origen) 
+        REFERENCES tes_cuenta_bancaria(id_cuenta_bancaria)
+) ENGINE=InnoDB;
+-- ===============================================================================
+-- 3. MÓDULO: ope (Operaciones)
+-- ===============================================================================
+
+CREATE TABLE IF NOT EXISTS ope_ciclo_caja (
+    id_ciclo_caja INT NOT NULL AUTO_INCREMENT,
+    numero_semana INT,
+    fecha_apertura DATE NULL,
+    fecha_cierre DATE NULL,
+    monto_saldo_inicial DECIMAL(12,2) DEFAULT 0.00,
+    monto_total_gastado DECIMAL(12,2) DEFAULT 0.00,
+    estado_ciclo ENUM('ABIERTO', 'CERRADO', 'LIQUIDADO') DEFAULT 'ABIERTO',
+    id_caja_chica INT NOT NULL,
+    id_rendicion INT NULL,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+    
+    CONSTRAINT pk_ope_ciclo_caja PRIMARY KEY (id_ciclo_caja),
+    CONSTRAINT fk_ope_ciclo_caja_tes_caja_chica FOREIGN KEY (id_caja_chica) 
+        REFERENCES tes_caja_chica(id_fondo),
+    CONSTRAINT fk_ope_ciclo_caja_ope_rendicion FOREIGN KEY (id_rendicion) 
+        REFERENCES ope_rendicion(id_rendicion)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS ope_rendicion (
+    id_rendicion INT NOT NULL AUTO_INCREMENT,
+    fecha_presentacion DATE DEFAULT (CURRENT_DATE),
+    fecha_aprobacion DATE NULL,
+    monto_total_declarado DECIMAL(12,2) DEFAULT 0.00,
+    monto_total_aprobado DECIMAL(12,2) DEFAULT 0.00,
+    monto_saldo_final DECIMAL(12,2) DEFAULT 0.00,
+    estado_rendicion ENUM('ACEPTADO', 'EN_ESPERA', 'DENEGADO', 'ANULADO') NOT NULL,
+    comentario VARCHAR(500),
+    id_ciclo_caja INT NULL,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+    
+    CONSTRAINT pk_ope_rendicion PRIMARY KEY (id_rendicion), 
+    CONSTRAINT fk_ope_rend_ope_ciclo_caja FOREIGN KEY (id_ciclo_caja) 
+        REFERENCES ope_ciclo_caja(id_ciclo_caja)
+) ENGINE=InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS ope_solicitud_gasto (
+    id_solicitud_gasto INT NOT NULL AUTO_INCREMENT,
+    fecha_solicitud DATE NOT NULL,
+    monto_solicitado DECIMAL(12,2) NOT NULL,
+    id_moneda_original INT NULL,
+    tipo_cambio DECIMAL(10,4) DEFAULT 1.0000,
+    monto_convertido DECIMAL(12,2) DEFAULT 0.00,
+    motivo_solicitud VARCHAR(200),
+    estado_solicitud ENUM('PENDIENTE', 'APROBADO', 'PAGADO', 'RENDIDO', 'RECHAZADO', 'ANULADO') DEFAULT 'PENDIENTE',
+    medio_desembolso ENUM('YAPE', 'PLIN', 'TRANSFERENCIA', 'EFECTIVO'),
+    comentario_decision VARCHAR(500),
+    
+    id_usuario_solicitante INT NOT NULL,
+    id_usuario_destinatario INT NULL,
+    id_jefe_aprobador INT NULL,
+    id_tesorero_aprobador INT NULL,
+    id_ciclo_caja INT NULL,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+    
+    CONSTRAINT pk_ope_solicitud_gasto PRIMARY KEY (id_solicitud_gasto),
+    CONSTRAINT fk_ope_solicitud_gasto_tes_moneda FOREIGN KEY (id_moneda_original) 
+        REFERENCES tes_moneda(id_moneda),
+    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_sol FOREIGN KEY (id_usuario_solicitante) 
+        REFERENCES rrhh_empleado(id_usuario),
+    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_des FOREIGN KEY (id_usuario_destinatario) 
+        REFERENCES rrhh_empleado(id_usuario),
+    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_jefe FOREIGN KEY (id_jefe_aprobador) 
+        REFERENCES rrhh_empleado(id_usuario),
+    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_tes FOREIGN KEY (id_tesorero_aprobador) 
+        REFERENCES rrhh_empleado(id_usuario),
+    CONSTRAINT fk_ope_solicitud_gasto_ope_ciclo_caja FOREIGN KEY (id_ciclo_caja) 
+        REFERENCES ope_ciclo_caja(id_ciclo_caja)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
+    id_comprobante INT NOT NULL AUTO_INCREMENT,
+    tipo_documento ENUM('FACTURA', 'BOLETA', 'DJ_EXCEPCIONAL') NOT NULL,
+    ruc_proveedor CHAR(11),
+    razon_social VARCHAR(150),
+    numero_serie VARCHAR(30),
+    fecha_emision DATE,
+    monto_subtotal DECIMAL(12,2),
+    monto_igv DECIMAL(12,2),
+    monto_total DECIMAL(12,2) NOT NULL,
+    tipo_cambio DECIMAL(10,4) DEFAULT 1.0000,
+    monto_convertido DECIMAL(12,2) DEFAULT 0.00,
+    nombre_archivo_comprobante VARCHAR(500),
+    estado_comprobante ENUM('POR_REVISAR', 'ANULADO', 'APROBADO', 'OBSERVADO') DEFAULT 'POR_REVISAR',
+    id_solicitud_gasto INT NOT NULL,
+    id_moneda INT NOT NULL,
+    
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+    
+    CONSTRAINT pk_ope_comprobante_pago PRIMARY KEY (id_comprobante),
+    CONSTRAINT fk_ope_comprobante_pago_ope_solicitud_gasto FOREIGN KEY (id_solicitud_gasto) 
+        REFERENCES ope_solicitud_gasto(id_solicitud_gasto),
+    CONSTRAINT fk_ope_comprobante_pago_tes_moneda FOREIGN KEY (id_moneda) 
+        REFERENCES tes_moneda(id_moneda)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS ope_transaccion (
+    id_transaccion INT NOT NULL AUTO_INCREMENT,
+    tipo_operacion ENUM('DESEMBOLSO', 'DEVOLUCION_SOBRANTE', 'REEMBOLSO_DEFICIT', 'REPOSICION_FONDO') NOT NULL,
+    momento_operacion DATETIME,
+    monto_transaccion DECIMAL(12,2) NOT NULL,
+    numero_operacion_bancaria VARCHAR(30),
+    medio_pago ENUM('YAPE', 'PLIN', 'TRANSFERENCIA', 'EFECTIVO'),
+    id_tipo_cambio INT NULL,
+    estado_transaccion ENUM('REGISTRADA', 'COMPLETADA', 'ANULADA') DEFAULT 'REGISTRADA',
+    id_cuenta_origen INT NULL,
+    id_cuenta_destino INT NULL,
+    id_moneda INT NOT NULL,
+    id_beneficiario INT NULL,
+
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+
+    CONSTRAINT pk_ope_transaccion PRIMARY KEY (id_transaccion),
+    CONSTRAINT fk_ope_transaccion_tes_tipo_cambio FOREIGN KEY (id_tipo_cambio)
+        REFERENCES tes_tipo_cambio(id_tipo_cambio),
+    CONSTRAINT fk_ope_transaccion_tes_cuenta_bancaria_ori FOREIGN KEY (id_cuenta_origen)
+        REFERENCES tes_cuenta_bancaria(id_cuenta_bancaria),
+    CONSTRAINT fk_ope_transaccion_tes_cuenta_bancaria_des FOREIGN KEY (id_cuenta_destino)
+        REFERENCES tes_cuenta_bancaria(id_cuenta_bancaria),
+    CONSTRAINT fk_ope_transaccion_tes_moneda FOREIGN KEY (id_moneda)
+        REFERENCES tes_moneda(id_moneda),
+    CONSTRAINT fk_ope_transaccion_rrhh_empleado_ben FOREIGN KEY (id_beneficiario)
+        REFERENCES rrhh_empleado(id_usuario)
+) ENGINE=InnoDB;
+
+SET FOREIGN_KEY_CHECKS = 1;
+CREATE TABLE IF NOT EXISTS log_auditoria (
+    id_auditoria INT NOT NULL AUTO_INCREMENT,
+    nombre_tabla VARCHAR(100) NOT NULL,
+    tipo_evento VARCHAR(10) NOT NULL, -- Valores: 'INSERT', 'UPDATE', 'DELETE'
+    id_registro_afectado VARCHAR(50) NOT NULL,
+    valores_antiguos JSON, -- Estado previo
+    valores_nuevos JSON,   -- Estado final
+    
+    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id_usuario_auditoria INT NULL,
+    
+    CONSTRAINT pk_log_auditoria PRIMARY KEY (id_auditoria)
+) ENGINE=InnoDB;
+
+-- CREATE INDEX idx_log_auditoria_tabla ON log_auditoria(nombre_tabla);
+-- CREATE INDEX idx_log_auditoria_evento ON log_auditoria(tipo_evento);
+-- CREATE INDEX idx_log_auditoria_creado ON log_auditoria(creado_at);
+-- CREATE INDEX idx_log_auditoria_usuario ON log_auditoria(id_usuario_auditoria);
+
+DELIMITER //
+
+
+DROP PROCEDURE IF EXISTS pa_insertar_auditoria//
+CREATE PROCEDURE pa_insertar_auditoria (
+    IN p_nombre_tabla VARCHAR(100),
+    IN p_tipo_evento VARCHAR(10),
+    IN p_id_registro VARCHAR(50),
+    IN p_valores_antiguos JSON,
+    IN p_valores_nuevos JSON,
+    IN p_id_usuario_accion INT
+)
+BEGIN
+    INSERT INTO log_auditoria (
+        nombre_tabla,
+        tipo_evento,
+        id_registro_afectado,
+        valores_antiguos,
+        valores_nuevos,
+        id_usuario_auditoria
+    ) VALUES (
+        p_nombre_tabla,
+        p_tipo_evento,
+        p_id_registro,
+        p_valores_antiguos,
+        p_valores_nuevos,
+        p_id_usuario_accion
+    );
+END //
+
+DELIMITER ;
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_ciclo_caja $$
+CREATE PROCEDURE pa_insertar_ciclo_caja(
+    IN p_id_usuario_accion INT,
+	IN p_numero_semana INT,
+	IN p_fecha_apertura DATE,
+	IN p_fecha_cierre DATE,
+	IN p_monto_saldo_inicial DECIMAL(12,2),
+	IN p_monto_total_gastado DECIMAL(12,2),
+	IN p_estado_ciclo ENUM('ABIERTO','CERRADO','LIQUIDADO'),
+	IN p_id_caja_chica INT,
+	IN p_id_rendicion INT,
+	OUT p_id_generado INT
+)
+BEGIN
+    IF p_id_caja_chica IS NULL OR p_id_caja_chica <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de ciclo de caja chica no válido';
+    END IF;
+
+    INSERT INTO ope_ciclo_caja(
+
+        numero_semana,
+        fecha_apertura,
+        fecha_cierre,
+        monto_saldo_inicial,
+        monto_total_gastado,
+        estado_ciclo,
+        id_caja_chica,
+        id_rendicion,
+        id_usuario_creacion,
+        id_usuario_modificacion    )
+    VALUES(
+
+        p_numero_semana,
+        p_fecha_apertura,
+        p_fecha_cierre,
+        p_monto_saldo_inicial,
+        p_monto_total_gastado,
+        p_estado_ciclo,
+        p_id_caja_chica,
+        p_id_rendicion,
+        p_id_usuario_accion,
+        p_id_usuario_accion    );
+    
+    SET p_id_generado = LAST_INSERT_ID();
+END$$
+
+DROP PROCEDURE IF EXISTS pa_modificar_ciclo_caja $$
+CREATE PROCEDURE pa_modificar_ciclo_caja(
+
+        IN p_id_usuario_accion INT,
+IN p_id_ciclo_caja INT,
+    IN p_numero_semana INT,
+    IN p_fecha_apertura DATE,
+    IN p_fecha_cierre DATE,
+    IN p_monto_saldo_inicial DECIMAL(12,2),
+    IN p_monto_total_gastado DECIMAL(12,2),
+    IN p_estado_ciclo ENUM('ABIERTO','CERRADO','LIQUIDADO'),
+    IN p_id_caja_chica INT,
+    IN p_id_rendicion INT
+
+)
+BEGIN
+    IF p_id_ciclo_caja IS NULL OR p_id_ciclo_caja <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de ciclo de caja no válido';
+    END IF;
+
+    UPDATE ope_ciclo_caja
+       SET numero_semana = p_numero_semana,
+           fecha_apertura = p_fecha_apertura,
+           fecha_cierre = p_fecha_cierre,
+           monto_saldo_inicial = p_monto_saldo_inicial,
+           monto_total_gastado = p_monto_total_gastado,
+           estado_ciclo = p_estado_ciclo,
+           id_caja_chica = p_id_caja_chica,
+           id_rendicion = p_id_rendicion,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_ciclo_caja = p_id_ciclo_caja;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_eliminar_ciclo_caja $$
+CREATE PROCEDURE pa_eliminar_ciclo_caja(
+
+        IN p_id_usuario_accion INT,
+IN p_id_ciclo_caja INT
+
+)
+BEGIN
+
+    IF p_id_ciclo_caja IS NULL OR p_id_ciclo_caja <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de ciclo de caja no válido';
+    END IF;
+
+    UPDATE ope_ciclo_caja
+       SET estado_ciclo = 'CERRADO',
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_ciclo_caja = p_id_ciclo_caja;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_ciclo_caja_por_id $$
+CREATE PROCEDURE pa_buscar_ciclo_caja_por_id(
+    IN p_id_ciclo_caja INT
+)
+BEGIN
+    IF p_id_ciclo_caja IS NULL OR p_id_ciclo_caja <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de ciclo de caja no válido';
+    END IF;
+
+    SELECT 
+        occ.id_ciclo_caja, 
+        occ.numero_semana, 
+        occ.fecha_apertura, 
+        occ.fecha_cierre, 
+        occ.monto_saldo_inicial, 
+        occ.monto_total_gastado, 
+        occ.estado_ciclo, 
+        occ.id_caja_chica, 
+        occ.id_rendicion,
+        ccj.id_fondo AS ccj_id_fondo,
+        ccj.monto_techo AS ccj_monto_techo,
+        ccj.id_area AS ccj_id_area,
+        ccj.id_moneda AS ccj_id_moneda,
+        ccj.id_cuenta_origen AS ccj_id_cuenta_origen,
+        f.nombre_fondo AS ccj_nombre_fondo,
+        f.estado_fondo AS ccj_estado_fondo,
+        ren.id_rendicion AS ren_id_rendicion,
+        ren.fecha_presentacion AS ren_fecha_presentacion,
+        ren.fecha_aprobacion AS ren_fecha_aprobacion,
+        ren.monto_total_declarado AS ren_monto_total_declarado,
+        ren.monto_total_aprobado AS ren_monto_total_aprobado,
+        ren.monto_saldo_final AS ren_monto_saldo_final,
+        ren.estado_rendicion AS ren_estado_rendicion,
+        ren.comentario AS ren_comentario
+    FROM ope_ciclo_caja occ
+    LEFT JOIN tes_caja_chica ccj ON occ.id_caja_chica = ccj.id_fondo
+    LEFT JOIN tes_fondo f ON ccj.id_fondo = f.id_fondo
+    LEFT JOIN ope_rendicion ren ON occ.id_rendicion = ren.id_rendicion
+    WHERE occ.id_ciclo_caja = p_id_ciclo_caja
+    ORDER BY occ.estado_ciclo DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_ciclos_caja $$
+CREATE PROCEDURE pa_listar_ciclos_caja()
+BEGIN
+    SELECT 
+        occ.id_ciclo_caja, 
+        occ.numero_semana, 
+        occ.fecha_apertura, 
+        occ.fecha_cierre, 
+        occ.monto_saldo_inicial, 
+        occ.monto_total_gastado, 
+        occ.estado_ciclo, 
+        occ.id_caja_chica, 
+        occ.id_rendicion,
+        ccj.id_fondo AS ccj_id_fondo,
+        ccj.monto_techo AS ccj_monto_techo,
+        ccj.id_area AS ccj_id_area,
+        ccj.id_moneda AS ccj_id_moneda,
+        ccj.id_cuenta_origen AS ccj_id_cuenta_origen,
+        f.nombre_fondo AS ccj_nombre_fondo,
+        f.estado_fondo AS ccj_estado_fondo,
+        ren.id_rendicion AS ren_id_rendicion,
+        ren.fecha_presentacion AS ren_fecha_presentacion,
+        ren.fecha_aprobacion AS ren_fecha_aprobacion,
+        ren.monto_total_declarado AS ren_monto_total_declarado,
+        ren.monto_total_aprobado AS ren_monto_total_aprobado,
+        ren.monto_saldo_final AS ren_monto_saldo_final,
+        ren.estado_rendicion AS ren_estado_rendicion,
+        ren.comentario AS ren_comentario
+    FROM ope_ciclo_caja occ
+    LEFT JOIN tes_caja_chica ccj ON occ.id_caja_chica = ccj.id_fondo
+    LEFT JOIN tes_fondo f ON ccj.id_fondo = f.id_fondo
+    LEFT JOIN ope_rendicion ren ON occ.id_rendicion = ren.id_rendicion
+    WHERE occ.estado_ciclo = 'ABIERTO'
+    ORDER BY occ.id_ciclo_caja DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_todos_ciclos_caja $$
+CREATE PROCEDURE pa_listar_todos_ciclos_caja()
+BEGIN
+    SELECT 
+        occ.id_ciclo_caja, 
+        occ.numero_semana, 
+        occ.fecha_apertura, 
+        occ.fecha_cierre, 
+        occ.monto_saldo_inicial, 
+        occ.monto_total_gastado, 
+        occ.estado_ciclo, 
+        occ.id_caja_chica, 
+        occ.id_rendicion,
+        ccj.id_fondo AS ccj_id_fondo,
+        ccj.monto_techo AS ccj_monto_techo,
+        ccj.id_area AS ccj_id_area,
+        ccj.id_moneda AS ccj_id_moneda,
+        ccj.id_cuenta_origen AS ccj_id_cuenta_origen,
+        f.nombre_fondo AS ccj_nombre_fondo,
+        f.estado_fondo AS ccj_estado_fondo,
+        ren.id_rendicion AS ren_id_rendicion,
+        ren.fecha_presentacion AS ren_fecha_presentacion,
+        ren.fecha_aprobacion AS ren_fecha_aprobacion,
+        ren.monto_total_declarado AS ren_monto_total_declarado,
+        ren.monto_total_aprobado AS ren_monto_total_aprobado,
+        ren.monto_saldo_final AS ren_monto_saldo_final,
+        ren.estado_rendicion AS ren_estado_rendicion,
+        ren.comentario AS ren_comentario
+    FROM ope_ciclo_caja occ
+    LEFT JOIN tes_caja_chica ccj ON occ.id_caja_chica = ccj.id_fondo
+    LEFT JOIN tes_fondo f ON ccj.id_fondo = f.id_fondo
+    LEFT JOIN ope_rendicion ren ON occ.id_rendicion = ren.id_rendicion
+    ORDER BY FIELD(occ.estado_ciclo, 'ABIERTO', 'CERRADO', 'LIQUIDADO'), occ.id_ciclo_caja DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_ciclos_activos $$
+CREATE PROCEDURE pa_listar_ciclos_activos()
+BEGIN
+    SELECT
+        occ.id_ciclo_caja,
+        occ.numero_semana,
+        occ.fecha_apertura,
+        occ.fecha_cierre,
+        occ.monto_saldo_inicial,
+        occ.monto_total_gastado,
+        occ.estado_ciclo,
+        occ.id_caja_chica,
+        occ.id_rendicion,
+        ccj.id_fondo AS ccj_id_fondo,
+        ccj.monto_techo AS ccj_monto_techo,
+        ccj.id_area AS ccj_id_area,
+        ccj.id_moneda AS ccj_id_moneda,
+        ccj.id_cuenta_origen AS ccj_id_cuenta_origen,
+        f.nombre_fondo AS ccj_nombre_fondo,
+        f.estado_fondo AS ccj_estado_fondo,
+        ren.id_rendicion AS ren_id_rendicion,
+        ren.fecha_presentacion AS ren_fecha_presentacion,
+        ren.fecha_aprobacion AS ren_fecha_aprobacion,
+        ren.monto_total_declarado AS ren_monto_total_declarado,
+        ren.monto_total_aprobado AS ren_monto_total_aprobado,
+        ren.monto_saldo_final AS ren_monto_saldo_final,
+        ren.estado_rendicion AS ren_estado_rendicion,
+        ren.comentario AS ren_comentario
+    FROM ope_ciclo_caja occ
+    LEFT JOIN tes_caja_chica ccj ON occ.id_caja_chica = ccj.id_fondo
+    LEFT JOIN tes_fondo f ON ccj.id_fondo = f.id_fondo
+    LEFT JOIN ope_rendicion ren ON occ.id_rendicion = ren.id_rendicion
+    WHERE occ.estado_ciclo = 'ABIERTO'
+    ORDER BY occ.fecha_apertura DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_ciclos_pasados $$
+CREATE PROCEDURE pa_listar_ciclos_pasados()
+BEGIN
+    SELECT
+        occ.id_ciclo_caja,
+        occ.numero_semana,
+        occ.fecha_apertura,
+        occ.fecha_cierre,
+        occ.monto_saldo_inicial,
+        occ.monto_total_gastado,
+        occ.estado_ciclo,
+        occ.id_caja_chica,
+        occ.id_rendicion,
+        ccj.id_fondo AS ccj_id_fondo,
+        ccj.monto_techo AS ccj_monto_techo,
+        ccj.id_area AS ccj_id_area,
+        ccj.id_moneda AS ccj_id_moneda,
+        ccj.id_cuenta_origen AS ccj_id_cuenta_origen,
+        f.nombre_fondo AS ccj_nombre_fondo,
+        f.estado_fondo AS ccj_estado_fondo,
+        ren.id_rendicion AS ren_id_rendicion,
+        ren.fecha_presentacion AS ren_fecha_presentacion,
+        ren.fecha_aprobacion AS ren_fecha_aprobacion,
+        ren.monto_total_declarado AS ren_monto_total_declarado,
+        ren.monto_total_aprobado AS ren_monto_total_aprobado,
+        ren.monto_saldo_final AS ren_monto_saldo_final,
+        ren.estado_rendicion AS ren_estado_rendicion,
+        ren.comentario AS ren_comentario
+    FROM ope_ciclo_caja occ
+    LEFT JOIN tes_caja_chica ccj ON occ.id_caja_chica = ccj.id_fondo
+    LEFT JOIN tes_fondo f ON ccj.id_fondo = f.id_fondo
+    LEFT JOIN ope_rendicion ren ON occ.id_rendicion = ren.id_rendicion
+    WHERE occ.estado_ciclo IN ('CERRADO', 'LIQUIDADO')
+    ORDER BY occ.fecha_cierre DESC, occ.estado_ciclo, occ.id_ciclo_caja DESC;
+END$$
+
+DELIMITER ;
+
+DELIMITER //
+
+-- ===============================================================================
+-- 1. TABLA: ope_ciclo_caja
+-- ===============================================================================
+-- ===============================================================================
+
+DROP TRIGGER IF EXISTS trg_ope_ciclo_caja_before_insert //
+CREATE TRIGGER trg_ope_ciclo_caja_before_insert
+BEFORE INSERT ON ope_ciclo_caja
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_ciclo_caja_before_update //
+CREATE TRIGGER trg_ope_ciclo_caja_before_update
+BEFORE UPDATE ON ope_ciclo_caja
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_ciclo_caja_after_insert //
+CREATE TRIGGER trg_ope_ciclo_caja_after_insert
+AFTER INSERT ON ope_ciclo_caja
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_ciclo_caja',
+        'INSERT',
+        CAST(NEW.id_ciclo_caja AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_ciclo_caja', NEW.id_ciclo_caja,
+            'numero_semana', NEW.numero_semana,
+            'fecha_apertura', NEW.fecha_apertura,
+            'fecha_cierre', NEW.fecha_cierre,
+            'monto_saldo_inicial', NEW.monto_saldo_inicial,
+            'monto_total_gastado', NEW.monto_total_gastado,
+            'estado_ciclo', NEW.estado_ciclo,
+            'id_caja_chica', NEW.id_caja_chica,
+            'id_rendicion', NEW.id_rendicion
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_ciclo_caja_after_update //
+CREATE TRIGGER trg_ope_ciclo_caja_after_update
+AFTER UPDATE ON ope_ciclo_caja
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_ciclo_caja',
+        'UPDATE',
+        CAST(NEW.id_ciclo_caja AS CHAR),
+        JSON_OBJECT(
+            'id_ciclo_caja', OLD.id_ciclo_caja,
+            'numero_semana', OLD.numero_semana,
+            'fecha_apertura', OLD.fecha_apertura,
+            'fecha_cierre', OLD.fecha_cierre,
+            'monto_saldo_inicial', OLD.monto_saldo_inicial,
+            'monto_total_gastado', OLD.monto_total_gastado,
+            'estado_ciclo', OLD.estado_ciclo,
+            'id_caja_chica', OLD.id_caja_chica,
+            'id_rendicion', OLD.id_rendicion
+        ),
+        JSON_OBJECT(
+            'id_ciclo_caja', NEW.id_ciclo_caja,
+            'numero_semana', NEW.numero_semana,
+            'fecha_apertura', NEW.fecha_apertura,
+            'fecha_cierre', NEW.fecha_cierre,
+            'monto_saldo_inicial', NEW.monto_saldo_inicial,
+            'monto_total_gastado', NEW.monto_total_gastado,
+            'estado_ciclo', NEW.estado_ciclo,
+            'id_caja_chica', NEW.id_caja_chica,
+            'id_rendicion', NEW.id_rendicion
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_ciclo_caja_after_delete //
+CREATE TRIGGER trg_ope_ciclo_caja_after_delete
+AFTER DELETE ON ope_ciclo_caja
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_ciclo_caja',
+        'DELETE',
+        CAST(OLD.id_ciclo_caja AS CHAR),
+        JSON_OBJECT(
+            'id_ciclo_caja', OLD.id_ciclo_caja,
+            'numero_semana', OLD.numero_semana,
+            'fecha_apertura', OLD.fecha_apertura,
+            'fecha_cierre', OLD.fecha_cierre,
+            'monto_saldo_inicial', OLD.monto_saldo_inicial,
+            'monto_total_gastado', OLD.monto_total_gastado,
+            'estado_ciclo', OLD.estado_ciclo,
+            'id_caja_chica', OLD.id_caja_chica,
+            'id_rendicion', OLD.id_rendicion
+        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+-- ===============================================================================
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_comprobante_pago $$
+CREATE PROCEDURE pa_insertar_comprobante_pago(
+    IN p_id_usuario_accion INT,
+IN p_tipo_documento ENUM('FACTURA','BOLETA','DJ_EXCEPCIONAL'),
+IN p_ruc_proveedor CHAR(11),
+IN p_razon_social VARCHAR(150),
+IN p_numero_serie VARCHAR(30),
+IN p_fecha_emision DATE,
+IN p_monto_subtotal DECIMAL(12,2),
+IN p_monto_igv DECIMAL(12,2),
+IN p_monto_total DECIMAL(12,2),
+IN p_tipo_cambio DECIMAL(10,4),
+IN p_monto_convertido DECIMAL(12,2),
+IN p_nombre_archivo VARCHAR(500),
+IN p_estado_comprobante ENUM('POR_REVISAR','ANULADO','APROBADO','OBSERVADO'),
+IN p_id_solicitud_gasto INT,
+IN p_id_moneda INT,
+OUT p_id_generado INT
+)
+BEGIN
+    INSERT INTO ope_comprobante_pago(
+
+        tipo_documento,
+        ruc_proveedor,
+        razon_social,
+        numero_serie,
+        fecha_emision,
+        monto_subtotal,
+        monto_igv,
+        monto_total,
+        tipo_cambio,
+        monto_convertido,
+        nombre_archivo_comprobante,
+        estado_comprobante,
+        id_solicitud_gasto,
+        id_moneda,
+        id_usuario_creacion,
+        id_usuario_modificacion    )
+    VALUES(
+
+        p_tipo_documento,
+        p_ruc_proveedor,
+        p_razon_social,
+        p_numero_serie,
+        p_fecha_emision,
+        p_monto_subtotal,
+        p_monto_igv,
+        p_monto_total,
+        p_tipo_cambio,
+        p_monto_convertido,
+        p_nombre_archivo,
+        p_estado_comprobante,
+        p_id_solicitud_gasto,
+        p_id_moneda,
+        p_id_usuario_accion,
+        p_id_usuario_accion    );
+    
+    SET p_id_generado = LAST_INSERT_ID();
+END$$
+
+DROP PROCEDURE IF EXISTS pa_modificar_comprobante_pago $$
+CREATE PROCEDURE pa_modificar_comprobante_pago(
+
+        IN p_id_usuario_accion INT,
+IN p_id_comprobante INT,
+    IN p_tipo_documento ENUM('FACTURA','BOLETA','DJ_EXCEPCIONAL'),
+    IN p_ruc_proveedor CHAR(11),
+    IN p_razon_social VARCHAR(150),
+    IN p_numero_serie VARCHAR(30),
+    IN p_fecha_emision DATE,
+    IN p_monto_subtotal DECIMAL(12,2),
+    IN p_monto_igv DECIMAL(12,2),
+    IN p_monto_total DECIMAL(12,2),
+    IN p_tipo_cambio DECIMAL(10,4),
+    IN p_monto_convertido DECIMAL(12,2),
+    IN p_nombre_archivo VARCHAR(500),
+IN p_estado_comprobante ENUM('POR_REVISAR','ANULADO','APROBADO','OBSERVADO'),
+    IN p_id_solicitud_gasto INT,
+    IN p_id_moneda INT
+
+)
+BEGIN
+    IF p_id_solicitud_gasto IS NULL OR p_id_solicitud_gasto <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de comprobante de pago inválido';
+    END IF;
+
+    UPDATE ope_comprobante_pago
+       SET tipo_documento = p_tipo_documento,
+           ruc_proveedor = p_ruc_proveedor,
+           razon_social = p_razon_social,
+           numero_serie = p_numero_serie,
+           fecha_emision = p_fecha_emision,
+           monto_subtotal = p_monto_subtotal,
+           monto_igv = p_monto_igv,
+            monto_total = p_monto_total,
+            tipo_cambio = p_tipo_cambio,
+            monto_convertido = p_monto_convertido,
+            nombre_archivo_comprobante = p_nombre_archivo,
+            estado_comprobante = p_estado_comprobante,
+            id_solicitud_gasto = p_id_solicitud_gasto,
+            id_moneda = p_id_moneda,
+            id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_comprobante = p_id_comprobante;
+END$$
+
+
+DROP PROCEDURE IF EXISTS pa_eliminar_comprobante_pago $$
+CREATE PROCEDURE pa_eliminar_comprobante_pago(
+
+        IN p_id_usuario_accion INT,
+IN p_id_comprobante INT
+
+)
+BEGIN
+    IF p_id_comprobante IS NULL OR p_id_comprobante <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de comprobante inválido';
+    END IF;
+
+    UPDATE ope_comprobante_pago
+       SET estado_comprobante = 'ANULADO',
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_comprobante = p_id_comprobante;
+    
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_comprobante_pago_por_id $$
+CREATE PROCEDURE pa_buscar_comprobante_pago_por_id(
+    IN p_id_comprobante INT
+)
+BEGIN
+    SELECT 
+        cp.id_comprobante, 
+        cp.tipo_documento, 
+        cp.ruc_proveedor, 
+        cp.razon_social, 
+        cp.numero_serie, 
+        cp.fecha_emision, 
+        cp.monto_subtotal, 
+        cp.monto_igv, 
+        cp.monto_total, 
+        cp.tipo_cambio,
+        cp.monto_convertido,
+        cp.nombre_archivo_comprobante,
+        cp.estado_comprobante,
+        cp.id_solicitud_gasto, 
+        cp.id_moneda,
+        m.id_moneda AS mon_id_moneda,
+        m.codigo_iso AS mon_codigo_iso,
+        m.simbolo AS mon_simbolo,
+        m.nombre_moneda AS mon_nombre,
+        m.descripcion AS mon_descripcion,
+        m.activa AS mon_activa,
+        sg.id_solicitud_gasto AS sg_id_solicitud_gasto,
+        sg.fecha_solicitud AS sg_fecha_solicitud,
+        sg.monto_solicitado AS sg_monto_solicitado,
+        sg.id_moneda_original AS sg_id_moneda_original,
+        sg.tipo_cambio AS sg_tipo_cambio,
+        sg.monto_convertido AS sg_monto_convertido,
+        sg.motivo_solicitud AS sg_motivo_solicitud,
+        sg.estado_solicitud AS sg_estado_solicitud,
+        sg.medio_desembolso AS sg_medio_desembolso,
+        sg.id_usuario_solicitante AS sg_id_usuario_solicitante,
+        sg.id_usuario_destinatario AS sg_id_usuario_destinatario,
+        sg.id_jefe_aprobador AS sg_id_jefe_aprobador,
+        sg.id_tesorero_aprobador AS sg_id_tesorero_aprobador,
+        sg.id_ciclo_caja AS sg_id_ciclo_caja,
+        sg.comentario_decision AS sg_comentario_decision
+    FROM ope_comprobante_pago cp
+    LEFT JOIN tes_moneda m ON cp.id_moneda = m.id_moneda
+    LEFT JOIN ope_solicitud_gasto sg ON cp.id_solicitud_gasto = sg.id_solicitud_gasto
+    WHERE cp.id_comprobante = p_id_comprobante
+    ORDER BY cp.estado_comprobante DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_comprobantes_pago $$
+CREATE PROCEDURE pa_listar_comprobantes_pago()
+BEGIN
+    SELECT 
+        cp.id_comprobante, 
+        cp.tipo_documento, 
+        cp.ruc_proveedor, 
+        cp.razon_social, 
+        cp.numero_serie, 
+        cp.fecha_emision, 
+        cp.monto_subtotal, 
+        cp.monto_igv, 
+        cp.monto_total, 
+        cp.tipo_cambio,
+        cp.monto_convertido,
+        cp.nombre_archivo_comprobante,
+        cp.estado_comprobante,
+        cp.id_solicitud_gasto, 
+        cp.id_moneda,
+        m.id_moneda AS mon_id_moneda,
+        m.codigo_iso AS mon_codigo_iso,
+        m.simbolo AS mon_simbolo,
+        m.nombre_moneda AS mon_nombre,
+        m.descripcion AS mon_descripcion,
+        m.activa AS mon_activa,
+        sg.id_solicitud_gasto AS sg_id_solicitud_gasto,
+        sg.fecha_solicitud AS sg_fecha_solicitud,
+        sg.monto_solicitado AS sg_monto_solicitado,
+        sg.id_moneda_original AS sg_id_moneda_original,
+        sg.tipo_cambio AS sg_tipo_cambio,
+        sg.monto_convertido AS sg_monto_convertido,
+        sg.motivo_solicitud AS sg_motivo_solicitud,
+        sg.estado_solicitud AS sg_estado_solicitud,
+        sg.medio_desembolso AS sg_medio_desembolso,
+        sg.id_usuario_solicitante AS sg_id_usuario_solicitante,
+        sg.id_usuario_destinatario AS sg_id_usuario_destinatario,
+        sg.id_jefe_aprobador AS sg_id_jefe_aprobador,
+        sg.id_tesorero_aprobador AS sg_id_tesorero_aprobador,
+        sg.id_ciclo_caja AS sg_id_ciclo_caja,
+        sg.comentario_decision AS sg_comentario_decision
+    FROM ope_comprobante_pago cp
+    LEFT JOIN tes_moneda m ON cp.id_moneda = m.id_moneda
+    LEFT JOIN ope_solicitud_gasto sg ON cp.id_solicitud_gasto = sg.id_solicitud_gasto
+    ORDER BY cp.estado_comprobante DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_todos_comprobantes_pago $$
+CREATE PROCEDURE pa_listar_todos_comprobantes_pago()
+BEGIN
+    SELECT 
+        cp.id_comprobante, 
+        cp.tipo_documento, 
+        cp.ruc_proveedor, 
+        cp.razon_social, 
+        cp.numero_serie, 
+        cp.fecha_emision, 
+        cp.monto_subtotal, 
+        cp.monto_igv, 
+        cp.monto_total, 
+        cp.tipo_cambio,
+        cp.monto_convertido,
+        cp.nombre_archivo_comprobante,
+        cp.estado_comprobante,
+        cp.id_solicitud_gasto, 
+        cp.id_moneda,
+        m.id_moneda AS mon_id_moneda,
+        m.codigo_iso AS mon_codigo_iso,
+        m.simbolo AS mon_simbolo,
+        m.nombre_moneda AS mon_nombre,
+        m.descripcion AS mon_descripcion,
+        m.activa AS mon_activa,
+        sg.id_solicitud_gasto AS sg_id_solicitud_gasto,
+        sg.fecha_solicitud AS sg_fecha_solicitud,
+        sg.monto_solicitado AS sg_monto_solicitado,
+        sg.id_moneda_original AS sg_id_moneda_original,
+        sg.tipo_cambio AS sg_tipo_cambio,
+        sg.monto_convertido AS sg_monto_convertido,
+        sg.motivo_solicitud AS sg_motivo_solicitud,
+        sg.estado_solicitud AS sg_estado_solicitud,
+        sg.medio_desembolso AS sg_medio_desembolso,
+        sg.id_usuario_solicitante AS sg_id_usuario_solicitante,
+        sg.id_usuario_destinatario AS sg_id_usuario_destinatario,
+        sg.id_jefe_aprobador AS sg_id_jefe_aprobador,
+        sg.id_tesorero_aprobador AS sg_id_tesorero_aprobador,
+        sg.id_ciclo_caja AS sg_id_ciclo_caja,
+        sg.comentario_decision AS sg_comentario_decision
+    FROM ope_comprobante_pago cp
+    LEFT JOIN tes_moneda m ON cp.id_moneda = m.id_moneda
+    LEFT JOIN ope_solicitud_gasto sg ON cp.id_solicitud_gasto = sg.id_solicitud_gasto
+    ORDER BY cp.estado_comprobante DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_comprobantes_por_solicitud $$
+CREATE PROCEDURE pa_listar_comprobantes_por_solicitud(
+	IN p_id_solicitud INT
+)
+BEGIN
+    SELECT
+        cp.id_comprobante,
+        cp.tipo_documento,
+        cp.ruc_proveedor,
+        cp.razon_social,
+        cp.numero_serie,
+        cp.fecha_emision,
+        cp.monto_subtotal,
+        cp.monto_igv,
+        cp.monto_total,
+        cp.tipo_cambio,
+        cp.monto_convertido,
+        cp.nombre_archivo_comprobante,
+        cp.estado_comprobante,
+        cp.id_solicitud_gasto,
+        cp.id_moneda,
+        m.id_moneda AS mon_id_moneda,
+        m.codigo_iso AS mon_codigo_iso,
+        m.simbolo AS mon_simbolo,
+        m.nombre_moneda AS mon_nombre,
+        m.descripcion AS mon_descripcion,
+        m.activa AS mon_activa,
+        sg.id_solicitud_gasto AS sg_id_solicitud_gasto,
+        sg.fecha_solicitud AS sg_fecha_solicitud,
+        sg.monto_solicitado AS sg_monto_solicitado,
+        sg.id_moneda_original AS sg_id_moneda_original,
+        sg.tipo_cambio AS sg_tipo_cambio,
+        sg.monto_convertido AS sg_monto_convertido,
+        sg.motivo_solicitud AS sg_motivo_solicitud,
+        sg.estado_solicitud AS sg_estado_solicitud,
+        sg.medio_desembolso AS sg_medio_desembolso,
+        sg.id_usuario_solicitante AS sg_id_usuario_solicitante,
+        sg.id_usuario_destinatario AS sg_id_usuario_destinatario,
+        sg.id_jefe_aprobador AS sg_id_jefe_aprobador,
+        sg.id_tesorero_aprobador AS sg_id_tesorero_aprobador,
+        sg.id_ciclo_caja AS sg_id_ciclo_caja,
+        sg.comentario_decision AS sg_comentario_decision
+    FROM ope_comprobante_pago cp
+    LEFT JOIN tes_moneda m ON cp.id_moneda = m.id_moneda
+    LEFT JOIN ope_solicitud_gasto sg ON cp.id_solicitud_gasto = sg.id_solicitud_gasto
+    WHERE cp.id_solicitud_gasto = p_id_solicitud
+    ORDER BY cp.estado_comprobante DESC, cp.id_comprobante DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_comprobantes_activos $$
+CREATE PROCEDURE pa_listar_comprobantes_activos()
+BEGIN
+    SELECT
+        cp.id_comprobante,
+        cp.tipo_documento,
+        cp.ruc_proveedor,
+        cp.razon_social,
+        cp.numero_serie,
+        cp.fecha_emision,
+        cp.monto_subtotal,
+        cp.monto_igv,
+        cp.monto_total,
+        cp.tipo_cambio,
+        cp.monto_convertido,
+        cp.nombre_archivo_comprobante,
+        cp.estado_comprobante,
+        cp.id_solicitud_gasto,
+        cp.id_moneda,
+        m.id_moneda AS mon_id_moneda,
+        m.codigo_iso AS mon_codigo_iso,
+        m.simbolo AS mon_simbolo,
+        m.nombre_moneda AS mon_nombre,
+        m.descripcion AS mon_descripcion,
+        m.activa AS mon_activa,
+        sg.id_solicitud_gasto AS sg_id_solicitud_gasto,
+        sg.fecha_solicitud AS sg_fecha_solicitud,
+        sg.monto_solicitado AS sg_monto_solicitado,
+        sg.id_moneda_original AS sg_id_moneda_original,
+        sg.tipo_cambio AS sg_tipo_cambio,
+        sg.monto_convertido AS sg_monto_convertido,
+        sg.motivo_solicitud AS sg_motivo_solicitud,
+        sg.estado_solicitud AS sg_estado_solicitud,
+        sg.medio_desembolso AS sg_medio_desembolso,
+        sg.id_usuario_solicitante AS sg_id_usuario_solicitante,
+        sg.id_usuario_destinatario AS sg_id_usuario_destinatario,
+        sg.id_jefe_aprobador AS sg_id_jefe_aprobador,
+        sg.id_tesorero_aprobador AS sg_id_tesorero_aprobador,
+        sg.id_ciclo_caja AS sg_id_ciclo_caja,
+        sg.comentario_decision AS sg_comentario_decision
+    FROM ope_comprobante_pago cp
+    LEFT JOIN tes_moneda m ON cp.id_moneda = m.id_moneda
+    LEFT JOIN ope_solicitud_gasto sg ON cp.id_solicitud_gasto = sg.id_solicitud_gasto
+    WHERE cp.estado_comprobante != 'ANULADO'
+    ORDER BY cp.estado_comprobante DESC, cp.id_comprobante DESC;
+END$$
+
+DELIMITER ;
+DELIMITER //
+
+-- ===============================================================================
+-- 4. TABLA: ope_comprobante_pago
+-- ===============================================================================
+-- ===============================================================================
+
+DROP TRIGGER IF EXISTS trg_ope_comprobante_pago_before_insert //
+CREATE TRIGGER trg_ope_comprobante_pago_before_insert
+BEFORE INSERT ON ope_comprobante_pago
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_comprobante_pago_before_update //
+CREATE TRIGGER trg_ope_comprobante_pago_before_update
+BEFORE UPDATE ON ope_comprobante_pago
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_comprobante_pago_after_insert //
+CREATE TRIGGER trg_ope_comprobante_pago_after_insert
+AFTER INSERT ON ope_comprobante_pago
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_comprobante_pago',
+        'INSERT',
+        CAST(NEW.id_comprobante AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_comprobante', NEW.id_comprobante,
+            'tipo_documento', NEW.tipo_documento,
+            'ruc_proveedor', NEW.ruc_proveedor,
+            'razon_social', NEW.razon_social,
+            'numero_serie', NEW.numero_serie,
+            'fecha_emision', NEW.fecha_emision,
+            'monto_subtotal', NEW.monto_subtotal,
+            'monto_igv', NEW.monto_igv,
+            'monto_total', NEW.monto_total,
+            'tipo_cambio', NEW.tipo_cambio,
+            'monto_convertido', NEW.monto_convertido,
+            'nombre_archivo_comprobante', NEW.nombre_archivo_comprobante,
+            'estado_comprobante', NEW.estado_comprobante,
+            'id_solicitud_gasto', NEW.id_solicitud_gasto,
+            'id_moneda', NEW.id_moneda
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_comprobante_pago_after_update //
+CREATE TRIGGER trg_ope_comprobante_pago_after_update
+AFTER UPDATE ON ope_comprobante_pago
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_comprobante_pago',
+        'UPDATE',
+        CAST(NEW.id_comprobante AS CHAR),
+        JSON_OBJECT(
+            'id_comprobante', OLD.id_comprobante,
+            'tipo_documento', OLD.tipo_documento,
+            'ruc_proveedor', OLD.ruc_proveedor,
+            'razon_social', OLD.razon_social,
+            'numero_serie', OLD.numero_serie,
+            'fecha_emision', OLD.fecha_emision,
+            'monto_subtotal', OLD.monto_subtotal,
+            'monto_igv', OLD.monto_igv,
+            'monto_total', OLD.monto_total,
+            'tipo_cambio', OLD.tipo_cambio,
+            'monto_convertido', OLD.monto_convertido,
+            'nombre_archivo_comprobante', OLD.nombre_archivo_comprobante,
+            'estado_comprobante', OLD.estado_comprobante,
+            'id_solicitud_gasto', OLD.id_solicitud_gasto,
+            'id_moneda', OLD.id_moneda
+        ),
+        JSON_OBJECT(
+            'id_comprobante', NEW.id_comprobante,
+            'tipo_documento', NEW.tipo_documento,
+            'ruc_proveedor', NEW.ruc_proveedor,
+            'razon_social', NEW.razon_social,
+            'numero_serie', NEW.numero_serie,
+            'fecha_emision', NEW.fecha_emision,
+            'monto_subtotal', NEW.monto_subtotal,
+            'monto_igv', NEW.monto_igv,
+            'monto_total', NEW.monto_total,
+            'tipo_cambio', NEW.tipo_cambio,
+            'monto_convertido', NEW.monto_convertido,
+            'nombre_archivo_comprobante', NEW.nombre_archivo_comprobante,
+            'estado_comprobante', NEW.estado_comprobante,
+            'id_solicitud_gasto', NEW.id_solicitud_gasto,
+            'id_moneda', NEW.id_moneda
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_comprobante_pago_after_delete //
+CREATE TRIGGER trg_ope_comprobante_pago_after_delete
+AFTER DELETE ON ope_comprobante_pago
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_comprobante_pago',
+        'DELETE',
+        CAST(OLD.id_comprobante AS CHAR),
+        JSON_OBJECT(
+            'id_comprobante', OLD.id_comprobante,
+            'tipo_documento', OLD.tipo_documento,
+            'ruc_proveedor', OLD.ruc_proveedor,
+            'razon_social', OLD.razon_social,
+            'numero_serie', OLD.numero_serie,
+            'fecha_emision', OLD.fecha_emision,
+            'monto_subtotal', OLD.monto_subtotal,
+            'monto_igv', OLD.monto_igv,
+            'monto_total', OLD.monto_total,
+            'tipo_cambio', OLD.tipo_cambio,
+            'monto_convertido', OLD.monto_convertido,
+            'nombre_archivo_comprobante', OLD.nombre_archivo_comprobante,
+            'estado_comprobante', OLD.estado_comprobante,
+            'id_solicitud_gasto', OLD.id_solicitud_gasto,
+            'id_moneda', OLD.id_moneda
+        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+-- ===============================================================================
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_rendicion $$
+CREATE PROCEDURE pa_insertar_rendicion(
+    IN p_id_usuario_accion INT,
+IN p_fecha_presentacion DATE,
+IN p_fecha_aprobacion DATE,
+IN p_monto_total_declarado DECIMAL(12,2),
+IN p_monto_total_aprobado DECIMAL(12,2),
+IN p_monto_saldo_final DECIMAL(12,2),
+IN p_estado_rendicion ENUM('ACEPTADO','EN_ESPERA','DENEGADO','ANULADO'),
+IN p_comentario VARCHAR(500),OUT p_id_generado INT
+)
+BEGIN
+
+    INSERT INTO ope_rendicion(
+
+        fecha_presentacion,
+        fecha_aprobacion,
+        monto_total_declarado,
+        monto_total_aprobado,
+        monto_saldo_final,
+        estado_rendicion,
+        comentario,
+        id_usuario_creacion,
+        id_usuario_modificacion    )
+    VALUES(
+
+        p_fecha_presentacion,
+        p_fecha_aprobacion,
+        p_monto_total_declarado,
+        p_monto_total_aprobado,
+        p_monto_saldo_final,
+        p_estado_rendicion,
+        p_comentario,
+        p_id_usuario_accion,
+        p_id_usuario_accion    );
+    
+    SET p_id_generado = LAST_INSERT_ID();
+END$$
+
+
+DROP PROCEDURE IF EXISTS pa_modificar_rendicion $$
+CREATE PROCEDURE pa_modificar_rendicion(
+
+    IN p_id_usuario_accion INT,
+	IN p_id_rendicion INT,
+    IN p_fecha_presentacion DATE,
+    IN p_fecha_aprobacion DATE,
+    IN p_monto_total_declarado DECIMAL(12,2),
+    IN p_monto_total_aprobado DECIMAL(12,2),
+    IN p_monto_saldo_final DECIMAL(12,2),
+    IN p_estado_rendicion ENUM('ACEPTADO','EN_ESPERA','DENEGADO','ANULADO'),
+    IN p_comentario VARCHAR(500)
+)
+BEGIN
+    IF p_id_rendicion IS NULL OR p_id_rendicion <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de rendición inválido';
+    END IF;
+
+    UPDATE ope_rendicion
+       SET fecha_presentacion = p_fecha_presentacion,
+           fecha_aprobacion = p_fecha_aprobacion,
+           monto_total_declarado = p_monto_total_declarado,
+           monto_total_aprobado = p_monto_total_aprobado,
+           monto_saldo_final = p_monto_saldo_final,
+           estado_rendicion = p_estado_rendicion,
+           comentario = p_comentario,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_rendicion = p_id_rendicion;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_eliminar_rendicion $$
+CREATE PROCEDURE pa_eliminar_rendicion(
+
+        IN p_id_usuario_accion INT,
+IN p_id_rendicion INT
+
+)
+BEGIN
+    IF p_id_rendicion IS NULL OR p_id_rendicion <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de rendición inválido';
+    END IF;
+
+    UPDATE ope_rendicion
+       SET estado_rendicion = 'ANULADO',
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_rendicion = p_id_rendicion;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_rendicion_por_id $$
+CREATE PROCEDURE pa_buscar_rendicion_por_id(
+    IN p_id_rendicion INT
+)
+BEGIN
+    SELECT
+        r.id_rendicion,
+        r.fecha_presentacion,
+        r.fecha_aprobacion,
+        r.monto_total_declarado,
+        r.monto_total_aprobado,
+        r.monto_saldo_final,
+        r.estado_rendicion,
+        r.comentario,
+        r.id_ciclo_caja,
+        cc.id_ciclo_caja AS cc_id_ciclo_caja,
+        cc.numero_semana AS cc_numero_semana,
+        cc.fecha_apertura AS cc_fecha_apertura,
+        cc.fecha_cierre AS cc_fecha_cierre,
+        cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
+        cc.monto_total_gastado AS cc_monto_total_gastado,
+        cc.estado_ciclo AS cc_estado_ciclo,
+        cc.id_caja_chica AS cc_id_caja_chica,
+        cc.id_rendicion AS cc_id_rendicion
+    FROM ope_rendicion r
+    LEFT JOIN ope_ciclo_caja cc ON r.id_ciclo_caja = cc.id_ciclo_caja
+    WHERE r.id_rendicion = p_id_rendicion;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_rendiciones $$
+CREATE PROCEDURE pa_listar_rendiciones()
+BEGIN
+    SELECT
+        r.id_rendicion,
+        r.fecha_presentacion,
+        r.fecha_aprobacion,
+        r.monto_total_declarado,
+        r.monto_total_aprobado,
+        r.monto_saldo_final,
+        r.estado_rendicion,
+        r.comentario,
+        r.id_ciclo_caja,
+        cc.id_ciclo_caja AS cc_id_ciclo_caja,
+        cc.numero_semana AS cc_numero_semana,
+        cc.fecha_apertura AS cc_fecha_apertura,
+        cc.fecha_cierre AS cc_fecha_cierre,
+        cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
+        cc.monto_total_gastado AS cc_monto_total_gastado,
+        cc.estado_ciclo AS cc_estado_ciclo,
+        cc.id_caja_chica AS cc_id_caja_chica,
+        cc.id_rendicion AS cc_id_rendicion
+    FROM ope_rendicion r
+    LEFT JOIN ope_ciclo_caja cc ON r.id_ciclo_caja = cc.id_ciclo_caja
+    ORDER BY r.estado_rendicion DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_todas_rendiciones $$
+CREATE PROCEDURE pa_listar_todas_rendiciones()
+BEGIN
+    SELECT
+        r.id_rendicion,
+        r.fecha_presentacion,
+        r.fecha_aprobacion,
+        r.monto_total_declarado,
+        r.monto_total_aprobado,
+        r.monto_saldo_final,
+        r.estado_rendicion,
+        r.comentario,
+        r.id_ciclo_caja,
+        cc.id_ciclo_caja AS cc_id_ciclo_caja,
+        cc.numero_semana AS cc_numero_semana,
+        cc.fecha_apertura AS cc_fecha_apertura,
+        cc.fecha_cierre AS cc_fecha_cierre,
+        cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
+        cc.monto_total_gastado AS cc_monto_total_gastado,
+        cc.estado_ciclo AS cc_estado_ciclo,
+        cc.id_caja_chica AS cc_id_caja_chica,
+        cc.id_rendicion AS cc_id_rendicion
+    FROM ope_rendicion r
+    LEFT JOIN ope_ciclo_caja cc ON r.id_ciclo_caja = cc.id_ciclo_caja
+    ORDER BY r.estado_rendicion DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_rendiciones_activas $$
+CREATE PROCEDURE pa_listar_rendiciones_activas()
+BEGIN
+    SELECT
+        r.id_rendicion,
+        r.fecha_presentacion,
+        r.fecha_aprobacion,
+        r.monto_total_declarado,
+        r.monto_total_aprobado,
+        r.monto_saldo_final,
+        r.estado_rendicion,
+        r.comentario,
+        r.id_ciclo_caja,
+        cc.id_ciclo_caja AS cc_id_ciclo_caja,
+        cc.numero_semana AS cc_numero_semana,
+        cc.fecha_apertura AS cc_fecha_apertura,
+        cc.fecha_cierre AS cc_fecha_cierre,
+        cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
+        cc.monto_total_gastado AS cc_monto_total_gastado,
+        cc.estado_ciclo AS cc_estado_ciclo,
+        cc.id_caja_chica AS cc_id_caja_chica,
+        cc.id_rendicion AS cc_id_rendicion
+    FROM ope_rendicion r
+    LEFT JOIN ope_ciclo_caja cc ON r.id_ciclo_caja = cc.id_ciclo_caja
+    WHERE r.estado_rendicion != 'ANULADO'
+    ORDER BY r.estado_rendicion DESC, r.id_rendicion DESC;
+END$$
+
+DELIMITER ;
+
+DELIMITER //
+
+-- ===============================================================================
+-- 2. TABLA: ope_rendicion
+-- ===============================================================================
+-- ===============================================================================
+
+DROP TRIGGER IF EXISTS trg_ope_rendicion_before_insert //
+CREATE TRIGGER trg_ope_rendicion_before_insert
+BEFORE INSERT ON ope_rendicion
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_rendicion_before_update //
+CREATE TRIGGER trg_ope_rendicion_before_update
+BEFORE UPDATE ON ope_rendicion
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_rendicion_after_insert //
+CREATE TRIGGER trg_ope_rendicion_after_insert
+AFTER INSERT ON ope_rendicion
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_rendicion',
+        'INSERT',
+        CAST(NEW.id_rendicion AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_rendicion', NEW.id_rendicion,
+            'fecha_presentacion', NEW.fecha_presentacion,
+            'fecha_aprobacion', NEW.fecha_aprobacion,
+            'monto_total_declarado', NEW.monto_total_declarado,
+            'monto_total_aprobado', NEW.monto_total_aprobado,
+            'monto_saldo_final', NEW.monto_saldo_final,
+            'estado_rendicion', NEW.estado_rendicion,
+            'comentario', NEW.comentario,
+            'id_ciclo_caja', NEW.id_ciclo_caja
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_rendicion_after_update //
+CREATE TRIGGER trg_ope_rendicion_after_update
+AFTER UPDATE ON ope_rendicion
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_rendicion',
+        'UPDATE',
+        CAST(NEW.id_rendicion AS CHAR),
+        JSON_OBJECT(
+            'id_rendicion', OLD.id_rendicion,
+            'fecha_presentacion', OLD.fecha_presentacion,
+            'fecha_aprobacion', OLD.fecha_aprobacion,
+            'monto_total_declarado', OLD.monto_total_declarado,
+            'monto_total_aprobado', OLD.monto_total_aprobado,
+            'monto_saldo_final', OLD.monto_saldo_final,
+            'estado_rendicion', OLD.estado_rendicion,
+            'comentario', OLD.comentario,
+            'id_ciclo_caja', OLD.id_ciclo_caja
+        ),
+        JSON_OBJECT(
+            'id_rendicion', NEW.id_rendicion,
+            'fecha_presentacion', NEW.fecha_presentacion,
+            'fecha_aprobacion', NEW.fecha_aprobacion,
+            'monto_total_declarado', NEW.monto_total_declarado,
+            'monto_total_aprobado', NEW.monto_total_aprobado,
+            'monto_saldo_final', NEW.monto_saldo_final,
+            'estado_rendicion', NEW.estado_rendicion,
+            'comentario', NEW.comentario,
+            'id_ciclo_caja', NEW.id_ciclo_caja
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_rendicion_after_delete //
+CREATE TRIGGER trg_ope_rendicion_after_delete
+AFTER DELETE ON ope_rendicion
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_rendicion',
+        'DELETE',
+        CAST(OLD.id_rendicion AS CHAR),
+        JSON_OBJECT(
+            'id_rendicion', OLD.id_rendicion,
+            'fecha_presentacion', OLD.fecha_presentacion,
+            'fecha_aprobacion', OLD.fecha_aprobacion,
+            'monto_total_declarado', OLD.monto_total_declarado,
+            'monto_total_aprobado', OLD.monto_total_aprobado,
+            'monto_saldo_final', OLD.monto_saldo_final,
+            'estado_rendicion', OLD.estado_rendicion,
+            'comentario', OLD.comentario,
+            'id_ciclo_caja', OLD.id_ciclo_caja
+        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+-- ===============================================================================
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_solicitud_gasto $$
+CREATE PROCEDURE pa_insertar_solicitud_gasto(
+    IN p_id_usuario_accion INT,
+    IN p_fecha_solicitud DATE,
+    IN p_monto_solicitado DECIMAL(12,2),
+    IN p_id_moneda_original INT,
+    IN p_tipo_cambio DECIMAL(10,4),
+    IN p_monto_convertido DECIMAL(12,2),
+    IN p_motivo_solicitud VARCHAR(200),
+    IN p_estado_solicitud ENUM('PENDIENTE','APROBADO','PAGADO','RENDIDO','RECHAZADO','ANULADO'),
+    IN p_medio_desembolso ENUM('YAPE','PLIN','TRANSFERENCIA','EFECTIVO'),
+    IN p_comentario_decision VARCHAR(500),
+    IN p_id_usuario_solicitante INT,
+    IN p_id_usuario_destinatario INT,
+    IN p_id_jefe_aprobador INT,
+    IN p_id_tesorero_aprobador INT,
+    IN p_id_ciclo_caja INT,
+    OUT p_id_generado INT
+)
+BEGIN
+    INSERT INTO ope_solicitud_gasto(
+        fecha_solicitud,
+        monto_solicitado,
+        id_moneda_original,
+        tipo_cambio,
+        monto_convertido,
+        motivo_solicitud,
+        estado_solicitud,
+        medio_desembolso,
+        comentario_decision,
+        id_usuario_solicitante,
+        id_usuario_destinatario,
+        id_jefe_aprobador,
+        id_tesorero_aprobador,
+        id_ciclo_caja,
+        id_usuario_creacion,
+        id_usuario_modificacion
+    )
+    VALUES(
+        p_fecha_solicitud,
+        p_monto_solicitado,
+        p_id_moneda_original,
+        p_tipo_cambio,
+        p_monto_convertido,
+        p_motivo_solicitud,
+        p_estado_solicitud,
+        p_medio_desembolso,
+        p_comentario_decision,
+        p_id_usuario_solicitante,
+        p_id_usuario_destinatario,
+        p_id_jefe_aprobador,
+        p_id_tesorero_aprobador,
+        p_id_ciclo_caja,
+        p_id_usuario_accion,
+        p_id_usuario_accion
+    );
+
+    SET p_id_generado = LAST_INSERT_ID();
+END$$
+
+DROP PROCEDURE IF EXISTS pa_modificar_solicitud_gasto $$
+CREATE PROCEDURE pa_modificar_solicitud_gasto(
+    IN p_id_usuario_accion INT,
+    IN p_id_solicitud_gasto INT,
+    IN p_fecha_solicitud DATE,
+    IN p_monto_solicitado DECIMAL(12,2),
+    IN p_id_moneda_original INT,
+    IN p_tipo_cambio DECIMAL(10,4),
+    IN p_monto_convertido DECIMAL(12,2),
+    IN p_motivo_solicitud VARCHAR(200),
+    IN p_estado_solicitud ENUM('PENDIENTE','APROBADO','PAGADO','RENDIDO','RECHAZADO','ANULADO'),
+    IN p_medio_desembolso ENUM('YAPE','PLIN','TRANSFERENCIA','EFECTIVO'),
+    IN p_comentario_decision VARCHAR(500),
+    IN p_id_usuario_solicitante INT,
+    IN p_id_usuario_destinatario INT,
+    IN p_id_jefe_aprobador INT,
+    IN p_id_tesorero_aprobador INT,
+    IN p_id_ciclo_caja INT
+)
+BEGIN
+    IF p_id_solicitud_gasto IS NULL OR p_id_solicitud_gasto <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de solicitud de gasto inválido';
+    END IF;
+
+    UPDATE ope_solicitud_gasto
+    SET fecha_solicitud = p_fecha_solicitud,
+        monto_solicitado = p_monto_solicitado,
+        id_moneda_original = p_id_moneda_original,
+        tipo_cambio = p_tipo_cambio,
+        monto_convertido = p_monto_convertido,
+        motivo_solicitud = p_motivo_solicitud,
+        estado_solicitud = p_estado_solicitud,
+        medio_desembolso = p_medio_desembolso,
+        comentario_decision = p_comentario_decision,
+        id_usuario_solicitante = p_id_usuario_solicitante,
+        id_usuario_destinatario = p_id_usuario_destinatario,
+        id_jefe_aprobador = p_id_jefe_aprobador,
+        id_tesorero_aprobador = p_id_tesorero_aprobador,
+        id_ciclo_caja = p_id_ciclo_caja,
+        id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_solicitud_gasto = p_id_solicitud_gasto;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_eliminar_solicitud_gasto $$
+CREATE PROCEDURE pa_eliminar_solicitud_gasto(
+    IN p_id_usuario_accion INT,
+    IN p_id_solicitud_gasto INT
+)
+BEGIN
+    IF p_id_solicitud_gasto IS NULL OR p_id_solicitud_gasto <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de solicitud de gasto inválido';
+    END IF;
+
+    UPDATE ope_solicitud_gasto
+    SET estado_solicitud = 'ANULADO',
+        id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_solicitud_gasto = p_id_solicitud_gasto;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_solicitud_gasto_por_id $$
+CREATE PROCEDURE pa_buscar_solicitud_gasto_por_id(
+    IN p_id_solicitud_gasto INT
+)
+BEGIN
+    IF p_id_solicitud_gasto IS NULL OR p_id_solicitud_gasto <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de solicitud de gasto inválido';
+    END IF;
+
+    SELECT
+        sg.id_solicitud_gasto,
+        sg.fecha_solicitud,
+        sg.monto_solicitado,
+        sg.id_moneda_original,
+        sg.tipo_cambio,
+        sg.monto_convertido,
+        sg.motivo_solicitud,
+        sg.estado_solicitud,
+        sg.medio_desembolso,
+        sg.id_usuario_solicitante,
+        sg.id_usuario_destinatario,
+        sg.id_jefe_aprobador,
+        sg.id_tesorero_aprobador,
+        sg.id_ciclo_caja,
+        sg.comentario_decision,
+        mon.id_moneda AS mon_id_moneda,
+        mon.codigo_iso AS mon_codigo_iso,
+        mon.simbolo AS mon_simbolo,
+        mon.nombre_moneda AS mon_nombre,
+        mon.descripcion AS mon_descripcion,
+        mon.activa AS mon_activa,
+        sol.id_usuario AS sol_id_usuario,
+        usol.nombres AS sol_nombres,
+        usol.apellido_paterno AS sol_apellido_paterno,
+        usol.apellido_materno AS sol_apellido_materno,
+        usol.correo AS sol_correo,
+        sol.numero_celular AS sol_numero_celular,
+        sol.rol_flujo AS sol_rol_flujo,
+        des.id_usuario AS des_id_usuario,
+        udes.nombres AS des_nombres,
+        udes.apellido_paterno AS des_apellido_paterno,
+        udes.apellido_materno AS des_apellido_materno,
+        udes.correo AS des_correo,
+        des.numero_celular AS des_numero_celular,
+        des.rol_flujo AS des_rol_flujo,
+        jefe.id_usuario AS jefe_id_usuario,
+        ujefe.nombres AS jefe_nombres,
+        ujefe.apellido_paterno AS jefe_apellido_paterno,
+        ujefe.apellido_materno AS jefe_apellido_materno,
+        ujefe.correo AS jefe_correo,
+        jefe.numero_celular AS jefe_numero_celular,
+        jefe.rol_flujo AS jefe_rol_flujo,
+        tes.id_usuario AS tes_id_usuario,
+        utes.nombres AS tes_nombres,
+        utes.apellido_paterno AS tes_apellido_paterno,
+        utes.apellido_materno AS tes_apellido_materno,
+        utes.correo AS tes_correo,
+        tes.numero_celular AS tes_numero_celular,
+        tes.rol_flujo AS tes_rol_flujo,
+        cc.id_ciclo_caja AS cc_id_ciclo_caja,
+        cc.numero_semana AS cc_numero_semana,
+        cc.fecha_apertura AS cc_fecha_apertura,
+        cc.fecha_cierre AS cc_fecha_cierre,
+        cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
+        cc.monto_total_gastado AS cc_monto_total_gastado,
+        cc.estado_ciclo AS cc_estado_ciclo,
+        cc.id_caja_chica AS cc_id_caja_chica,
+        cc.id_rendicion AS cc_id_rendicion
+    FROM ope_solicitud_gasto sg
+    LEFT JOIN tes_moneda mon ON sg.id_moneda_original = mon.id_moneda
+    LEFT JOIN rrhh_empleado sol ON sg.id_usuario_solicitante = sol.id_usuario
+    LEFT JOIN rrhh_usuario usol ON sol.id_usuario = usol.id_usuario
+    LEFT JOIN rrhh_empleado des ON sg.id_usuario_destinatario = des.id_usuario
+    LEFT JOIN rrhh_usuario udes ON des.id_usuario = udes.id_usuario
+    LEFT JOIN rrhh_empleado jefe ON sg.id_jefe_aprobador = jefe.id_usuario
+    LEFT JOIN rrhh_usuario ujefe ON jefe.id_usuario = ujefe.id_usuario
+    LEFT JOIN rrhh_empleado tes ON sg.id_tesorero_aprobador = tes.id_usuario
+    LEFT JOIN rrhh_usuario utes ON tes.id_usuario = utes.id_usuario
+    LEFT JOIN ope_ciclo_caja cc ON sg.id_ciclo_caja = cc.id_ciclo_caja
+    WHERE sg.id_solicitud_gasto = p_id_solicitud_gasto
+    ORDER BY sg.estado_solicitud DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_solicitudes_gasto $$
+CREATE PROCEDURE pa_listar_solicitudes_gasto()
+BEGIN
+    SELECT
+        sg.id_solicitud_gasto,
+        sg.fecha_solicitud,
+        sg.monto_solicitado,
+        sg.id_moneda_original,
+        sg.tipo_cambio,
+        sg.monto_convertido,
+        sg.motivo_solicitud,
+        sg.estado_solicitud,
+        sg.medio_desembolso,
+        sg.id_usuario_solicitante,
+        sg.id_usuario_destinatario,
+        sg.id_jefe_aprobador,
+        sg.id_tesorero_aprobador,
+        sg.id_ciclo_caja,
+        sg.comentario_decision,
+        mon.id_moneda AS mon_id_moneda,
+        mon.codigo_iso AS mon_codigo_iso,
+        mon.simbolo AS mon_simbolo,
+        mon.nombre_moneda AS mon_nombre,
+        mon.descripcion AS mon_descripcion,
+        mon.activa AS mon_activa,
+        sol.id_usuario AS sol_id_usuario,
+        usol.nombres AS sol_nombres,
+        usol.apellido_paterno AS sol_apellido_paterno,
+        usol.apellido_materno AS sol_apellido_materno,
+        usol.correo AS sol_correo,
+        sol.numero_celular AS sol_numero_celular,
+        sol.rol_flujo AS sol_rol_flujo,
+        des.id_usuario AS des_id_usuario,
+        udes.nombres AS des_nombres,
+        udes.apellido_paterno AS des_apellido_paterno,
+        udes.apellido_materno AS des_apellido_materno,
+        udes.correo AS des_correo,
+        des.numero_celular AS des_numero_celular,
+        des.rol_flujo AS des_rol_flujo,
+        jefe.id_usuario AS jefe_id_usuario,
+        ujefe.nombres AS jefe_nombres,
+        ujefe.apellido_paterno AS jefe_apellido_paterno,
+        ujefe.apellido_materno AS jefe_apellido_materno,
+        ujefe.correo AS jefe_correo,
+        jefe.numero_celular AS jefe_numero_celular,
+        jefe.rol_flujo AS jefe_rol_flujo,
+        tes.id_usuario AS tes_id_usuario,
+        utes.nombres AS tes_nombres,
+        utes.apellido_paterno AS tes_apellido_paterno,
+        utes.apellido_materno AS tes_apellido_materno,
+        utes.correo AS tes_correo,
+        tes.numero_celular AS tes_numero_celular,
+        tes.rol_flujo AS tes_rol_flujo,
+        cc.id_ciclo_caja AS cc_id_ciclo_caja,
+        cc.numero_semana AS cc_numero_semana,
+        cc.fecha_apertura AS cc_fecha_apertura,
+        cc.fecha_cierre AS cc_fecha_cierre,
+        cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
+        cc.monto_total_gastado AS cc_monto_total_gastado,
+        cc.estado_ciclo AS cc_estado_ciclo,
+        cc.id_caja_chica AS cc_id_caja_chica,
+        cc.id_rendicion AS cc_id_rendicion
+    FROM ope_solicitud_gasto sg
+    LEFT JOIN tes_moneda mon ON sg.id_moneda_original = mon.id_moneda
+    LEFT JOIN rrhh_empleado sol ON sg.id_usuario_solicitante = sol.id_usuario
+    LEFT JOIN rrhh_usuario usol ON sol.id_usuario = usol.id_usuario
+    LEFT JOIN rrhh_empleado des ON sg.id_usuario_destinatario = des.id_usuario
+    LEFT JOIN rrhh_usuario udes ON des.id_usuario = udes.id_usuario
+    LEFT JOIN rrhh_empleado jefe ON sg.id_jefe_aprobador = jefe.id_usuario
+    LEFT JOIN rrhh_usuario ujefe ON jefe.id_usuario = ujefe.id_usuario
+    LEFT JOIN rrhh_empleado tes ON sg.id_tesorero_aprobador = tes.id_usuario
+    LEFT JOIN rrhh_usuario utes ON tes.id_usuario = utes.id_usuario
+    LEFT JOIN ope_ciclo_caja cc ON sg.id_ciclo_caja = cc.id_ciclo_caja
+    ORDER BY sg.estado_solicitud DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_todas_solicitudes_gasto $$
+CREATE PROCEDURE pa_listar_todas_solicitudes_gasto()
+BEGIN
+    SELECT
+        sg.id_solicitud_gasto,
+        sg.fecha_solicitud,
+        sg.monto_solicitado,
+        sg.id_moneda_original,
+        sg.tipo_cambio,
+        sg.monto_convertido,
+        sg.motivo_solicitud,
+        sg.estado_solicitud,
+        sg.medio_desembolso,
+        sg.id_usuario_solicitante,
+        sg.id_usuario_destinatario,
+        sg.id_jefe_aprobador,
+        sg.id_tesorero_aprobador,
+        sg.id_ciclo_caja,
+        sg.comentario_decision,
+        mon.id_moneda AS mon_id_moneda,
+        mon.codigo_iso AS mon_codigo_iso,
+        mon.simbolo AS mon_simbolo,
+        mon.nombre_moneda AS mon_nombre,
+        mon.descripcion AS mon_descripcion,
+        mon.activa AS mon_activa,
+        sol.id_usuario AS sol_id_usuario,
+        usol.nombres AS sol_nombres,
+        usol.apellido_paterno AS sol_apellido_paterno,
+        usol.apellido_materno AS sol_apellido_materno,
+        usol.correo AS sol_correo,
+        sol.numero_celular AS sol_numero_celular,
+        sol.rol_flujo AS sol_rol_flujo,
+        des.id_usuario AS des_id_usuario,
+        udes.nombres AS des_nombres,
+        udes.apellido_paterno AS des_apellido_paterno,
+        udes.apellido_materno AS des_apellido_materno,
+        udes.correo AS des_correo,
+        des.numero_celular AS des_numero_celular,
+        des.rol_flujo AS des_rol_flujo,
+        jefe.id_usuario AS jefe_id_usuario,
+        ujefe.nombres AS jefe_nombres,
+        ujefe.apellido_paterno AS jefe_apellido_paterno,
+        ujefe.apellido_materno AS jefe_apellido_materno,
+        ujefe.correo AS jefe_correo,
+        jefe.numero_celular AS jefe_numero_celular,
+        jefe.rol_flujo AS jefe_rol_flujo,
+        tes.id_usuario AS tes_id_usuario,
+        utes.nombres AS tes_nombres,
+        utes.apellido_paterno AS tes_apellido_paterno,
+        utes.apellido_materno AS tes_apellido_materno,
+        utes.correo AS tes_correo,
+        tes.numero_celular AS tes_numero_celular,
+        tes.rol_flujo AS tes_rol_flujo,
+        cc.id_ciclo_caja AS cc_id_ciclo_caja,
+        cc.numero_semana AS cc_numero_semana,
+        cc.fecha_apertura AS cc_fecha_apertura,
+        cc.fecha_cierre AS cc_fecha_cierre,
+        cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
+        cc.monto_total_gastado AS cc_monto_total_gastado,
+        cc.estado_ciclo AS cc_estado_ciclo,
+        cc.id_caja_chica AS cc_id_caja_chica,
+        cc.id_rendicion AS cc_id_rendicion
+    FROM ope_solicitud_gasto sg
+    LEFT JOIN tes_moneda mon ON sg.id_moneda_original = mon.id_moneda
+    LEFT JOIN rrhh_empleado sol ON sg.id_usuario_solicitante = sol.id_usuario
+    LEFT JOIN rrhh_usuario usol ON sol.id_usuario = usol.id_usuario
+    LEFT JOIN rrhh_empleado des ON sg.id_usuario_destinatario = des.id_usuario
+    LEFT JOIN rrhh_usuario udes ON des.id_usuario = udes.id_usuario
+    LEFT JOIN rrhh_empleado jefe ON sg.id_jefe_aprobador = jefe.id_usuario
+    LEFT JOIN rrhh_usuario ujefe ON jefe.id_usuario = ujefe.id_usuario
+    LEFT JOIN rrhh_empleado tes ON sg.id_tesorero_aprobador = tes.id_usuario
+    LEFT JOIN rrhh_usuario utes ON tes.id_usuario = utes.id_usuario
+    LEFT JOIN ope_ciclo_caja cc ON sg.id_ciclo_caja = cc.id_ciclo_caja
+    ORDER BY sg.estado_solicitud DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_solicitudes_por_solicitante $$
+CREATE PROCEDURE pa_listar_solicitudes_por_solicitante(
+    IN p_id_usuario_solicitante INT
+)
+BEGIN
+    IF p_id_usuario_solicitante IS NULL OR p_id_usuario_solicitante <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de usuario solicitante inválido';
+    END IF;
+
+    SELECT
+        sg.id_solicitud_gasto,
+        sg.fecha_solicitud,
+        sg.monto_solicitado,
+        sg.id_moneda_original,
+        sg.tipo_cambio,
+        sg.monto_convertido,
+        sg.motivo_solicitud,
+        sg.estado_solicitud,
+        sg.medio_desembolso,
+        sg.id_usuario_solicitante,
+        sg.id_usuario_destinatario,
+        sg.id_jefe_aprobador,
+        sg.id_tesorero_aprobador,
+        sg.id_ciclo_caja,
+        sg.comentario_decision,
+        mon.id_moneda AS mon_id_moneda,
+        mon.codigo_iso AS mon_codigo_iso,
+        mon.simbolo AS mon_simbolo,
+        mon.nombre_moneda AS mon_nombre,
+        mon.descripcion AS mon_descripcion,
+        mon.activa AS mon_activa,
+        sol.id_usuario AS sol_id_usuario,
+        usol.nombres AS sol_nombres,
+        usol.apellido_paterno AS sol_apellido_paterno,
+        usol.apellido_materno AS sol_apellido_materno,
+        usol.correo AS sol_correo,
+        sol.numero_celular AS sol_numero_celular,
+        sol.rol_flujo AS sol_rol_flujo,
+        des.id_usuario AS des_id_usuario,
+        udes.nombres AS des_nombres,
+        udes.apellido_paterno AS des_apellido_paterno,
+        udes.apellido_materno AS des_apellido_materno,
+        udes.correo AS des_correo,
+        des.numero_celular AS des_numero_celular,
+        des.rol_flujo AS des_rol_flujo,
+        jefe.id_usuario AS jefe_id_usuario,
+        ujefe.nombres AS jefe_nombres,
+        ujefe.apellido_paterno AS jefe_apellido_paterno,
+        ujefe.apellido_materno AS jefe_apellido_materno,
+        ujefe.correo AS jefe_correo,
+        jefe.numero_celular AS jefe_numero_celular,
+        jefe.rol_flujo AS jefe_rol_flujo,
+        tes.id_usuario AS tes_id_usuario,
+        utes.nombres AS tes_nombres,
+        utes.apellido_paterno AS tes_apellido_paterno,
+        utes.apellido_materno AS tes_apellido_materno,
+        utes.correo AS tes_correo,
+        tes.numero_celular AS tes_numero_celular,
+        tes.rol_flujo AS tes_rol_flujo,
+        cc.id_ciclo_caja AS cc_id_ciclo_caja,
+        cc.numero_semana AS cc_numero_semana,
+        cc.fecha_apertura AS cc_fecha_apertura,
+        cc.fecha_cierre AS cc_fecha_cierre,
+        cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
+        cc.monto_total_gastado AS cc_monto_total_gastado,
+        cc.estado_ciclo AS cc_estado_ciclo,
+        cc.id_caja_chica AS cc_id_caja_chica,
+        cc.id_rendicion AS cc_id_rendicion
+    FROM ope_solicitud_gasto sg
+    LEFT JOIN tes_moneda mon ON sg.id_moneda_original = mon.id_moneda
+    LEFT JOIN rrhh_empleado sol ON sg.id_usuario_solicitante = sol.id_usuario
+    LEFT JOIN rrhh_usuario usol ON sol.id_usuario = usol.id_usuario
+    LEFT JOIN rrhh_empleado des ON sg.id_usuario_destinatario = des.id_usuario
+    LEFT JOIN rrhh_usuario udes ON des.id_usuario = udes.id_usuario
+    LEFT JOIN rrhh_empleado jefe ON sg.id_jefe_aprobador = jefe.id_usuario
+    LEFT JOIN rrhh_usuario ujefe ON jefe.id_usuario = ujefe.id_usuario
+    LEFT JOIN rrhh_empleado tes ON sg.id_tesorero_aprobador = tes.id_usuario
+    LEFT JOIN rrhh_usuario utes ON tes.id_usuario = utes.id_usuario
+    LEFT JOIN ope_ciclo_caja cc ON sg.id_ciclo_caja = cc.id_ciclo_caja
+    WHERE sg.id_usuario_solicitante = p_id_usuario_solicitante
+      AND (sg.estado_solicitud IS NULL OR sg.estado_solicitud != 'ANULADO')
+    ORDER BY sg.estado_solicitud DESC, sg.id_solicitud_gasto DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_solicitudes_pendientes_jefe $$
+CREATE PROCEDURE pa_listar_solicitudes_pendientes_jefe(
+    IN p_id_usuario_destinatario INT
+)
+BEGIN
+    IF p_id_usuario_destinatario IS NULL OR p_id_usuario_destinatario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de usuario destinatario inválido';
+    END IF;
+
+    SELECT
+        sg.id_solicitud_gasto,
+        sg.fecha_solicitud,
+        sg.monto_solicitado,
+        sg.id_moneda_original,
+        sg.tipo_cambio,
+        sg.monto_convertido,
+        sg.motivo_solicitud,
+        sg.estado_solicitud,
+        sg.medio_desembolso,
+        sg.id_usuario_solicitante,
+        sg.id_usuario_destinatario,
+        sg.id_jefe_aprobador,
+        sg.id_tesorero_aprobador,
+        sg.id_ciclo_caja,
+        sg.comentario_decision,
+        mon.id_moneda AS mon_id_moneda,
+        mon.codigo_iso AS mon_codigo_iso,
+        mon.simbolo AS mon_simbolo,
+        mon.nombre_moneda AS mon_nombre,
+        mon.descripcion AS mon_descripcion,
+        mon.activa AS mon_activa,
+        sol.id_usuario AS sol_id_usuario,
+        usol.nombres AS sol_nombres,
+        usol.apellido_paterno AS sol_apellido_paterno,
+        usol.apellido_materno AS sol_apellido_materno,
+        usol.correo AS sol_correo,
+        sol.numero_celular AS sol_numero_celular,
+        sol.rol_flujo AS sol_rol_flujo,
+        des.id_usuario AS des_id_usuario,
+        udes.nombres AS des_nombres,
+        udes.apellido_paterno AS des_apellido_paterno,
+        udes.apellido_materno AS des_apellido_materno,
+        udes.correo AS des_correo,
+        des.numero_celular AS des_numero_celular,
+        des.rol_flujo AS des_rol_flujo,
+        jefe.id_usuario AS jefe_id_usuario,
+        ujefe.nombres AS jefe_nombres,
+        ujefe.apellido_paterno AS jefe_apellido_paterno,
+        ujefe.apellido_materno AS jefe_apellido_materno,
+        ujefe.correo AS jefe_correo,
+        jefe.numero_celular AS jefe_numero_celular,
+        jefe.rol_flujo AS jefe_rol_flujo,
+        tes.id_usuario AS tes_id_usuario,
+        utes.nombres AS tes_nombres,
+        utes.apellido_paterno AS tes_apellido_paterno,
+        utes.apellido_materno AS tes_apellido_materno,
+        utes.correo AS tes_correo,
+        tes.numero_celular AS tes_numero_celular,
+        tes.rol_flujo AS tes_rol_flujo,
+        cc.id_ciclo_caja AS cc_id_ciclo_caja,
+        cc.numero_semana AS cc_numero_semana,
+        cc.fecha_apertura AS cc_fecha_apertura,
+        cc.fecha_cierre AS cc_fecha_cierre,
+        cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
+        cc.monto_total_gastado AS cc_monto_total_gastado,
+        cc.estado_ciclo AS cc_estado_ciclo,
+        cc.id_caja_chica AS cc_id_caja_chica,
+        cc.id_rendicion AS cc_id_rendicion
+    FROM ope_solicitud_gasto sg
+    LEFT JOIN tes_moneda mon ON sg.id_moneda_original = mon.id_moneda
+    LEFT JOIN rrhh_empleado sol ON sg.id_usuario_solicitante = sol.id_usuario
+    LEFT JOIN rrhh_usuario usol ON sol.id_usuario = usol.id_usuario
+    LEFT JOIN rrhh_empleado des ON sg.id_usuario_destinatario = des.id_usuario
+    LEFT JOIN rrhh_usuario udes ON des.id_usuario = udes.id_usuario
+    LEFT JOIN rrhh_empleado jefe ON sg.id_jefe_aprobador = jefe.id_usuario
+    LEFT JOIN rrhh_usuario ujefe ON jefe.id_usuario = ujefe.id_usuario
+    LEFT JOIN rrhh_empleado tes ON sg.id_tesorero_aprobador = tes.id_usuario
+    LEFT JOIN rrhh_usuario utes ON tes.id_usuario = utes.id_usuario
+    LEFT JOIN ope_ciclo_caja cc ON sg.id_ciclo_caja = cc.id_ciclo_caja
+    WHERE sg.id_usuario_destinatario = p_id_usuario_destinatario
+      AND sg.estado_solicitud = 'PENDIENTE'
+    ORDER BY sg.fecha_solicitud ASC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_solicitudes_por_ciclo $$
+CREATE PROCEDURE pa_listar_solicitudes_por_ciclo(
+    IN p_id_ciclo_caja INT
+)
+BEGIN
+    SELECT
+        sg.id_solicitud_gasto,
+        sg.fecha_solicitud,
+        sg.monto_solicitado,
+        sg.id_moneda_original,
+        sg.tipo_cambio,
+        sg.monto_convertido,
+        sg.motivo_solicitud,
+        sg.estado_solicitud,
+        sg.medio_desembolso,
+        sg.id_usuario_solicitante,
+        sg.id_usuario_destinatario,
+        sg.id_jefe_aprobador,
+        sg.id_tesorero_aprobador,
+        sg.id_ciclo_caja,
+        sg.comentario_decision,
+        mon.id_moneda AS mon_id_moneda,
+        mon.codigo_iso AS mon_codigo_iso,
+        mon.simbolo AS mon_simbolo,
+        mon.nombre_moneda AS mon_nombre,
+        mon.descripcion AS mon_descripcion,
+        mon.activa AS mon_activa,
+        sol.id_usuario AS sol_id_usuario,
+        usol.nombres AS sol_nombres,
+        usol.apellido_paterno AS sol_apellido_paterno,
+        usol.apellido_materno AS sol_apellido_materno,
+        usol.correo AS sol_correo,
+        sol.numero_celular AS sol_numero_celular,
+        sol.rol_flujo AS sol_rol_flujo,
+        des.id_usuario AS des_id_usuario,
+        udes.nombres AS des_nombres,
+        udes.apellido_paterno AS des_apellido_paterno,
+        udes.apellido_materno AS des_apellido_materno,
+        udes.correo AS des_correo,
+        des.numero_celular AS des_numero_celular,
+        des.rol_flujo AS des_rol_flujo,
+        jefe.id_usuario AS jefe_id_usuario,
+        ujefe.nombres AS jefe_nombres,
+        ujefe.apellido_paterno AS jefe_apellido_paterno,
+        ujefe.apellido_materno AS jefe_apellido_materno,
+        ujefe.correo AS jefe_correo,
+        jefe.numero_celular AS jefe_numero_celular,
+        jefe.rol_flujo AS jefe_rol_flujo,
+        tes.id_usuario AS tes_id_usuario,
+        utes.nombres AS tes_nombres,
+        utes.apellido_paterno AS tes_apellido_paterno,
+        utes.apellido_materno AS tes_apellido_materno,
+        utes.correo AS tes_correo,
+        tes.numero_celular AS tes_numero_celular,
+        tes.rol_flujo AS tes_rol_flujo,
+        cc.id_ciclo_caja AS cc_id_ciclo_caja,
+        cc.numero_semana AS cc_numero_semana,
+        cc.fecha_apertura AS cc_fecha_apertura,
+        cc.fecha_cierre AS cc_fecha_cierre,
+        cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
+        cc.monto_total_gastado AS cc_monto_total_gastado,
+        cc.estado_ciclo AS cc_estado_ciclo,
+        cc.id_caja_chica AS cc_id_caja_chica,
+        cc.id_rendicion AS cc_id_rendicion
+    FROM ope_solicitud_gasto sg
+    LEFT JOIN tes_moneda mon ON sg.id_moneda_original = mon.id_moneda
+    LEFT JOIN rrhh_empleado sol ON sg.id_usuario_solicitante = sol.id_usuario
+    LEFT JOIN rrhh_usuario usol ON sol.id_usuario = usol.id_usuario
+    LEFT JOIN rrhh_empleado des ON sg.id_usuario_destinatario = des.id_usuario
+    LEFT JOIN rrhh_usuario udes ON des.id_usuario = udes.id_usuario
+    LEFT JOIN rrhh_empleado jefe ON sg.id_jefe_aprobador = jefe.id_usuario
+    LEFT JOIN rrhh_usuario ujefe ON jefe.id_usuario = ujefe.id_usuario
+    LEFT JOIN rrhh_empleado tes ON sg.id_tesorero_aprobador = tes.id_usuario
+    LEFT JOIN rrhh_usuario utes ON tes.id_usuario = utes.id_usuario
+    LEFT JOIN ope_ciclo_caja cc ON sg.id_ciclo_caja = cc.id_ciclo_caja
+    WHERE sg.id_ciclo_caja = p_id_ciclo_caja
+      AND (sg.estado_solicitud IS NULL OR sg.estado_solicitud != 'ANULADO')
+    ORDER BY sg.estado_solicitud DESC, sg.id_solicitud_gasto DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_solicitudes_activas $$
+CREATE PROCEDURE pa_listar_solicitudes_activas()
+BEGIN
+    SELECT
+        sg.id_solicitud_gasto,
+        sg.fecha_solicitud,
+        sg.monto_solicitado,
+        sg.id_moneda_original,
+        sg.tipo_cambio,
+        sg.monto_convertido,
+        sg.motivo_solicitud,
+        sg.estado_solicitud,
+        sg.medio_desembolso,
+        sg.id_usuario_solicitante,
+        sg.id_usuario_destinatario,
+        sg.id_jefe_aprobador,
+        sg.id_tesorero_aprobador,
+        sg.id_ciclo_caja,
+        sg.comentario_decision,
+        mon.id_moneda AS mon_id_moneda,
+        mon.codigo_iso AS mon_codigo_iso,
+        mon.simbolo AS mon_simbolo,
+        mon.nombre_moneda AS mon_nombre,
+        mon.descripcion AS mon_descripcion,
+        mon.activa AS mon_activa,
+        sol.id_usuario AS sol_id_usuario,
+        usol.nombres AS sol_nombres,
+        usol.apellido_paterno AS sol_apellido_paterno,
+        usol.apellido_materno AS sol_apellido_materno,
+        usol.correo AS sol_correo,
+        sol.numero_celular AS sol_numero_celular,
+        sol.rol_flujo AS sol_rol_flujo,
+        des.id_usuario AS des_id_usuario,
+        udes.nombres AS des_nombres,
+        udes.apellido_paterno AS des_apellido_paterno,
+        udes.apellido_materno AS des_apellido_materno,
+        udes.correo AS des_correo,
+        des.numero_celular AS des_numero_celular,
+        des.rol_flujo AS des_rol_flujo,
+        jefe.id_usuario AS jefe_id_usuario,
+        ujefe.nombres AS jefe_nombres,
+        ujefe.apellido_paterno AS jefe_apellido_paterno,
+        ujefe.apellido_materno AS jefe_apellido_materno,
+        ujefe.correo AS jefe_correo,
+        jefe.numero_celular AS jefe_numero_celular,
+        jefe.rol_flujo AS jefe_rol_flujo,
+        tes.id_usuario AS tes_id_usuario,
+        utes.nombres AS tes_nombres,
+        utes.apellido_paterno AS tes_apellido_paterno,
+        utes.apellido_materno AS tes_apellido_materno,
+        utes.correo AS tes_correo,
+        tes.numero_celular AS tes_numero_celular,
+        tes.rol_flujo AS tes_rol_flujo,
+        cc.id_ciclo_caja AS cc_id_ciclo_caja,
+        cc.numero_semana AS cc_numero_semana,
+        cc.fecha_apertura AS cc_fecha_apertura,
+        cc.fecha_cierre AS cc_fecha_cierre,
+        cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
+        cc.monto_total_gastado AS cc_monto_total_gastado,
+        cc.estado_ciclo AS cc_estado_ciclo,
+        cc.id_caja_chica AS cc_id_caja_chica,
+        cc.id_rendicion AS cc_id_rendicion
+    FROM ope_solicitud_gasto sg
+    LEFT JOIN tes_moneda mon ON sg.id_moneda_original = mon.id_moneda
+    LEFT JOIN rrhh_empleado sol ON sg.id_usuario_solicitante = sol.id_usuario
+    LEFT JOIN rrhh_usuario usol ON sol.id_usuario = usol.id_usuario
+    LEFT JOIN rrhh_empleado des ON sg.id_usuario_destinatario = des.id_usuario
+    LEFT JOIN rrhh_usuario udes ON des.id_usuario = udes.id_usuario
+    LEFT JOIN rrhh_empleado jefe ON sg.id_jefe_aprobador = jefe.id_usuario
+    LEFT JOIN rrhh_usuario ujefe ON jefe.id_usuario = ujefe.id_usuario
+    LEFT JOIN rrhh_empleado tes ON sg.id_tesorero_aprobador = tes.id_usuario
+    LEFT JOIN rrhh_usuario utes ON tes.id_usuario = utes.id_usuario
+    LEFT JOIN ope_ciclo_caja cc ON sg.id_ciclo_caja = cc.id_ciclo_caja
+    WHERE sg.estado_solicitud != 'ANULADO'
+    ORDER BY sg.estado_solicitud DESC, sg.id_solicitud_gasto DESC;
+END$$
+
+DELIMITER ;
+DELIMITER //
+
+-- ===============================================================================
+-- 3. TABLA: ope_solicitud_gasto
+-- ===============================================================================
+-- ===============================================================================
+
+DROP TRIGGER IF EXISTS trg_ope_solicitud_gasto_before_insert //
+CREATE TRIGGER trg_ope_solicitud_gasto_before_insert
+BEFORE INSERT ON ope_solicitud_gasto
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_solicitud_gasto_before_update //
+CREATE TRIGGER trg_ope_solicitud_gasto_before_update
+BEFORE UPDATE ON ope_solicitud_gasto
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_solicitud_gasto_after_insert //
+CREATE TRIGGER trg_ope_solicitud_gasto_after_insert
+AFTER INSERT ON ope_solicitud_gasto
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_solicitud_gasto',
+        'INSERT',
+        CAST(NEW.id_solicitud_gasto AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_solicitud_gasto', NEW.id_solicitud_gasto,
+            'fecha_solicitud', NEW.fecha_solicitud,
+            'monto_solicitado', NEW.monto_solicitado,
+            'id_moneda_original', NEW.id_moneda_original,
+            'tipo_cambio', NEW.tipo_cambio,
+            'monto_convertido', NEW.monto_convertido,
+            'motivo_solicitud', NEW.motivo_solicitud,
+            'medio_desembolso', NEW.medio_desembolso,
+            'estado_solicitud', NEW.estado_solicitud,
+            'id_usuario_solicitante', NEW.id_usuario_solicitante,
+            'id_usuario_destinatario', NEW.id_usuario_destinatario,
+            'id_jefe_aprobador', NEW.id_jefe_aprobador,
+            'id_tesorero_aprobador', NEW.id_tesorero_aprobador,
+            'id_ciclo_caja', NEW.id_ciclo_caja
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_solicitud_gasto_after_update //
+CREATE TRIGGER trg_ope_solicitud_gasto_after_update
+AFTER UPDATE ON ope_solicitud_gasto
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_solicitud_gasto',
+        'UPDATE',
+        CAST(NEW.id_solicitud_gasto AS CHAR),
+        JSON_OBJECT(
+            'id_solicitud_gasto', OLD.id_solicitud_gasto,
+            'fecha_solicitud', OLD.fecha_solicitud,
+            'monto_solicitado', OLD.monto_solicitado,
+            'id_moneda_original', OLD.id_moneda_original,
+            'tipo_cambio', OLD.tipo_cambio,
+            'monto_convertido', OLD.monto_convertido,
+            'motivo_solicitud', OLD.motivo_solicitud,
+            'medio_desembolso', OLD.medio_desembolso,
+            'estado_solicitud', OLD.estado_solicitud,
+            'id_usuario_solicitante', OLD.id_usuario_solicitante,
+            'id_usuario_destinatario', OLD.id_usuario_destinatario,
+            'id_jefe_aprobador', OLD.id_jefe_aprobador,
+            'id_tesorero_aprobador', OLD.id_tesorero_aprobador,
+            'id_ciclo_caja', OLD.id_ciclo_caja
+        ),
+        JSON_OBJECT(
+            'id_solicitud_gasto', NEW.id_solicitud_gasto,
+            'fecha_solicitud', NEW.fecha_solicitud,
+            'monto_solicitado', NEW.monto_solicitado,
+            'id_moneda_original', NEW.id_moneda_original,
+            'tipo_cambio', NEW.tipo_cambio,
+            'monto_convertido', NEW.monto_convertido,
+            'motivo_solicitud', NEW.motivo_solicitud,
+            'medio_desembolso', NEW.medio_desembolso,
+            'estado_solicitud', NEW.estado_solicitud,
+            'id_usuario_solicitante', NEW.id_usuario_solicitante,
+            'id_usuario_destinatario', NEW.id_usuario_destinatario,
+            'id_jefe_aprobador', NEW.id_jefe_aprobador,
+            'id_tesorero_aprobador', NEW.id_tesorero_aprobador,
+            'id_ciclo_caja', NEW.id_ciclo_caja
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_solicitud_gasto_after_delete //
+CREATE TRIGGER trg_ope_solicitud_gasto_after_delete
+AFTER DELETE ON ope_solicitud_gasto
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_solicitud_gasto',
+        'DELETE',
+        CAST(OLD.id_solicitud_gasto AS CHAR),
+        JSON_OBJECT(
+            'id_solicitud_gasto', OLD.id_solicitud_gasto,
+            'fecha_solicitud', OLD.fecha_solicitud,
+            'monto_solicitado', OLD.monto_solicitado,
+            'id_moneda_original', OLD.id_moneda_original,
+            'tipo_cambio', OLD.tipo_cambio,
+            'monto_convertido', OLD.monto_convertido,
+            'motivo_solicitud', OLD.motivo_solicitud,
+            'medio_desembolso', OLD.medio_desembolso,
+            'estado_solicitud', OLD.estado_solicitud,
+            'id_usuario_solicitante', OLD.id_usuario_solicitante,
+            'id_usuario_destinatario', OLD.id_usuario_destinatario,
+            'id_jefe_aprobador', OLD.id_jefe_aprobador,
+            'id_tesorero_aprobador', OLD.id_tesorero_aprobador,
+            'id_ciclo_caja', OLD.id_ciclo_caja
+        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+-- ===============================================================================
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_transaccion $$
+CREATE PROCEDURE pa_insertar_transaccion(
+    IN p_id_usuario_accion INT,
+    IN p_tipo_operacion ENUM('DESEMBOLSO','DEVOLUCION_SOBRANTE','REEMBOLSO_DEFICIT','REPOSICION_FONDO'),
+    IN p_momento_operacion DATETIME,
+    IN p_monto_transaccion DECIMAL(12,2),
+    IN p_numero_operacion_bancaria VARCHAR(30),
+    IN p_medio_pago ENUM('YAPE','PLIN','TRANSFERENCIA','EFECTIVO'),
+    IN p_id_tipo_cambio INT,
+    IN p_id_cuenta_origen INT,
+    IN p_id_cuenta_destino INT,
+    IN p_id_moneda INT,
+    IN p_id_beneficiario INT,
+    IN p_estado_transaccion ENUM('REGISTRADA','COMPLETADA','ANULADA'),
+    OUT p_id_generado INT
+)
+BEGIN
+    INSERT INTO ope_transaccion(
+        tipo_operacion,
+        momento_operacion,
+        monto_transaccion,
+        numero_operacion_bancaria,
+        medio_pago,
+        id_tipo_cambio,
+        id_cuenta_origen,
+        id_cuenta_destino,
+        id_moneda,
+        id_beneficiario,
+        estado_transaccion,
+        id_usuario_creacion,
+        id_usuario_modificacion
+    ) VALUES(
+        p_tipo_operacion,
+        p_momento_operacion,
+        p_monto_transaccion,
+        p_numero_operacion_bancaria,
+        p_medio_pago,
+        p_id_tipo_cambio,
+        p_id_cuenta_origen,
+        p_id_cuenta_destino,
+        p_id_moneda,
+        p_id_beneficiario,
+        p_estado_transaccion,
+        p_id_usuario_accion,
+        p_id_usuario_accion
+    );
+    SET p_id_generado = LAST_INSERT_ID();
+END$$
+
+DROP PROCEDURE IF EXISTS pa_modificar_transaccion $$
+CREATE PROCEDURE pa_modificar_transaccion(
+    IN p_id_usuario_accion INT,
+    IN p_id_transaccion INT,
+    IN p_tipo_operacion ENUM('DESEMBOLSO','DEVOLUCION_SOBRANTE','REEMBOLSO_DEFICIT','REPOSICION_FONDO'),
+    IN p_momento_operacion DATETIME,
+    IN p_monto_transaccion DECIMAL(12,2),
+    IN p_numero_operacion_bancaria VARCHAR(30),
+    IN p_medio_pago ENUM('YAPE','PLIN','TRANSFERENCIA','EFECTIVO'),
+    IN p_id_tipo_cambio INT,
+    IN p_id_cuenta_origen INT,
+    IN p_id_cuenta_destino INT,
+    IN p_id_moneda INT,
+    IN p_id_beneficiario INT,
+    IN p_estado_transaccion ENUM('REGISTRADA','COMPLETADA','ANULADA')
+)
+BEGIN
+    IF p_id_transaccion IS NULL OR p_id_transaccion <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de transacción inválido';
+    END IF;
+
+    UPDATE ope_transaccion
+    SET
+        tipo_operacion = p_tipo_operacion,
+        momento_operacion = p_momento_operacion,
+        monto_transaccion = p_monto_transaccion,
+        numero_operacion_bancaria = p_numero_operacion_bancaria,
+        medio_pago = p_medio_pago,
+        id_tipo_cambio = p_id_tipo_cambio,
+        id_cuenta_origen = p_id_cuenta_origen,
+        id_cuenta_destino = p_id_cuenta_destino,
+        id_moneda = p_id_moneda,
+        id_beneficiario = p_id_beneficiario,
+        estado_transaccion = p_estado_transaccion,
+        id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_transaccion = p_id_transaccion;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_eliminar_transaccion $$
+CREATE PROCEDURE pa_eliminar_transaccion(
+    IN p_id_usuario_accion INT,
+    IN p_id_transaccion INT
+)
+BEGIN
+    IF p_id_transaccion IS NULL OR p_id_transaccion <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de transacción inválido';
+    END IF;
+    UPDATE ope_transaccion
+    SET
+        estado_transaccion = 'ANULADA',
+        id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_transaccion = p_id_transaccion;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_transaccion_por_id $$
+CREATE PROCEDURE pa_buscar_transaccion_por_id(
+    IN p_id_transaccion INT
+)
+BEGIN
+    SELECT
+        t.id_transaccion,
+        t.tipo_operacion,
+        t.momento_operacion,
+        t.monto_transaccion,
+        t.numero_operacion_bancaria,
+        t.medio_pago,
+        t.id_tipo_cambio,
+        tc.id_moneda_origen,
+        tc.id_moneda_destino,
+        tc.valor_tipo_cambio,
+        tc.fecha_tipo_cambio,
+        mo.id_moneda AS tc_mo_id_moneda,
+        mo.codigo_iso AS tc_mo_codigo_iso,
+        mo.simbolo AS tc_mo_simbolo,
+        mo.nombre_moneda AS tc_mo_nombre,
+        mo.descripcion AS tc_mo_descripcion,
+        mo.activa AS tc_mo_activa,
+        md.id_moneda AS tc_md_id_moneda,
+        md.codigo_iso AS tc_md_codigo_iso,
+        md.simbolo AS tc_md_simbolo,
+        md.nombre_moneda AS tc_md_nombre,
+        md.descripcion AS tc_md_descripcion,
+        md.activa AS tc_md_activa,
+        t.estado_transaccion,
+        t.id_cuenta_origen,
+        t.id_cuenta_destino,
+        t.id_moneda,
+        t.id_beneficiario,
+        co.id_cuenta_bancaria AS co_id_cuenta,
+        co.numero_cuenta AS co_numero_cuenta,
+        co.nombre_banco AS co_nombre_banco,
+        co.cci AS co_cci,
+        co.activa AS co_activa,
+        co.id_moneda AS co_id_moneda,
+        co.id_area AS co_id_area,
+        co.id_usuario AS co_id_usuario,
+        cd.id_cuenta_bancaria AS cd_id_cuenta,
+        cd.numero_cuenta AS cd_numero_cuenta,
+        cd.nombre_banco AS cd_nombre_banco,
+        cd.cci AS cd_cci,
+        cd.activa AS cd_activa,
+        cd.id_moneda AS cd_id_moneda,
+        cd.id_area AS cd_id_area,
+        cd.id_usuario AS cd_id_usuario,
+        m.id_moneda AS m_id_moneda,
+        m.codigo_iso AS m_codigo_iso,
+        m.simbolo AS m_simbolo,
+        m.nombre_moneda AS m_nombre,
+        m.descripcion AS m_descripcion,
+        m.activa AS m_activa,
+        ben.id_usuario AS ben_id_usuario,
+        uben.nombres AS ben_nombres,
+        uben.apellido_paterno AS ben_apellido_paterno,
+        uben.apellido_materno AS ben_apellido_materno,
+        uben.correo AS ben_correo,
+        ben.numero_celular AS ben_numero_celular,
+        ben.rol_flujo AS ben_rol_flujo
+    FROM ope_transaccion t
+    LEFT JOIN tes_tipo_cambio tc ON t.id_tipo_cambio = tc.id_tipo_cambio
+    LEFT JOIN tes_moneda mo ON tc.id_moneda_origen = mo.id_moneda
+    LEFT JOIN tes_moneda md ON tc.id_moneda_destino = md.id_moneda
+    LEFT JOIN tes_cuenta_bancaria co ON t.id_cuenta_origen = co.id_cuenta_bancaria
+    LEFT JOIN tes_cuenta_bancaria cd ON t.id_cuenta_destino = cd.id_cuenta_bancaria
+    LEFT JOIN tes_moneda m ON t.id_moneda = m.id_moneda
+    LEFT JOIN rrhh_empleado ben ON t.id_beneficiario = ben.id_usuario
+    LEFT JOIN rrhh_usuario uben ON ben.id_usuario = uben.id_usuario
+    WHERE t.id_transaccion = p_id_transaccion
+    ORDER BY t.estado_transaccion DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_transacciones $$
+CREATE PROCEDURE pa_listar_transacciones()
+BEGIN
+    SELECT
+        t.id_transaccion,
+        t.tipo_operacion,
+        t.momento_operacion,
+        t.monto_transaccion,
+        t.numero_operacion_bancaria,
+        t.medio_pago,
+        t.id_tipo_cambio,
+        tc.id_moneda_origen,
+        tc.id_moneda_destino,
+        tc.valor_tipo_cambio,
+        tc.fecha_tipo_cambio,
+        mo.id_moneda AS tc_mo_id_moneda,
+        mo.codigo_iso AS tc_mo_codigo_iso,
+        mo.simbolo AS tc_mo_simbolo,
+        mo.nombre_moneda AS tc_mo_nombre,
+        mo.descripcion AS tc_mo_descripcion,
+        mo.activa AS tc_mo_activa,
+        md.id_moneda AS tc_md_id_moneda,
+        md.codigo_iso AS tc_md_codigo_iso,
+        md.simbolo AS tc_md_simbolo,
+        md.nombre_moneda AS tc_md_nombre,
+        md.descripcion AS tc_md_descripcion,
+        md.activa AS tc_md_activa,
+        t.estado_transaccion,
+        t.id_cuenta_origen,
+        t.id_cuenta_destino,
+        t.id_moneda,
+        t.id_beneficiario,
+        co.id_cuenta_bancaria AS co_id_cuenta,
+        co.numero_cuenta AS co_numero_cuenta,
+        co.nombre_banco AS co_nombre_banco,
+        co.cci AS co_cci,
+        co.activa AS co_activa,
+        co.id_moneda AS co_id_moneda,
+        co.id_area AS co_id_area,
+        co.id_usuario AS co_id_usuario,
+        cd.id_cuenta_bancaria AS cd_id_cuenta,
+        cd.numero_cuenta AS cd_numero_cuenta,
+        cd.nombre_banco AS cd_nombre_banco,
+        cd.cci AS cd_cci,
+        cd.activa AS cd_activa,
+        cd.id_moneda AS cd_id_moneda,
+        cd.id_area AS cd_id_area,
+        cd.id_usuario AS cd_id_usuario,
+        m.id_moneda AS m_id_moneda,
+        m.codigo_iso AS m_codigo_iso,
+        m.simbolo AS m_simbolo,
+        m.nombre_moneda AS m_nombre,
+        m.descripcion AS m_descripcion,
+        m.activa AS m_activa,
+        ben.id_usuario AS ben_id_usuario,
+        uben.nombres AS ben_nombres,
+        uben.apellido_paterno AS ben_apellido_paterno,
+        uben.apellido_materno AS ben_apellido_materno,
+        uben.correo AS ben_correo,
+        ben.numero_celular AS ben_numero_celular,
+        ben.rol_flujo AS ben_rol_flujo
+    FROM ope_transaccion t
+    LEFT JOIN tes_tipo_cambio tc ON t.id_tipo_cambio = tc.id_tipo_cambio
+    LEFT JOIN tes_moneda mo ON tc.id_moneda_origen = mo.id_moneda
+    LEFT JOIN tes_moneda md ON tc.id_moneda_destino = md.id_moneda
+    LEFT JOIN tes_cuenta_bancaria co ON t.id_cuenta_origen = co.id_cuenta_bancaria
+    LEFT JOIN tes_cuenta_bancaria cd ON t.id_cuenta_destino = cd.id_cuenta_bancaria
+    LEFT JOIN tes_moneda m ON t.id_moneda = m.id_moneda
+    LEFT JOIN rrhh_empleado ben ON t.id_beneficiario = ben.id_usuario
+    LEFT JOIN rrhh_usuario uben ON ben.id_usuario = uben.id_usuario
+    ORDER BY t.estado_transaccion DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_todas_transacciones $$
+CREATE PROCEDURE pa_listar_todas_transacciones()
+BEGIN
+    SELECT
+        t.id_transaccion,
+        t.tipo_operacion,
+        t.momento_operacion,
+        t.monto_transaccion,
+        t.numero_operacion_bancaria,
+        t.medio_pago,
+        t.id_tipo_cambio,
+        tc.id_moneda_origen,
+        tc.id_moneda_destino,
+        tc.valor_tipo_cambio,
+        tc.fecha_tipo_cambio,
+        mo.id_moneda AS tc_mo_id_moneda,
+        mo.codigo_iso AS tc_mo_codigo_iso,
+        mo.simbolo AS tc_mo_simbolo,
+        mo.nombre_moneda AS tc_mo_nombre,
+        mo.descripcion AS tc_mo_descripcion,
+        mo.activa AS tc_mo_activa,
+        md.id_moneda AS tc_md_id_moneda,
+        md.codigo_iso AS tc_md_codigo_iso,
+        md.simbolo AS tc_md_simbolo,
+        md.nombre_moneda AS tc_md_nombre,
+        md.descripcion AS tc_md_descripcion,
+        md.activa AS tc_md_activa,
+        t.estado_transaccion,
+        t.id_cuenta_origen,
+        t.id_cuenta_destino,
+        t.id_moneda,
+        t.id_beneficiario,
+        co.id_cuenta_bancaria AS co_id_cuenta,
+        co.numero_cuenta AS co_numero_cuenta,
+        co.nombre_banco AS co_nombre_banco,
+        co.cci AS co_cci,
+        co.activa AS co_activa,
+        co.id_moneda AS co_id_moneda,
+        co.id_area AS co_id_area,
+        co.id_usuario AS co_id_usuario,
+        cd.id_cuenta_bancaria AS cd_id_cuenta,
+        cd.numero_cuenta AS cd_numero_cuenta,
+        cd.nombre_banco AS cd_nombre_banco,
+        cd.cci AS cd_cci,
+        cd.activa AS cd_activa,
+        cd.id_moneda AS cd_id_moneda,
+        cd.id_area AS cd_id_area,
+        cd.id_usuario AS cd_id_usuario,
+        m.id_moneda AS m_id_moneda,
+        m.codigo_iso AS m_codigo_iso,
+        m.simbolo AS m_simbolo,
+        m.nombre_moneda AS m_nombre,
+        m.descripcion AS m_descripcion,
+        m.activa AS m_activa,
+        ben.id_usuario AS ben_id_usuario,
+        uben.nombres AS ben_nombres,
+        uben.apellido_paterno AS ben_apellido_paterno,
+        uben.apellido_materno AS ben_apellido_materno,
+        uben.correo AS ben_correo,
+        ben.numero_celular AS ben_numero_celular,
+        ben.rol_flujo AS ben_rol_flujo
+    FROM ope_transaccion t
+    LEFT JOIN tes_tipo_cambio tc ON t.id_tipo_cambio = tc.id_tipo_cambio
+    LEFT JOIN tes_moneda mo ON tc.id_moneda_origen = mo.id_moneda
+    LEFT JOIN tes_moneda md ON tc.id_moneda_destino = md.id_moneda
+    LEFT JOIN tes_cuenta_bancaria co ON t.id_cuenta_origen = co.id_cuenta_bancaria
+    LEFT JOIN tes_cuenta_bancaria cd ON t.id_cuenta_destino = cd.id_cuenta_bancaria
+    LEFT JOIN tes_moneda m ON t.id_moneda = m.id_moneda
+    LEFT JOIN rrhh_empleado ben ON t.id_beneficiario = ben.id_usuario
+    LEFT JOIN rrhh_usuario uben ON ben.id_usuario = uben.id_usuario
+    ORDER BY t.estado_transaccion DESC, t.id_transaccion DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_transacciones_activas $$
+CREATE PROCEDURE pa_listar_transacciones_activas()
+BEGIN
+    SELECT
+        t.id_transaccion,
+        t.tipo_operacion,
+        t.momento_operacion,
+        t.monto_transaccion,
+        t.numero_operacion_bancaria,
+        t.medio_pago,
+        t.id_tipo_cambio,
+        tc.id_moneda_origen,
+        tc.id_moneda_destino,
+        tc.valor_tipo_cambio,
+        tc.fecha_tipo_cambio,
+        mo.id_moneda AS tc_mo_id_moneda,
+        mo.codigo_iso AS tc_mo_codigo_iso,
+        mo.simbolo AS tc_mo_simbolo,
+        mo.nombre_moneda AS tc_mo_nombre,
+        mo.descripcion AS tc_mo_descripcion,
+        mo.activa AS tc_mo_activa,
+        md.id_moneda AS tc_md_id_moneda,
+        md.codigo_iso AS tc_md_codigo_iso,
+        md.simbolo AS tc_md_simbolo,
+        md.nombre_moneda AS tc_md_nombre,
+        md.descripcion AS tc_md_descripcion,
+        md.activa AS tc_md_activa,
+        t.estado_transaccion,
+        t.id_cuenta_origen,
+        t.id_cuenta_destino,
+        t.id_moneda,
+        t.id_beneficiario,
+        co.id_cuenta_bancaria AS co_id_cuenta,
+        co.numero_cuenta AS co_numero_cuenta,
+        co.nombre_banco AS co_nombre_banco,
+        co.cci AS co_cci,
+        co.activa AS co_activa,
+        co.id_moneda AS co_id_moneda,
+        co.id_area AS co_id_area,
+        co.id_usuario AS co_id_usuario,
+        cd.id_cuenta_bancaria AS cd_id_cuenta,
+        cd.numero_cuenta AS cd_numero_cuenta,
+        cd.nombre_banco AS cd_nombre_banco,
+        cd.cci AS cd_cci,
+        cd.activa AS cd_activa,
+        cd.id_moneda AS cd_id_moneda,
+        cd.id_area AS cd_id_area,
+        cd.id_usuario AS cd_id_usuario,
+        m.id_moneda AS m_id_moneda,
+        m.codigo_iso AS m_codigo_iso,
+        m.simbolo AS m_simbolo,
+        m.nombre_moneda AS m_nombre,
+        m.descripcion AS m_descripcion,
+        m.activa AS m_activa,
+        ben.id_usuario AS ben_id_usuario,
+        uben.nombres AS ben_nombres,
+        uben.apellido_paterno AS ben_apellido_paterno,
+        uben.apellido_materno AS ben_apellido_materno,
+        uben.correo AS ben_correo,
+        ben.numero_celular AS ben_numero_celular,
+        ben.rol_flujo AS ben_rol_flujo
+    FROM ope_transaccion t
+    LEFT JOIN tes_tipo_cambio tc ON t.id_tipo_cambio = tc.id_tipo_cambio
+    LEFT JOIN tes_moneda mo ON tc.id_moneda_origen = mo.id_moneda
+    LEFT JOIN tes_moneda md ON tc.id_moneda_destino = md.id_moneda
+    LEFT JOIN tes_cuenta_bancaria co ON t.id_cuenta_origen = co.id_cuenta_bancaria
+    LEFT JOIN tes_cuenta_bancaria cd ON t.id_cuenta_destino = cd.id_cuenta_bancaria
+    LEFT JOIN tes_moneda m ON t.id_moneda = m.id_moneda
+    LEFT JOIN rrhh_empleado ben ON t.id_beneficiario = ben.id_usuario
+    LEFT JOIN rrhh_usuario uben ON ben.id_usuario = uben.id_usuario
+    WHERE t.estado_transaccion != 'ANULADA'
+    ORDER BY t.estado_transaccion DESC, t.id_transaccion DESC;
+END$$
+
+DELIMITER ;
+
+DELIMITER //
+
+-- ===============================================================================
+-- 5. TABLA: ope_transaccion
+-- ===============================================================================
+-- ===============================================================================
+
+DROP TRIGGER IF EXISTS trg_ope_transaccion_before_insert //
+CREATE TRIGGER trg_ope_transaccion_before_insert
+BEFORE INSERT ON ope_transaccion
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_transaccion_before_update //
+CREATE TRIGGER trg_ope_transaccion_before_update
+BEFORE UPDATE ON ope_transaccion
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_transaccion_after_insert //
+CREATE TRIGGER trg_ope_transaccion_after_insert
+AFTER INSERT ON ope_transaccion
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_transaccion',
+        'INSERT',
+        CAST(NEW.id_transaccion AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_transaccion', NEW.id_transaccion,
+            'tipo_operacion', NEW.tipo_operacion,
+            'momento_operacion', NEW.momento_operacion,
+            'monto_transaccion', NEW.monto_transaccion,
+            'id_beneficiario', NEW.id_beneficiario,
+            'numero_operacion_bancaria', NEW.numero_operacion_bancaria,
+            'medio_pago', NEW.medio_pago,
+            'id_tipo_cambio', NEW.id_tipo_cambio,
+            'estado_transaccion', NEW.estado_transaccion,
+            'id_cuenta_origen', NEW.id_cuenta_origen,
+            'id_cuenta_destino', NEW.id_cuenta_destino,
+            'id_moneda', NEW.id_moneda
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_transaccion_after_update //
+CREATE TRIGGER trg_ope_transaccion_after_update
+AFTER UPDATE ON ope_transaccion
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_transaccion',
+        'UPDATE',
+        CAST(NEW.id_transaccion AS CHAR),
+        JSON_OBJECT(
+            'id_transaccion', OLD.id_transaccion,
+            'tipo_operacion', OLD.tipo_operacion,
+            'momento_operacion', OLD.momento_operacion,
+            'monto_transaccion', OLD.monto_transaccion,
+            'id_beneficiario', OLD.id_beneficiario,
+            'numero_operacion_bancaria', OLD.numero_operacion_bancaria,
+            'medio_pago', OLD.medio_pago,
+            'id_tipo_cambio', OLD.id_tipo_cambio,
+            'estado_transaccion', OLD.estado_transaccion,
+            'id_cuenta_origen', OLD.id_cuenta_origen,
+            'id_cuenta_destino', OLD.id_cuenta_destino,
+            'id_moneda', OLD.id_moneda
+        ),
+        JSON_OBJECT(
+            'id_transaccion', NEW.id_transaccion,
+            'tipo_operacion', NEW.tipo_operacion,
+            'momento_operacion', NEW.momento_operacion,
+            'monto_transaccion', NEW.monto_transaccion,
+            'id_beneficiario', NEW.id_beneficiario,
+            'numero_operacion_bancaria', NEW.numero_operacion_bancaria,
+            'medio_pago', NEW.medio_pago,
+            'id_tipo_cambio', NEW.id_tipo_cambio,
+            'estado_transaccion', NEW.estado_transaccion,
+            'id_cuenta_origen', NEW.id_cuenta_origen,
+            'id_cuenta_destino', NEW.id_cuenta_destino,
+            'id_moneda', NEW.id_moneda
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_transaccion_after_delete //
+CREATE TRIGGER trg_ope_transaccion_after_delete
+AFTER DELETE ON ope_transaccion
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_transaccion',
+        'DELETE',
+        CAST(OLD.id_transaccion AS CHAR),
+        JSON_OBJECT(
+            'id_transaccion', OLD.id_transaccion,
+            'tipo_operacion', OLD.tipo_operacion,
+            'momento_operacion', OLD.momento_operacion,
+            'monto_transaccion', OLD.monto_transaccion,
+            'id_beneficiario', OLD.id_beneficiario,
+            'numero_operacion_bancaria', OLD.numero_operacion_bancaria,
+            'medio_pago', OLD.medio_pago,
+            'id_tipo_cambio', OLD.id_tipo_cambio,
+            'estado_transaccion', OLD.estado_transaccion,
+            'id_cuenta_origen', OLD.id_cuenta_origen,
+            'id_cuenta_destino', OLD.id_cuenta_destino,
+            'id_moneda', OLD.id_moneda
+        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+DELIMITER ;
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_administrador $$
+CREATE PROCEDURE pa_insertar_administrador(
+
+        IN p_id_usuario_accion INT,
+IN p_id_usuario INT
+
+)
+BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del administrador no es valido';
+    END IF;
+
+    INSERT INTO rrhh_administrador(
+
+        id_usuario,
+        id_usuario_creacion,
+        id_usuario_modificacion    )
+    VALUES(
+
+        p_id_usuario,
+        p_id_usuario_accion,
+        p_id_usuario_accion    );
+END$$
+
+DROP PROCEDURE IF EXISTS pa_modificar_administrador $$
+CREATE PROCEDURE pa_modificar_administrador(
+    IN p_id_usuario_accion INT,
+    IN p_id_usuario INT
+)
+BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de administrador no valido';
+    END IF;
+
+    UPDATE rrhh_administrador
+       SET id_usuario_modificacion = p_id_usuario_accion
+     WHERE id_usuario = p_id_usuario;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_eliminar_administrador $$
+CREATE PROCEDURE pa_eliminar_administrador(
+
+    IN p_id_usuario_accion INT,
+	IN p_id_usuario INT
+)
+BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de administrador no valido';
+    END IF;
+
+    UPDATE rrhh_usuario
+       SET esta_activo = 0,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_usuario = p_id_usuario;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_administrador_por_id $$
+CREATE PROCEDURE pa_buscar_administrador_por_id(
+    IN p_id_usuario INT
+)
+BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de administrador no valido';
+    END IF;
+
+    SELECT
+        u.id_usuario,
+        u.nombres,
+        u.apellido_paterno,
+        u.apellido_materno,
+        u.password_hash,
+        u.correo,
+        CASE WHEN u.esta_activo = 1 THEN 'ACTIVO' ELSE 'INACTIVO' END AS estado_usuario,
+        a.id_usuario
+    FROM rrhh_administrador a
+    INNER JOIN rrhh_usuario u ON a.id_usuario = u.id_usuario
+    WHERE a.id_usuario = p_id_usuario
+      AND u.esta_activo = 1;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_administradores $$
+CREATE PROCEDURE pa_listar_administradores()
+BEGIN
+    SELECT
+        u.id_usuario,
+        u.nombres,
+        u.apellido_paterno,
+        u.apellido_materno,
+        u.password_hash,
+        u.correo,
+        CASE WHEN u.esta_activo = 1 THEN 'ACTIVO' ELSE 'INACTIVO' END AS estado_usuario,
+        a.id_usuario
+    FROM rrhh_administrador a
+    INNER JOIN rrhh_usuario u ON a.id_usuario = u.id_usuario
+    WHERE u.esta_activo = 1
+    ORDER BY a.id_usuario;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_todos_administradores $$
+CREATE PROCEDURE pa_listar_todos_administradores()
+BEGIN
+    SELECT
+        u.id_usuario,
+        u.nombres,
+        u.apellido_paterno,
+        u.apellido_materno,
+        u.password_hash,
+        u.correo,
+        CASE WHEN u.esta_activo = 1 THEN 'ACTIVO' ELSE 'INACTIVO' END AS estado_usuario,
+        a.id_usuario
+    FROM rrhh_administrador a
+    INNER JOIN rrhh_usuario u ON a.id_usuario = u.id_usuario
+    ORDER BY a.id_usuario;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_obtener_password_administrador_por_correo $$
+CREATE PROCEDURE pa_obtener_password_administrador_por_correo(
+    IN p_correo VARCHAR(255)
+)
+BEGIN
+    SELECT
+        u.password_hash
+    FROM rrhh_administrador a
+    INNER JOIN rrhh_usuario u ON a.id_usuario = u.id_usuario
+    WHERE u.correo = p_correo
+      AND u.esta_activo = 1;
+END$$
+
+DELIMITER ;
+DELIMITER //
+
+-- ===============================================================================
+-- 5. TABLA: rrhh_administrador
+-- ===============================================================================
+-- ===============================================================================
+
+
+DROP TRIGGER IF EXISTS trg_rrhh_administrador_before_insert //
+CREATE TRIGGER trg_rrhh_administrador_before_insert
+BEFORE INSERT ON rrhh_administrador
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_administrador_before_update //
+CREATE TRIGGER trg_rrhh_administrador_before_update
+BEFORE UPDATE ON rrhh_administrador
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_administrador_after_insert //
+CREATE TRIGGER trg_rrhh_administrador_after_insert
+AFTER INSERT ON rrhh_administrador
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_administrador',
+        'INSERT',
+        CAST(NEW.id_usuario AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_usuario', NEW.id_usuario
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_administrador_after_update //
+CREATE TRIGGER trg_rrhh_administrador_after_update
+AFTER UPDATE ON rrhh_administrador
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_administrador',
+        'UPDATE',
+        CAST(NEW.id_usuario AS CHAR),
+        JSON_OBJECT(
+            'id_usuario', OLD.id_usuario
+        ),
+        JSON_OBJECT(
+            'id_usuario', NEW.id_usuario
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_administrador_after_delete //
+CREATE TRIGGER trg_rrhh_administrador_after_delete
+AFTER DELETE ON rrhh_administrador
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_administrador',
+        'DELETE',
+        CAST(OLD.id_usuario AS CHAR),
+        JSON_OBJECT(
+            'id_usuario', OLD.id_usuario        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+DELIMITER ;
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_area  $$
+CREATE PROCEDURE pa_insertar_area(
+    IN p_id_usuario_accion INT,
+IN p_nombre_area VARCHAR(60),
+IN p_descripcion_area VARCHAR(500),
+IN p_id_jefe INT,
+OUT p_id_generado INT
+)
+BEGIN
+    INSERT INTO rrhh_area(
+
+        nombre_area,
+        descripcion_area, 
+        id_jefe, 
+        esta_activo,
+        id_usuario_creacion,
+        id_usuario_modificacion    )
+    VALUES(
+
+        p_nombre_area,
+        p_descripcion_area, 
+        p_id_jefe, 
+        1,
+        p_id_usuario_accion,
+        p_id_usuario_accion    );
+
+    SET p_id_generado = LAST_INSERT_ID();
+END$$
+
+DROP PROCEDURE IF EXISTS pa_modificar_area $$
+CREATE PROCEDURE pa_modificar_area(
+
+        IN p_id_usuario_accion INT,
+IN p_id_area INT,
+    IN p_nombre_area VARCHAR(60),
+    IN p_descripcion_area VARCHAR(500),
+    IN p_id_jefe INT
+
+)
+BEGIN
+    IF p_id_area IS NULL OR p_id_area <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del área no es válido';
+    END IF;
+
+    UPDATE rrhh_area
+       SET nombre_area = p_nombre_area,
+           descripcion_area = p_descripcion_area, 
+           id_jefe = p_id_jefe,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_area = p_id_area;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_asignar_jefe_area $$ 
+CREATE PROCEDURE pa_asignar_jefe_area(
+
+        IN p_id_usuario_accion INT,
+IN p_id_area INT,
+    IN p_id_jefe INT
+
+)
+BEGIN
+    IF p_id_area IS NULL OR p_id_area <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del área no es válido';
+    END IF;
+    IF p_id_jefe IS NULL OR p_id_jefe <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del jefe no es válido';
+    END IF;
+
+    UPDATE rrhh_area
+       SET id_jefe = p_id_jefe,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_area = p_id_area;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_eliminar_area  $$
+CREATE PROCEDURE pa_eliminar_area(
+
+        IN p_id_usuario_accion INT,
+IN p_id_area INT
+
+)
+BEGIN
+    IF p_id_area IS NULL OR p_id_area <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del área no es válido';
+    END IF;
+
+    UPDATE rrhh_area
+       SET esta_activo = 0,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_area = p_id_area;
+
+    UPDATE tes_fondo f
+       INNER JOIN tes_caja_chica cc ON f.id_fondo = cc.id_fondo
+       SET f.estado_fondo = 'INACTIVO',
+           f.id_usuario_modificacion = p_id_usuario_accion
+     WHERE cc.id_area = p_id_area;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_area_por_id  $$
+CREATE PROCEDURE pa_buscar_area_por_id(
+    IN p_id_area INT
+)
+BEGIN
+    IF p_id_area IS NULL OR p_id_area <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del área no es válido';
+    END IF;
+
+    SELECT 
+        a.id_area, 
+        a.nombre_area, 
+        a.descripcion_area, 
+        a.id_jefe,
+        a.esta_activo,
+        cc.id_fondo AS id_fondo_caja_chica,
+        e.id_usuario AS jefe_id_usuario,
+        u.nombres AS jefe_nombres,
+        u.apellido_paterno AS jefe_apellido_paterno,
+        u.apellido_materno AS jefe_apellido_materno,
+        u.correo AS jefe_correo,
+        e.numero_celular AS jefe_numero_celular,
+        e.rol_flujo AS jefe_rol_flujo,
+        cc.monto_techo AS cc_monto_techo,
+        cc.id_moneda AS cc_id_moneda,
+        cc.id_cuenta_origen AS cc_id_cuenta_origen,
+        cc.id_area AS cc_id_area,
+        f.nombre_fondo AS cc_nombre_fondo,
+        f.estado_fondo AS cc_estado_fondo
+    FROM rrhh_area a
+    LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
+    LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
+    LEFT JOIN tes_caja_chica cc ON a.id_area = cc.id_area
+    LEFT JOIN tes_fondo f ON cc.id_fondo = f.id_fondo
+    WHERE a.id_area = p_id_area;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_areas $$
+CREATE PROCEDURE pa_listar_areas()
+BEGIN
+    SELECT
+        a.id_area,
+        a.nombre_area,
+        a.descripcion_area,
+        a.id_jefe,
+        a.esta_activo,
+        cc.id_fondo AS id_fondo_caja_chica,
+        e.id_usuario AS jefe_id_usuario,
+        u.nombres AS jefe_nombres,
+        u.apellido_paterno AS jefe_apellido_paterno,
+        u.apellido_materno AS jefe_apellido_materno,
+        u.correo AS jefe_correo,
+        e.numero_celular AS jefe_numero_celular,
+        e.rol_flujo AS jefe_rol_flujo,
+        cc.monto_techo AS cc_monto_techo,
+        cc.id_moneda AS cc_id_moneda,
+        cc.id_cuenta_origen AS cc_id_cuenta_origen,
+        cc.id_area AS cc_id_area,
+        f.nombre_fondo AS cc_nombre_fondo,
+        f.estado_fondo AS cc_estado_fondo
+    FROM rrhh_area a
+    LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
+    LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
+    LEFT JOIN tes_caja_chica cc ON a.id_area = cc.id_area
+    LEFT JOIN tes_fondo f ON cc.id_fondo = f.id_fondo
+    ORDER BY a.esta_activo DESC, a.id_area;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_areas_activas $$
+CREATE PROCEDURE pa_listar_areas_activas()
+BEGIN
+    SELECT
+        a.id_area,
+        a.nombre_area,
+        a.descripcion_area,
+        a.id_jefe,
+        a.esta_activo,
+        cc.id_fondo AS id_fondo_caja_chica,
+        e.id_usuario AS jefe_id_usuario,
+        u.nombres AS jefe_nombres,
+        u.apellido_paterno AS jefe_apellido_paterno,
+        u.apellido_materno AS jefe_apellido_materno,
+        u.correo AS jefe_correo,
+        e.numero_celular AS jefe_numero_celular,
+        e.rol_flujo AS jefe_rol_flujo,
+        cc.monto_techo AS cc_monto_techo,
+        cc.id_moneda AS cc_id_moneda,
+        cc.id_cuenta_origen AS cc_id_cuenta_origen,
+        cc.id_area AS cc_id_area,
+        f.nombre_fondo AS cc_nombre_fondo,
+        f.estado_fondo AS cc_estado_fondo
+    FROM rrhh_area a
+    LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
+    LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
+    LEFT JOIN tes_caja_chica cc ON a.id_area = cc.id_area
+    LEFT JOIN tes_fondo f ON cc.id_fondo = f.id_fondo
+    WHERE a.esta_activo = 1
+    ORDER BY a.id_area;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_reactivar_area $$
+CREATE PROCEDURE pa_reactivar_area(
+
+        IN p_id_usuario_accion INT,
+IN p_id_area INT
+
+)
+BEGIN
+    IF p_id_area IS NULL OR p_id_area <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del área no es válido';
+    END IF;
+
+    UPDATE rrhh_area
+       SET esta_activo = 1,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_area = p_id_area;
+
+    UPDATE tes_fondo f
+       INNER JOIN tes_caja_chica cc ON f.id_fondo = cc.id_fondo
+       SET f.estado_fondo = 'ACTIVO',
+           f.id_usuario_modificacion = p_id_usuario_accion
+     WHERE cc.id_area = p_id_area;
+END$$
+
+DELIMITER ;
+DELIMITER //
+
+-- ===============================================================================
+-- 3. TABLA: rrhh_area
+-- ===============================================================================
+-- ===============================================================================
+
+DROP TRIGGER IF EXISTS trg_rrhh_area_before_insert //
+CREATE TRIGGER trg_rrhh_area_before_insert
+BEFORE INSERT ON rrhh_area
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+
+DROP TRIGGER IF EXISTS trg_rrhh_area_before_update //
+CREATE TRIGGER trg_rrhh_area_before_update
+BEFORE UPDATE ON rrhh_area
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_area_after_insert //
+CREATE TRIGGER trg_rrhh_area_after_insert
+AFTER INSERT ON rrhh_area
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_area',
+        'INSERT',
+        CAST(NEW.id_area AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_area', NEW.id_area,
+            'nombre_area', NEW.nombre_area,
+            'descripcion_area', NEW.descripcion_area,
+            'id_jefe', NEW.id_jefe,
+            'esta_activo', NEW.esta_activo
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_area_after_update //
+CREATE TRIGGER trg_rrhh_area_after_update
+AFTER UPDATE ON rrhh_area
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_area',
+        'UPDATE',
+        CAST(NEW.id_area AS CHAR),
+        JSON_OBJECT(
+            'id_area', OLD.id_area,
+            'nombre_area', OLD.nombre_area,
+            'descripcion_area', OLD.descripcion_area,
+            'id_jefe', OLD.id_jefe,
+            'esta_activo', OLD.esta_activo
+        ),
+        JSON_OBJECT(
+            'id_area', NEW.id_area,
+            'nombre_area', NEW.nombre_area,
+            'descripcion_area', NEW.descripcion_area,
+            'id_jefe', NEW.id_jefe,
+            'esta_activo', NEW.esta_activo
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_area_after_delete //
+CREATE TRIGGER trg_rrhh_area_after_delete
+AFTER DELETE ON rrhh_area
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_area',
+        'DELETE',
+        CAST(OLD.id_area AS CHAR),
+        JSON_OBJECT(
+            'id_area', OLD.id_area,
+            'nombre_area', OLD.nombre_area,
+            'descripcion_area', OLD.descripcion_area,
+            'id_jefe', OLD.id_jefe,
+            'esta_activo', OLD.esta_activo
+        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+-- ===============================================================================
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_empleado $$
+CREATE PROCEDURE pa_insertar_empleado(
+
+        IN p_id_usuario_accion INT,
+IN p_id_usuario INT,
+    IN p_numero_celular VARCHAR(15),
+    IN p_id_area INT,
+    IN p_id_rol INT,
+    IN p_id_jefe_directo INT,
+    IN p_rol_flujo ENUM('EMPLEADO','JEFE_AREA')
+)
+BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID de usuario es obligatorio para el empleado';
+    END IF;
+
+    INSERT INTO rrhh_empleado(
+
+        id_usuario,
+        numero_celular,
+        rol_flujo,
+        id_area,
+        id_rol,
+        id_jefe_directo,
+        id_usuario_creacion,
+        id_usuario_modificacion    )
+    VALUES(
+
+        p_id_usuario,
+        p_numero_celular,
+        p_rol_flujo,
+        p_id_area,
+        p_id_rol,
+        p_id_jefe_directo,
+        p_id_usuario_accion,
+        p_id_usuario_accion    );
+END$$
+
+DROP PROCEDURE IF EXISTS pa_modificar_empleado $$
+CREATE PROCEDURE pa_modificar_empleado(
+
+        IN p_id_usuario_accion INT,
+IN p_id_usuario INT,
+    IN p_numero_celular VARCHAR(15),
+    IN p_id_area INT,
+    IN p_id_rol INT,
+    IN p_id_jefe_directo INT,
+    IN p_rol_flujo ENUM('EMPLEADO','JEFE_AREA')
+)
+BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del empleado no es valido';
+    END IF;
+
+    UPDATE rrhh_empleado
+       SET numero_celular = p_numero_celular,
+           rol_flujo = p_rol_flujo,
+           id_area = p_id_area,
+           id_rol = p_id_rol,
+           id_jefe_directo = p_id_jefe_directo,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_usuario = p_id_usuario;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_eliminar_empleado $$
+CREATE PROCEDURE pa_eliminar_empleado(
+
+        IN p_id_usuario_accion INT,
+IN p_id_usuario INT
+
+)
+BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del empleado no es valido';
+    END IF;
+
+    UPDATE rrhh_usuario
+       SET esta_activo = 0,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_usuario = p_id_usuario;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_empleado_por_id $$
+CREATE PROCEDURE pa_buscar_empleado_por_id(
+    IN p_id_usuario INT
+)
+BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El ID del empleado no es valido';
+    END IF;
+    SELECT
+        u.id_usuario,
+        u.nombres,
+        u.apellido_paterno,
+        u.apellido_materno,
+        u.password_hash,
+        u.correo,
+        e.numero_celular,
+        e.rol_flujo,
+        e.id_area,
+        e.id_rol,
+        e.id_jefe_directo,
+        CASE WHEN u.esta_activo = 1 THEN 'ACTIVO' ELSE 'INACTIVO' END AS estado_usuario,
+        a.id_area AS area_id_area,
+        a.nombre_area AS area_nombre,
+        a.descripcion_area AS area_descripcion,
+        a.id_jefe AS area_id_jefe,
+        a.esta_activo AS area_esta_activo,
+        r.id_rol AS rol_id_rol,
+        r.titulo_rol AS rol_titulo,
+        r.descripcion_rol AS rol_descripcion,
+        r.esta_activo AS rol_esta_activo,
+        j.id_usuario AS jefe_id_usuario,
+        uj.nombres AS jefe_nombres,
+        uj.apellido_paterno AS jefe_apellido_paterno,
+        uj.apellido_materno AS jefe_apellido_materno,
+        uj.correo AS jefe_correo,
+        j.numero_celular AS jefe_numero_celular,
+        j.rol_flujo AS jefe_rol_flujo
+    FROM rrhh_empleado e
+    INNER JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
+    LEFT JOIN rrhh_area a ON e.id_area = a.id_area
+    LEFT JOIN rrhh_rol r ON e.id_rol = r.id_rol
+    LEFT JOIN rrhh_empleado j ON e.id_jefe_directo = j.id_usuario
+    LEFT JOIN rrhh_usuario uj ON j.id_usuario = uj.id_usuario
+    WHERE e.id_usuario = p_id_usuario
+      AND u.esta_activo = 1;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_empleados $$
+CREATE PROCEDURE pa_listar_empleados()
+BEGIN
+    SELECT
+        u.id_usuario,
+        u.nombres,
+        u.apellido_paterno,
+        u.apellido_materno,
+        u.password_hash,
+        u.correo,
+        e.numero_celular,
+        e.rol_flujo,
+        e.id_area,
+        e.id_rol,
+        e.id_jefe_directo,
+        CASE WHEN u.esta_activo = 1 THEN 'ACTIVO' ELSE 'INACTIVO' END AS estado_usuario,
+        a.id_area AS area_id_area,
+        a.nombre_area AS area_nombre,
+        a.descripcion_area AS area_descripcion,
+        a.id_jefe AS area_id_jefe,
+        a.esta_activo AS area_esta_activo,
+        r.id_rol AS rol_id_rol,
+        r.titulo_rol AS rol_titulo,
+        r.descripcion_rol AS rol_descripcion,
+        r.esta_activo AS rol_esta_activo,
+        j.id_usuario AS jefe_id_usuario,
+        uj.nombres AS jefe_nombres,
+        uj.apellido_paterno AS jefe_apellido_paterno,
+        uj.apellido_materno AS jefe_apellido_materno,
+        uj.correo AS jefe_correo,
+        j.numero_celular AS jefe_numero_celular,
+        j.rol_flujo AS jefe_rol_flujo
+    FROM rrhh_empleado e
+    INNER JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
+    LEFT JOIN rrhh_area a ON e.id_area = a.id_area
+    LEFT JOIN rrhh_rol r ON e.id_rol = r.id_rol
+    LEFT JOIN rrhh_empleado j ON e.id_jefe_directo = j.id_usuario
+    LEFT JOIN rrhh_usuario uj ON j.id_usuario = uj.id_usuario
+    WHERE u.esta_activo = 1
+    ORDER BY e.id_usuario;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_todos_empleados $$
+CREATE PROCEDURE pa_listar_todos_empleados()
+BEGIN
+    SELECT
+        u.id_usuario,
+        u.nombres,
+        u.apellido_paterno,
+        u.apellido_materno,
+        u.password_hash,
+        u.correo,
+        e.numero_celular,
+        e.rol_flujo,
+        e.id_area,
+        e.id_rol,
+        e.id_jefe_directo,
+        CASE WHEN u.esta_activo = 1 THEN 'ACTIVO' ELSE 'INACTIVO' END AS estado_usuario,
+        a.id_area AS area_id_area,
+        a.nombre_area AS area_nombre,
+        a.descripcion_area AS area_descripcion,
+        a.id_jefe AS area_id_jefe,
+        a.esta_activo AS area_esta_activo,
+        r.id_rol AS rol_id_rol,
+        r.titulo_rol AS rol_titulo,
+        r.descripcion_rol AS rol_descripcion,
+        r.esta_activo AS rol_esta_activo,
+        j.id_usuario AS jefe_id_usuario,
+        uj.nombres AS jefe_nombres,
+        uj.apellido_paterno AS jefe_apellido_paterno,
+        uj.apellido_materno AS jefe_apellido_materno,
+        uj.correo AS jefe_correo,
+        j.numero_celular AS jefe_numero_celular,
+        j.rol_flujo AS jefe_rol_flujo
+    FROM rrhh_empleado e
+    INNER JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
+    LEFT JOIN rrhh_area a ON e.id_area = a.id_area
+    LEFT JOIN rrhh_rol r ON e.id_rol = r.id_rol
+    LEFT JOIN rrhh_empleado j ON e.id_jefe_directo = j.id_usuario
+    LEFT JOIN rrhh_usuario uj ON j.id_usuario = uj.id_usuario
+    ORDER BY u.esta_activo DESC, e.id_usuario;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_obtener_password_empleado_por_correo $$
+CREATE PROCEDURE pa_obtener_password_empleado_por_correo(
+    IN p_correo VARCHAR(255)
+)
+BEGIN
+    SELECT
+        u.password_hash
+    FROM rrhh_empleado e
+    INNER JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
+    WHERE u.correo = p_correo
+      AND u.esta_activo = 1;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_empleados_por_nombre_apellido $$
+CREATE PROCEDURE pa_buscar_empleados_por_nombre_apellido(
+    IN p_busqueda VARCHAR(200)
+)
+BEGIN
+    SELECT
+        u.nombres,
+        u.apellido_paterno,
+        u.apellido_materno,
+        u.correo,
+        u.password_hash
+    FROM rrhh_empleado e
+    INNER JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
+    WHERE u.esta_activo = 1
+      AND (u.nombres LIKE CONCAT('%', p_busqueda, '%')
+           OR u.apellido_paterno LIKE CONCAT('%', p_busqueda, '%')
+           OR u.apellido_materno LIKE CONCAT('%', p_busqueda, '%'));
+END$$
+
+DELIMITER ;
+DELIMITER //
+
+-- ===============================================================================
+-- 4. TABLA: rrhh_empleado
+-- ===============================================================================
+-- ===============================================================================
+
+DROP TRIGGER IF EXISTS trg_rrhh_empleado_before_insert //
+CREATE TRIGGER trg_rrhh_empleado_before_insert
+BEFORE INSERT ON rrhh_empleado
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_empleado_before_update //
+CREATE TRIGGER trg_rrhh_empleado_before_update
+BEFORE UPDATE ON rrhh_empleado
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_empleado_after_insert //
+CREATE TRIGGER trg_rrhh_empleado_after_insert
+AFTER INSERT ON rrhh_empleado
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_empleado',
+        'INSERT',
+        CAST(NEW.id_usuario AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_usuario', NEW.id_usuario,
+            'numero_celular', NEW.numero_celular,
+            'rol_flujo', NEW.rol_flujo,
+            'id_area', NEW.id_area,
+            'id_rol', NEW.id_rol,
+            'id_jefe_directo', NEW.id_jefe_directo
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_empleado_after_update // 
+CREATE TRIGGER trg_rrhh_empleado_after_update
+AFTER UPDATE ON rrhh_empleado
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_empleado',
+        'UPDATE',
+        CAST(NEW.id_usuario AS CHAR),
+        JSON_OBJECT(
+            'id_usuario', OLD.id_usuario,
+            'numero_celular' , OLD.numero_celular,
+            'rol_flujo', OLD.rol_flujo,
+            'id_area', OLD.id_area,
+            'id_rol', OLD.id_rol,
+            'id_jefe_directo', OLD.id_jefe_directo
+        ),
+        JSON_OBJECT(
+            'id_usuario', NEW.id_usuario,
+            'numero_celular', NEW.numero_celular,
+            'rol_flujo', NEW.rol_flujo,
+            'id_area', NEW.id_area,
+            'id_rol', NEW.id_rol,
+            'id_jefe_directo', NEW.id_jefe_directo
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_empleado_after_delete //
+CREATE TRIGGER trg_rrhh_empleado_after_delete
+AFTER DELETE ON rrhh_empleado
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_empleado',
+        'DELETE',
+        CAST(OLD.id_usuario AS CHAR),
+        JSON_OBJECT(
+            'id_usuario', OLD.id_usuario,
+            'numero_celular', OLD.numero_celular,
+            'rol_flujo', OLD.rol_flujo,
+            'id_area', OLD.id_area,
+            'id_rol', OLD.id_rol,
+            'id_jefe_directo', OLD.id_jefe_directo
+        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+-- ===============================================================================
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_rol $$
+CREATE PROCEDURE pa_insertar_rol(
+    IN p_id_usuario_accion INT,
+IN p_titulo_rol VARCHAR(50),
+IN p_descripcion_rol VARCHAR(200),OUT p_id_generado INT
+)
+BEGIN
+
+    INSERT INTO rrhh_rol(
+
+        titulo_rol,
+        descripcion_rol, 
+        esta_activo,
+        id_usuario_creacion,
+        id_usuario_modificacion    )
+    VALUES(
+
+        p_titulo_rol,
+        p_descripcion_rol, 
+        1,
+        p_id_usuario_accion,
+        p_id_usuario_accion    );
+    
+    SET p_id_generado = LAST_INSERT_ID();
+END$$
+
+DROP PROCEDURE IF EXISTS pa_modificar_rol $$
+CREATE PROCEDURE pa_modificar_rol(
+
+        IN p_id_usuario_accion INT,
+IN p_id_rol INT,
+    IN p_titulo_rol VARCHAR(50),
+    IN p_descripcion_rol VARCHAR(200)
+)
+BEGIN
+    IF p_id_rol IS NULL OR p_id_rol <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de rol inválido';
+    END IF;
+
+    UPDATE rrhh_rol
+       SET titulo_rol = p_titulo_rol,
+           descripcion_rol = p_descripcion_rol,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_rol = p_id_rol;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_eliminar_rol $$
+CREATE PROCEDURE pa_eliminar_rol(
+
+        IN p_id_usuario_accion INT,
+IN p_id_rol INT
+
+)
+BEGIN
+    IF p_id_rol IS NULL OR p_id_rol <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de rol inválido';
+    END IF;
+    UPDATE rrhh_rol
+       SET esta_activo = 0,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_rol = p_id_rol;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_rol_por_id $$
+CREATE PROCEDURE pa_buscar_rol_por_id(
+    IN p_id_rol INT
+)
+BEGIN
+    IF p_id_rol IS NULL OR p_id_rol <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de rol inválido';
+    END IF;
+    SELECT 
+        id_rol, 
+        titulo_rol, 
+        descripcion_rol,
+        esta_activo
+    FROM rrhh_rol
+    WHERE id_rol = p_id_rol;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_roles $$
+CREATE PROCEDURE pa_listar_roles()
+BEGIN
+    SELECT 
+        id_rol, 
+        titulo_rol, 
+        descripcion_rol,
+        esta_activo
+    FROM rrhh_rol
+    ORDER BY esta_activo DESC, id_rol;
+END$$
+
+DELIMITER ;
+DELIMITER //
+
+-- ===============================================================================
+-- 1. TABLA: rrhh_rol
+-- ===============================================================================
+-- ===============================================================================
+
+DROP TRIGGER IF EXISTS trg_rrhh_rol_before_insert //
+CREATE TRIGGER trg_rrhh_rol_before_insert
+BEFORE INSERT ON rrhh_rol
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_rol_before_update //
+CREATE TRIGGER trg_rrhh_rol_before_update
+BEFORE UPDATE ON rrhh_rol
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_rol_after_insert //
+CREATE TRIGGER trg_rrhh_rol_after_insert
+AFTER INSERT ON rrhh_rol
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_rol',
+        'INSERT',
+        CAST(NEW.id_rol AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_rol', NEW.id_rol,
+            'titulo_rol', NEW.titulo_rol,
+            'descripcion_rol', NEW.descripcion_rol,
+            'esta_activo', NEW.esta_activo
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_rol_after_update //
+CREATE TRIGGER trg_rrhh_rol_after_update
+AFTER UPDATE ON rrhh_rol
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_rol',
+        'UPDATE',
+        CAST(NEW.id_rol AS CHAR),
+        JSON_OBJECT(
+            'id_rol', OLD.id_rol,
+            'titulo_rol', OLD.titulo_rol,
+            'descripcion_rol', OLD.descripcion_rol,
+            'esta_activo', OLD.esta_activo
+        ),
+        JSON_OBJECT(
+            'id_rol', NEW.id_rol,
+            'titulo_rol', NEW.titulo_rol,
+            'descripcion_rol', NEW.descripcion_rol,
+            'esta_activo', NEW.esta_activo
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_rol_after_delete //
+CREATE TRIGGER trg_rrhh_rol_after_delete
+AFTER DELETE ON rrhh_rol
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_rol',
+        'DELETE',
+        CAST(OLD.id_rol AS CHAR),
+        JSON_OBJECT(
+            'id_rol', OLD.id_rol,
+            'titulo_rol', OLD.titulo_rol,
+            'descripcion_rol', OLD.descripcion_rol,
+            'esta_activo', OLD.esta_activo
+        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+-- ===============================================================================
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_usuario $$
+CREATE PROCEDURE pa_insertar_usuario(
+    IN p_id_usuario_accion INT,
+	IN p_nombres VARCHAR(60),
+	IN p_apellido_paterno VARCHAR(40),
+	IN p_apellido_materno VARCHAR(40),
+	IN p_password_hash VARCHAR(255),
+	IN p_correo VARCHAR(255),
+	OUT p_id_generado INT
+)
+BEGIN
+    INSERT INTO rrhh_usuario(
+
+        nombres,
+        apellido_paterno,
+        apellido_materno,
+        password_hash,
+        correo,
+        esta_activo,
+        id_usuario_creacion,
+        id_usuario_modificacion    )
+    VALUES(
+
+        p_nombres,
+        p_apellido_paterno,
+        p_apellido_materno,
+        p_password_hash,
+        p_correo,
+        1,
+        p_id_usuario_accion,
+        p_id_usuario_accion    );
+    
+    SET p_id_generado = LAST_INSERT_ID();
+END$$
+
+DROP PROCEDURE IF EXISTS pa_modificar_usuario $$
+CREATE PROCEDURE pa_modificar_usuario(
+
+        IN p_id_usuario_accion INT,
+IN p_id_usuario INT,
+    IN p_nombres VARCHAR(60),
+    IN p_apellido_paterno VARCHAR(40),
+    IN p_apellido_materno VARCHAR(40),
+    IN p_password_hash VARCHAR(255),
+    IN p_correo VARCHAR(255)
+)
+BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de usuario invalido';
+    END IF;
+
+    UPDATE rrhh_usuario
+       SET nombres = p_nombres,
+           apellido_paterno = p_apellido_paterno,
+           apellido_materno = p_apellido_materno,
+           password_hash = p_password_hash,
+           correo = p_correo,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_usuario = p_id_usuario;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_eliminar_usuario $$
+CREATE PROCEDURE pa_eliminar_usuario(
+    IN p_id_usuario_accion INT,
+	IN p_id_usuario INT
+)
+BEGIN
+    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de usuario invalido';
+    END IF;
+
+    UPDATE rrhh_usuario
+       SET esta_activo = 0,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_usuario = p_id_usuario;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_usuario_por_correo $$
+CREATE PROCEDURE pa_buscar_usuario_por_correo(
+    IN p_correo VARCHAR(255)
+)
+BEGIN
+    SELECT 
+        u.id_usuario,
+        u.nombres,
+        u.apellido_paterno,
+        u.apellido_materno,
+        u.password_hash,
+        u.correo,
+        CASE WHEN u.esta_activo = 1 THEN 'ACTIVO' ELSE 'INACTIVO' END AS estado,
+        CASE 
+            WHEN e.id_usuario IS NOT NULL THEN 'EMPLEADO'
+            WHEN a.id_usuario IS NOT NULL THEN 'ADMINISTRADOR'
+            ELSE 'EMPLEADO'
+        END AS tipo_usuario,
+        e.id_usuario AS id_empleado,
+        e.id_area,
+        ar.nombre_area AS nombre_area,
+        e.id_rol,
+        ro.titulo_rol AS titulo_rol
+    FROM rrhh_usuario u
+    LEFT JOIN rrhh_empleado e ON u.id_usuario = e.id_usuario
+    LEFT JOIN rrhh_administrador a ON u.id_usuario = a.id_usuario
+    LEFT JOIN rrhh_area ar ON e.id_area = ar.id_area
+    LEFT JOIN rrhh_rol ro ON e.id_rol = ro.id_rol
+    WHERE u.correo = p_correo;
+END$$
+
+DELIMITER ;
+DELIMITER //
+
+-- ===============================================================================
+-- 2. TABLA: rrhh_usuario
+-- ===============================================================================
+-- ===============================================================================
+
+DROP TRIGGER IF EXISTS trg_rrhh_usuario_before_insert //
+CREATE TRIGGER trg_rrhh_usuario_before_insert
+BEFORE INSERT ON rrhh_usuario
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_usuario_before_update //
+CREATE TRIGGER trg_rrhh_usuario_before_update
+BEFORE UPDATE ON rrhh_usuario
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_usuario_after_insert //
+CREATE TRIGGER trg_rrhh_usuario_after_insert
+AFTER INSERT ON rrhh_usuario
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_usuario',
+        'INSERT',
+        CAST(NEW.id_usuario AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_usuario', NEW.id_usuario,
+            'nombres', NEW.nombres,
+            'apellido_paterno', NEW.apellido_paterno,
+            'apellido_materno', NEW.apellido_materno,
+            'password_hash', NEW.password_hash,
+        'correo', NEW.correo,
+            'esta_activo', NEW.esta_activo
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_usuario_after_update //
+CREATE TRIGGER trg_rrhh_usuario_after_update
+AFTER UPDATE ON rrhh_usuario
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_usuario',
+        'UPDATE',
+        CAST(NEW.id_usuario AS CHAR),
+        JSON_OBJECT(
+            'id_usuario', OLD.id_usuario,
+            'nombres', OLD.nombres,
+            'apellido_paterno', OLD.apellido_paterno,
+            'apellido_materno', OLD.apellido_materno,
+            'password_hash', OLD.password_hash,
+        'correo', OLD.correo,
+            'esta_activo', OLD.esta_activo
+        ),
+        JSON_OBJECT(
+            'id_usuario', NEW.id_usuario,
+            'nombres', NEW.nombres,
+            'apellido_paterno', NEW.apellido_paterno,
+            'apellido_materno', NEW.apellido_materno,
+            'password_hash', NEW.password_hash,
+        'correo', NEW.correo,
+            'esta_activo', NEW.esta_activo
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_rrhh_usuario_after_delete //
+CREATE TRIGGER trg_rrhh_usuario_after_delete
+AFTER DELETE ON rrhh_usuario
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'rrhh_usuario',
+        'DELETE',
+        CAST(OLD.id_usuario AS CHAR),
+        JSON_OBJECT(
+            'id_usuario', OLD.id_usuario,
+            'nombres', OLD.nombres,
+            'apellido_paterno', OLD.apellido_paterno,
+            'apellido_materno', OLD.apellido_materno,
+            'password_hash', OLD.password_hash,
+        'correo', OLD.correo,
+            'esta_activo', OLD.esta_activo
+        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+-- ===============================================================================
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_caja_chica $$
+CREATE PROCEDURE pa_insertar_caja_chica(
+
+        IN p_id_usuario_accion INT,
+IN p_id_fondo INT,
+    IN p_monto_techo DECIMAL(12,2),
+    IN p_id_area INT,
+    IN p_id_moneda INT,
+    IN p_id_cuenta_origen INT
+
+)
+BEGIN
+    INSERT INTO tes_caja_chica (
+        id_fondo,
+        monto_techo,
+        id_area,
+        id_moneda,
+        id_cuenta_origen,
+        id_usuario_creacion,
+        id_usuario_modificacion
+    )
+    VALUES (
+        p_id_fondo,
+        p_monto_techo,
+        p_id_area,
+        p_id_moneda,
+        p_id_cuenta_origen,
+        p_id_usuario_accion,
+        p_id_usuario_accion
+    );
+END$$
+
+DROP PROCEDURE IF EXISTS pa_modificar_caja_chica $$
+CREATE PROCEDURE pa_modificar_caja_chica(
+
+        IN p_id_usuario_accion INT,
+IN p_id_fondo INT,
+    IN p_monto_techo DECIMAL(12,2),
+    IN p_id_area INT,
+    IN p_id_moneda INT,
+    IN p_id_cuenta_origen INT
+
+)
+BEGIN
+    IF p_id_fondo IS NULL OR p_id_fondo <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de caja chica no válido';
+    END IF;
+
+    UPDATE tes_caja_chica 
+    SET monto_techo = p_monto_techo,
+        id_area = p_id_area,
+        id_moneda = p_id_moneda,
+        id_cuenta_origen = p_id_cuenta_origen,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_fondo = p_id_fondo;
+END$$
+
+
+DROP PROCEDURE IF EXISTS pa_eliminar_caja_chica $$
+CREATE PROCEDURE pa_eliminar_caja_chica(
+
+        IN p_id_usuario_accion INT,
+IN p_id_fondo INT
+
+)
+BEGIN 
+    IF p_id_fondo IS NULL OR p_id_fondo <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de caja chica no válido';
+    END IF;
+
+    call pa_eliminar_fondo(p_id_usuario_accion, p_id_fondo);
+
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_por_id_caja_chica $$
+CREATE PROCEDURE pa_buscar_por_id_caja_chica(
+    IN p_id_fondo INT
+)
+BEGIN
+    IF p_id_fondo IS NULL OR p_id_fondo <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de caja chica no válido';
+    END IF;
+
+    SELECT
+        f.id_fondo,
+        f.nombre_fondo,
+        f.estado_fondo,
+        c.monto_techo,
+        c.id_area,
+        c.id_moneda,
+        c.id_cuenta_origen,
+        a.id_area AS area_id_area,
+        a.nombre_area AS area_nombre,
+        a.descripcion_area AS area_descripcion,
+        a.id_jefe AS area_id_jefe,
+        a.esta_activo AS area_esta_activo,
+        m.id_moneda AS mon_id_moneda,
+        m.codigo_iso AS mon_codigo_iso,
+        m.simbolo AS mon_simbolo,
+        m.nombre_moneda AS mon_nombre,
+        m.descripcion AS mon_descripcion,
+        m.activa AS mon_activa,
+        cb.id_cuenta_bancaria AS cb_id_cuenta,
+        cb.numero_cuenta AS cb_numero_cuenta,
+        cb.nombre_banco AS cb_nombre_banco,
+        cb.cci AS cb_cci,
+        cb.activa AS cb_activa,
+        cb.id_moneda AS cb_id_moneda,
+        cb.id_usuario AS cb_id_usuario,
+        cb.id_area AS cb_id_area,
+        cbm.id_moneda AS cbm_id_moneda,
+        cbm.codigo_iso AS cbm_codigo_iso,
+        cbm.simbolo AS cbm_simbolo,
+        cbm.nombre_moneda AS cbm_nombre,
+        cbm.descripcion AS cbm_descripcion,
+        cbm.activa AS cbm_activa,
+        cba.id_area AS cba_id_area,
+        cba.nombre_area AS cba_nombre,
+        cba.descripcion_area AS cba_descripcion,
+        cba.id_jefe AS cba_id_jefe,
+        cba.esta_activo AS cba_esta_activo,
+        cbe.id_usuario AS cbe_id_usuario,
+        ucbe.nombres AS cbe_nombres,
+        ucbe.apellido_paterno AS cbe_apellido_paterno,
+        ucbe.apellido_materno AS cbe_apellido_materno,
+        ucbe.correo AS cbe_correo,
+        cbe.numero_celular AS cbe_numero_celular,
+        cbe.rol_flujo AS cbe_rol_flujo
+    FROM tes_fondo f
+    JOIN tes_caja_chica c ON f.id_fondo = c.id_fondo
+    LEFT JOIN rrhh_area a ON c.id_area = a.id_area
+    LEFT JOIN tes_moneda m ON c.id_moneda = m.id_moneda
+    LEFT JOIN tes_cuenta_bancaria cb ON c.id_cuenta_origen = cb.id_cuenta_bancaria
+    LEFT JOIN tes_moneda cbm ON cb.id_moneda = cbm.id_moneda
+    LEFT JOIN rrhh_area cba ON cb.id_area = cba.id_area
+    LEFT JOIN rrhh_empleado cbe ON cb.id_usuario = cbe.id_usuario
+    LEFT JOIN rrhh_usuario ucbe ON cbe.id_usuario = ucbe.id_usuario
+    WHERE f.id_fondo = p_id_fondo;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_todas_cajas_chicas $$
+CREATE PROCEDURE pa_listar_todas_cajas_chicas()
+BEGIN
+    SELECT
+        f.id_fondo,
+        f.nombre_fondo,
+        f.estado_fondo,
+        c.monto_techo,
+        c.id_area,
+        c.id_moneda,
+        c.id_cuenta_origen,
+        a.id_area AS area_id_area,
+        a.nombre_area AS area_nombre,
+        a.descripcion_area AS area_descripcion,
+        a.id_jefe AS area_id_jefe,
+        a.esta_activo AS area_esta_activo,
+        m.id_moneda AS mon_id_moneda,
+        m.codigo_iso AS mon_codigo_iso,
+        m.simbolo AS mon_simbolo,
+        m.nombre_moneda AS mon_nombre,
+        m.descripcion AS mon_descripcion,
+        m.activa AS mon_activa,
+        cb.id_cuenta_bancaria AS cb_id_cuenta,
+        cb.numero_cuenta AS cb_numero_cuenta,
+        cb.nombre_banco AS cb_nombre_banco,
+        cb.cci AS cb_cci,
+        cb.activa AS cb_activa,
+        cb.id_moneda AS cb_id_moneda,
+        cb.id_usuario AS cb_id_usuario,
+        cb.id_area AS cb_id_area,
+        cbm.id_moneda AS cbm_id_moneda,
+        cbm.codigo_iso AS cbm_codigo_iso,
+        cbm.simbolo AS cbm_simbolo,
+        cbm.nombre_moneda AS cbm_nombre,
+        cbm.descripcion AS cbm_descripcion,
+        cbm.activa AS cbm_activa,
+        cba.id_area AS cba_id_area,
+        cba.nombre_area AS cba_nombre,
+        cba.descripcion_area AS cba_descripcion,
+        cba.id_jefe AS cba_id_jefe,
+        cba.esta_activo AS cba_esta_activo,
+        cbe.id_usuario AS cbe_id_usuario,
+        ucbe.nombres AS cbe_nombres,
+        ucbe.apellido_paterno AS cbe_apellido_paterno,
+        ucbe.apellido_materno AS cbe_apellido_materno,
+        ucbe.correo AS cbe_correo,
+        cbe.numero_celular AS cbe_numero_celular,
+        cbe.rol_flujo AS cbe_rol_flujo
+    FROM tes_fondo f
+    JOIN tes_caja_chica c ON f.id_fondo = c.id_fondo
+    LEFT JOIN rrhh_area a ON c.id_area = a.id_area
+    LEFT JOIN tes_moneda m ON c.id_moneda = m.id_moneda
+    LEFT JOIN tes_cuenta_bancaria cb ON c.id_cuenta_origen = cb.id_cuenta_bancaria
+    LEFT JOIN tes_moneda cbm ON cb.id_moneda = cbm.id_moneda
+    LEFT JOIN rrhh_area cba ON cb.id_area = cba.id_area
+    LEFT JOIN rrhh_empleado cbe ON cb.id_usuario = cbe.id_usuario
+    LEFT JOIN rrhh_usuario ucbe ON cbe.id_usuario = ucbe.id_usuario
+    ORDER BY f.estado_fondo DESC, f.id_fondo;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_cajas_chicas_activas $$
+CREATE PROCEDURE pa_listar_cajas_chicas_activas()
+BEGIN
+    SELECT
+        f.id_fondo,
+        f.nombre_fondo,
+        f.estado_fondo,
+        c.monto_techo,
+        c.id_area,
+        c.id_moneda,
+        c.id_cuenta_origen,
+        a.id_area AS area_id_area,
+        a.nombre_area AS area_nombre,
+        a.descripcion_area AS area_descripcion,
+        a.id_jefe AS area_id_jefe,
+        a.esta_activo AS area_esta_activo,
+        m.id_moneda AS mon_id_moneda,
+        m.codigo_iso AS mon_codigo_iso,
+        m.simbolo AS mon_simbolo,
+        m.nombre_moneda AS mon_nombre,
+        m.descripcion AS mon_descripcion,
+        m.activa AS mon_activa,
+        cb.id_cuenta_bancaria AS cb_id_cuenta,
+        cb.numero_cuenta AS cb_numero_cuenta,
+        cb.nombre_banco AS cb_nombre_banco,
+        cb.cci AS cb_cci,
+        cb.activa AS cb_activa,
+        cb.id_moneda AS cb_id_moneda,
+        cb.id_usuario AS cb_id_usuario,
+        cb.id_area AS cb_id_area,
+        cbm.id_moneda AS cbm_id_moneda,
+        cbm.codigo_iso AS cbm_codigo_iso,
+        cbm.simbolo AS cbm_simbolo,
+        cbm.nombre_moneda AS cbm_nombre,
+        cbm.descripcion AS cbm_descripcion,
+        cbm.activa AS cbm_activa,
+        cba.id_area AS cba_id_area,
+        cba.nombre_area AS cba_nombre,
+        cba.descripcion_area AS cba_descripcion,
+        cba.id_jefe AS cba_id_jefe,
+        cba.esta_activo AS cba_esta_activo,
+        cbe.id_usuario AS cbe_id_usuario,
+        ucbe.nombres AS cbe_nombres,
+        ucbe.apellido_paterno AS cbe_apellido_paterno,
+        ucbe.apellido_materno AS cbe_apellido_materno,
+        ucbe.correo AS cbe_correo,
+        cbe.numero_celular AS cbe_numero_celular,
+        cbe.rol_flujo AS cbe_rol_flujo
+    FROM tes_fondo f
+    JOIN tes_caja_chica c ON f.id_fondo = c.id_fondo
+    LEFT JOIN rrhh_area a ON c.id_area = a.id_area
+    LEFT JOIN tes_moneda m ON c.id_moneda = m.id_moneda
+    LEFT JOIN tes_cuenta_bancaria cb ON c.id_cuenta_origen = cb.id_cuenta_bancaria
+    LEFT JOIN tes_moneda cbm ON cb.id_moneda = cbm.id_moneda
+    LEFT JOIN rrhh_area cba ON cb.id_area = cba.id_area
+    LEFT JOIN rrhh_empleado cbe ON cb.id_usuario = cbe.id_usuario
+    LEFT JOIN rrhh_usuario ucbe ON cbe.id_usuario = ucbe.id_usuario
+    WHERE f.estado_fondo = 'ACTIVO'
+    ORDER BY f.id_fondo;
+END$$
+
+DELIMITER ;
+DELIMITER //
+
+-- ===============================================================================
+-- 4. TABLA: tes_caja_chica
+-- ===============================================================================
+-- ===============================================================================
+
+DROP TRIGGER IF EXISTS trg_tes_caja_chica_before_insert //
+CREATE TRIGGER trg_tes_caja_chica_before_insert
+BEFORE INSERT ON tes_caja_chica
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_caja_chica_before_update //
+CREATE TRIGGER trg_tes_caja_chica_before_update
+BEFORE UPDATE ON tes_caja_chica
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_caja_chica_after_insert //
+CREATE TRIGGER trg_tes_caja_chica_after_insert
+AFTER INSERT ON tes_caja_chica
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'tes_caja_chica',
+        'INSERT',
+        CAST(NEW.id_fondo AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_fondo', NEW.id_fondo,
+            'monto_techo', NEW.monto_techo,
+            'id_area', NEW.id_area,
+        'id_moneda', NEW.id_moneda,
+        'id_cuenta_origen', NEW.id_cuenta_origen
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_caja_chica_after_update //
+CREATE TRIGGER trg_tes_caja_chica_after_update
+AFTER UPDATE ON tes_caja_chica
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'tes_caja_chica',
+        'UPDATE',
+        CAST(NEW.id_fondo AS CHAR),
+        JSON_OBJECT(
+            'id_fondo', OLD.id_fondo,
+            'monto_techo', OLD.monto_techo,
+            'id_area', OLD.id_area,
+        'id_moneda', OLD.id_moneda,
+        'id_cuenta_origen', OLD.id_cuenta_origen
+        ),
+        JSON_OBJECT(
+            'id_fondo', NEW.id_fondo,
+            'monto_techo', NEW.monto_techo,
+            'id_area', NEW.id_area,
+        'id_moneda', NEW.id_moneda,
+        'id_cuenta_origen', NEW.id_cuenta_origen
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_caja_chica_after_delete //
+CREATE TRIGGER trg_tes_caja_chica_after_delete
+AFTER DELETE ON tes_caja_chica
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'tes_caja_chica',
+        'DELETE',
+        CAST(OLD.id_fondo AS CHAR),
+        JSON_OBJECT(
+            'id_fondo', OLD.id_fondo,
+            'monto_techo', OLD.monto_techo,
+            'id_area', OLD.id_area,
+        'id_moneda', OLD.id_moneda,
+        'id_cuenta_origen', OLD.id_cuenta_origen
+        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+DELIMITER ;
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_cuenta_bancaria $$
+CREATE PROCEDURE pa_insertar_cuenta_bancaria(
+    IN p_id_usuario_accion INT,
+IN p_nombre_banco VARCHAR(50),
+IN p_numero_cuenta VARCHAR(30),
+IN p_cci CHAR(20),
+IN p_id_moneda INT,
+IN p_id_usuario_titular INT,
+IN p_id_area_titular INT,
+OUT p_id_cuenta_bancaria INT
+)
+BEGIN
+	INSERT INTO tes_cuenta_bancaria(
+
+        nombre_banco, numero_cuenta, cci,
+        id_moneda,
+        id_usuario,
+        id_area,
+        id_usuario_creacion,
+        id_usuario_modificacion    )
+	VALUES
+        (p_nombre_banco,p_numero_cuenta,p_cci,
+        p_id_moneda,
+        p_id_usuario_titular,
+        p_id_area_titular,
+        p_id_usuario_accion,
+        p_id_usuario_accion);
+	
+	SET p_id_cuenta_bancaria=@@last_insert_id;
+
+END$$
+
+DROP PROCEDURE IF EXISTS pa_modificar_cuenta_bancaria $$
+CREATE PROCEDURE pa_modificar_cuenta_bancaria(
+
+        IN p_id_usuario_accion INT,
+IN p_id_cuenta_bancaria INT,
+    IN p_nombre_banco VARCHAR(50),
+    IN p_numero_cuenta VARCHAR(30),
+    IN p_cci CHAR(20),
+    IN p_id_moneda INT,
+    IN p_id_usuario_titular INT,
+    IN p_id_area_titular INT
+
+)
+BEGIN
+    IF p_id_cuenta_bancaria IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de la cuenta no válido';
+    END IF;
+
+    UPDATE tes_cuenta_bancaria
+    SET nombre_banco = p_nombre_banco,
+        numero_cuenta = p_numero_cuenta,
+        cci = p_cci,
+        id_moneda = p_id_moneda,
+        id_usuario = p_id_usuario_titular,
+        id_area = p_id_area_titular,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_cuenta_bancaria = p_id_cuenta_bancaria;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_eliminar_cuenta_bancaria $$
+CREATE PROCEDURE pa_eliminar_cuenta_bancaria(
+ 
+	    IN p_id_usuario_accion INT,
+IN p_id_cuenta_bancaria INT
+
+)
+BEGIN 
+    IF p_id_cuenta_bancaria IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de la cuenta no válido';
+    END IF;
+	UPDATE tes_cuenta_bancaria SET activa = 0,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_cuenta_bancaria = p_id_cuenta_bancaria;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_cuenta_bancaria_por_id $$
+CREATE PROCEDURE pa_buscar_cuenta_bancaria_por_id(
+    IN p_id_cuenta_bancaria INT
+)
+BEGIN
+    IF p_id_cuenta_bancaria IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de la cuenta no válido';
+    END IF;
+
+    SELECT
+        cb.id_cuenta_bancaria,
+        cb.numero_cuenta,
+        cb.nombre_banco,
+        cb.cci,
+        cb.id_moneda,
+        cb.id_usuario,
+        cb.id_area,
+        cb.activa,
+        m.id_moneda AS mon_id_moneda,
+        m.codigo_iso AS mon_codigo_iso,
+        m.simbolo AS mon_simbolo,
+        m.nombre_moneda AS mon_nombre,
+        m.descripcion AS mon_descripcion,
+        m.activa AS mon_activa,
+        a.id_area AS area_id_area,
+        a.nombre_area AS area_nombre,
+        a.descripcion_area AS area_descripcion,
+        a.id_jefe AS area_id_jefe,
+        a.esta_activo AS area_esta_activo,
+        e.id_usuario AS emp_id_usuario,
+        u.nombres AS emp_nombres,
+        u.apellido_paterno AS emp_apellido_paterno,
+        u.apellido_materno AS emp_apellido_materno,
+        u.correo AS emp_correo,
+        e.numero_celular AS emp_numero_celular,
+        e.rol_flujo AS emp_rol_flujo
+    FROM tes_cuenta_bancaria cb
+    LEFT JOIN tes_moneda m ON cb.id_moneda = m.id_moneda
+    LEFT JOIN rrhh_area a ON cb.id_area = a.id_area
+    LEFT JOIN rrhh_empleado e ON cb.id_usuario = e.id_usuario
+    LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
+    WHERE cb.id_cuenta_bancaria = p_id_cuenta_bancaria;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_cuentas_bancarias $$
+CREATE PROCEDURE pa_listar_cuentas_bancarias()
+BEGIN
+    SELECT
+        cb.id_cuenta_bancaria,
+        cb.numero_cuenta,
+        cb.nombre_banco,
+        cb.cci,
+        cb.id_moneda,
+        cb.id_usuario,
+        cb.id_area,
+        cb.activa,
+        m.id_moneda AS mon_id_moneda,
+        m.codigo_iso AS mon_codigo_iso,
+        m.simbolo AS mon_simbolo,
+        m.nombre_moneda AS mon_nombre,
+        m.descripcion AS mon_descripcion,
+        m.activa AS mon_activa,
+        a.id_area AS area_id_area,
+        a.nombre_area AS area_nombre,
+        a.descripcion_area AS area_descripcion,
+        a.id_jefe AS area_id_jefe,
+        a.esta_activo AS area_esta_activo,
+        e.id_usuario AS emp_id_usuario,
+        u.nombres AS emp_nombres,
+        u.apellido_paterno AS emp_apellido_paterno,
+        u.apellido_materno AS emp_apellido_materno,
+        u.correo AS emp_correo,
+        e.numero_celular AS emp_numero_celular,
+        e.rol_flujo AS emp_rol_flujo
+    FROM tes_cuenta_bancaria cb
+    LEFT JOIN tes_moneda m ON cb.id_moneda = m.id_moneda
+    LEFT JOIN rrhh_area a ON cb.id_area = a.id_area
+    LEFT JOIN rrhh_empleado e ON cb.id_usuario = e.id_usuario
+    LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
+    ORDER BY cb.activa DESC, cb.id_cuenta_bancaria;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_cuentas_bancarias_activas $$
+CREATE PROCEDURE pa_listar_cuentas_bancarias_activas()
+BEGIN
+    SELECT
+        cb.id_cuenta_bancaria,
+        cb.numero_cuenta,
+        cb.nombre_banco,
+        cb.cci,
+        cb.id_moneda,
+        cb.id_usuario,
+        cb.id_area,
+        cb.activa,
+        m.id_moneda AS mon_id_moneda,
+        m.codigo_iso AS mon_codigo_iso,
+        m.simbolo AS mon_simbolo,
+        m.nombre_moneda AS mon_nombre,
+        m.descripcion AS mon_descripcion,
+        m.activa AS mon_activa,
+        a.id_area AS area_id_area,
+        a.nombre_area AS area_nombre,
+        a.descripcion_area AS area_descripcion,
+        a.id_jefe AS area_id_jefe,
+        a.esta_activo AS area_esta_activo,
+        e.id_usuario AS emp_id_usuario,
+        u.nombres AS emp_nombres,
+        u.apellido_paterno AS emp_apellido_paterno,
+        u.apellido_materno AS emp_apellido_materno,
+        u.correo AS emp_correo,
+        e.numero_celular AS emp_numero_celular,
+        e.rol_flujo AS emp_rol_flujo
+    FROM tes_cuenta_bancaria cb
+    LEFT JOIN tes_moneda m ON cb.id_moneda = m.id_moneda
+    LEFT JOIN rrhh_area a ON cb.id_area = a.id_area
+    LEFT JOIN rrhh_empleado e ON cb.id_usuario = e.id_usuario
+    LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
+    WHERE cb.activa = 1;
+END$$
+
+DELIMITER ;
+DELIMITER //
+
+-- ===============================================================================
+-- 2. TABLA: tes_cuenta_bancaria
+-- ===============================================================================
+-- ===============================================================================
+
+DROP TRIGGER IF EXISTS trg_tes_cuenta_bancaria_before_insert //
+CREATE TRIGGER trg_tes_cuenta_bancaria_before_insert
+BEFORE INSERT ON tes_cuenta_bancaria
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_cuenta_bancaria_before_update //
+CREATE TRIGGER trg_tes_cuenta_bancaria_before_update
+BEFORE UPDATE ON tes_cuenta_bancaria
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_cuenta_bancaria_after_insert //
+CREATE TRIGGER trg_tes_cuenta_bancaria_after_insert
+AFTER INSERT ON tes_cuenta_bancaria
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'tes_cuenta_bancaria',
+        'INSERT',
+        CAST(NEW.id_cuenta_bancaria AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_cuenta_bancaria', NEW.id_cuenta_bancaria,
+            'nombre_banco', NEW.nombre_banco,
+            'numero_cuenta', NEW.numero_cuenta,
+            'cci', NEW.cci,
+            'id_moneda', NEW.id_moneda,
+            'id_area', NEW.id_area,
+            'id_usuario', NEW.id_usuario,
+            'activa', NEW.activa
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_cuenta_bancaria_after_update //
+CREATE TRIGGER trg_tes_cuenta_bancaria_after_update
+AFTER UPDATE ON tes_cuenta_bancaria
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'tes_cuenta_bancaria',
+        'UPDATE',
+        CAST(NEW.id_cuenta_bancaria AS CHAR),
+        JSON_OBJECT(
+            'id_cuenta_bancaria', OLD.id_cuenta_bancaria,
+            'nombre_banco', OLD.nombre_banco,
+            'numero_cuenta', OLD.numero_cuenta,
+            'cci', OLD.cci,
+            'id_moneda', OLD.id_moneda,
+            'id_area', OLD.id_area,
+            'id_usuario', OLD.id_usuario,
+            'activa', OLD.activa
+        ),
+        JSON_OBJECT(
+            'id_cuenta_bancaria', NEW.id_cuenta_bancaria,
+            'nombre_banco', NEW.nombre_banco,
+            'numero_cuenta', NEW.numero_cuenta,
+            'cci', NEW.cci,
+            'id_moneda', NEW.id_moneda,
+            'id_area', NEW.id_area,
+            'id_usuario', NEW.id_usuario,
+            'activa', NEW.activa
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_cuenta_bancaria_after_delete //
+CREATE TRIGGER trg_tes_cuenta_bancaria_after_delete
+AFTER DELETE ON tes_cuenta_bancaria
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'tes_cuenta_bancaria',
+        'DELETE',
+        CAST(OLD.id_cuenta_bancaria AS CHAR),
+        JSON_OBJECT(
+            'id_cuenta_bancaria', OLD.id_cuenta_bancaria,
+            'nombre_banco', OLD.nombre_banco,
+            'numero_cuenta', OLD.numero_cuenta,
+            'cci', OLD.cci,
+            'id_moneda', OLD.id_moneda,
+            'id_area', OLD.id_area,
+            'id_usuario', OLD.id_usuario,
+            'activa', OLD.activa
+        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+-- ===============================================================================
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_fondo $$
+CREATE PROCEDURE pa_insertar_fondo(
+    IN p_id_usuario_accion INT,
+	IN p_nombre_fondo VARCHAR(100),
+	IN p_estado_fondo ENUM('ACTIVO','INACTIVO'),
+	OUT p_id_fondo INT
+)
+BEGIN   
+	INSERT INTO tes_fondo(
+nombre_fondo, estado_fondo,
+        id_usuario_creacion,
+        id_usuario_modificacion    ) 
+    VALUES(
+p_nombre_fondo, p_estado_fondo,
+        p_id_usuario_accion,
+        p_id_usuario_accion    );
+
+    SET p_id_fondo=@@last_insert_id;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_modificar_fondo $$
+CREATE PROCEDURE pa_modificar_fondo(
+    IN p_id_usuario_accion INT,
+	IN p_id_fondo INT,
+    IN p_nombre_fondo VARCHAR(100),
+    IN p_estado_fondo ENUM('ACTIVO','INACTIVO')
+)
+BEGIN
+	IF p_id_fondo IS NULL OR p_id_fondo <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de fondo no válido';
+    END IF;
+
+	UPDATE tes_fondo SET 
+        nombre_fondo =p_nombre_fondo, 
+	    estado_fondo=p_estado_fondo,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_fondo=p_id_fondo;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_eliminar_fondo $$
+CREATE PROCEDURE pa_eliminar_fondo(
+
+	    IN p_id_usuario_accion INT,
+IN p_id_fondo INT
+
+)
+BEGIN
+	IF p_id_fondo IS NULL OR p_id_fondo <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de fondo no válido';
+    END IF;
+
+	UPDATE tes_fondo SET estado_fondo = 'INACTIVO',
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_fondo = p_id_fondo;
+END$$
+
+DELIMITER ;
+DELIMITER //
+
+-- ===============================================================================
+-- 3. TABLA: tes_fondo
+-- ===============================================================================
+-- ===============================================================================
+
+DROP TRIGGER IF EXISTS trg_tes_fondo_before_insert //
+CREATE TRIGGER trg_tes_fondo_before_insert
+BEFORE INSERT ON tes_fondo
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_fondo_before_update //
+CREATE TRIGGER trg_tes_fondo_before_update
+BEFORE UPDATE ON tes_fondo
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_fondo_after_insert //
+CREATE TRIGGER trg_tes_fondo_after_insert
+AFTER INSERT ON tes_fondo
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'tes_fondo',
+        'INSERT',
+        CAST(NEW.id_fondo AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_fondo', NEW.id_fondo,
+            'nombre_fondo', NEW.nombre_fondo,
+            'estado_fondo', NEW.estado_fondo
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_fondo_after_update //
+CREATE TRIGGER trg_tes_fondo_after_update
+AFTER UPDATE ON tes_fondo
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'tes_fondo',
+        'UPDATE',
+        CAST(NEW.id_fondo AS CHAR),
+        JSON_OBJECT(
+            'id_fondo', OLD.id_fondo,
+            'nombre_fondo', OLD.nombre_fondo,
+            'estado_fondo', OLD.estado_fondo
+        ),
+        JSON_OBJECT(
+            'id_fondo', NEW.id_fondo,
+            'nombre_fondo', NEW.nombre_fondo,
+            'estado_fondo', NEW.estado_fondo
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_fondo_after_delete //
+CREATE TRIGGER trg_tes_fondo_after_delete
+AFTER DELETE ON tes_fondo
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'tes_fondo',
+        'DELETE',
+        CAST(OLD.id_fondo AS CHAR),
+        JSON_OBJECT(
+            'id_fondo', OLD.id_fondo,
+            'nombre_fondo', OLD.nombre_fondo,
+            'estado_fondo', OLD.estado_fondo
+        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+-- ===============================================================================
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_moneda $$
+CREATE PROCEDURE pa_insertar_moneda(
+    IN p_id_usuario_accion INT,
+	IN p_codigo_iso VARCHAR(30),
+	IN p_simbolo VARCHAR(5),
+	IN p_nombre VARCHAR(50),
+	IN p_descripcion VARCHAR(350),
+	OUT p_id_moneda INT
+)
+BEGIN
+	INSERT INTO tes_moneda(
+		codigo_iso,simbolo, 
+		nombre_moneda, 
+		descripcion, 
+		activa,
+        id_usuario_creacion,
+        id_usuario_modificacion    ) 
+		VALUES(
+		p_codigo_iso,
+		p_simbolo, 
+		p_nombre, 
+		p_descripcion, 
+		1,
+        p_id_usuario_accion,
+        p_id_usuario_accion    );
+	SET p_id_moneda=@@last_insert_id;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_modificar_moneda $$
+CREATE PROCEDURE pa_modificar_moneda(
+	IN p_id_usuario_accion INT,
+	IN p_id_moneda INT,
+	IN p_codigo_iso VARCHAR(30),
+	IN p_simbolo VARCHAR(5),
+	IN p_nombre VARCHAR(50),
+	IN p_descripcion VARCHAR(350)
+	)
+BEGIN
+	IF p_id_moneda IS NULL OR p_id_moneda <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de moneda no válido';
+    END IF;
+
+	UPDATE tes_moneda SET codigo_iso = p_codigo_iso, 
+	simbolo = p_simbolo,
+	nombre_moneda = p_nombre,
+	descripcion = p_descripcion,
+	id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_moneda = p_id_moneda;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_moneda_por_id $$
+CREATE PROCEDURE pa_buscar_moneda_por_id(
+	IN p_id_moneda INT
+)
+BEGIN
+	IF p_id_moneda IS NULL OR p_id_moneda <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de moneda no válido';
+    END IF;
+
+	SELECT id_moneda, codigo_iso, simbolo, nombre_moneda, descripcion, activa FROM tes_moneda
+	WHERE id_moneda=p_id_moneda AND activa=1;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_monedas $$
+CREATE PROCEDURE pa_listar_monedas()
+BEGIN
+	SELECT id_moneda, codigo_iso, simbolo, nombre_moneda, descripcion, activa FROM tes_moneda ORDER BY activa DESC;
+END$$
+
+
+DROP PROCEDURE IF EXISTS pa_listar_monedas_por_estado $$
+CREATE PROCEDURE pa_listar_monedas_por_estado(
+    IN p_activa TINYINT
+)
+BEGIN
+    SELECT 
+        id_moneda,
+        codigo_iso,
+        simbolo,
+        nombre_moneda,
+        descripcion,
+        activa
+    FROM tes_moneda
+    WHERE activa = p_activa
+    ORDER BY activa DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_monedas_X_codigoISO_nombre_simbolo $$
+CREATE PROCEDURE pa_listar_monedas_X_codigoISO_nombre_simbolo (
+	IN p_comentario_busqueda VARCHAR (100)
+)
+BEGIN 
+	SELECT id_moneda, codigo_iso, simbolo, nombre_moneda, activa, descripcion
+    FROM tes_moneda
+    WHERE codigo_iso LIKE CONCAT('%', p_comentario_busqueda, '%')
+    OR simbolo LIKE CONCAT('%', p_comentario_busqueda, '%')
+    OR nombre_moneda LIKE CONCAT('%', p_comentario_busqueda, '%')
+    ORDER BY activa DESC;
+END $$
+
+DROP PROCEDURE IF EXISTS pa_eliminar_moneda $$
+CREATE PROCEDURE pa_eliminar_moneda(
+	IN p_id_usuario_accion INT,
+	IN p_id_moneda INT
+
+)
+BEGIN
+	IF p_id_moneda IS NULL OR p_id_moneda <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de moneda no válido';
+    END IF;
+
+	UPDATE tes_moneda SET activa = 0,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_moneda = p_id_moneda;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_reactivar_moneda $$
+CREATE PROCEDURE pa_reactivar_moneda(
+	IN p_id_usuario_accion INT,
+	IN p_id_moneda INT
+)
+BEGIN
+	IF p_id_moneda IS NULL OR p_id_moneda <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de moneda no válido';
+    END IF;
+
+	UPDATE tes_moneda SET activa = 1,
+           id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_moneda = p_id_moneda;
+END$$
+DELIMITER //
+
+-- ===============================================================================
+-- 1. TABLA: tes_moneda
+-- ===============================================================================
+-- ===============================================================================
+
+DROP TRIGGER IF EXISTS trg_tes_moneda_before_insert //
+CREATE TRIGGER trg_tes_moneda_before_insert
+BEFORE INSERT ON tes_moneda
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_moneda_before_update //
+CREATE TRIGGER trg_tes_moneda_before_update
+BEFORE UPDATE ON tes_moneda
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_moneda_after_insert //
+CREATE TRIGGER trg_tes_moneda_after_insert
+AFTER INSERT ON tes_moneda
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'tes_moneda',
+        'INSERT',
+        CAST(NEW.id_moneda AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_moneda', NEW.id_moneda,
+            'codigo_iso', NEW.codigo_iso,
+            'simbolo', NEW.simbolo,
+            'nombre_moneda', NEW.nombre_moneda,
+            'descripcion', NEW.descripcion,
+            'activa', NEW.activa
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_moneda_after_update //
+CREATE TRIGGER trg_tes_moneda_after_update
+AFTER UPDATE ON tes_moneda
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'tes_moneda',
+        'UPDATE',
+        CAST(NEW.id_moneda AS CHAR),
+        JSON_OBJECT(
+            'id_moneda', OLD.id_moneda,
+            'codigo_iso', OLD.codigo_iso,
+            'simbolo', OLD.simbolo,
+            'nombre_moneda', OLD.nombre_moneda,
+            'descripcion', OLD.descripcion,
+            'activa', OLD.activa
+        ),
+        JSON_OBJECT(
+            'id_moneda', NEW.id_moneda,
+            'codigo_iso', NEW.codigo_iso,
+            'simbolo', NEW.simbolo,
+            'nombre_moneda', NEW.nombre_moneda,
+            'descripcion', NEW.descripcion,
+            'activa', NEW.activa
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_moneda_after_delete //
+CREATE TRIGGER trg_tes_moneda_after_delete
+AFTER DELETE ON tes_moneda
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'tes_moneda',
+        'DELETE',
+        CAST(OLD.id_moneda AS CHAR),
+        JSON_OBJECT(
+            'id_moneda', OLD.id_moneda,
+            'codigo_iso', OLD.codigo_iso,
+            'simbolo', OLD.simbolo,
+            'nombre_moneda', OLD.nombre_moneda,
+            'descripcion', OLD.descripcion,
+            'activa', OLD.activa
+        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+-- ===============================================================================
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_insertar_tipo_cambio $$
+CREATE PROCEDURE pa_insertar_tipo_cambio(
+    IN p_id_usuario_accion INT,
+    IN p_id_moneda_origen INT,
+    IN p_id_moneda_destino INT,
+    IN p_valor_tipo_cambio DECIMAL(10,4),
+    IN p_fecha_tipo_cambio DATE,
+    OUT p_id_generado INT
+)
+BEGIN
+    INSERT INTO tes_tipo_cambio(
+        id_moneda_origen,
+        id_moneda_destino,
+        valor_tipo_cambio,
+        fecha_tipo_cambio,
+        id_usuario_creacion,
+        id_usuario_modificacion
+    ) VALUES(
+        p_id_moneda_origen,
+        p_id_moneda_destino,
+        p_valor_tipo_cambio,
+        p_fecha_tipo_cambio,
+        p_id_usuario_accion,
+        p_id_usuario_accion
+    );
+    SET p_id_generado = LAST_INSERT_ID();
+END$$
+
+DROP PROCEDURE IF EXISTS pa_modificar_tipo_cambio $$
+CREATE PROCEDURE pa_modificar_tipo_cambio(
+    IN p_id_usuario_accion INT,
+    IN p_id_tipo_cambio INT,
+    IN p_id_moneda_origen INT,
+    IN p_id_moneda_destino INT,
+    IN p_valor_tipo_cambio DECIMAL(10,4),
+    IN p_fecha_tipo_cambio DATE
+)
+BEGIN
+    IF p_id_tipo_cambio IS NULL OR p_id_tipo_cambio <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de tipo de cambio inválido';
+    END IF;
+
+    UPDATE tes_tipo_cambio
+    SET
+        id_moneda_origen = p_id_moneda_origen,
+        id_moneda_destino = p_id_moneda_destino,
+        valor_tipo_cambio = p_valor_tipo_cambio,
+        fecha_tipo_cambio = p_fecha_tipo_cambio,
+        id_usuario_modificacion = p_id_usuario_accion
+    WHERE id_tipo_cambio = p_id_tipo_cambio;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_eliminar_tipo_cambio $$
+CREATE PROCEDURE pa_eliminar_tipo_cambio(
+    IN p_id_usuario_accion INT,
+    IN p_id_tipo_cambio INT
+)
+BEGIN
+    IF p_id_tipo_cambio IS NULL OR p_id_tipo_cambio <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de tipo de cambio inválido';
+    END IF;
+
+    DELETE FROM tes_tipo_cambio
+    WHERE id_tipo_cambio = p_id_tipo_cambio;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_tipo_cambio_por_id $$
+CREATE PROCEDURE pa_buscar_tipo_cambio_por_id(
+    IN p_id_tipo_cambio INT
+)
+BEGIN
+    SELECT
+        tc.id_tipo_cambio,
+        tc.id_moneda_origen,
+        tc.id_moneda_destino,
+        tc.valor_tipo_cambio,
+        tc.fecha_tipo_cambio,
+        mo.id_moneda AS origen_id_moneda,
+        mo.codigo_iso AS origen_codigo_iso,
+        mo.simbolo AS origen_simbolo,
+        mo.nombre_moneda AS origen_nombre,
+        mo.descripcion AS origen_descripcion,
+        mo.activa AS origen_activa,
+        md.id_moneda AS destino_id_moneda,
+        md.codigo_iso AS destino_codigo_iso,
+        md.simbolo AS destino_simbolo,
+        md.nombre_moneda AS destino_nombre,
+        md.descripcion AS destino_descripcion,
+        md.activa AS destino_activa
+    FROM tes_tipo_cambio tc
+    LEFT JOIN tes_moneda mo ON tc.id_moneda_origen = mo.id_moneda
+    LEFT JOIN tes_moneda md ON tc.id_moneda_destino = md.id_moneda
+    WHERE tc.id_tipo_cambio = p_id_tipo_cambio;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_tipos_cambio $$
+CREATE PROCEDURE pa_listar_tipos_cambio()
+BEGIN
+    SELECT
+        tc.id_tipo_cambio,
+        tc.id_moneda_origen,
+        tc.id_moneda_destino,
+        tc.valor_tipo_cambio,
+        tc.fecha_tipo_cambio,
+        mo.id_moneda AS origen_id_moneda,
+        mo.codigo_iso AS origen_codigo_iso,
+        mo.simbolo AS origen_simbolo,
+        mo.nombre_moneda AS origen_nombre,
+        mo.descripcion AS origen_descripcion,
+        mo.activa AS origen_activa,
+        md.id_moneda AS destino_id_moneda,
+        md.codigo_iso AS destino_codigo_iso,
+        md.simbolo AS destino_simbolo,
+        md.nombre_moneda AS destino_nombre,
+        md.descripcion AS destino_descripcion,
+        md.activa AS destino_activa
+    FROM tes_tipo_cambio tc
+    LEFT JOIN tes_moneda mo ON tc.id_moneda_origen = mo.id_moneda
+    LEFT JOIN tes_moneda md ON tc.id_moneda_destino = md.id_moneda
+    ORDER BY tc.fecha_tipo_cambio DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_buscar_tipo_cambio_por_monedas_fecha $$
+CREATE PROCEDURE pa_buscar_tipo_cambio_por_monedas_fecha(
+    IN p_id_moneda_origen INT,
+    IN p_id_moneda_destino INT,
+    IN p_fecha DATE
+)
+BEGIN
+    SELECT
+        id_tipo_cambio,
+        id_moneda_origen,
+        id_moneda_destino,
+        valor_tipo_cambio,
+        fecha_tipo_cambio
+    FROM tes_tipo_cambio
+    WHERE id_moneda_origen = p_id_moneda_origen
+      AND id_moneda_destino = p_id_moneda_destino
+      AND fecha_tipo_cambio = p_fecha
+    LIMIT 1;
+END$$
+
+DELIMITER ;
+-- ================================================================
+-- Triggers para tes_tipo_cambio
+-- TABLA: tes_tipo_cambio
+-- ================================================================
+
+DELIMITER //
+
+DROP TRIGGER IF EXISTS trg_tes_tipo_cambio_after_insert //
+CREATE TRIGGER trg_tes_tipo_cambio_after_insert
+AFTER INSERT ON tes_tipo_cambio
+FOR EACH ROW
+BEGIN
+    INSERT INTO log_auditoria (
+        nombre_tabla,
+        accion,
+        id_registro_afectado,
+        valores_antiguos,
+        valores_nuevos,
+        id_usuario_accion,
+        momento_cambio
+    )
+    VALUES (
+        'tes_tipo_cambio',
+        'INSERT',
+        NEW.id_tipo_cambio,
+        NULL,
+        JSON_OBJECT(
+            'id_tipo_cambio', NEW.id_tipo_cambio,
+            'id_moneda_origen', NEW.id_moneda_origen,
+            'id_moneda_destino', NEW.id_moneda_destino,
+            'valor_tipo_cambio', NEW.valor_tipo_cambio,
+            'fecha_tipo_cambio', NEW.fecha_tipo_cambio
+        ),
+        NEW.id_usuario_creacion,
+        NOW()
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_tipo_cambio_after_update //
+CREATE TRIGGER trg_tes_tipo_cambio_after_update
+AFTER UPDATE ON tes_tipo_cambio
+FOR EACH ROW
+BEGIN
+    INSERT INTO log_auditoria (
+        nombre_tabla,
+        accion,
+        id_registro_afectado,
+        valores_antiguos,
+        valores_nuevos,
+        id_usuario_accion,
+        momento_cambio
+    )
+    VALUES (
+        'tes_tipo_cambio',
+        'UPDATE',
+        NEW.id_tipo_cambio,
+        JSON_OBJECT(
+            'id_moneda_origen', OLD.id_moneda_origen,
+            'id_moneda_destino', OLD.id_moneda_destino,
+            'valor_tipo_cambio', OLD.valor_tipo_cambio,
+            'fecha_tipo_cambio', OLD.fecha_tipo_cambio
+        ),
+        JSON_OBJECT(
+            'id_moneda_origen', NEW.id_moneda_origen,
+            'id_moneda_destino', NEW.id_moneda_destino,
+            'valor_tipo_cambio', NEW.valor_tipo_cambio,
+            'fecha_tipo_cambio', NEW.fecha_tipo_cambio
+        ),
+        NEW.id_usuario_modificacion,
+        NOW()
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_tipo_cambio_after_delete //
+CREATE TRIGGER trg_tes_tipo_cambio_after_delete
+AFTER DELETE ON tes_tipo_cambio
+FOR EACH ROW
+BEGIN
+    INSERT INTO log_auditoria (
+        nombre_tabla,
+        accion,
+        id_registro_afectado,
+        valores_antiguos,
+        valores_nuevos,
+        id_usuario_accion,
+        momento_cambio
+    )
+    VALUES (
+        'tes_tipo_cambio',
+        'DELETE',
+        OLD.id_tipo_cambio,
+        JSON_OBJECT(
+            'id_tipo_cambio', OLD.id_tipo_cambio,
+            'id_moneda_origen', OLD.id_moneda_origen,
+            'id_moneda_destino', OLD.id_moneda_destino,
+            'valor_tipo_cambio', OLD.valor_tipo_cambio,
+            'fecha_tipo_cambio', OLD.fecha_tipo_cambio
+        ),
+        NULL,
+        OLD.id_usuario_modificacion,
+        NOW()
+    );
+END //
+
+DELIMITER ;

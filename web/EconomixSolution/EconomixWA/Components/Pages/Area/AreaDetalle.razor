@@ -4,6 +4,7 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject IAreaWS AreaWS
+@inject IUsuarioWS UsuarioWS
 
 <div class="d-flex flex-column h-100 mb-3">
     <div class="row h-100 @(EsCreacion? "mb-3": " ")">
@@ -200,7 +201,8 @@
 
         try
         {
-            await Task.Run(() => AreaWS.insertar(Area));
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => AreaWS.insertar(Area, idUsuarioAccion));
             await Task.Run(() => IrAAreas());
         }
         catch (Exception ex)
@@ -211,19 +213,22 @@
 
     private async Task GuardarCambios()
     {
-        await Task.Run(() => AreaWS.actualizar(Area));
+        var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+        await Task.Run(() => AreaWS.actualizar(Area, idUsuarioAccion));
         await OnCerrarDetalle.InvokeAsync();
     }
 
     private async Task EliminarArea()
     {
-        await Task.Run(() => AreaWS.eliminar(Area.AreaID));
+        var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+        await Task.Run(() => AreaWS.eliminar(Area.AreaID, idUsuarioAccion));
         await OnCerrarDetalle.InvokeAsync();
     }
 
     private async Task RecuperarArea()
     {
-        await Task.Run(() => AreaWS.recuperar(Area.AreaID));
+        var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+        await Task.Run(() => AreaWS.recuperar(Area.AreaID, idUsuarioAccion));
         await OnCerrarDetalle.InvokeAsync();
     }
 }

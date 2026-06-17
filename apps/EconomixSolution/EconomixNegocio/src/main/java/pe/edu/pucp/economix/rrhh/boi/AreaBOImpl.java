@@ -23,18 +23,25 @@ public class AreaBOImpl implements IAreaBO {
         empleadoDAO=new EmpleadoDAOImpl();
         cajaChicaDAO=new CajaChicaDAOImpl();
     }
+    private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
+        if (idUsuarioAccion <= 0) {
+            throw new Exception("El usuario de acción debe ser mayor que cero.");
+        }
+    }
+
     @Override
-    public int insertar(Area area) throws Exception {
+    public int insertar(Area area, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(area,false);
         validarCajaChica(area.getCajaChica());
         try {
             DBManager.getDBManager().iniciarTransaccion();
-            areaDAO.insertar(area);
+            areaDAO.insertar(area, idUsuarioAccion);
             CajaChica cc = area.getCajaChica();
             cc.setAreaAsignada(area);
             cc.setNombre("Fondo - " + area.getNombre());
-            cc.setEstado(EstadoFondo.Activo);
-            cajaChicaDAO.insertar(cc);
+            cc.setEstado(EstadoFondo.ACTIVO);
+            cajaChicaDAO.insertar(cc, idUsuarioAccion);
             DBManager.getDBManager().confirmarTransaccion();
         } catch (Exception ex) {
             DBManager.getDBManager().cancelarTransaccion();
@@ -44,17 +51,19 @@ public class AreaBOImpl implements IAreaBO {
     }
 
     @Override
-    public int modificar(Area area) throws Exception {
+    public int modificar(Area area, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         validar(area,true);
-        return areaDAO.modificar(area);
+        return areaDAO.modificar(area, idUsuarioAccion);
     }
 
     @Override
-    public int eliminar(int id) throws Exception {
+    public int eliminar(int id, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         if (id <= 0) {
             throw new Exception("El id del area debe ser mayor que cero.");
         }
-        return  areaDAO.eliminar(id);
+        return  areaDAO.eliminar(id, idUsuarioAccion);
     }
 
     @Override
@@ -62,51 +71,26 @@ public class AreaBOImpl implements IAreaBO {
         if (id <= 0) {
             throw new Exception("El id del area debe ser mayor que cero.");
         }
-        Area area = areaDAO.buscarPorId(id);
-        if (area != null
-                && area.getCajaChica() != null
-                && area.getCajaChica().getIdFondo() > 0) {
-            CajaChica cc = cajaChicaDAO.buscarPorId(area.getCajaChica().getIdFondo());
-            area.setCajaChica(cc);
-        }
-        return area;
+        return areaDAO.buscarPorId(id);
     }
 
     @Override
     public List<Area> listarTodas() throws Exception {
-        List<Area> areas = areaDAO.listarTodas();
-        if (areas != null) {
-            for (Area area : areas) {
-                if (area.getCajaChica() != null
-                        && area.getCajaChica().getIdFondo() > 0) {
-                    CajaChica cc = cajaChicaDAO.buscarPorId(area.getCajaChica().getIdFondo());
-                    area.setCajaChica(cc);
-                }
-            }
-        }
-        return areas;
-    }
-    @Override
-    public List<Area> listarActivas() throws Exception {
-        List<Area> areas = areaDAO.listarActivas();
-        if (areas != null) {
-            for (Area area : areas) {
-                if (area.getCajaChica() != null
-                        && area.getCajaChica().getIdFondo() > 0) {
-                    CajaChica cc = cajaChicaDAO.buscarPorId(area.getCajaChica().getIdFondo());
-                    area.setCajaChica(cc);
-                }
-            }
-        }
-        return areas;
+        return areaDAO.listarTodas();
     }
 
     @Override
-    public int recuperar(int id) throws Exception {
+    public List<Area> listarActivas() throws Exception {
+        return areaDAO.listarActivas();
+    }
+
+    @Override
+    public int recuperar(int id, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
         if (id <= 0) {
             throw new Exception("El id del area debe ser mayor que cero.");
         }
-        return areaDAO.recuperar(id);
+        return areaDAO.recuperar(id, idUsuarioAccion);
     }
 
     public void validar(Area area, boolean esModificacion) throws Exception{

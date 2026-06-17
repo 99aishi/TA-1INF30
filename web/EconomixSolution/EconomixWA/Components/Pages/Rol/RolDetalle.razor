@@ -1,4 +1,5 @@
 @inject IRolWS RolWS
+@inject IUsuarioWS UsuarioWS
 
 <div class="d-flex flex-column h-100">
     <div class="card rounded-4 p-3 h-100 d-flex justify-content-between">
@@ -130,7 +131,8 @@
 
         try
         {
-            await Task.Run(() => RolWS.insertar(Rol));
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => RolWS.insertar(Rol, idUsuarioAccion));
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
@@ -146,7 +148,8 @@
 
         try
         {
-            await Task.Run(() => RolWS.actualizar(Rol));
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => RolWS.actualizar(Rol, idUsuarioAccion));
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
@@ -159,7 +162,8 @@
     {
         try
         {
-            await Task.Run(() => RolWS.eliminar(Rol.RolID));
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => RolWS.eliminar(Rol.RolID, idUsuarioAccion));
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
@@ -174,7 +178,8 @@
         try
         {
             Rol.EstaActivo = true;
-            await Task.Run(() => RolWS.actualizar(Rol));
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => RolWS.actualizar(Rol, idUsuarioAccion));
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)

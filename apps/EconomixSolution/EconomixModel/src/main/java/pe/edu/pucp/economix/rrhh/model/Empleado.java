@@ -3,10 +3,13 @@ package pe.edu.pucp.economix.rrhh.model;
 import java.util.List;
 
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
+import pe.edu.pucp.economix.rrhh.model.RolFlujo;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 
 public class Empleado extends Usuario {
     private String numeroCelular;
+    private RolFlujo rolFlujo;
 
     private Rol rol;
     private Area area;
@@ -19,11 +22,12 @@ public class Empleado extends Usuario {
 
     public Empleado(int usuarioID, String nombres, String apellidoPaterno, String apellidoMaterno, 
                     String password, EstadoUsuario estado, String correo,
-                    String numeroCelular, Rol rol, Area area, Empleado jefeDirecto, 
+                    String numeroCelular, RolFlujo rolFlujo, Rol rol, Area area, Empleado jefeDirecto, 
                     List<SolicitudGasto> solicitudesRecibidas, List<SolicitudGasto> solicitudesEnviadas, 
                     List<CuentaBancaria> cuentas) {
         super(usuarioID, nombres, apellidoPaterno, apellidoMaterno, password, estado, correo);
         this.numeroCelular = numeroCelular;
+        this.rolFlujo = rolFlujo;
         this.rol = rol;
         this.area = area;
         this.jefeDirecto = jefeDirecto;
@@ -34,11 +38,12 @@ public class Empleado extends Usuario {
 
     public Empleado(String nombres, String apellidoPaterno, String apellidoMaterno, 
                     String password, EstadoUsuario estado, String correo,
-                    String numeroCelular, Rol rol, Area area, Empleado jefeDirecto, 
+                    String numeroCelular, RolFlujo rolFlujo, Rol rol, Area area, Empleado jefeDirecto, 
                     List<SolicitudGasto> solicitudesRecibidas, List<SolicitudGasto> solicitudesEnviadas, 
                     List<CuentaBancaria> cuentas) {
         super(nombres, apellidoPaterno, apellidoMaterno, password, estado, correo);
         this.numeroCelular = numeroCelular;
+        this.rolFlujo = rolFlujo;
         this.rol = rol;
         this.area = area;
         this.jefeDirecto = jefeDirecto;
@@ -50,6 +55,7 @@ public class Empleado extends Usuario {
     public Empleado(Empleado empleado){
         super(empleado);
         this.numeroCelular = empleado.numeroCelular;
+        this.rolFlujo = empleado.rolFlujo;
         this.rol = empleado.rol;
         this.area = empleado.area;
         this.jefeDirecto = empleado.jefeDirecto;
@@ -64,6 +70,13 @@ public class Empleado extends Usuario {
     public void setNumeroCelular(String numeroCelular) {
         this.numeroCelular = numeroCelular;
     }
+    public RolFlujo getRolFlujo() {
+        return rolFlujo;
+    }
+    public void setRolFlujo(RolFlujo rolFlujo) {
+        this.rolFlujo = rolFlujo;
+    }
+
     public Rol getRol() {
         return rol;
     }
@@ -105,6 +118,7 @@ public class Empleado extends Usuario {
     public String toString() {
         return super.toString() + " Empleado{" +
                 "numeroCelular='" + numeroCelular + '\'' +
+                ", rolFlujo=" + rolFlujo +
                 ", rol=" + rol +
                 ", area=" + area +
                 ", jefeDirecto=" + jefeDirecto +
@@ -123,12 +137,29 @@ public class Empleado extends Usuario {
     }
 
     public void registrarSolicitudFondo(String motivo, double monto, java.util.Date fecha) {
+        SolicitudGasto sg = new SolicitudGasto();
+        sg.setMotivoSolicitud(motivo);
+        sg.setMontoSolicitado(monto);
+        sg.setFechaSolicitud(fecha);
+        sg.setSolicitante(this);
+        sg.setEstado(EstadoSolicitudGasto.PENDIENTE);
+        if (this.solicitudesEnviadas == null)
+            this.solicitudesEnviadas = new java.util.ArrayList<>();
+        this.solicitudesEnviadas.add(sg);
     }
 
     public void solicitarEfectivoCajaChica(double monto, String motivo) {
+        registrarSolicitudFondo(motivo, monto, new java.util.Date());
     }
 
     public boolean puedeAprobarSolicitud(SolicitudGasto solicitud) {
+        if (solicitud == null) return false;
+        if (rolFlujo == RolFlujo.JEFE_AREA &&
+            solicitud.getSolicitante() != null &&
+            solicitud.getSolicitante().getJefeDirecto() != null &&
+            solicitud.getSolicitante().getJefeDirecto().getUsuarioID() == this.getUsuarioID()) {
+            return true;
+        }
         return false;
     }
 }

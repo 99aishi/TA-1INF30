@@ -20,7 +20,7 @@
                         }
                         <div class="d-flex flex-column justify-content-center gap-2">
                             <span class="badge text-bg-success rounded-pill px-2">
-                                @(Usuario?.Estado ?? "Activo")
+                                @((Usuario?.Estado ?? EstadoUsuario.ACTIVO) == EstadoUsuario.ACTIVO ? "Activo" : "Inactivo")
                             </span>
                         </div>
                     </div>

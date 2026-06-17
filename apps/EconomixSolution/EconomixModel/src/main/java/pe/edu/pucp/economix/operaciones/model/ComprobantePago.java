@@ -14,6 +14,9 @@ public class ComprobantePago {
     private String numeroSerial;
     private Date fechaEmision;
     private double montoTotal;
+    private double tipoCambio;
+    private double montoConvertido;
+    private String nombreArchivoComprobante;
     private double subtotal;
     private double igv;
     private double total;
@@ -111,6 +114,24 @@ public class ComprobantePago {
     public void setMontoTotal(double montoTotal) {
         this.montoTotal = montoTotal;
     }
+    public double getTipoCambio() {
+        return tipoCambio;
+    }
+    public void setTipoCambio(double tipoCambio) {
+        this.tipoCambio = tipoCambio;
+    }
+    public double getMontoConvertido() {
+        return montoConvertido;
+    }
+    public void setMontoConvertido(double montoConvertido) {
+        this.montoConvertido = montoConvertido;
+    }
+    public String getNombreArchivoComprobante() {
+        return nombreArchivoComprobante;
+    }
+    public void setNombreArchivoComprobante(String nombreArchivoComprobante) {
+        this.nombreArchivoComprobante = nombreArchivoComprobante;
+    }
     public void setSubtotal(double subtotal) {
         this.subtotal = subtotal;
     }
@@ -164,6 +185,9 @@ public class ComprobantePago {
                 ", numeroSerial='" + numeroSerial + '\'' +
                 ", fechaEmision=" + fechaEmision +
                 ", montoTotal=" + montoTotal +
+                ", tipoCambio=" + tipoCambio +
+                ", montoConvertido=" + montoConvertido +
+                ", nombreArchivoComprobante='" + nombreArchivoComprobante + '\'' +
                 ", subtotal=" + subtotal +
                 ", igv=" + igv +
                 ", total=" + total +
@@ -174,7 +198,8 @@ public class ComprobantePago {
 
 
     public boolean esFechaValida() {
-        // TODO: Validar que la fecha de emisión no sea futura ni exceda límites (RF_09)
-        return false;
+        if (this.fechaEmision == null) return false;
+        java.util.Date hoy = new java.util.Date();
+        return !this.fechaEmision.after(hoy);
     }
 }
