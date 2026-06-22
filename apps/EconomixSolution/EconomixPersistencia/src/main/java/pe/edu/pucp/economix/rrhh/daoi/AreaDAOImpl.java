@@ -14,10 +14,7 @@ import pe.edu.pucp.economix.rrhh.idao.IAreaDAO;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.rrhh.model.RolFlujo;
-import pe.edu.pucp.economix.tesoreria.model.CajaChica;
-import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
-import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
-import pe.edu.pucp.economix.tesoreria.model.Moneda;
+
 
 public class AreaDAOImpl implements  IAreaDAO{
     private ResultSet rs;
@@ -143,37 +140,9 @@ public class AreaDAOImpl implements  IAreaDAO{
 
         Empleado jefe = mapearEmpleadoBasico(rs, "jefe_", cache);
         if (jefe != null) {
-            jefe.setArea(area); // back-ref
             area.setJefe(jefe);
         }
 
-        int idFondo = rs.getInt("id_fondo_caja_chica");
-        if (!rs.wasNull()) {
-            CajaChica cc = getOrCreate(cache, CajaChica.class, idFondo, () -> new CajaChica());
-            cc.setIdFondo(idFondo);
-            cc.setNombre(rs.getString("cc_nombre_fondo"));
-            cc.setMontoTecho(rs.getDouble("cc_monto_techo"));
-            String estadoFondo = rs.getString("cc_estado_fondo");
-            if(estadoFondo != null)
-                cc.setEstado(EstadoFondo.valueOf(estadoFondo));
-            cc.setAreaAsignada(area); // back-ref
-
-            int idMoneda = rs.getInt("cc_id_moneda");
-            if (!rs.wasNull()) {
-                Moneda mon = getOrCreate(cache, Moneda.class, idMoneda, () -> new Moneda());
-                mon.setIdMoneda(idMoneda);
-                cc.setMoneda(mon);
-            }
-
-            int idCuentaOrigen = rs.getInt("cc_id_cuenta_origen");
-            if (!rs.wasNull()) {
-                CuentaBancaria cb = getOrCreate(cache, CuentaBancaria.class, idCuentaOrigen, () -> new CuentaBancaria());
-                cb.setIdCuenta(idCuentaOrigen);
-                cc.setCuentaOrigen(cb);
-            }
-
-            area.setCajaChica(cc);
-        }
         return area;
     }
 

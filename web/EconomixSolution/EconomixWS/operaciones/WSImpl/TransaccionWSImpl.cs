@@ -10,16 +10,14 @@ public class TransaccionWSImpl : ITransaccionWS
 {
     private readonly HttpClient _httpClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private static readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        ReferenceHandler = ReferenceHandler.IgnoreCycles
-    };
+    private readonly JsonSerializerOptions _jsonOptions;
 
-    public TransaccionWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
+    public TransaccionWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor, JsonSerializerOptions jsonOptions)
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(httpClient.BaseAddress + "TransaccionWS/");
         _httpContextAccessor = httpContextAccessor;
+        _jsonOptions = jsonOptions;
     }
 
     private int ObtenerIdUsuarioAccion()
@@ -74,7 +72,7 @@ public class TransaccionWSImpl : ITransaccionWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<Transaccion>();
-            return JsonSerializer.Deserialize<List<Transaccion>>(json) ?? new List<Transaccion>();
+            return JsonSerializer.Deserialize<List<Transaccion>>(json, _jsonOptions) ?? new List<Transaccion>();
         }
         catch
         {
@@ -92,7 +90,7 @@ public class TransaccionWSImpl : ITransaccionWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
-            return JsonSerializer.Deserialize<Transaccion>(json);
+            return JsonSerializer.Deserialize<Transaccion>(json, _jsonOptions);
         }
         catch
         {

@@ -6,4 +6,5 @@ using EconomixWS.UsuarioWS;
 public interface ICajaChicaWS : IWS<CajaChica>
 {
     CajaChica? obtenerPorId(int id);
+    List<CajaChica> listarPorCuentaBancaria(int idCuentaBancaria);
 }

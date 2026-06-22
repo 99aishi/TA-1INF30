@@ -10,16 +10,14 @@ public class CicloCajaWSImpl : ICicloCajaWS
 {
     private readonly HttpClient _httpClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private static readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        ReferenceHandler = ReferenceHandler.IgnoreCycles
-    };
+    private readonly JsonSerializerOptions _jsonOptions;
 
-    public CicloCajaWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
+    public CicloCajaWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor, JsonSerializerOptions jsonOptions)
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(httpClient.BaseAddress + "CicloCajaWS/");
         _httpContextAccessor = httpContextAccessor;
+        _jsonOptions = jsonOptions;
     }
 
     private int ObtenerIdUsuarioAccion()
@@ -74,7 +72,7 @@ public class CicloCajaWSImpl : ICicloCajaWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<CicloCajaChica>();
-            return JsonSerializer.Deserialize<List<CicloCajaChica>>(json) ?? new List<CicloCajaChica>();
+            return JsonSerializer.Deserialize<List<CicloCajaChica>>(json, _jsonOptions) ?? new List<CicloCajaChica>();
         }
         catch
         {
@@ -92,7 +90,7 @@ public class CicloCajaWSImpl : ICicloCajaWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
-            return JsonSerializer.Deserialize<CicloCajaChica>(json);
+            return JsonSerializer.Deserialize<CicloCajaChica>(json, _jsonOptions);
         }
         catch
         {

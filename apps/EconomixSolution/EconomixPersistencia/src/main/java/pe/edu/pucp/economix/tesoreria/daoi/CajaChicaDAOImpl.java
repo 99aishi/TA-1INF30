@@ -10,14 +10,11 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import pe.edu.pucp.economix.config.DBManager;
-import pe.edu.pucp.economix.rrhh.model.Area;
-import pe.edu.pucp.economix.rrhh.model.Empleado;
-import pe.edu.pucp.economix.rrhh.model.RolFlujo;
-import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
-import pe.edu.pucp.economix.tesoreria.model.Moneda;
 import pe.edu.pucp.economix.tesoreria.idao.ICajaChicaDAO;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
+import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
+import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 public class CajaChicaDAOImpl implements ICajaChicaDAO{
     private ResultSet rs;
@@ -34,23 +31,18 @@ public class CajaChicaDAOImpl implements ICajaChicaDAO{
         DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_fondo", parametrosEntrada, parametrosSalida);
         cajaChica.setIdFondo((int)parametrosSalida.get("p_id_fondo"));
 
-        parametrosSalida = new HashMap<>();
         parametrosEntrada = new HashMap<>();
         parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_id_fondo", cajaChica.getIdFondo());
         parametrosEntrada.put("p_monto_techo", (Double)cajaChica.getMontoTecho());
-        if(cajaChica.getAreaAsignada() == null)
-            parametrosEntrada.put("p_id_area", null);
+        if(cajaChica.getCuentaBancaria() == null)
+            parametrosEntrada.put("p_id_cuenta_bancaria", null);
         else
-            parametrosEntrada.put("p_id_area", cajaChica.getAreaAsignada().getIdArea());
+            parametrosEntrada.put("p_id_cuenta_bancaria", cajaChica.getCuentaBancaria().getIdCuenta());
         if(cajaChica.getMoneda() != null)
             parametrosEntrada.put("p_id_moneda", cajaChica.getMoneda().getIdMoneda());
         else
             parametrosEntrada.put("p_id_moneda", null);
-        if(cajaChica.getCuentaOrigen() != null)
-            parametrosEntrada.put("p_id_cuenta_origen", cajaChica.getCuentaOrigen().getIdCuenta());
-        else
-            parametrosEntrada.put("p_id_cuenta_origen", null);
 
         DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_caja_chica", parametrosEntrada, null);
 
@@ -70,18 +62,14 @@ public class CajaChicaDAOImpl implements ICajaChicaDAO{
         parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_id_fondo", cajaChica.getIdFondo());
         parametrosEntrada.put("p_monto_techo", (Double)cajaChica.getMontoTecho());
-        if(cajaChica.getAreaAsignada() == null)
-            parametrosEntrada.put("p_id_area", null);
+        if(cajaChica.getCuentaBancaria() == null)
+            parametrosEntrada.put("p_id_cuenta_bancaria", null);
         else
-            parametrosEntrada.put("p_id_area", cajaChica.getAreaAsignada().getIdArea());
+            parametrosEntrada.put("p_id_cuenta_bancaria", cajaChica.getCuentaBancaria().getIdCuenta());
         if(cajaChica.getMoneda() != null)
             parametrosEntrada.put("p_id_moneda", cajaChica.getMoneda().getIdMoneda());
         else
             parametrosEntrada.put("p_id_moneda", null);
-        if(cajaChica.getCuentaOrigen() != null)
-            parametrosEntrada.put("p_id_cuenta_origen", cajaChica.getCuentaOrigen().getIdCuenta());
-        else
-            parametrosEntrada.put("p_id_cuenta_origen", null);
 
         DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_caja_chica", parametrosEntrada, null);
         return resultado;
@@ -154,6 +142,28 @@ public class CajaChicaDAOImpl implements ICajaChicaDAO{
         return cajas;
     }
 
+    @Override
+    public List<CajaChica> listarPorCuentaBancaria(int idCuentaBancaria) throws SQLException {
+        List<CajaChica> cajas = null;
+        CajaChica caja;
+        Map<Class<?>, Map<Integer, Object>> cache = new HashMap<>();
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_cuenta_bancaria", idCuentaBancaria);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_cajas_chicas_por_cuenta", parametrosEntrada);
+        try{
+            while(rs.next()){
+                if(cajas == null) cajas = new ArrayList<>();
+                caja = mapearCajaChica(rs, cache);
+                cajas.add(caja);
+            }
+        }catch(SQLException ex){
+            System.out.println("Error al listar cajas chicas por cuenta: " + ex.getMessage());
+        }finally{
+            DBManager.getDBManager().cerrarConexion();
+        }
+        return cajas;
+    }
+
     @SuppressWarnings("unchecked")
     private <T> T getOrCreate(Map<Class<?>, Map<Integer, Object>> cache, Class<T> type, int id, Supplier<T> factory) {
         if (id <= 0) return null;
@@ -172,19 +182,14 @@ public class CajaChicaDAOImpl implements ICajaChicaDAO{
             caja.setEstado(EstadoFondo.valueOf(estadoFondo));
         caja.setMontoTecho(rs.getDouble("monto_techo"));
 
-        Area area = mapearAreaCompleta(rs, "area_", cache);
-        if (area != null) {
-            area.setCajaChica(caja);
-            caja.setAreaAsignada(area);
+        CuentaBancaria cuentaBancaria = mapearCuentaBancariaCompleta(rs, "cb_", cache);
+        if (cuentaBancaria != null) {
+            caja.setCuentaBancaria(cuentaBancaria);
         }
 
         Moneda moneda = mapearMonedaCompleta(rs, "mon_", cache);
         if (moneda != null)
             caja.setMoneda(moneda);
-
-        CuentaBancaria cuentaOrigen = mapearCuentaBancariaCompleta(rs, "cb_", cache);
-        if (cuentaOrigen != null)
-            caja.setCuentaOrigen(cuentaOrigen);
 
         return caja;
     }
@@ -208,23 +213,6 @@ public class CajaChicaDAOImpl implements ICajaChicaDAO{
         });
     }
 
-    private Area mapearAreaCompleta(ResultSet rs, String prefijo, Map<Class<?>, Map<Integer, Object>> cache) throws SQLException {
-        int id = rs.getInt(prefijo + "id_area");
-        if (rs.wasNull() || id <= 0) return null;
-        return getOrCreate(cache, Area.class, id, () -> {
-            Area area = new Area();
-            area.setIdArea(id);
-            try {
-                area.setNombre(rs.getString(prefijo + "nombre"));
-                area.setDescripcion(rs.getString(prefijo + "descripcion"));
-                area.setEstaActivo(rs.getBoolean(prefijo + "esta_activo"));
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
-            }
-            return area;
-        });
-    }
-
     private CuentaBancaria mapearCuentaBancariaCompleta(ResultSet rs, String prefijo, Map<Class<?>, Map<Integer, Object>> cache) throws SQLException {
         int id = rs.getInt(prefijo + "id_cuenta");
         if (rs.wasNull() || id <= 0) return null;
@@ -239,38 +227,10 @@ public class CajaChicaDAOImpl implements ICajaChicaDAO{
 
                 Moneda moneda = mapearMonedaCompleta(rs, "cbm_", cache);
                 if (moneda != null) cuentaBancaria.setMoneda(moneda);
-
-                Area area = mapearAreaCompleta(rs, "cba_", cache);
-                if (area != null) cuentaBancaria.setAreaAdministradora(area);
-
-                Empleado empleado = mapearEmpleadoBasico(rs, "cbe_", cache);
-                if (empleado != null) cuentaBancaria.setEmpleadoAdministrador(empleado);
             } catch (SQLException ex) {
                 throw new RuntimeException(ex);
             }
             return cuentaBancaria;
-        });
-    }
-
-    private Empleado mapearEmpleadoBasico(ResultSet rs, String prefijo, Map<Class<?>, Map<Integer, Object>> cache) throws SQLException {
-        int id = rs.getInt(prefijo + "id_usuario");
-        if (rs.wasNull() || id <= 0) return null;
-        return getOrCreate(cache, Empleado.class, id, () -> {
-            Empleado empleado = new Empleado();
-            empleado.setUsuarioID(id);
-            try {
-                empleado.setNombres(rs.getString(prefijo + "nombres"));
-                empleado.setApellidoPaterno(rs.getString(prefijo + "apellido_paterno"));
-                empleado.setApellidoMaterno(rs.getString(prefijo + "apellido_materno"));
-                empleado.setCorreo(rs.getString(prefijo + "correo"));
-                empleado.setNumeroCelular(rs.getString(prefijo + "numero_celular"));
-                String rolFlujo = rs.getString(prefijo + "rol_flujo");
-                if (rolFlujo != null)
-                    empleado.setRolFlujo(RolFlujo.valueOf(rolFlujo));
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
-            }
-            return empleado;
         });
     }
 }

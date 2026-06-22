@@ -2,9 +2,7 @@ package pe.edu.pucp.economix.rrhh.model;
 
 import java.util.List;
 
-import jakarta.json.bind.annotation.JsonbTransient;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
-import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 
 public class Area{
@@ -14,25 +12,25 @@ public class Area{
     private boolean estaActivo;
     //Relaciones
     private Empleado jefe;
-    private CajaChica cajaChica;
     private List<CuentaBancaria> cuentasBancarias;
+    private List<Rol> roles;
 
     //Constructores
     public Area(){}
-    public Area(int idArea, String nombre, String descripcion, Empleado jefe, CajaChica cajaChica, List<CuentaBancaria> cuentasBancarias) {
+    public Area(int idArea, String nombre, String descripcion, Empleado jefe, List<CuentaBancaria> cuentasBancarias, List<Rol> roles) {
         this.idArea = idArea;
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.jefe = jefe;
-        this.cajaChica = cajaChica;
         this.cuentasBancarias = cuentasBancarias;
+        this.roles = roles;
     }
-    public Area(String nombre, String descripcion, Empleado jefe, CajaChica cajaChica, List<CuentaBancaria> cuentasBancarias) {
+    public Area(String nombre, String descripcion, Empleado jefe, List<CuentaBancaria> cuentasBancarias, List<Rol> roles) {
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.jefe = jefe;
-        this.cajaChica = cajaChica;
         this.cuentasBancarias = cuentasBancarias;
+        this.roles = roles;
     }
 
     //Selectores
@@ -54,7 +52,6 @@ public class Area{
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
     }
-    @JsonbTransient
     public Empleado getJefe() {
         return jefe;
     }
@@ -67,17 +64,17 @@ public class Area{
     public void setEstaActivo(boolean estaActivo) {
         this.estaActivo = estaActivo;
     }
-    public CajaChica getCajaChica() {
-        return cajaChica;
-    }
-    public void setCajaChica(CajaChica cajaChica) {
-        this.cajaChica = cajaChica;
-    }
     public List<CuentaBancaria> getCuentasBancarias() {
         return cuentasBancarias;
     }
     public void setCuentasBancarias(List<CuentaBancaria> cuentasBancarias) {
         this.cuentasBancarias = cuentasBancarias;
+    }
+    public List<Rol> getRoles() {
+        return roles;
+    }
+    public void setRoles(List<Rol> roles) {
+        this.roles = roles;
     }
 
     //Metodos
@@ -88,8 +85,8 @@ public class Area{
                 ", nombre='" + nombre + '\'' +
                 ", descripcion='" + descripcion + '\'' +
                 ", jefe=" + jefe +
-                ", cajaChica=" + cajaChica +
                 ", cuentasBancarias=" + cuentasBancarias +
+                ", roles=" + roles +
                 '}';
     }
 

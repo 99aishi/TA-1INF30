@@ -1,3 +1,4 @@
+
 DELIMITER //
 
 -- ===============================================================================
@@ -35,9 +36,8 @@ BEGIN
         JSON_OBJECT(
             'id_fondo', NEW.id_fondo,
             'monto_techo', NEW.monto_techo,
-            'id_area', NEW.id_area,
-        'id_moneda', NEW.id_moneda,
-        'id_cuenta_origen', NEW.id_cuenta_origen
+            'id_cuenta_bancaria', NEW.id_cuenta_bancaria,
+            'id_moneda', NEW.id_moneda
         ),
         NEW.id_usuario_creacion
     );
@@ -55,16 +55,14 @@ BEGIN
         JSON_OBJECT(
             'id_fondo', OLD.id_fondo,
             'monto_techo', OLD.monto_techo,
-            'id_area', OLD.id_area,
-        'id_moneda', OLD.id_moneda,
-        'id_cuenta_origen', OLD.id_cuenta_origen
+            'id_cuenta_bancaria', OLD.id_cuenta_bancaria,
+            'id_moneda', OLD.id_moneda
         ),
         JSON_OBJECT(
             'id_fondo', NEW.id_fondo,
             'monto_techo', NEW.monto_techo,
-            'id_area', NEW.id_area,
-        'id_moneda', NEW.id_moneda,
-        'id_cuenta_origen', NEW.id_cuenta_origen
+            'id_cuenta_bancaria', NEW.id_cuenta_bancaria,
+            'id_moneda', NEW.id_moneda
         ),
         NEW.id_usuario_modificacion
     );
@@ -82,9 +80,8 @@ BEGIN
         JSON_OBJECT(
             'id_fondo', OLD.id_fondo,
             'monto_techo', OLD.monto_techo,
-            'id_area', OLD.id_area,
-        'id_moneda', OLD.id_moneda,
-        'id_cuenta_origen', OLD.id_cuenta_origen
+            'id_cuenta_bancaria', OLD.id_cuenta_bancaria,
+            'id_moneda', OLD.id_moneda
         ),
         NULL,
         OLD.id_usuario_modificacion

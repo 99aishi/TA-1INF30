@@ -10,16 +10,14 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
 {
     private readonly HttpClient _httpClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private static readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        ReferenceHandler = ReferenceHandler.IgnoreCycles
-    };
+    private readonly JsonSerializerOptions _jsonOptions;
 
-    public SolicitudGastoWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
+    public SolicitudGastoWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor, JsonSerializerOptions jsonOptions)
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(httpClient.BaseAddress + "SolicitudGastoWS/");
         _httpContextAccessor = httpContextAccessor;
+        _jsonOptions = jsonOptions;
     }
 
     private int ObtenerIdUsuarioAccion()
@@ -74,7 +72,7 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<SolicitudGasto>();
-            return JsonSerializer.Deserialize<List<SolicitudGasto>>(json) ?? new List<SolicitudGasto>();
+            return JsonSerializer.Deserialize<List<SolicitudGasto>>(json, _jsonOptions) ?? new List<SolicitudGasto>();
         }
         catch
         {
@@ -92,7 +90,7 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
-            return JsonSerializer.Deserialize<SolicitudGasto>(json);
+            return JsonSerializer.Deserialize<SolicitudGasto>(json, _jsonOptions);
         }
         catch
         {
@@ -109,7 +107,7 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<SolicitudGasto>();
-            return JsonSerializer.Deserialize<List<SolicitudGasto>>(json) ?? new List<SolicitudGasto>();
+            return JsonSerializer.Deserialize<List<SolicitudGasto>>(json, _jsonOptions) ?? new List<SolicitudGasto>();
         }
         catch
         {
@@ -127,7 +125,7 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<SolicitudGasto>();
-            return JsonSerializer.Deserialize<List<SolicitudGasto>>(json) ?? new List<SolicitudGasto>();
+            return JsonSerializer.Deserialize<List<SolicitudGasto>>(json, _jsonOptions) ?? new List<SolicitudGasto>();
         }
         catch
         {
@@ -145,7 +143,7 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<SolicitudGasto>();
-            return JsonSerializer.Deserialize<List<SolicitudGasto>>(json) ?? new List<SolicitudGasto>();
+            return JsonSerializer.Deserialize<List<SolicitudGasto>>(json, _jsonOptions) ?? new List<SolicitudGasto>();
         }
         catch
         {

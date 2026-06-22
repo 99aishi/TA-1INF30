@@ -180,8 +180,6 @@ public class SolicitudGastoDAOImpl implements ISolicitudGastoDAO {
 
         CicloCajaChica ciclo = mapearCicloCajaChicaBasico(rs, "cc_", cache);
         if (ciclo != null) {
-            if (ciclo.getSolicitudesDeGasto() == null) ciclo.setSolicitudesDeGasto(new ArrayList<>());
-            ciclo.getSolicitudesDeGasto().add(solicitud);
             solicitud.setCiclo(ciclo);
         }
 

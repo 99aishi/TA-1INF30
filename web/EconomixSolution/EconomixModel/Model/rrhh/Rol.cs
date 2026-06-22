@@ -15,4 +15,7 @@ public class Rol
 
     [JsonPropertyName("estaActivo")]
     public bool EstaActivo { get; set; } = true;
+
+    [JsonPropertyName("area")]
+    public Area? Area { get; set; }
 }

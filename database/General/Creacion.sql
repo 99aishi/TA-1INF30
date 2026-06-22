@@ -1,3 +1,4 @@
+
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ===============================================================================
@@ -8,6 +9,7 @@ CREATE TABLE IF NOT EXISTS rrhh_rol (
     id_rol INT NOT NULL AUTO_INCREMENT,
     titulo_rol VARCHAR(50) NOT NULL UNIQUE,
     descripcion_rol VARCHAR(200),
+    id_area INT NULL,
     esta_activo TINYINT(1) DEFAULT 1,
     
     -- Auditoría
@@ -16,7 +18,11 @@ CREATE TABLE IF NOT EXISTS rrhh_rol (
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
-    CONSTRAINT pk_rrhh_rol PRIMARY KEY (id_rol)
+    CONSTRAINT pk_rrhh_rol PRIMARY KEY (id_rol),
+    CONSTRAINT fk_rrhh_rol_rrhh_area FOREIGN KEY (id_area)
+        REFERENCES rrhh_area(id_area)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS rrhh_usuario (
@@ -180,25 +186,22 @@ CREATE TABLE IF NOT EXISTS tes_fondo (
 CREATE TABLE IF NOT EXISTS tes_caja_chica (
     id_fondo INT NOT NULL,
     monto_techo DECIMAL(12,2) NOT NULL,
-    id_area INT NOT NULL,
+    id_cuenta_bancaria INT NOT NULL,
     id_moneda INT NULL,
-    id_cuenta_origen INT NULL,
-    
+
     -- Auditoría
     creado_at DATETIME,
     actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
-    
+
     CONSTRAINT pk_tes_caja_chica PRIMARY KEY (id_fondo),
-    CONSTRAINT fk_tes_caja_chica_tes_fondo FOREIGN KEY (id_fondo) 
+    CONSTRAINT fk_tes_caja_chica_tes_fondo FOREIGN KEY (id_fondo)
         REFERENCES tes_fondo(id_fondo),
-    CONSTRAINT fk_tes_caja_chica_rrhh_area FOREIGN KEY (id_area) 
-        REFERENCES rrhh_area(id_area),
-    CONSTRAINT fk_tes_caja_chica_tes_moneda FOREIGN KEY (id_moneda) 
-        REFERENCES tes_moneda(id_moneda),
-    CONSTRAINT fk_tes_caja_chica_cuenta_bancaria FOREIGN KEY (id_cuenta_origen) 
-        REFERENCES tes_cuenta_bancaria(id_cuenta_bancaria)
+    CONSTRAINT fk_tes_caja_chica_tes_cuenta_bancaria FOREIGN KEY (id_cuenta_bancaria)
+        REFERENCES tes_cuenta_bancaria(id_cuenta_bancaria),
+    CONSTRAINT fk_tes_caja_chica_tes_moneda FOREIGN KEY (id_moneda)
+        REFERENCES tes_moneda(id_moneda)
 ) ENGINE=InnoDB;
 -- ===============================================================================
 -- 3. MÓDULO: ope (Operaciones)

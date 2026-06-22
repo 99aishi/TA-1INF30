@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using EconomixModel.Model;
 using EconomixWA.Components;
 using EconomixWS.OperacionesWS;
@@ -9,6 +11,13 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using IUsuarioWS = EconomixWS.UsuarioWS.IUsuarioWS;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSingleton(new JsonSerializerOptions
+{
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    PropertyNameCaseInsensitive = true,
+    ReferenceHandler = ReferenceHandler.IgnoreCycles
+});
 
 var baseURL = builder.Configuration["URLServices:BaseWSPath"];
 
@@ -21,7 +30,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.LoginPath = "/";
-        options.LogoutPath = "/logout";
+        options.LogoutPath = "/auth/logout";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
     });
@@ -84,6 +93,10 @@ builder.Services.AddHttpClient<ICicloCajaWS, CicloCajaWSImpl>(
     client => client.BaseAddress = new Uri(baseURL)
 );
 
+builder.Services.AddHttpClient<IAuditoriaWS, AuditoriaWSImpl>(
+    client => client.BaseAddress = new Uri(baseURL)
+);
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -133,25 +146,7 @@ app.MapPost("/auth/login", async (HttpContext context, IUsuarioWS usuarioWS) =>
     }
     else if (usuarioEncontrado is Empleado emp)
     {
-        string rol;
-        if (emp.Area != null && !string.IsNullOrEmpty(emp.Area.Nombre) &&
-            emp.Area.Nombre.Contains("Tesorer", StringComparison.OrdinalIgnoreCase))
-        {
-            rol = "Tesoreria";
-        }
-        else if (emp.RolFlujo == RolFlujo.EMPLEADO)
-        {
-            rol = "Empleado";
-        }
-        else if (emp.RolFlujo == RolFlujo.JEFE_AREA)
-        {
-            rol = "Jefe";
-        }
-        else
-        {
-            rol = "Empleado";
-        }
-
+        string rol = DeterminarRolEmpleado(emp);
         claims.Add(new Claim(ClaimTypes.Role, rol));
     }
 
@@ -172,6 +167,41 @@ app.MapPost("/auth/login", async (HttpContext context, IUsuarioWS usuarioWS) =>
     var redirectUrl = string.IsNullOrEmpty(returnUrl) ? "/dashboard" : returnUrl;
     return Results.Redirect(redirectUrl);
 });
+
+app.MapGet("/auth/logout", async (HttpContext context) =>
+{
+    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    return Results.Redirect("/");
+});
+
+static string DeterminarRolEmpleado(Empleado emp)
+{
+    // Treasury area detection by name
+    if (emp.Area != null && !string.IsNullOrEmpty(emp.Area.Nombre))
+    {
+        string nombreArea = emp.Area.Nombre;
+        if (nombreArea.Contains("Tesorer", StringComparison.OrdinalIgnoreCase) ||
+            nombreArea.Contains("Tes", StringComparison.OrdinalIgnoreCase) ||
+            nombreArea.Contains("Tesorero", StringComparison.OrdinalIgnoreCase) ||
+            nombreArea.Contains("Finanza", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Tesoreria";
+        }
+    }
+
+    // Boss detection: no direct boss, or explicitly marked as area boss, or area has no boss assigned
+    bool esJefeArea = emp.RolFlujo == RolFlujo.JEFE_AREA;
+    bool sinJefeDirecto = emp.JefeDirecto == null;
+    bool areaSinJefe = emp.Area?.Jefe == null;
+    bool esElJefeDelArea = emp.Area?.Jefe?.UsuarioID == emp.UsuarioID;
+
+    if (esJefeArea || sinJefeDirecto || areaSinJefe || esElJefeDelArea)
+    {
+        return "Jefe";
+    }
+
+    return "Empleado";
+}
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

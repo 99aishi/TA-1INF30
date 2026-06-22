@@ -226,11 +226,6 @@ public class EmpleadoDAOImpl implements IEmpleadoDAO{
             area.setDescripcion(rs.getString("area_descripcion"));
             area.setEstaActivo(rs.getBoolean("area_esta_activo"));
 
-            int idJefeArea = rs.getInt("area_id_jefe");
-            if (!rs.wasNull() && idJefeArea == empleado.getUsuarioID()) {
-                area.setJefe(empleado);
-            }
-
             empleado.setArea(area);
         }
 

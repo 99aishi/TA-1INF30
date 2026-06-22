@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using EconomixModel.Model;
 using Microsoft.AspNetCore.Http;
 
@@ -10,16 +9,14 @@ public class EmpleadoWSImpl : IEmpleadoWS
 {
     private readonly HttpClient _httpClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private static readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        ReferenceHandler = ReferenceHandler.IgnoreCycles
-    };
+    private readonly JsonSerializerOptions _jsonOptions;
 
-    public EmpleadoWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
+    public EmpleadoWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor, JsonSerializerOptions jsonOptions)
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(httpClient.BaseAddress + "EmpleadoWS/");
         _httpContextAccessor = httpContextAccessor;
+        _jsonOptions = jsonOptions;
     }
 
     private int ObtenerIdUsuarioAccion()
@@ -77,7 +74,7 @@ public class EmpleadoWSImpl : IEmpleadoWS
         var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
         if (string.IsNullOrEmpty(json) || json == "null")
             return new List<Empleado>();
-        return JsonSerializer.Deserialize<List<Empleado>>(json) ?? new List<Empleado>();
+        return JsonSerializer.Deserialize<List<Empleado>>(json, _jsonOptions) ?? new List<Empleado>();
     }
 
     public Empleado? obtenerPorId(int id)
@@ -90,7 +87,7 @@ public class EmpleadoWSImpl : IEmpleadoWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
-            return JsonSerializer.Deserialize<Empleado>(json);
+            return JsonSerializer.Deserialize<Empleado>(json, _jsonOptions);
         }
         catch
         {
@@ -107,7 +104,7 @@ public class EmpleadoWSImpl : IEmpleadoWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<Empleado>();
-            return JsonSerializer.Deserialize<List<Empleado>>(json) ?? new List<Empleado>();
+            return JsonSerializer.Deserialize<List<Empleado>>(json, _jsonOptions) ?? new List<Empleado>();
         }
         catch
         {

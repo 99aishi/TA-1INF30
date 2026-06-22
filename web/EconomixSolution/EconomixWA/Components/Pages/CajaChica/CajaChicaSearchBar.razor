@@ -3,28 +3,38 @@
         <div class="col-12 col-md-4">
             <label class="form-label small text-muted">Nombre</label>
             <input type="text" class="form-control bg-light rounded-4"
-                   placeholder="Buscar caja chica..."
+                   placeholder="Buscar..."
                    @bind="FiltroNombre" @bind:event="oninput" />
         </div>
-        <div class="col-3 col-md-2">
+        <div class="col-12 col-md-3">
+            <label class="form-label small text-muted">Cuenta bancaria</label>
+            <select class="form-select bg-light rounded-4" @bind="FiltroCuentaBancariaId">
+                <option value="0">Todas</option>
+                @foreach (var cuenta in CuentasBancarias)
+                {
+                    <option value="@cuenta.IdCuenta">@cuenta.NombreBanco - @cuenta.NumeroBancario</option>
+                }
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-muted">Estado</label>
+            <select class="form-select bg-light rounded-4" @bind="FiltroEstado">
+                <option value="Todas">Todas</option>
+                <option value="ACTIVO">Activo</option>
+                <option value="INACTIVO">Inactivo</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-1">
             <label class="form-label small text-muted">Monto mín.</label>
             <input type="number" step="0.01" class="form-control bg-light rounded-4"
                    placeholder="0.00" @bind="FiltroMontoMin" />
         </div>
-        <div class="col-3 col-md-2">
+        <div class="col-6 col-md-1">
             <label class="form-label small text-muted">Monto máx.</label>
             <input type="number" step="0.01" class="form-control bg-light rounded-4"
                    placeholder="0.00" @bind="FiltroMontoMax" />
         </div>
-        <div class="col-3 col-md-2">
-            <label class="form-label small text-muted">Estado</label>
-            <select class="form-select bg-light rounded-4" @bind="FiltroEstado">
-                <option value="Todas">Todas</option>
-                <option value="Activo">Activo</option>
-                <option value="Inactivo">Inactivo</option>
-            </select>
-        </div>
-        <div class="col-3 col-md-2 d-grid">
+        <div class="col-6 col-md-1 d-grid">
             <label class="form-label small text-muted">&nbsp;</label>
             <button type="button" class="btn btn-secondary rounded-4" @onclick="Limpiar">
                 Limpiar
@@ -36,6 +46,11 @@
 @code {
     [Parameter] public string FiltroNombre { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> FiltroNombreChanged { get; set; }
+
+    [Parameter] public int FiltroCuentaBancariaId { get; set; }
+    [Parameter] public EventCallback<int> FiltroCuentaBancariaIdChanged { get; set; }
+
+    [Parameter] public List<CuentaBancaria> CuentasBancarias { get; set; } = new();
 
     [Parameter] public double? FiltroMontoMin { get; set; }
     [Parameter] public EventCallback<double?> FiltroMontoMinChanged { get; set; }
@@ -52,6 +67,9 @@
     {
         FiltroNombre = string.Empty;
         await FiltroNombreChanged.InvokeAsync(string.Empty);
+
+        FiltroCuentaBancariaId = 0;
+        await FiltroCuentaBancariaIdChanged.InvokeAsync(0);
 
         FiltroMontoMin = null;
         await FiltroMontoMinChanged.InvokeAsync(null);

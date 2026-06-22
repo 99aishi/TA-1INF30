@@ -285,9 +285,9 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         }
 
         CajaChica cajaChica = ciclo.getCajaChica();
-        CuentaBancaria cuentaOrigen = cajaChica.getCuentaOrigen();
+        CuentaBancaria cuentaOrigen = cajaChica.getCuentaBancaria();
         if (cuentaOrigen == null || cuentaOrigen.getIdCuenta() <= 0) {
-            throw new Exception("La caja chica no tiene una cuenta origen configurada.");
+            throw new Exception("La caja chica no tiene una cuenta bancaria configurada.");
         }
 
         Empleado solicitante = solicitud.getSolicitante();

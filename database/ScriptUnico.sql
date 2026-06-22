@@ -1,3 +1,4 @@
+
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ---------------------------------------------------------
@@ -27,7 +28,8 @@ DROP TABLE IF EXISTS rrhh_area;
 DROP TABLE IF EXISTS rrhh_usuario;
 DROP TABLE IF EXISTS rrhh_rol;
 
-SET FOREIGN_KEY_CHECKS = 1;SET FOREIGN_KEY_CHECKS = 0;
+SET FOREIGN_KEY_CHECKS = 1;
+SET FOREIGN_KEY_CHECKS = 0;
 
 -- ===============================================================================
 -- 1. MÓDULO: rrhh (Recursos Humanos y Accesos)
@@ -37,6 +39,7 @@ CREATE TABLE IF NOT EXISTS rrhh_rol (
     id_rol INT NOT NULL AUTO_INCREMENT,
     titulo_rol VARCHAR(50) NOT NULL UNIQUE,
     descripcion_rol VARCHAR(200),
+    id_area INT NULL,
     esta_activo TINYINT(1) DEFAULT 1,
     
     -- Auditoría
@@ -45,7 +48,11 @@ CREATE TABLE IF NOT EXISTS rrhh_rol (
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
     
-    CONSTRAINT pk_rrhh_rol PRIMARY KEY (id_rol)
+    CONSTRAINT pk_rrhh_rol PRIMARY KEY (id_rol),
+    CONSTRAINT fk_rrhh_rol_rrhh_area FOREIGN KEY (id_area)
+        REFERENCES rrhh_area(id_area)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS rrhh_usuario (
@@ -209,25 +216,22 @@ CREATE TABLE IF NOT EXISTS tes_fondo (
 CREATE TABLE IF NOT EXISTS tes_caja_chica (
     id_fondo INT NOT NULL,
     monto_techo DECIMAL(12,2) NOT NULL,
-    id_area INT NOT NULL,
+    id_cuenta_bancaria INT NOT NULL,
     id_moneda INT NULL,
-    id_cuenta_origen INT NULL,
-    
+
     -- Auditoría
     creado_at DATETIME,
     actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
-    
+
     CONSTRAINT pk_tes_caja_chica PRIMARY KEY (id_fondo),
-    CONSTRAINT fk_tes_caja_chica_tes_fondo FOREIGN KEY (id_fondo) 
+    CONSTRAINT fk_tes_caja_chica_tes_fondo FOREIGN KEY (id_fondo)
         REFERENCES tes_fondo(id_fondo),
-    CONSTRAINT fk_tes_caja_chica_rrhh_area FOREIGN KEY (id_area) 
-        REFERENCES rrhh_area(id_area),
-    CONSTRAINT fk_tes_caja_chica_tes_moneda FOREIGN KEY (id_moneda) 
-        REFERENCES tes_moneda(id_moneda),
-    CONSTRAINT fk_tes_caja_chica_cuenta_bancaria FOREIGN KEY (id_cuenta_origen) 
-        REFERENCES tes_cuenta_bancaria(id_cuenta_bancaria)
+    CONSTRAINT fk_tes_caja_chica_tes_cuenta_bancaria FOREIGN KEY (id_cuenta_bancaria)
+        REFERENCES tes_cuenta_bancaria(id_cuenta_bancaria),
+    CONSTRAINT fk_tes_caja_chica_tes_moneda FOREIGN KEY (id_moneda)
+        REFERENCES tes_moneda(id_moneda)
 ) ENGINE=InnoDB;
 -- ===============================================================================
 -- 3. MÓDULO: ope (Operaciones)
@@ -383,56 +387,6 @@ CREATE TABLE IF NOT EXISTS ope_transaccion (
 ) ENGINE=InnoDB;
 
 SET FOREIGN_KEY_CHECKS = 1;
-CREATE TABLE IF NOT EXISTS log_auditoria (
-    id_auditoria INT NOT NULL AUTO_INCREMENT,
-    nombre_tabla VARCHAR(100) NOT NULL,
-    tipo_evento VARCHAR(10) NOT NULL, -- Valores: 'INSERT', 'UPDATE', 'DELETE'
-    id_registro_afectado VARCHAR(50) NOT NULL,
-    valores_antiguos JSON, -- Estado previo
-    valores_nuevos JSON,   -- Estado final
-    
-    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    id_usuario_auditoria INT NULL,
-    
-    CONSTRAINT pk_log_auditoria PRIMARY KEY (id_auditoria)
-) ENGINE=InnoDB;
-
--- CREATE INDEX idx_log_auditoria_tabla ON log_auditoria(nombre_tabla);
--- CREATE INDEX idx_log_auditoria_evento ON log_auditoria(tipo_evento);
--- CREATE INDEX idx_log_auditoria_creado ON log_auditoria(creado_at);
--- CREATE INDEX idx_log_auditoria_usuario ON log_auditoria(id_usuario_auditoria);
-
-DELIMITER //
-
-
-DROP PROCEDURE IF EXISTS pa_insertar_auditoria//
-CREATE PROCEDURE pa_insertar_auditoria (
-    IN p_nombre_tabla VARCHAR(100),
-    IN p_tipo_evento VARCHAR(10),
-    IN p_id_registro VARCHAR(50),
-    IN p_valores_antiguos JSON,
-    IN p_valores_nuevos JSON,
-    IN p_id_usuario_accion INT
-)
-BEGIN
-    INSERT INTO log_auditoria (
-        nombre_tabla,
-        tipo_evento,
-        id_registro_afectado,
-        valores_antiguos,
-        valores_nuevos,
-        id_usuario_auditoria
-    ) VALUES (
-        p_nombre_tabla,
-        p_tipo_evento,
-        p_id_registro,
-        p_valores_antiguos,
-        p_valores_nuevos,
-        p_id_usuario_accion
-    );
-END //
-
-DELIMITER ;
 
 DELIMITER $$
 
@@ -555,9 +509,8 @@ BEGIN
         occ.id_rendicion,
         ccj.id_fondo AS ccj_id_fondo,
         ccj.monto_techo AS ccj_monto_techo,
-        ccj.id_area AS ccj_id_area,
+        ccj.id_cuenta_bancaria AS ccj_id_cuenta_bancaria,
         ccj.id_moneda AS ccj_id_moneda,
-        ccj.id_cuenta_origen AS ccj_id_cuenta_origen,
         f.nombre_fondo AS ccj_nombre_fondo,
         f.estado_fondo AS ccj_estado_fondo,
         ren.id_rendicion AS ren_id_rendicion,
@@ -591,9 +544,8 @@ BEGIN
         occ.id_rendicion,
         ccj.id_fondo AS ccj_id_fondo,
         ccj.monto_techo AS ccj_monto_techo,
-        ccj.id_area AS ccj_id_area,
+        ccj.id_cuenta_bancaria AS ccj_id_cuenta_bancaria,
         ccj.id_moneda AS ccj_id_moneda,
-        ccj.id_cuenta_origen AS ccj_id_cuenta_origen,
         f.nombre_fondo AS ccj_nombre_fondo,
         f.estado_fondo AS ccj_estado_fondo,
         ren.id_rendicion AS ren_id_rendicion,
@@ -627,9 +579,8 @@ BEGIN
         occ.id_rendicion,
         ccj.id_fondo AS ccj_id_fondo,
         ccj.monto_techo AS ccj_monto_techo,
-        ccj.id_area AS ccj_id_area,
+        ccj.id_cuenta_bancaria AS ccj_id_cuenta_bancaria,
         ccj.id_moneda AS ccj_id_moneda,
-        ccj.id_cuenta_origen AS ccj_id_cuenta_origen,
         f.nombre_fondo AS ccj_nombre_fondo,
         f.estado_fondo AS ccj_estado_fondo,
         ren.id_rendicion AS ren_id_rendicion,
@@ -662,9 +613,8 @@ BEGIN
         occ.id_rendicion,
         ccj.id_fondo AS ccj_id_fondo,
         ccj.monto_techo AS ccj_monto_techo,
-        ccj.id_area AS ccj_id_area,
+        ccj.id_cuenta_bancaria AS ccj_id_cuenta_bancaria,
         ccj.id_moneda AS ccj_id_moneda,
-        ccj.id_cuenta_origen AS ccj_id_cuenta_origen,
         f.nombre_fondo AS ccj_nombre_fondo,
         f.estado_fondo AS ccj_estado_fondo,
         ren.id_rendicion AS ren_id_rendicion,
@@ -698,9 +648,8 @@ BEGIN
         occ.id_rendicion,
         ccj.id_fondo AS ccj_id_fondo,
         ccj.monto_techo AS ccj_monto_techo,
-        ccj.id_area AS ccj_id_area,
+        ccj.id_cuenta_bancaria AS ccj_id_cuenta_bancaria,
         ccj.id_moneda AS ccj_id_moneda,
-        ccj.id_cuenta_origen AS ccj_id_cuenta_origen,
         f.nombre_fondo AS ccj_nombre_fondo,
         f.estado_fondo AS ccj_estado_fondo,
         ren.id_rendicion AS ren_id_rendicion,
@@ -720,7 +669,6 @@ BEGIN
 END$$
 
 DELIMITER ;
-
 DELIMITER //
 
 -- ===============================================================================
@@ -1196,6 +1144,7 @@ BEGIN
 END$$
 
 DELIMITER ;
+
 DELIMITER //
 
 -- ===============================================================================
@@ -1532,7 +1481,6 @@ BEGIN
 END$$
 
 DELIMITER ;
-
 DELIMITER //
 
 -- ===============================================================================
@@ -2325,6 +2273,7 @@ BEGIN
 END$$
 
 DELIMITER ;
+
 DELIMITER //
 
 -- ===============================================================================
@@ -2980,6 +2929,7 @@ BEGIN
 END //
 
 DELIMITER ;
+
 DELIMITER $$
 
 DROP PROCEDURE IF EXISTS pa_insertar_administrador $$
@@ -3280,13 +3230,14 @@ BEGIN
     UPDATE rrhh_area
        SET esta_activo = 0,
            id_usuario_modificacion = p_id_usuario_accion
-    WHERE id_area = p_id_area;
+     WHERE id_area = p_id_area;
 
     UPDATE tes_fondo f
        INNER JOIN tes_caja_chica cc ON f.id_fondo = cc.id_fondo
+       INNER JOIN tes_cuenta_bancaria cb ON cc.id_cuenta_bancaria = cb.id_cuenta_bancaria
        SET f.estado_fondo = 'INACTIVO',
            f.id_usuario_modificacion = p_id_usuario_accion
-     WHERE cc.id_area = p_id_area;
+     WHERE cb.id_area = p_id_area;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_buscar_area_por_id  $$
@@ -3304,25 +3255,16 @@ BEGIN
         a.descripcion_area, 
         a.id_jefe,
         a.esta_activo,
-        cc.id_fondo AS id_fondo_caja_chica,
         e.id_usuario AS jefe_id_usuario,
         u.nombres AS jefe_nombres,
         u.apellido_paterno AS jefe_apellido_paterno,
         u.apellido_materno AS jefe_apellido_materno,
         u.correo AS jefe_correo,
         e.numero_celular AS jefe_numero_celular,
-        e.rol_flujo AS jefe_rol_flujo,
-        cc.monto_techo AS cc_monto_techo,
-        cc.id_moneda AS cc_id_moneda,
-        cc.id_cuenta_origen AS cc_id_cuenta_origen,
-        cc.id_area AS cc_id_area,
-        f.nombre_fondo AS cc_nombre_fondo,
-        f.estado_fondo AS cc_estado_fondo
+        e.rol_flujo AS jefe_rol_flujo
     FROM rrhh_area a
     LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
     LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
-    LEFT JOIN tes_caja_chica cc ON a.id_area = cc.id_area
-    LEFT JOIN tes_fondo f ON cc.id_fondo = f.id_fondo
     WHERE a.id_area = p_id_area;
 END$$
 
@@ -3335,25 +3277,16 @@ BEGIN
         a.descripcion_area,
         a.id_jefe,
         a.esta_activo,
-        cc.id_fondo AS id_fondo_caja_chica,
         e.id_usuario AS jefe_id_usuario,
         u.nombres AS jefe_nombres,
         u.apellido_paterno AS jefe_apellido_paterno,
         u.apellido_materno AS jefe_apellido_materno,
         u.correo AS jefe_correo,
         e.numero_celular AS jefe_numero_celular,
-        e.rol_flujo AS jefe_rol_flujo,
-        cc.monto_techo AS cc_monto_techo,
-        cc.id_moneda AS cc_id_moneda,
-        cc.id_cuenta_origen AS cc_id_cuenta_origen,
-        cc.id_area AS cc_id_area,
-        f.nombre_fondo AS cc_nombre_fondo,
-        f.estado_fondo AS cc_estado_fondo
+        e.rol_flujo AS jefe_rol_flujo
     FROM rrhh_area a
     LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
     LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
-    LEFT JOIN tes_caja_chica cc ON a.id_area = cc.id_area
-    LEFT JOIN tes_fondo f ON cc.id_fondo = f.id_fondo
     ORDER BY a.esta_activo DESC, a.id_area;
 END$$
 
@@ -3366,25 +3299,16 @@ BEGIN
         a.descripcion_area,
         a.id_jefe,
         a.esta_activo,
-        cc.id_fondo AS id_fondo_caja_chica,
         e.id_usuario AS jefe_id_usuario,
         u.nombres AS jefe_nombres,
         u.apellido_paterno AS jefe_apellido_paterno,
         u.apellido_materno AS jefe_apellido_materno,
         u.correo AS jefe_correo,
         e.numero_celular AS jefe_numero_celular,
-        e.rol_flujo AS jefe_rol_flujo,
-        cc.monto_techo AS cc_monto_techo,
-        cc.id_moneda AS cc_id_moneda,
-        cc.id_cuenta_origen AS cc_id_cuenta_origen,
-        cc.id_area AS cc_id_area,
-        f.nombre_fondo AS cc_nombre_fondo,
-        f.estado_fondo AS cc_estado_fondo
+        e.rol_flujo AS jefe_rol_flujo
     FROM rrhh_area a
     LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
     LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
-    LEFT JOIN tes_caja_chica cc ON a.id_area = cc.id_area
-    LEFT JOIN tes_fondo f ON cc.id_fondo = f.id_fondo
     WHERE a.esta_activo = 1
     ORDER BY a.id_area;
 END$$
@@ -3404,13 +3328,14 @@ BEGIN
     UPDATE rrhh_area
        SET esta_activo = 1,
            id_usuario_modificacion = p_id_usuario_accion
-    WHERE id_area = p_id_area;
+     WHERE id_area = p_id_area;
 
     UPDATE tes_fondo f
        INNER JOIN tes_caja_chica cc ON f.id_fondo = cc.id_fondo
+       INNER JOIN tes_cuenta_bancaria cb ON cc.id_cuenta_bancaria = cb.id_cuenta_bancaria
        SET f.estado_fondo = 'ACTIVO',
            f.id_usuario_modificacion = p_id_usuario_accion
-     WHERE cc.id_area = p_id_area;
+     WHERE cb.id_area = p_id_area;
 END$$
 
 DELIMITER ;
@@ -3860,21 +3785,25 @@ DROP PROCEDURE IF EXISTS pa_insertar_rol $$
 CREATE PROCEDURE pa_insertar_rol(
     IN p_id_usuario_accion INT,
 IN p_titulo_rol VARCHAR(50),
-IN p_descripcion_rol VARCHAR(200),OUT p_id_generado INT
+IN p_descripcion_rol VARCHAR(200),
+IN p_id_area INT,
+OUT p_id_generado INT
 )
 BEGIN
 
     INSERT INTO rrhh_rol(
 
         titulo_rol,
-        descripcion_rol, 
+        descripcion_rol,
+        id_area,
         esta_activo,
         id_usuario_creacion,
         id_usuario_modificacion    )
     VALUES(
 
         p_titulo_rol,
-        p_descripcion_rol, 
+        p_descripcion_rol,
+        p_id_area,
         1,
         p_id_usuario_accion,
         p_id_usuario_accion    );
@@ -3888,7 +3817,8 @@ CREATE PROCEDURE pa_modificar_rol(
         IN p_id_usuario_accion INT,
 IN p_id_rol INT,
     IN p_titulo_rol VARCHAR(50),
-    IN p_descripcion_rol VARCHAR(200)
+    IN p_descripcion_rol VARCHAR(200),
+    IN p_id_area INT
 )
 BEGIN
     IF p_id_rol IS NULL OR p_id_rol <= 0 THEN
@@ -3898,6 +3828,7 @@ BEGIN
     UPDATE rrhh_rol
        SET titulo_rol = p_titulo_rol,
            descripcion_rol = p_descripcion_rol,
+           id_area = p_id_area,
            id_usuario_modificacion = p_id_usuario_accion
     WHERE id_rol = p_id_rol;
 END$$
@@ -3931,6 +3862,7 @@ BEGIN
         id_rol, 
         titulo_rol, 
         descripcion_rol,
+        id_area,
         esta_activo
     FROM rrhh_rol
     WHERE id_rol = p_id_rol;
@@ -3943,9 +3875,31 @@ BEGIN
         id_rol, 
         titulo_rol, 
         descripcion_rol,
+        id_area,
         esta_activo
     FROM rrhh_rol
     ORDER BY esta_activo DESC, id_rol;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_roles_por_area $$
+CREATE PROCEDURE pa_listar_roles_por_area(
+    IN p_id_area INT
+)
+BEGIN
+    IF p_id_area IS NULL OR p_id_area <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de área inválido';
+    END IF;
+
+    SELECT 
+        id_rol, 
+        titulo_rol, 
+        descripcion_rol,
+        id_area,
+        esta_activo
+    FROM rrhh_rol
+    WHERE id_area = p_id_area
+      AND esta_activo = 1
+    ORDER BY id_rol;
 END$$
 
 DELIMITER ;
@@ -4039,48 +3993,12 @@ BEGIN
 END //
 
 -- ===============================================================================
+
 DELIMITER $$
 
 DROP PROCEDURE IF EXISTS pa_insertar_usuario $$
 CREATE PROCEDURE pa_insertar_usuario(
     IN p_id_usuario_accion INT,
-	IN p_nombres VARCHAR(60),
-	IN p_apellido_paterno VARCHAR(40),
-	IN p_apellido_materno VARCHAR(40),
-	IN p_password_hash VARCHAR(255),
-	IN p_correo VARCHAR(255),
-	OUT p_id_generado INT
-)
-BEGIN
-    INSERT INTO rrhh_usuario(
-
-        nombres,
-        apellido_paterno,
-        apellido_materno,
-        password_hash,
-        correo,
-        esta_activo,
-        id_usuario_creacion,
-        id_usuario_modificacion    )
-    VALUES(
-
-        p_nombres,
-        p_apellido_paterno,
-        p_apellido_materno,
-        p_password_hash,
-        p_correo,
-        1,
-        p_id_usuario_accion,
-        p_id_usuario_accion    );
-    
-    SET p_id_generado = LAST_INSERT_ID();
-END$$
-
-DROP PROCEDURE IF EXISTS pa_modificar_usuario $$
-CREATE PROCEDURE pa_modificar_usuario(
-
-        IN p_id_usuario_accion INT,
-IN p_id_usuario INT,
     IN p_nombres VARCHAR(60),
     IN p_apellido_paterno VARCHAR(40),
     IN p_apellido_materno VARCHAR(40),
@@ -4088,34 +4006,52 @@ IN p_id_usuario INT,
     IN p_correo VARCHAR(255)
 )
 BEGIN
-    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de usuario invalido';
-    END IF;
+    INSERT INTO rrhh_usuario(
+        nombres, apellido_paterno, apellido_materno, password_hash, correo,
+        creado_at, actualizado_at, id_usuario_creacion, id_usuario_modificacion
+    )
+    VALUES(
+        p_nombres, p_apellido_paterno, p_apellido_materno, p_password_hash, p_correo,
+        NOW(), NOW(), p_id_usuario_accion, p_id_usuario_accion
+    );
+    SELECT LAST_INSERT_ID() AS p_id_generado;
+END$$
 
+DROP PROCEDURE IF EXISTS pa_modificar_usuario $$
+CREATE PROCEDURE pa_modificar_usuario(
+    IN p_id_usuario_accion INT,
+    IN p_id_usuario INT,
+    IN p_nombres VARCHAR(60),
+    IN p_apellido_paterno VARCHAR(40),
+    IN p_apellido_materno VARCHAR(40),
+    IN p_password_hash VARCHAR(255),
+    IN p_correo VARCHAR(255)
+)
+BEGIN
     UPDATE rrhh_usuario
        SET nombres = p_nombres,
            apellido_paterno = p_apellido_paterno,
            apellido_materno = p_apellido_materno,
            password_hash = p_password_hash,
            correo = p_correo,
+           actualizado_at = NOW(),
            id_usuario_modificacion = p_id_usuario_accion
-    WHERE id_usuario = p_id_usuario;
+     WHERE id_usuario = p_id_usuario;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_eliminar_usuario $$
 CREATE PROCEDURE pa_eliminar_usuario(
-    IN p_id_usuario_accion INT,
-	IN p_id_usuario INT
+    IN p_id_usuario INT
 )
 BEGIN
-    IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de usuario invalido';
-    END IF;
+    DELETE FROM rrhh_usuario WHERE id_usuario = p_id_usuario;
+END$$
 
-    UPDATE rrhh_usuario
-       SET esta_activo = 0,
-           id_usuario_modificacion = p_id_usuario_accion
-    WHERE id_usuario = p_id_usuario;
+DROP PROCEDURE IF EXISTS pa_listar_usuarios $$
+CREATE PROCEDURE pa_listar_usuarios()
+BEGIN
+    SELECT id_usuario, nombres, apellido_paterno, apellido_materno, password_hash, correo
+    FROM rrhh_usuario;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_buscar_usuario_por_correo $$
@@ -4137,19 +4073,46 @@ BEGIN
             ELSE 'EMPLEADO'
         END AS tipo_usuario,
         e.id_usuario AS id_empleado,
+        e.numero_celular,
+        e.rol_flujo,
+        e.id_jefe_directo,
         e.id_area,
         ar.nombre_area AS nombre_area,
+        ar.descripcion_area AS area_descripcion,
+        ar.esta_activo AS area_esta_activo,
+        ar.id_jefe AS area_id_jefe,
         e.id_rol,
-        ro.titulo_rol AS titulo_rol
+        ro.titulo_rol AS titulo_rol,
+        ro.descripcion_rol AS rol_descripcion,
+        ro.esta_activo AS rol_esta_activo,
+        jef.id_usuario AS jefe_id_usuario,
+        uj.nombres AS jefe_nombres,
+        uj.apellido_paterno AS jefe_apellido_paterno,
+        uj.apellido_materno AS jefe_apellido_materno,
+        uj.correo AS jefe_correo,
+        jef.numero_celular AS jefe_numero_celular,
+        jef.rol_flujo AS jefe_rol_flujo,
+        ar_jef.id_usuario AS area_jefe_id_usuario,
+        uar.nombres AS area_jefe_nombres,
+        uar.apellido_paterno AS area_jefe_apellido_paterno,
+        uar.apellido_materno AS area_jefe_apellido_materno,
+        uar.correo AS area_jefe_correo,
+        ar_jef.numero_celular AS area_jefe_numero_celular,
+        ar_jef.rol_flujo AS area_jefe_rol_flujo
     FROM rrhh_usuario u
     LEFT JOIN rrhh_empleado e ON u.id_usuario = e.id_usuario
     LEFT JOIN rrhh_administrador a ON u.id_usuario = a.id_usuario
     LEFT JOIN rrhh_area ar ON e.id_area = ar.id_area
     LEFT JOIN rrhh_rol ro ON e.id_rol = ro.id_rol
+    LEFT JOIN rrhh_empleado jef ON e.id_jefe_directo = jef.id_usuario
+    LEFT JOIN rrhh_usuario uj ON jef.id_usuario = uj.id_usuario
+    LEFT JOIN rrhh_empleado ar_jef ON ar.id_jefe = ar_jef.id_usuario
+    LEFT JOIN rrhh_usuario uar ON ar_jef.id_usuario = uar.id_usuario
     WHERE u.correo = p_correo;
 END$$
 
 DELIMITER ;
+
 DELIMITER //
 
 -- ===============================================================================
@@ -4256,31 +4219,26 @@ DELIMITER $$
 
 DROP PROCEDURE IF EXISTS pa_insertar_caja_chica $$
 CREATE PROCEDURE pa_insertar_caja_chica(
-
-        IN p_id_usuario_accion INT,
-IN p_id_fondo INT,
+    IN p_id_usuario_accion INT,
+    IN p_id_fondo INT,
     IN p_monto_techo DECIMAL(12,2),
-    IN p_id_area INT,
-    IN p_id_moneda INT,
-    IN p_id_cuenta_origen INT
-
+    IN p_id_cuenta_bancaria INT,
+    IN p_id_moneda INT
 )
 BEGIN
     INSERT INTO tes_caja_chica (
         id_fondo,
         monto_techo,
-        id_area,
+        id_cuenta_bancaria,
         id_moneda,
-        id_cuenta_origen,
         id_usuario_creacion,
         id_usuario_modificacion
     )
     VALUES (
         p_id_fondo,
         p_monto_techo,
-        p_id_area,
+        p_id_cuenta_bancaria,
         p_id_moneda,
-        p_id_cuenta_origen,
         p_id_usuario_accion,
         p_id_usuario_accion
     );
@@ -4288,38 +4246,32 @@ END$$
 
 DROP PROCEDURE IF EXISTS pa_modificar_caja_chica $$
 CREATE PROCEDURE pa_modificar_caja_chica(
-
-        IN p_id_usuario_accion INT,
-IN p_id_fondo INT,
+    IN p_id_usuario_accion INT,
+    IN p_id_fondo INT,
     IN p_monto_techo DECIMAL(12,2),
-    IN p_id_area INT,
-    IN p_id_moneda INT,
-    IN p_id_cuenta_origen INT
-
+    IN p_id_cuenta_bancaria INT,
+    IN p_id_moneda INT
 )
 BEGIN
     IF p_id_fondo IS NULL OR p_id_fondo <= 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de caja chica no válido';
     END IF;
 
-    UPDATE tes_caja_chica 
+    UPDATE tes_caja_chica
     SET monto_techo = p_monto_techo,
-        id_area = p_id_area,
+        id_cuenta_bancaria = p_id_cuenta_bancaria,
         id_moneda = p_id_moneda,
-        id_cuenta_origen = p_id_cuenta_origen,
-           id_usuario_modificacion = p_id_usuario_accion
+        id_usuario_modificacion = p_id_usuario_accion
     WHERE id_fondo = p_id_fondo;
 END$$
 
 
 DROP PROCEDURE IF EXISTS pa_eliminar_caja_chica $$
 CREATE PROCEDURE pa_eliminar_caja_chica(
-
-        IN p_id_usuario_accion INT,
-IN p_id_fondo INT
-
+    IN p_id_usuario_accion INT,
+    IN p_id_fondo INT
 )
-BEGIN 
+BEGIN
     IF p_id_fondo IS NULL OR p_id_fondo <= 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de caja chica no válido';
     END IF;
@@ -4342,14 +4294,8 @@ BEGIN
         f.nombre_fondo,
         f.estado_fondo,
         c.monto_techo,
-        c.id_area,
+        c.id_cuenta_bancaria,
         c.id_moneda,
-        c.id_cuenta_origen,
-        a.id_area AS area_id_area,
-        a.nombre_area AS area_nombre,
-        a.descripcion_area AS area_descripcion,
-        a.id_jefe AS area_id_jefe,
-        a.esta_activo AS area_esta_activo,
         m.id_moneda AS mon_id_moneda,
         m.codigo_iso AS mon_codigo_iso,
         m.simbolo AS mon_simbolo,
@@ -4362,35 +4308,17 @@ BEGIN
         cb.cci AS cb_cci,
         cb.activa AS cb_activa,
         cb.id_moneda AS cb_id_moneda,
-        cb.id_usuario AS cb_id_usuario,
-        cb.id_area AS cb_id_area,
         cbm.id_moneda AS cbm_id_moneda,
         cbm.codigo_iso AS cbm_codigo_iso,
         cbm.simbolo AS cbm_simbolo,
         cbm.nombre_moneda AS cbm_nombre,
         cbm.descripcion AS cbm_descripcion,
-        cbm.activa AS cbm_activa,
-        cba.id_area AS cba_id_area,
-        cba.nombre_area AS cba_nombre,
-        cba.descripcion_area AS cba_descripcion,
-        cba.id_jefe AS cba_id_jefe,
-        cba.esta_activo AS cba_esta_activo,
-        cbe.id_usuario AS cbe_id_usuario,
-        ucbe.nombres AS cbe_nombres,
-        ucbe.apellido_paterno AS cbe_apellido_paterno,
-        ucbe.apellido_materno AS cbe_apellido_materno,
-        ucbe.correo AS cbe_correo,
-        cbe.numero_celular AS cbe_numero_celular,
-        cbe.rol_flujo AS cbe_rol_flujo
+        cbm.activa AS cbm_activa
     FROM tes_fondo f
     JOIN tes_caja_chica c ON f.id_fondo = c.id_fondo
-    LEFT JOIN rrhh_area a ON c.id_area = a.id_area
     LEFT JOIN tes_moneda m ON c.id_moneda = m.id_moneda
-    LEFT JOIN tes_cuenta_bancaria cb ON c.id_cuenta_origen = cb.id_cuenta_bancaria
+    LEFT JOIN tes_cuenta_bancaria cb ON c.id_cuenta_bancaria = cb.id_cuenta_bancaria
     LEFT JOIN tes_moneda cbm ON cb.id_moneda = cbm.id_moneda
-    LEFT JOIN rrhh_area cba ON cb.id_area = cba.id_area
-    LEFT JOIN rrhh_empleado cbe ON cb.id_usuario = cbe.id_usuario
-    LEFT JOIN rrhh_usuario ucbe ON cbe.id_usuario = ucbe.id_usuario
     WHERE f.id_fondo = p_id_fondo;
 END$$
 
@@ -4402,14 +4330,8 @@ BEGIN
         f.nombre_fondo,
         f.estado_fondo,
         c.monto_techo,
-        c.id_area,
+        c.id_cuenta_bancaria,
         c.id_moneda,
-        c.id_cuenta_origen,
-        a.id_area AS area_id_area,
-        a.nombre_area AS area_nombre,
-        a.descripcion_area AS area_descripcion,
-        a.id_jefe AS area_id_jefe,
-        a.esta_activo AS area_esta_activo,
         m.id_moneda AS mon_id_moneda,
         m.codigo_iso AS mon_codigo_iso,
         m.simbolo AS mon_simbolo,
@@ -4422,35 +4344,17 @@ BEGIN
         cb.cci AS cb_cci,
         cb.activa AS cb_activa,
         cb.id_moneda AS cb_id_moneda,
-        cb.id_usuario AS cb_id_usuario,
-        cb.id_area AS cb_id_area,
         cbm.id_moneda AS cbm_id_moneda,
         cbm.codigo_iso AS cbm_codigo_iso,
         cbm.simbolo AS cbm_simbolo,
         cbm.nombre_moneda AS cbm_nombre,
         cbm.descripcion AS cbm_descripcion,
-        cbm.activa AS cbm_activa,
-        cba.id_area AS cba_id_area,
-        cba.nombre_area AS cba_nombre,
-        cba.descripcion_area AS cba_descripcion,
-        cba.id_jefe AS cba_id_jefe,
-        cba.esta_activo AS cba_esta_activo,
-        cbe.id_usuario AS cbe_id_usuario,
-        ucbe.nombres AS cbe_nombres,
-        ucbe.apellido_paterno AS cbe_apellido_paterno,
-        ucbe.apellido_materno AS cbe_apellido_materno,
-        ucbe.correo AS cbe_correo,
-        cbe.numero_celular AS cbe_numero_celular,
-        cbe.rol_flujo AS cbe_rol_flujo
+        cbm.activa AS cbm_activa
     FROM tes_fondo f
     JOIN tes_caja_chica c ON f.id_fondo = c.id_fondo
-    LEFT JOIN rrhh_area a ON c.id_area = a.id_area
     LEFT JOIN tes_moneda m ON c.id_moneda = m.id_moneda
-    LEFT JOIN tes_cuenta_bancaria cb ON c.id_cuenta_origen = cb.id_cuenta_bancaria
+    LEFT JOIN tes_cuenta_bancaria cb ON c.id_cuenta_bancaria = cb.id_cuenta_bancaria
     LEFT JOIN tes_moneda cbm ON cb.id_moneda = cbm.id_moneda
-    LEFT JOIN rrhh_area cba ON cb.id_area = cba.id_area
-    LEFT JOIN rrhh_empleado cbe ON cb.id_usuario = cbe.id_usuario
-    LEFT JOIN rrhh_usuario ucbe ON cbe.id_usuario = ucbe.id_usuario
     ORDER BY f.estado_fondo DESC, f.id_fondo;
 END$$
 
@@ -4462,14 +4366,8 @@ BEGIN
         f.nombre_fondo,
         f.estado_fondo,
         c.monto_techo,
-        c.id_area,
+        c.id_cuenta_bancaria,
         c.id_moneda,
-        c.id_cuenta_origen,
-        a.id_area AS area_id_area,
-        a.nombre_area AS area_nombre,
-        a.descripcion_area AS area_descripcion,
-        a.id_jefe AS area_id_jefe,
-        a.esta_activo AS area_esta_activo,
         m.id_moneda AS mon_id_moneda,
         m.codigo_iso AS mon_codigo_iso,
         m.simbolo AS mon_simbolo,
@@ -4482,40 +4380,66 @@ BEGIN
         cb.cci AS cb_cci,
         cb.activa AS cb_activa,
         cb.id_moneda AS cb_id_moneda,
-        cb.id_usuario AS cb_id_usuario,
-        cb.id_area AS cb_id_area,
         cbm.id_moneda AS cbm_id_moneda,
         cbm.codigo_iso AS cbm_codigo_iso,
         cbm.simbolo AS cbm_simbolo,
         cbm.nombre_moneda AS cbm_nombre,
         cbm.descripcion AS cbm_descripcion,
-        cbm.activa AS cbm_activa,
-        cba.id_area AS cba_id_area,
-        cba.nombre_area AS cba_nombre,
-        cba.descripcion_area AS cba_descripcion,
-        cba.id_jefe AS cba_id_jefe,
-        cba.esta_activo AS cba_esta_activo,
-        cbe.id_usuario AS cbe_id_usuario,
-        ucbe.nombres AS cbe_nombres,
-        ucbe.apellido_paterno AS cbe_apellido_paterno,
-        ucbe.apellido_materno AS cbe_apellido_materno,
-        ucbe.correo AS cbe_correo,
-        cbe.numero_celular AS cbe_numero_celular,
-        cbe.rol_flujo AS cbe_rol_flujo
+        cbm.activa AS cbm_activa
     FROM tes_fondo f
     JOIN tes_caja_chica c ON f.id_fondo = c.id_fondo
-    LEFT JOIN rrhh_area a ON c.id_area = a.id_area
     LEFT JOIN tes_moneda m ON c.id_moneda = m.id_moneda
-    LEFT JOIN tes_cuenta_bancaria cb ON c.id_cuenta_origen = cb.id_cuenta_bancaria
+    LEFT JOIN tes_cuenta_bancaria cb ON c.id_cuenta_bancaria = cb.id_cuenta_bancaria
     LEFT JOIN tes_moneda cbm ON cb.id_moneda = cbm.id_moneda
-    LEFT JOIN rrhh_area cba ON cb.id_area = cba.id_area
-    LEFT JOIN rrhh_empleado cbe ON cb.id_usuario = cbe.id_usuario
-    LEFT JOIN rrhh_usuario ucbe ON cbe.id_usuario = ucbe.id_usuario
     WHERE f.estado_fondo = 'ACTIVO'
     ORDER BY f.id_fondo;
 END$$
 
+DROP PROCEDURE IF EXISTS pa_listar_cajas_chicas_por_cuenta $$
+CREATE PROCEDURE pa_listar_cajas_chicas_por_cuenta(
+    IN p_id_cuenta_bancaria INT
+)
+BEGIN
+    IF p_id_cuenta_bancaria IS NULL OR p_id_cuenta_bancaria <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de cuenta bancaria no válido';
+    END IF;
+
+    SELECT
+        f.id_fondo,
+        f.nombre_fondo,
+        f.estado_fondo,
+        c.monto_techo,
+        c.id_cuenta_bancaria,
+        c.id_moneda,
+        m.id_moneda AS mon_id_moneda,
+        m.codigo_iso AS mon_codigo_iso,
+        m.simbolo AS mon_simbolo,
+        m.nombre_moneda AS mon_nombre,
+        m.descripcion AS mon_descripcion,
+        m.activa AS mon_activa,
+        cb.id_cuenta_bancaria AS cb_id_cuenta,
+        cb.numero_cuenta AS cb_numero_cuenta,
+        cb.nombre_banco AS cb_nombre_banco,
+        cb.cci AS cb_cci,
+        cb.activa AS cb_activa,
+        cb.id_moneda AS cb_id_moneda,
+        cbm.id_moneda AS cbm_id_moneda,
+        cbm.codigo_iso AS cbm_codigo_iso,
+        cbm.simbolo AS cbm_simbolo,
+        cbm.nombre_moneda AS cbm_nombre,
+        cbm.descripcion AS cbm_descripcion,
+        cbm.activa AS cbm_activa
+    FROM tes_fondo f
+    JOIN tes_caja_chica c ON f.id_fondo = c.id_fondo
+    LEFT JOIN tes_moneda m ON c.id_moneda = m.id_moneda
+    LEFT JOIN tes_cuenta_bancaria cb ON c.id_cuenta_bancaria = cb.id_cuenta_bancaria
+    LEFT JOIN tes_moneda cbm ON cb.id_moneda = cbm.id_moneda
+    WHERE c.id_cuenta_bancaria = p_id_cuenta_bancaria
+    ORDER BY f.id_fondo;
+END$$
+
 DELIMITER ;
+
 DELIMITER //
 
 -- ===============================================================================
@@ -4553,9 +4477,8 @@ BEGIN
         JSON_OBJECT(
             'id_fondo', NEW.id_fondo,
             'monto_techo', NEW.monto_techo,
-            'id_area', NEW.id_area,
-        'id_moneda', NEW.id_moneda,
-        'id_cuenta_origen', NEW.id_cuenta_origen
+            'id_cuenta_bancaria', NEW.id_cuenta_bancaria,
+            'id_moneda', NEW.id_moneda
         ),
         NEW.id_usuario_creacion
     );
@@ -4573,16 +4496,14 @@ BEGIN
         JSON_OBJECT(
             'id_fondo', OLD.id_fondo,
             'monto_techo', OLD.monto_techo,
-            'id_area', OLD.id_area,
-        'id_moneda', OLD.id_moneda,
-        'id_cuenta_origen', OLD.id_cuenta_origen
+            'id_cuenta_bancaria', OLD.id_cuenta_bancaria,
+            'id_moneda', OLD.id_moneda
         ),
         JSON_OBJECT(
             'id_fondo', NEW.id_fondo,
             'monto_techo', NEW.monto_techo,
-            'id_area', NEW.id_area,
-        'id_moneda', NEW.id_moneda,
-        'id_cuenta_origen', NEW.id_cuenta_origen
+            'id_cuenta_bancaria', NEW.id_cuenta_bancaria,
+            'id_moneda', NEW.id_moneda
         ),
         NEW.id_usuario_modificacion
     );
@@ -4600,9 +4521,8 @@ BEGIN
         JSON_OBJECT(
             'id_fondo', OLD.id_fondo,
             'monto_techo', OLD.monto_techo,
-            'id_area', OLD.id_area,
-        'id_moneda', OLD.id_moneda,
-        'id_cuenta_origen', OLD.id_cuenta_origen
+            'id_cuenta_bancaria', OLD.id_cuenta_bancaria,
+            'id_moneda', OLD.id_moneda
         ),
         NULL,
         OLD.id_usuario_modificacion
@@ -4610,6 +4530,7 @@ BEGIN
 END //
 
 DELIMITER ;
+
 DELIMITER $$
 
 DROP PROCEDURE IF EXISTS pa_insertar_cuenta_bancaria $$
@@ -4975,6 +4896,7 @@ BEGIN
 END$$
 
 DELIMITER ;
+
 DELIMITER //
 
 -- ===============================================================================
@@ -5193,6 +5115,7 @@ BEGIN
            id_usuario_modificacion = p_id_usuario_accion
     WHERE id_moneda = p_id_moneda;
 END$$
+
 DELIMITER //
 
 -- ===============================================================================
@@ -5436,6 +5359,7 @@ BEGIN
 END$$
 
 DELIMITER ;
+
 -- ================================================================
 -- Triggers para tes_tipo_cambio
 -- TABLA: tes_tipo_cambio

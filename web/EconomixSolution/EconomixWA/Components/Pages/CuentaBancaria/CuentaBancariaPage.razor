@@ -8,15 +8,19 @@
 @inject IUsuarioWS UsuarioWS
 
 <div class="h-100 d-flex flex-column">
-    <div class="d-flex flex-row justify-content-between align-items-center mb-3">
-        <div>
-            <p class="h3 mb-1">Cuentas Bancarias</p>
+    <div class="d-flex flex-row align-items-center mb-4">
+        <div class="flex-grow-1">
+            <p class="h4 mb-1">Cuentas Bancarias</p>
             <p class="text-muted mb-0">Administración de cuentas bancarias de empleados y áreas.</p>
         </div>
 
-        <button type="button" class="btn btn-primary" @onclick="PrepararNueva">
-            + Agregar cuenta
-        </button>
+        <LiveClock />
+
+        <div class="flex-grow-1 text-end">
+            <button type="button" class="btn btn-primary" @onclick="PrepararNueva">
+                + Agregar cuenta
+            </button>
+        </div>
     </div>
 
     @if (!string.IsNullOrEmpty(ErrorMessage))
@@ -27,7 +31,8 @@
         </div>
     }
 
-    <CuentaBancariaSearchBar @bind-Busqueda="Busqueda"
+    <CuentaBancariaSearchBar @bind-BusquedaBanco="BusquedaBanco"
+                             @bind-BusquedaCuentaCCI="BusquedaCuentaCCI"
                              @bind-MonedaSeleccionadaId="FiltroMonedaId"
                              @bind-TipoDueno="FiltroTipoDueno"
                              Monedas="Monedas"
@@ -57,9 +62,11 @@
                     {
                         @foreach (var cuenta in CuentasFiltradas)
                         {
-                            <CuentaBancariaItem Cuenta="cuenta"
-                                                Seleccionada="@(CuentaSeleccionada?.IdCuenta == cuenta.IdCuenta)"
-                                                OnSeleccionar="() => Seleccionar(cuenta)" />
+                             <CuentaBancariaItem Cuenta="cuenta"
+                                                 Empleados="Empleados"
+                                                 Areas="Areas"
+                                                 Seleccionada="@(CuentaSeleccionada?.IdCuenta == cuenta.IdCuenta)"
+                                                 OnSeleccionar="() => Seleccionar(cuenta)" />
                         }
                     }
                 </div>
@@ -67,95 +74,99 @@
 
             @if (MostrarEditor && CuentaEnEdicion != null)
             {
-                <div class="col-6 h-100 overflow-auto">
-                    <div class="card rounded-4 p-3 h-100">
-                        <p class="h5 mb-3">@(CuentaEnEdicion.IdCuenta > 0 ? "Editar cuenta" : "Nueva cuenta")</p>
-
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label class="form-label mb-1">Banco</label>
-                                <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("NombreBanco") ? "is-invalid" : "")"
-                                       placeholder="Nombre del banco" @bind="CuentaEnEdicion.NombreBanco">
-                                @if (Errores.ContainsKey("NombreBanco"))
-                                {
-                                    <div class="text-danger small mt-1">@Errores["NombreBanco"]</div>
-                                }
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label mb-1">Número de cuenta</label>
-                                <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("NumeroBancario") ? "is-invalid" : "")"
-                                       placeholder="Mínimo 10 dígitos" @bind="CuentaEnEdicion.NumeroBancario">
-                                @if (Errores.ContainsKey("NumeroBancario"))
-                                {
-                                    <div class="text-danger small mt-1">@Errores["NumeroBancario"]</div>
-                                }
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label mb-1">CCI</label>
-                                <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("Cci") ? "is-invalid" : "")"
-                                       placeholder="20 dígitos" @bind="CuentaEnEdicion.Cci">
-                                @if (Errores.ContainsKey("Cci"))
-                                {
-                                    <div class="text-danger small mt-1">@Errores["Cci"]</div>
-                                }
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label mb-1">Moneda</label>
-                                <select class="form-select rounded-4 @(Errores.ContainsKey("Moneda") ? "is-invalid" : "")"
-                                        @bind="MonedaSeleccionadaId">
-                                    <option value="0">Seleccione una moneda</option>
-                                    @foreach (var moneda in Monedas)
+                <div class="col-6 h-100 d-flex flex-column">
+                    <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
+                        <div class="p-3 pb-2">
+                            <p class="h5 mb-0">@(CuentaEnEdicion.IdCuenta > 0 ? "Editar cuenta" : "Nueva cuenta")</p>
+                        </div>
+                        <hr class="my-0" />
+                        <div class="p-3 overflow-auto flex-fill">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label mb-1">Banco</label>
+                                    <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("NombreBanco") ? "is-invalid" : "")"
+                                           placeholder="Nombre del banco" @bind="CuentaEnEdicion.NombreBanco">
+                                    @if (Errores.ContainsKey("NombreBanco"))
                                     {
-                                        <option value="@moneda.IdMoneda">@moneda.Simbolo - @moneda.Nombre</option>
+                                        <div class="text-danger small mt-1">@Errores["NombreBanco"]</div>
                                     }
-                                </select>
-                                @if (Errores.ContainsKey("Moneda"))
-                                {
-                                    <div class="text-danger small mt-1">@Errores["Moneda"]</div>
-                                }
-                            </div>
-
-                            <div class="col-12">
-                                <label class="form-label mb-1">Dueño</label>
-                                <select class="form-select rounded-4 mb-2"
-                                        @bind="TipoDuenoEdicion">
-                                    <option value="">Seleccione tipo de dueño</option>
-                                    <option value="Empleado">Empleado</option>
-                                    <option value="Area">Área</option>
-                                </select>
-
-                                @if (TipoDuenoEdicion == "Empleado")
-                                {
-                                    <select class="form-select rounded-4 @(Errores.ContainsKey("Dueno") ? "is-invalid" : "")"
-                                            @bind="EmpleadoSeleccionadoId">
-                                        <option value="0">Seleccione un empleado</option>
-                                        @foreach (var emp in Empleados)
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label mb-1">Número de cuenta</label>
+                                    <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("NumeroBancario") ? "is-invalid" : "")"
+                                           placeholder="Mínimo 10 dígitos" @bind="CuentaEnEdicion.NumeroBancario">
+                                    @if (Errores.ContainsKey("NumeroBancario"))
+                                    {
+                                        <div class="text-danger small mt-1">@Errores["NumeroBancario"]</div>
+                                    }
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label mb-1">CCI</label>
+                                    <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("Cci") ? "is-invalid" : "")"
+                                           placeholder="20 dígitos" @bind="CuentaEnEdicion.Cci">
+                                    @if (Errores.ContainsKey("Cci"))
+                                    {
+                                        <div class="text-danger small mt-1">@Errores["Cci"]</div>
+                                    }
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label mb-1">Moneda</label>
+                                    <select class="form-select rounded-4 @(Errores.ContainsKey("Moneda") ? "is-invalid" : "")"
+                                            @bind="MonedaSeleccionadaId">
+                                        <option value="0">Seleccione una moneda</option>
+                                        @foreach (var moneda in Monedas)
                                         {
-                                            <option value="@emp.UsuarioID">@emp.Nombres @emp.ApellidoPaterno</option>
+                                            <option value="@moneda.IdMoneda">@moneda.Simbolo - @moneda.Nombre</option>
                                         }
                                     </select>
-                                }
-                                else if (TipoDuenoEdicion == "Area")
-                                {
-                                    <select class="form-select rounded-4 @(Errores.ContainsKey("Dueno") ? "is-invalid" : "")"
-                                            @bind="AreaSeleccionadaId">
-                                        <option value="0">Seleccione un área</option>
-                                        @foreach (var area in Areas)
-                                        {
-                                            <option value="@area.AreaID">@area.Nombre</option>
-                                        }
+                                    @if (Errores.ContainsKey("Moneda"))
+                                    {
+                                        <div class="text-danger small mt-1">@Errores["Moneda"]</div>
+                                    }
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label mb-1">Dueño</label>
+                                    <select class="form-select rounded-4 mb-2"
+                                            @bind="TipoDuenoEdicion">
+                                        <option value="">Seleccione tipo de dueño</option>
+                                        <option value="Empleado">Empleado</option>
+                                        <option value="Area">Área</option>
                                     </select>
-                                }
-                                @if (Errores.ContainsKey("Dueno"))
-                                {
-                                    <div class="text-danger small mt-1">@Errores["Dueno"]</div>
-                                }
+
+                                    @if (TipoDuenoEdicion == "Empleado")
+                                    {
+                                        <select class="form-select rounded-4 @(Errores.ContainsKey("Dueno") ? "is-invalid" : "")"
+                                                @bind="EmpleadoSeleccionadoId">
+                                            <option value="0">Seleccione un empleado</option>
+                                            @foreach (var emp in Empleados)
+                                            {
+                                                <option value="@emp.UsuarioID">@emp.Nombres @emp.ApellidoPaterno</option>
+                                            }
+                                        </select>
+                                    }
+                                    else if (TipoDuenoEdicion == "Area")
+                                    {
+                                        <select class="form-select rounded-4 @(Errores.ContainsKey("Dueno") ? "is-invalid" : "")"
+                                                @bind="AreaSeleccionadaId">
+                                            <option value="0">Seleccione un área</option>
+                                            @foreach (var area in Areas)
+                                            {
+                                                <option value="@area.AreaID">@area.Nombre</option>
+                                            }
+                                        </select>
+                                    }
+                                    @if (Errores.ContainsKey("Dueno"))
+                                    {
+                                        <div class="text-danger small mt-1">@Errores["Dueno"]</div>
+                                    }
+                                </div>
                             </div>
                         </div>
-
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <button type="button" class="btn btn-outline-success" @onclick="Guardar">
-                                Guardar
+                        <hr class="my-0" />
+                        <div class="p-3 d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-outline-warning" @onclick="Guardar">
+                                Guardar Cambios
                             </button>
                             <button type="button" class="btn btn-outline-secondary" @onclick="CerrarEditor">
                                 Cancelar
@@ -178,7 +189,8 @@
     private bool Cargando { get; set; } = true;
     private bool MostrarEditor { get; set; }
     private string ErrorMessage { get; set; } = string.Empty;
-    private string Busqueda { get; set; } = string.Empty;
+    private string BusquedaBanco { get; set; } = string.Empty;
+    private string BusquedaCuentaCCI { get; set; } = string.Empty;
     private int FiltroMonedaId { get; set; }
     private string FiltroTipoDueno { get; set; } = "Todos";
 
@@ -207,16 +219,17 @@
     }
 
     private bool HayFiltrosActivos =>
-        !string.IsNullOrWhiteSpace(Busqueda)
+        !string.IsNullOrWhiteSpace(BusquedaBanco)
+        || !string.IsNullOrWhiteSpace(BusquedaCuentaCCI)
         || FiltroMonedaId > 0
         || FiltroTipoDueno != "Todos";
 
     private IEnumerable<CuentaBancaria> CuentasFiltradas => Cuentas
-        .Where(c => string.IsNullOrWhiteSpace(Busqueda)
-            || c.NombreBanco.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
-            || c.NumeroBancario.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
-            || (c.Cci?.Contains(Busqueda, StringComparison.OrdinalIgnoreCase) ?? false)
-            || ObtenerNombreDueno(c).Contains(Busqueda, StringComparison.OrdinalIgnoreCase))
+        .Where(c => string.IsNullOrWhiteSpace(BusquedaBanco)
+            || c.NombreBanco.Contains(BusquedaBanco, StringComparison.OrdinalIgnoreCase))
+        .Where(c => string.IsNullOrWhiteSpace(BusquedaCuentaCCI)
+            || c.NumeroBancario.Contains(BusquedaCuentaCCI, StringComparison.OrdinalIgnoreCase)
+            || (c.Cci?.Contains(BusquedaCuentaCCI, StringComparison.OrdinalIgnoreCase) ?? false))
         .Where(c => FiltroMonedaId == 0 || c.Moneda?.IdMoneda == FiltroMonedaId)
         .Where(c => FiltroTipoDueno == "Todos"
             || (FiltroTipoDueno == "Empleado" && c.EmpleadoAdministrador != null)
@@ -422,14 +435,20 @@
 
     private string ObtenerNombreDueno(CuentaBancaria cuenta)
     {
-        if (cuenta.EmpleadoAdministrador != null)
+        var empId = cuenta.EmpleadoAdministrador?.UsuarioID ?? 0;
+        if (empId > 0)
         {
-            return $"{cuenta.EmpleadoAdministrador.Nombres} {cuenta.EmpleadoAdministrador.ApellidoPaterno}".Trim();
+            var emp = Empleados.FirstOrDefault(e => e.UsuarioID == empId);
+            return emp != null ? $"{emp.Nombres} {emp.ApellidoPaterno}".Trim() : $"Empleado #{empId}";
         }
-        if (cuenta.AreaAdministradora != null)
+
+        var areaId = cuenta.AreaAdministradora?.AreaID ?? 0;
+        if (areaId > 0)
         {
-            return cuenta.AreaAdministradora.Nombre;
+            var area = Areas.FirstOrDefault(a => a.AreaID == areaId);
+            return area?.Nombre ?? $"Área #{areaId}";
         }
+
         return "Sin dueño";
     }
 }

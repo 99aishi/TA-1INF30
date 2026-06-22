@@ -11,4 +11,5 @@ public interface ICajaChicaDAO {
     CajaChica buscarPorId(int id) throws SQLException;
     java.util.List<CajaChica> listarActivas() throws SQLException;
     java.util.List<CajaChica> listarTodas() throws SQLException;
+    java.util.List<CajaChica> listarPorCuentaBancaria(int idCuentaBancaria) throws SQLException;
 }

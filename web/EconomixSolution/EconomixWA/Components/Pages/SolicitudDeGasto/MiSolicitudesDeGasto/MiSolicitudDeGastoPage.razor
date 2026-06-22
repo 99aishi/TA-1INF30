@@ -4,9 +4,15 @@
 @inject ISolicitudGastoWS SolicitudGastoWS
 
 <div class="h-100 d-flex flex-column">
-    <div class="d-flex flex-row justify-content-between">
-        <p class="h4">Mis Solicitudes de Gasto</p>
-        <button type="button" class="btn btn-primary" @onclick="IrCrearSolicitud"> + Agregar Solicitud</button>
+    <div class="d-flex flex-row align-items-center mb-4">
+        <div class="flex-grow-1">
+            <p class="h4 mb-1">Mis Solicitudes de Gasto</p>
+            <p class="text-muted mb-0">Solicitudes de gasto creadas y su estado de aprobación</p>
+        </div>
+        <LiveClock />
+        <div class="flex-grow-1 text-end">
+            <button type="button" class="btn btn-primary" @onclick="IrCrearSolicitud"> + Agregar Solicitud</button>
+        </div>
     </div>
 
     @if (!string.IsNullOrEmpty(ErrorMessage))

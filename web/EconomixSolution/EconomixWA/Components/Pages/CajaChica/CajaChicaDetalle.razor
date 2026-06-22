@@ -4,84 +4,103 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject ICajaChicaWS CajaChicaWS
+@inject ICuentaBancariaWS CuentaBancariaWS
+@inject IMonedaWS MonedaWS
+@inject IAreaWS AreaWS
 @inject IUsuarioWS UsuarioWS
+@using Microsoft.AspNetCore.WebUtilities
 
 <div class="d-flex flex-column h-100 mb-3">
-    <div class="row h-100 @(EsCreacion ? "mb-3" : " ")">
-        <div class="col-12 h-100 mb-3">
-            <div class="card rounded-4 p-3 mb-3 h-100 d-flex justify-content-between">
-                <div class="d-flex flex-column">
-                    <div class="d-flex gap-4">
-                        @if (EsCreacion)
-                        {
-                            <p class="h3"> Registar Caja Chica </p>
-                        }
-                        else
-                        {
-                            <p class="h3"> @(CajaChica?.Nombre ?? "Caja Chica") </p>
-                        }
-                    </div>
+    <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
+        <div class="p-3 pb-2 d-flex gap-4 align-items-center">
+            @if (EsCreacion)
+            {
+                <p class="h3 mb-0">Registrar Caja Chica</p>
+            }
+            else
+            {
+                <p class="h3 mb-0">@(CajaChica?.Nombre ?? "Caja Chica")</p>
+            }
+        </div>
+        <hr class="my-0" />
+        <div class="flex-fill overflow-auto p-3">
 
-                    @if (!string.IsNullOrEmpty(ErrorMessage))
-                    {
-                        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                            @ErrorMessage
-                            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
-                        </div>
-                    }
-
-                    <div class="row">
-                        <div class="col-6 mt-3">
-                            <label class="form-label">Nombre</label>
-                            <input type="text" class="form-control form-control-lg rounded-4 bg-light"
-                                   placeholder="Nombre de la caja chica" @bind="CajaChica.Nombre">
-                        </div>
-                        <div class="col-6 mt-3">
-                            <label class="form-label">Monto Techo (S/)</label>
-                            <input type="number" step="0.01" min="0"
-                                   class="form-control form-control-lg rounded-4 bg-light"
-                                   placeholder="0.00" @bind="CajaChica.MontoTecho">
-                        </div>
-                        <div class="col-6 mt-3">
-                            <label class="form-label">Área Asignada</label>
-                            <input type="text" class="form-control form-control-lg rounded-4 bg-light"
-                                   placeholder="Nombre del área" @bind="CajaChica.AreaAsignada.Nombre">
-                        </div>
-                        <div class="col-6 mt-3">
-                            <label class="form-label">Moneda</label>
-                            <input type="text" class="form-control form-control-lg rounded-4 bg-light"
-                                   placeholder="Moneda" @bind="CajaChica.Moneda.CodigoISO">
-                        </div>
-                    </div>
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                    @ErrorMessage
+                    <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
                 </div>
+            }
 
-                <div class="d-flex justify-content-end gap-3 mt-4">
-                    @if (EsCreacion)
-                    {
-                        <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="InsertarCajaChica">
-                            Registrar
-                        </button>
-                        <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="IrACajaChica">
-                            Cerrar
-                        </button>
-                        <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="IrACajaChica">
-                            Cancelar
-                        </button>
-                    }
-                    else
-                    {
-                        <button type="button" class="btn btn-outline-warning align-self-start mt-3" @onclick="GuardarCambios">
-                            Guardar Cambios
-                        </button>
-                        <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="CerrarDetalle">
-                            Cerrar
-                        </button>
-                        <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="EliminarCajaChica">
-                            Eliminar
-                        </button>
-                    }
+            <div class="row">
+                <div class="col-12 col-md-6 mt-3">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light"
+                           placeholder="Nombre de la caja chica" @bind="CajaChica!.Nombre">
+                </div>
+                <div class="col-12 col-md-6 mt-3">
+                    <label class="form-label">Monto Techo</label>
+                    <input type="number" step="0.01" min="0"
+                           class="form-control form-control-lg rounded-4 bg-light"
+                           placeholder="0.00" @bind="CajaChica!.MontoTecho">
+                </div>
+                <div class="col-12 col-md-6 mt-3">
+                    <label class="form-label">Área</label>
+                    <select class="form-select form-select-lg rounded-4 bg-light"
+                            @bind="AreaSeleccionadaId">
+                        <option value="0">Seleccione área</option>
+                        @foreach (var area in Areas)
+                        {
+                            <option value="@area.AreaID">@area.Nombre</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-md-6 mt-3">
+                    <label class="form-label">Cuenta bancaria</label>
+                    <select class="form-select form-select-lg rounded-4 bg-light"
+                            @bind="CuentaBancariaSeleccionadaId"
+                            disabled="@(AreaSeleccionadaId <= 0)">
+                        <option value="0">@(AreaSeleccionadaId <= 0 ? "Seleccione un área primero" : "Seleccione cuenta")</option>
+                        @foreach (var cuenta in CuentasBancariasFiltradas)
+                        {
+                            <option value="@cuenta.IdCuenta">@cuenta.NombreBanco - @cuenta.NumeroBancario (@(cuenta.Moneda?.Simbolo ?? "-"))</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-md-6 mt-3">
+                    <label class="form-label">Moneda (automática)</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" disabled
+                           value="@(CajaChica?.Moneda != null ? $"{CajaChica.Moneda.Simbolo} - {CajaChica.Moneda.Nombre}" : "Seleccione una cuenta bancaria")" />
                 </div>
             </div>
+        </div>
+        <hr class="my-0" />
+        <div class="p-3 d-flex justify-content-end gap-3">
+            @if (EsCreacion)
+            {
+                <button type="button" class="btn btn-outline-primary" @onclick="InsertarCajaChica">
+                    Registrar
+                </button>
+                <button type="button" class="btn btn-outline-info" @onclick="IrACajaChica">
+                    Cerrar
+                </button>
+                <button type="button" class="btn btn-outline-danger" @onclick="IrACajaChica">
+                    Cancelar
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-outline-warning" @onclick="GuardarCambios">
+                    Guardar Cambios
+                </button>
+                <button type="button" class="btn btn-outline-info" @onclick="CerrarDetalle">
+                    Cerrar
+                </button>
+                <button type="button" class="btn btn-outline-danger" @onclick="EliminarCajaChica">
+                    Eliminar
+                </button>
+            }
         </div>
     </div>
 </div>
@@ -95,16 +114,116 @@
 
     private bool EsCreacion { get; set; }
     private string ErrorMessage { get; set; } = string.Empty;
+    private List<Moneda> Monedas { get; set; } = new();
+    private List<CuentaBancaria> CuentasBancarias { get; set; } = new();
+    private List<Area> Areas { get; set; } = new();
 
-    protected override void OnInitialized()
+    private int AreaSeleccionadaId { get; set; }
+
+    private List<CuentaBancaria> CuentasBancariasFiltradas => AreaSeleccionadaId <= 0
+        ? new List<CuentaBancaria>()
+        : CuentasBancarias
+            .Where(c => c.AreaAdministradora?.AreaID == AreaSeleccionadaId)
+            .ToList();
+
+    private int MonedaSeleccionadaId
+    {
+        get => CajaChica.Moneda?.IdMoneda ?? 0;
+        set => CajaChica.Moneda = value == 0 ? null : Monedas.FirstOrDefault(m => m.IdMoneda == value);
+    }
+
+    private int CuentaBancariaSeleccionadaId
+    {
+        get => CajaChica.CuentaBancaria?.IdCuenta ?? 0;
+        set
+        {
+            var cuenta = value == 0 ? null : CuentasBancarias.FirstOrDefault(c => c.IdCuenta == value);
+            CajaChica.CuentaBancaria = cuenta;
+            if (cuenta?.Moneda != null)
+            {
+                CajaChica.Moneda = new Moneda
+                {
+                    IdMoneda = cuenta.Moneda.IdMoneda,
+                    Nombre = cuenta.Moneda.Nombre,
+                    Simbolo = cuenta.Moneda.Simbolo,
+                    CodigoISO = cuenta.Moneda.CodigoISO
+                };
+            }
+            else
+            {
+                CajaChica.Moneda = null;
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
     {
         EsCreacion = Navigation.Uri.Contains("/Crear");
+        await CargarCatalogos();
+        await InicializarDesdeParametros();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await InicializarDesdeParametros();
+    }
+
+    private async Task CargarCatalogos()
+    {
+        try { Monedas = await Task.Run(() => new List<Moneda>(MonedaWS.listar())); } catch { Monedas = new List<Moneda>(); }
+        try { CuentasBancarias = await Task.Run(() => new List<CuentaBancaria>(CuentaBancariaWS.listar())); } catch { CuentasBancarias = new List<CuentaBancaria>(); }
+        try { Areas = await Task.Run(() => new List<Area>(AreaWS.listar())); } catch { Areas = new List<Area>(); }
+    }
+
+    private async Task InicializarDesdeParametros()
+    {
+        CajaChica ??= new CajaChica();
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
         if (EsCreacion)
         {
-            CajaChica = new CajaChica();
-            CajaChica.AreaAsignada = new Area();
-            CajaChica.Moneda = new Moneda();
-            CajaChica.CuentaOrigen = new CuentaBancaria();
+            if (CajaChica == null || CajaChica.IdFondo > 0)
+                CajaChica = new CajaChica { Estado = "ACTIVO", Moneda = new Moneda() };
+
+            if (query.TryGetValue("cuentaId", out var cuentaIdValue)
+                && int.TryParse(cuentaIdValue, out var cuentaId))
+            {
+                var cuenta = CuentasBancarias.FirstOrDefault(c => c.IdCuenta == cuentaId)
+                             ?? await Task.Run(() => CuentaBancariaWS.obtenerPorId(cuentaId));
+                if (cuenta != null)
+                {
+                    CajaChica.CuentaBancaria = cuenta;
+                    if (cuenta.AreaAdministradora != null)
+                        AreaSeleccionadaId = cuenta.AreaAdministradora.AreaID;
+                    if (CajaChica.Moneda == null || CajaChica.Moneda.IdMoneda <= 0)
+                        CajaChica.Moneda = cuenta.Moneda != null
+                            ? new Moneda { IdMoneda = cuenta.Moneda.IdMoneda, Nombre = cuenta.Moneda.Nombre, Simbolo = cuenta.Moneda.Simbolo, CodigoISO = cuenta.Moneda.CodigoISO }
+                            : new Moneda();
+                    if (!CuentasBancarias.Any(c => c.IdCuenta == cuenta.IdCuenta))
+                        CuentasBancarias.Add(cuenta);
+                }
+            }
+        }
+        else
+        {
+            if (CajaChica == null || CajaChica.IdFondo <= 0)
+            {
+                if (query.TryGetValue("cajaId", out var cajaIdValue)
+                    && int.TryParse(cajaIdValue, out var cajaId))
+                {
+                    CajaChica = await Task.Run(() => CajaChicaWS.obtenerPorId(cajaId)) ?? new CajaChica();
+                }
+                else
+                {
+                    CajaChica = new CajaChica();
+                }
+            }
+
+            if (CajaChica.Moneda == null) CajaChica.Moneda = new Moneda();
+
+            if (CajaChica.CuentaBancaria?.AreaAdministradora != null)
+                AreaSeleccionadaId = CajaChica.CuentaBancaria.AreaAdministradora.AreaID;
         }
     }
 
@@ -118,9 +237,35 @@
         Navigation.NavigateTo("/Caja Chica");
     }
 
-    private async Task InsertarCajaChica()
+    private bool Validar()
     {
         ErrorMessage = string.Empty;
+        if (string.IsNullOrWhiteSpace(CajaChica.Nombre))
+        {
+            ErrorMessage = "El nombre es obligatorio.";
+            return false;
+        }
+        if (CajaChica.MontoTecho <= 0)
+        {
+            ErrorMessage = "El monto techo debe ser mayor que cero.";
+            return false;
+        }
+        if (CajaChica.Moneda == null || CajaChica.Moneda.IdMoneda <= 0)
+        {
+            ErrorMessage = "La cuenta bancaria seleccionada no tiene moneda asignada.";
+            return false;
+        }
+        if (CajaChica.CuentaBancaria == null || CajaChica.CuentaBancaria.IdCuenta <= 0)
+        {
+            ErrorMessage = "Debe seleccionar una cuenta bancaria.";
+            return false;
+        }
+        return true;
+    }
+
+    private async Task InsertarCajaChica()
+    {
+        if (!Validar()) return;
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
@@ -135,7 +280,7 @@
 
     private async Task GuardarCambios()
     {
-        ErrorMessage = string.Empty;
+        if (!Validar()) return;
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
@@ -150,7 +295,6 @@
 
     private async Task EliminarCajaChica()
     {
-        ErrorMessage = string.Empty;
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();

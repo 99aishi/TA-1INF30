@@ -1,21 +1,21 @@
 package pe.edu.pucp.economix.tesoreria.boi;
 
-import pe.edu.pucp.economix.rrhh.idao.IAreaDAO;
-import pe.edu.pucp.economix.rrhh.daoi.AreaDAOImpl;
-import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.tesoreria.ibo.ICajaChicaBO;
 import pe.edu.pucp.economix.tesoreria.idao.ICajaChicaDAO;
+import pe.edu.pucp.economix.tesoreria.idao.ICuentaBancariaDAO;
 import pe.edu.pucp.economix.tesoreria.daoi.CajaChicaDAOImpl;
+import pe.edu.pucp.economix.tesoreria.daoi.CuentaBancariaDAOImpl;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
+import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 
 import java.util.List;
 
 public class CajaChicaBOImpl implements ICajaChicaBO {
     private final ICajaChicaDAO cajaDAO;
-    private final IAreaDAO areaDAO;
+    private final ICuentaBancariaDAO cuentaBancariaDAO;
     public CajaChicaBOImpl(){
         cajaDAO=new CajaChicaDAOImpl();
-        areaDAO=new AreaDAOImpl();
+        cuentaBancariaDAO=new CuentaBancariaDAOImpl();
     }
     private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
         if (idUsuarioAccion <= 0) {
@@ -63,6 +63,15 @@ public class CajaChicaBOImpl implements ICajaChicaBO {
     public List<CajaChica> listarActivas() throws Exception {
         return cajaDAO.listarActivas();
     }
+
+    @Override
+    public List<CajaChica> listarPorCuentaBancaria(int idCuentaBancaria) throws Exception {
+        if (idCuentaBancaria <= 0) {
+            throw new Exception("El id de la cuenta bancaria debe ser mayor que cero.");
+        }
+        return cajaDAO.listarPorCuentaBancaria(idCuentaBancaria);
+    }
+
     public void validar(CajaChica caja,boolean esModificacion) throws Exception{
         if(caja==null){
             throw new Exception("La caja chica no puede ser nula.");
@@ -72,21 +81,21 @@ public class CajaChicaBOImpl implements ICajaChicaBO {
             throw new Exception("El id de la caja chica es obligatoria para la modificación.");
         }
 
-        validarArea(caja.getAreaAsignada());
+        validarCuentaBancaria(caja.getCuentaBancaria());
         validarNombre(caja.getNombre());
         validarMontoTecho(caja.getMontoTecho());
 
     }
-    public void validarArea(Area area) throws Exception{
-        if (area == null) {
-            throw new Exception("El area de la caja chica es obligatorio.");
+    public void validarCuentaBancaria(CuentaBancaria cuentaBancaria) throws Exception{
+        if (cuentaBancaria == null) {
+            throw new Exception("La cuenta bancaria de la caja chica es obligatoria.");
         }
 
-        if (area.getIdArea() <= 0) {
-            throw new Exception("El area de la caja chica no es válido.");
+        if (cuentaBancaria.getIdCuenta() <= 0) {
+            throw new Exception("La cuenta bancaria de la caja chica no es válida.");
         }
-        if(areaDAO.buscarPorId(area.getIdArea())==null){
-            throw new Exception("El area de la caja chica no existe.");
+        if(cuentaBancariaDAO.buscarPorId(cuentaBancaria.getIdCuenta())==null){
+            throw new Exception("La cuenta bancaria de la caja chica no existe.");
         }
 
     }

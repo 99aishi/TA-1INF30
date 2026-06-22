@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using EconomixModel.Model;
 using Microsoft.AspNetCore.Http;
 
@@ -10,16 +9,14 @@ public class AreaWSImpl : IAreaWS
 {
     private readonly HttpClient _httpClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private static readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        ReferenceHandler = ReferenceHandler.IgnoreCycles
-    };
+    private readonly JsonSerializerOptions _jsonOptions;
 
-    public AreaWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
+    public AreaWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor, JsonSerializerOptions jsonOptions)
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(httpClient.BaseAddress + "AreaWS/");
         _httpContextAccessor = httpContextAccessor;
+        _jsonOptions = jsonOptions;
     }
 
     private int ObtenerIdUsuarioAccion()
@@ -81,7 +78,7 @@ public class AreaWSImpl : IAreaWS
         if (string.IsNullOrEmpty(json) || json == "null")
             return new List<Area>();
         
-        return System.Text.Json.JsonSerializer.Deserialize<List<Area>>(json) ?? new List<Area>();
+        return System.Text.Json.JsonSerializer.Deserialize<List<Area>>(json, _jsonOptions) ?? new List<Area>();
     }
 
     public List<Area> listarActivas()
@@ -101,7 +98,7 @@ public class AreaWSImpl : IAreaWS
         if (string.IsNullOrEmpty(json) || json == "null")
             return new List<Area>();
 
-        return System.Text.Json.JsonSerializer.Deserialize<List<Area>>(json) ?? new List<Area>();
+        return System.Text.Json.JsonSerializer.Deserialize<List<Area>>(json, _jsonOptions) ?? new List<Area>();
     }
 
     public int recuperar(int id, int idUsuarioAccion)
@@ -113,7 +110,7 @@ public class AreaWSImpl : IAreaWS
             throw new Exception(error);
         }
         var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-        return System.Text.Json.JsonSerializer.Deserialize<int>(json);
+        return System.Text.Json.JsonSerializer.Deserialize<int>(json, _jsonOptions);
     }
 
     public Area? obtenerPorId(int id)
@@ -133,6 +130,6 @@ public class AreaWSImpl : IAreaWS
         if (string.IsNullOrEmpty(json) || json == "null")
             return null;
 
-        return System.Text.Json.JsonSerializer.Deserialize<Area>(json);
+        return System.Text.Json.JsonSerializer.Deserialize<Area>(json, _jsonOptions);
     }
 }

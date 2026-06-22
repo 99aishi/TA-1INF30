@@ -15,7 +15,6 @@ import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoCicloCaja;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoRendicion;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
-import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
@@ -158,11 +157,11 @@ public class CicloCajaChicaDAOImpl implements ICicloCajaChicaDAO {
         if(estadoFondo != null)
             cc.setEstado(EstadoFondo.valueOf(estadoFondo));
 
-        int idArea = rs.getInt(prefijo + "id_area");
-        if (!rs.wasNull() && idArea > 0) {
-            Area area = getOrCreate(cache, Area.class, idArea, () -> new Area());
-            area.setIdArea(idArea);
-            cc.setAreaAsignada(area);
+        int idCuentaBancaria = rs.getInt(prefijo + "id_cuenta_bancaria");
+        if (!rs.wasNull() && idCuentaBancaria > 0) {
+            CuentaBancaria cb = getOrCreate(cache, CuentaBancaria.class, idCuentaBancaria, () -> new CuentaBancaria());
+            cb.setIdCuenta(idCuentaBancaria);
+            cc.setCuentaBancaria(cb);
         }
 
         int idMoneda = rs.getInt(prefijo + "id_moneda");
@@ -170,13 +169,6 @@ public class CicloCajaChicaDAOImpl implements ICicloCajaChicaDAO {
             Moneda moneda = getOrCreate(cache, Moneda.class, idMoneda, () -> new Moneda());
             moneda.setIdMoneda(idMoneda);
             cc.setMoneda(moneda);
-        }
-
-        int idCuentaOrigen = rs.getInt(prefijo + "id_cuenta_origen");
-        if (!rs.wasNull() && idCuentaOrigen > 0) {
-            CuentaBancaria cb = getOrCreate(cache, CuentaBancaria.class, idCuentaOrigen, () -> new CuentaBancaria());
-            cb.setIdCuenta(idCuentaOrigen);
-            cc.setCuentaOrigen(cb);
         }
 
         return cc;

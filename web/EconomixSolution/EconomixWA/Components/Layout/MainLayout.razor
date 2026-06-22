@@ -80,7 +80,6 @@ else
     
     private void Logout()
     { 
-        UsuarioWS.Logout();
-        Navigation.NavigateTo("/", forceLoad: true);
+        Navigation.NavigateTo("/auth/logout", forceLoad: true);
     }
 }

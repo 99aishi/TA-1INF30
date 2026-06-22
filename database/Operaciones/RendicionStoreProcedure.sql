@@ -1,3 +1,4 @@
+
 DELIMITER $$
 
 DROP PROCEDURE IF EXISTS pa_insertar_rendicion $$

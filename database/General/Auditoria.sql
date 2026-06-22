@@ -1,3 +1,4 @@
+
 CREATE TABLE IF NOT EXISTS log_auditoria (
     id_auditoria INT NOT NULL AUTO_INCREMENT,
     nombre_tabla VARCHAR(100) NOT NULL,
@@ -45,6 +46,32 @@ BEGIN
         p_valores_nuevos,
         p_id_usuario_accion
     );
+END //
+
+DROP PROCEDURE IF EXISTS pa_listar_auditoria_recientes//
+CREATE PROCEDURE pa_listar_auditoria_recientes(
+    IN p_limite INT
+)
+BEGIN
+    IF p_limite IS NULL OR p_limite <= 0 THEN
+        SET p_limite = 50;
+    END IF;
+
+    SELECT 
+        a.id_auditoria,
+        a.nombre_tabla,
+        a.tipo_evento,
+        a.id_registro_afectado,
+        a.valores_antiguos,
+        a.valores_nuevos,
+        a.creado_at,
+        a.id_usuario_auditoria,
+        u.nombres AS usuario_nombres,
+        u.apellido_paterno AS usuario_apellido_paterno
+    FROM log_auditoria a
+    LEFT JOIN rrhh_usuario u ON a.id_usuario_auditoria = u.id_usuario
+    ORDER BY a.creado_at DESC
+    LIMIT p_limite;
 END //
 
 DELIMITER ;

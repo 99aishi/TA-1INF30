@@ -3,31 +3,33 @@
 @inject NavigationManager Navigation
 @inject ICajaChicaWS CajaChicaWS
 @inject ICicloCajaWS CicloCajaWS
+@inject IAreaWS AreaWS
+@inject IEmpleadoWS EmpleadoWS
 @using EconomixWA.Components.Pages.CajaChica
 
-<div id="cards-container" class="row">
-    <div id="card-container" class="col-3">
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
         <div class="card rounded-4 h-100">
-            <div class="card-body ">
+            <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-body-primary">Fondos Totales</h6>
                 <p class="card-text h2">@FormatearSoles(FondosTotales)</p>
             </div>
         </div>
     </div>
-    <div id="card-container" class="col-3">
+    <div class="col-6 col-lg-3">
         <div class="card rounded-4 h-100">
             <div class="card-body d-flex flex-column justify-content-between">
                 <div>
                     <h6 class="card-subtitle mb-2 text-body-primary">Fondos utilizados</h6>
                     <p class="card-text h2">@FormatearSoles(FondosUtilizados)</p>
                 </div>
-                <div class="progress rounded-4" style="height: 10px">
+                <div class="progress rounded-4 mt-2" style="height: 10px">
                     <div class="progress-bar rounded-4" style="width: @PorcentajeUtilizado%" role="progressbar" aria-valuenow="@PorcentajeUtilizado" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
             </div>
         </div>
     </div>
-    <div id="card-container" class="col-3">
+    <div class="col-6 col-lg-3">
         <div class="card rounded-4 h-100">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-body-primary">Saldo disponible</h6>
@@ -35,7 +37,7 @@
             </div>
         </div>
     </div>
-    <div id="card-container" class="col-3">
+    <div class="col-6 col-lg-3">
         <div class="card rounded-4 h-100">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-body-primary">Ciclos Activos</h6>
@@ -48,20 +50,22 @@
 
 
 <div class="card rounded-4 mt-2 overflow-hidden">
-    <div class="card-body p-0">
+    <div class="card-body p-0 d-flex flex-column">
 
-        <div class="p-3 border-bottom">
+        <div class="p-3">
             <h4 class="fw-bold mb-1">Ciclos de caja chica por área</h4>
             <p class="text-muted mb-0">
                 Visualización y seguimiento de cajas chicas por cada área de la empresa
             </p>
         </div>
 
-        <div class="overflow-scroll overflow-x-hidden" style="max-height: 330px;">
+        <hr class="my-0" />
+
+        <div class="overflow-scroll overflow-x-hidden flex-fill" style="max-height: 330px;">
             @foreach (var ciclo in CiclosCajaChica)
             {
-                <CajaChicaItem Area="@ciclo.Area"
-                               Responsable="@ciclo.Responsable"
+                <CajaChicaItem Titulo="@ciclo.Area"
+                               Subtitulo="@ciclo.Responsable"
                                PorcentajeUso="@ciclo.PorcentajeUso"
                                MontoTotal="@ciclo.MontoTotal"
                                Gastado="@ciclo.Gastado"
@@ -85,12 +89,21 @@
     private int CiclosRevision { get; set; }
 
     private List<CicloCajaChica> CiclosCajaChica { get; set; } = new();
+    private List<Area> Areas { get; set; } = new();
+    private List<Empleado> Empleados { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
     {
         await Task.WhenAll(
             CargarFondos(),
-            CargarCiclos());
+            CargarCiclos(),
+            CargarCatalogos());
+    }
+
+    private async Task CargarCatalogos()
+    {
+        try { Areas = await Task.Run(() => new List<Area>(AreaWS.listar())); } catch { Areas = new(); }
+        try { Empleados = await Task.Run(() => new List<Empleado>(EmpleadoWS.listar())); } catch { Empleados = new(); }
     }
 
     private async Task CargarFondos()
@@ -124,10 +137,19 @@
                 var fechaCierre = c.FechaCierre;
                 var cerrarPronto = fechaCierre.HasValue && fechaCierre.Value.Date <= DateTime.Now.AddDays(3).Date;
 
+                var areaId = c.CajaChica?.CuentaBancaria?.AreaAdministradora?.AreaID ?? 0;
+                var area = areaId > 0 ? Areas.FirstOrDefault(a => a.AreaID == areaId) : null;
+                var areaNombre = area?.Nombre ?? (areaId > 0 ? $"Área #{areaId}" : "Sin área");
+                var jefeId = area?.Jefe?.UsuarioID ?? 0;
+                var jefe = jefeId > 0 ? Empleados.FirstOrDefault(e => e.UsuarioID == jefeId) : null;
+                var responsableNombre = jefe != null
+                    ? $"{jefe.Nombres} {jefe.ApellidoPaterno}".Trim()
+                    : (jefeId > 0 ? $"Jefe #{jefeId}" : "Sin responsable");
+
                 return new CicloCajaChica
                 {
-                    Area = c.CajaChica?.AreaAsignada?.Nombre ?? "Sin área",
-                    Responsable = c.CajaChica?.AreaAsignada?.Jefe?.Nombres ?? "Sin responsable",
+                    Area = areaNombre,
+                    Responsable = responsableNombre,
                     PorcentajeUso = porcentaje,
                     MontoTotal = montoTotal,
                     Gastado = gastado,

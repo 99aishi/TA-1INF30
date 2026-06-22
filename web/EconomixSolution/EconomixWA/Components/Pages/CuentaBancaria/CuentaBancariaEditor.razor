@@ -52,9 +52,18 @@
             </select>
         </div>
         <div class="col-12 col-md-3 d-flex align-items-end justify-content-end gap-2">
-            <button type="button" class="btn btn-outline-success" @onclick="Guardar">
-                <i class="bi bi-check-lg"></i> Guardar
-            </button>
+            @if (EsEdicion)
+            {
+                <button type="button" class="btn btn-outline-warning" @onclick="Guardar">
+                    <i class="bi bi-check-lg"></i> Guardar Cambios
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-outline-success" @onclick="Guardar">
+                    <i class="bi bi-check-lg"></i> Guardar
+                </button>
+            }
             <button type="button" class="btn btn-outline-secondary" @onclick="Cancelar">
                 Cancelar
             </button>
@@ -68,6 +77,9 @@
 
     [Parameter]
     public List<Moneda> Monedas { get; set; } = new();
+
+    [Parameter]
+    public bool EsEdicion { get; set; }
 
     [Parameter]
     public EventCallback<CuentaBancaria> OnGuardar { get; set; }

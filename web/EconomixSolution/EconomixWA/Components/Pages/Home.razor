@@ -1,80 +1,115 @@
 ﻿@page "/dashboard"
 @rendermode InteractiveServer
 @inject IUsuarioWS UsuarioWS
+@inject ISolicitudGastoWS SolicitudGastoWS
+@inject IAuditoriaWS AuditoriaWS
 @using System.Collections.Generic;
 @using EconomixWA.Components.Pages.MainDashBoard;
 @using EconomixWA.Components.Pages.SolicitudDeGasto.SolicitudRecibida;
 @using EconomixWA.Components.Pages.SolicitudDeGasto;
 @using EconomixWA.Components.Pages.Actividad;
 
-
-
 <PageTitle>Dashboard</PageTitle>
 
-<div class ="d-flex flex-column h-100">
+<div class="h-100 d-flex flex-column">
     
-    <div class="d-flex flex-row justify-content-between pb-3">
-        <div class="d-flex flex-column">
-            <p class="h4">@Saludo, @(UsuarioActual?.Nombres ?? "Usuario")</p>    
-            <p class="h6">Área: @(AreaUsuario)</p>
+    <div class="d-flex flex-row align-items-center mb-4">
+        <div class="flex-grow-1">
+            <p class="h4 mb-0">@Saludo, @(UsuarioActual?.Nombres ?? "Usuario")</p>    
+            <p class="h6 text-muted mb-0">Área: @(AreaUsuario)</p>
         </div>
-        <div class="d-flex flex-column align-items-end">
-            <p class="h5 mb-0">@FechaHoy</p>
-        </div>
+        <LiveClock />
+        <div class="flex-grow-1 text-end"></div>
     </div>
 
-    
-    @switch(Rol){
-        case "Jefe":
-            <DashboardJefe/>
-            <div class="row mt-3 overflow-hidden pb-3">
-                <div class="col-6 h-100">
-                    <div class="card rounded-4 pt-3 h-100 d-flex flex-column">
-                        <h5 class="h2 ms-3">Solicitudes de gasto pendientes</h5>
-                        <div class="overflow-scroll flex-fill pb-3">
-                            @foreach(String nombre in Nombres){
-                                <SolicitudDeGastoPendiente Nombre="@nombre"/>
-                            }
-                        </div>
-                    </div>    
+    <div class="d-flex flex-column flex-fill overflow-hidden">
+        @switch(Rol){
+            case "Jefe":
+                <DashboardJefe/>
+                <div class="row g-3 flex-fill mt-3 mb-3 overflow-hidden">
+                    <div class="col-6 h-100">
+                        <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
+                            <div class="p-3 pb-2">
+                                <h5 class="mb-0">Solicitudes de gasto pendientes</h5>
+                            </div>
+                            <hr class="my-0" />
+                            <div class="overflow-auto flex-fill">
+                                @if (CargandoSolicitudesJefe)
+                                {
+                                    <div class="p-3 text-center text-muted">Cargando solicitudes...</div>
+                                }
+                                else if (SolicitudesPendientesJefe.Count == 0)
+                                {
+                                    <div class="p-3 text-center text-muted">No hay solicitudes pendientes</div>
+                                }
+                                else
+                                {
+                                    @foreach (var s in SolicitudesPendientesJefe)
+                                    {
+                                        <SolicitudDeGastoPendiente Nombre="@(s.Solicitante?.Nombres ?? "Sin nombre")"
+                                                                  Concepto="@(s.MotivoSolicitud ?? "Sin concepto")"
+                                                                  Fecha="s.FechaSolicitud"
+                                                                  Prioridad="@(s.FechaSolicitud < DateTime.Now.AddDays(-2) ? "Urgente" : "")"
+                                                                  IsoMoneda="@(s.MonedaOriginal?.Simbolo ?? "S/.")"
+                                                                  Monto="s.MontoSolicitado" />
+                                    }
+                                }
+                            </div>
+                        </div>    
+                    </div>
+                    <div class="col-6 h-100">
+                        <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">     
+                            <div class="p-3 pb-2">
+                                <h5 class="mb-0">Acciones Recientes</h5>
+                            </div>
+                            <hr class="my-0" />
+                            <div class="overflow-auto flex-fill">
+                                @if (CargandoActividadJefe)
+                                {
+                                    <div class="p-3 text-center text-muted">Cargando actividad...</div>
+                                }
+                                else if (ActividadRecienteJefe.Count == 0)
+                                {
+                                    <div class="p-3 text-center text-muted">No hay actividad reciente</div>
+                                }
+                                else
+                                {
+                                    @foreach (var a in ActividadRecienteJefe)
+                                    {
+                                        <ActividadRecienteItem Titulo="@a.Titulo"
+                                                               Modulo="@a.Modulo"
+                                                               Usuario="@a.Usuario"
+                                                               Area="@a.Area"
+                                                               Descripcion="@a.Descripcion"
+                                                               Monto="@a.Monto"
+                                                               Estado="@a.Estado"
+                                                               Fecha="a.Fecha" />
+                                    }
+                                }
+                            </div>
+                        </div>    
+                    </div>
                 </div>
-                <div class="col-6 h-100">
-                    <div class="card rounded-4 pt-3 h-100 d-flex flex-column">     
-                        <h5 class="h2 ms-3">Acciones Recientes</h5>
-                        <div class="overflow-scroll flex-fill">
-                            @for(int i = 0; i < 100; i++){
-                               <ActividadRecienteItem/>
-                            }
-                        </div>
-                    </div>    
-                </div>
-            </div>
-            break;
-        case "Empleado":
-            <DashboardEmpleado/>
-            break;
-        case "Tesoreria":
-            <DashboardTesoreria/>
-            break;
-        case "Administrador":
-            <DashboardAdministrador/>
-            break;
-        default:
-            break;
-    }
+                break;
+            case "Empleado":
+                <DashboardEmpleado/>
+                break;
+            case "Tesoreria":
+                <DashboardTesoreria/>
+                break;
+            case "Administrador":
+                <DashboardAdministrador/>
+                break;
+            default:
+                break;
+        }
+    </div>
 </div>
 
 @code{
-    public List<String> Nombres = new List<String>(){"Mario Hugo", "Tulio Tribiño", "Gregorio Samsaaaa", "Juan Carlos BOdoque",
-                                                        "Mario Hugo", "Tulio Tribiño", "Gregorio Samsaaaa", "Juan Carlos BOdoque",
-    
-                                                    
-                                                    string.Empty};
-
     private EconomixModel.Model.Usuario? UsuarioActual { get; set; }
     private string Rol => ObtenerRol();
     private string Saludo => ObtenerSaludo();
-    private string FechaHoy => DateTime.Now.ToString("d/M/yyyy");
     private string AreaUsuario => UsuarioActual switch
     {
         Empleado emp when emp.Area != null => emp.Area.Nombre,
@@ -82,7 +117,12 @@
         _ => "Sin área asignada"
     };
 
-    protected override void OnInitialized()
+    private bool CargandoSolicitudesJefe { get; set; } = true;
+    private bool CargandoActividadJefe { get; set; } = true;
+    private List<SolicitudGasto> SolicitudesPendientesJefe { get; set; } = new();
+    private List<ActividadDto> ActividadRecienteJefe { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
     {
         try
         {
@@ -92,6 +132,58 @@
         {
             UsuarioActual = null;
         }
+
+        if (Rol == "Jefe")
+        {
+            await Task.WhenAll(
+                CargarSolicitudesPendientesJefe(),
+                CargarActividadRecienteJefe());
+        }
+    }
+
+    private async Task CargarSolicitudesPendientesJefe()
+    {
+        CargandoSolicitudesJefe = true;
+        try
+        {
+            var idJefe = UsuarioWS.GetCurrentUserId();
+            var todas = await Task.Run(() => SolicitudGastoWS.listar());
+            SolicitudesPendientesJefe = todas
+                .Where(s => s.Estado.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(s => s.FechaSolicitud)
+                .Take(10)
+                .ToList();
+        }
+        catch
+        {
+            SolicitudesPendientesJefe = new List<SolicitudGasto>();
+        }
+        CargandoSolicitudesJefe = false;
+    }
+
+    private async Task CargarActividadRecienteJefe()
+    {
+        CargandoActividadJefe = true;
+        try
+        {
+            var logs = await Task.Run(() => AuditoriaWS.listarRecientes(10));
+            ActividadRecienteJefe = logs.Select(l => new ActividadDto
+            {
+                Titulo = l.Descripcion ?? "Sin descripción",
+                Modulo = l.EntidadNombre ?? "Sistema",
+                Usuario = l.NombreCompletoUsuario ?? "Sistema",
+                Area = l.EntidadNombre ?? "-",
+                Descripcion = l.Descripcion ?? "-",
+                Monto = "-",
+                Estado = l.AccionNombre ?? "-",
+                Fecha = l.CreadoAt
+            }).ToList();
+        }
+        catch
+        {
+            ActividadRecienteJefe = new List<ActividadDto>();
+        }
+        CargandoActividadJefe = false;
     }
 
     private string ObtenerRol()
@@ -125,7 +217,16 @@
             _ => "Buenas noches"
         };
     }
+
+    private class ActividadDto
+    {
+        public string Titulo { get; set; } = string.Empty;
+        public string Modulo { get; set; } = string.Empty;
+        public string Usuario { get; set; } = string.Empty;
+        public string Area { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+        public string Monto { get; set; } = "-";
+        public string Estado { get; set; } = string.Empty;
+        public DateTime Fecha { get; set; }
+    }
 }
-
-
-

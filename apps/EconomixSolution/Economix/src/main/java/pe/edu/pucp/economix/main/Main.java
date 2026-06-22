@@ -1,18 +1,14 @@
 package pe.edu.pucp.economix.main;
 
-import pe.edu.pucp.economix.rrhh.boi.AdministradorBOImpl;
-import pe.edu.pucp.economix.rrhh.boi.AreaBOImpl;
-import pe.edu.pucp.economix.rrhh.ibo.IAdministradorBO;
-import pe.edu.pucp.economix.rrhh.ibo.IAreaBO;
+import pe.edu.pucp.economix.rrhh.boi.*;
+import pe.edu.pucp.economix.rrhh.ibo.*;
 import pe.edu.pucp.economix.rrhh.model.Administrador;
-import pe.edu.pucp.economix.rrhh.model.Area;
-
-import java.util.List;
+import pe.edu.pucp.economix.rrhh.model.Empleado;
 
 public class Main {
     public static void main(String[] args) throws Exception {
         IAdministradorBO administradorBO = new AdministradorBOImpl();
-        Administrador admin = administradorBO.buscarPorId(1);
+        Administrador admin = administradorBO.buscarPorId(11);
         if (admin == null) {
             admin = new Administrador();
             admin.setNombres("Administrador");
@@ -25,10 +21,9 @@ public class Main {
             System.out.println("Administrador ya existe: " + admin.getNombres());
         }
 
-        IAreaBO areaBO = new AreaBOImpl();
-        List<Area> areas = areaBO.listarTodas();
-        for(Area area : areas){
-            System.out.println(area);
-        }
+        IUsuarioBO empleadoBO = new UsuarioBOImpl();
+        String correo = "admin@economix.pe";
+        String password = "administrador123";
+        empleadoBO.validarUsuario(correo, password);
     }
 }

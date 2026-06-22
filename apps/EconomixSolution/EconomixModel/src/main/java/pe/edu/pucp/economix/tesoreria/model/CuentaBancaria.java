@@ -4,6 +4,7 @@ import pe.edu.pucp.economix.operaciones.model.Transaccion;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class CuentaBancaria {
@@ -17,6 +18,7 @@ public class CuentaBancaria {
     private Moneda moneda;
     private Empleado empleadoAdministrador;
     private Area areaAdministradora;
+    private List<CajaChica> cajasChicas = new ArrayList<>();
     private List<Transaccion> recepciones;
     private List<Transaccion> transferencias;
 
@@ -24,7 +26,7 @@ public class CuentaBancaria {
     public CuentaBancaria(){};
     public CuentaBancaria(int idCuenta, String nombreBanco, String numeroBancario, String cci,
                           Moneda moneda, Empleado empleadoAdministrador, Area areaAdministradora,
-                          List<Transaccion> recepciones, List<Transaccion> transferencias) {
+                          List<CajaChica> cajasChicas, List<Transaccion> recepciones, List<Transaccion> transferencias) {
         this.idCuenta = idCuenta;
         this.nombreBanco = nombreBanco;
         this.numeroBancario = numeroBancario;
@@ -32,19 +34,21 @@ public class CuentaBancaria {
         this.moneda = moneda;
         this.empleadoAdministrador = empleadoAdministrador;
         this.areaAdministradora = areaAdministradora;
+        this.cajasChicas = cajasChicas != null ? cajasChicas : new ArrayList<>();
         this.recepciones = recepciones;
         this.transferencias = transferencias;
     }
 
     public CuentaBancaria(String nombreBanco, String numeroBancario, String cci, Moneda moneda,
                           Empleado empleadoAdministrador, Area areaAdministradora,
-                          List<Transaccion> recepciones, List<Transaccion> transferencias) {
+                          List<CajaChica> cajasChicas, List<Transaccion> recepciones, List<Transaccion> transferencias) {
         this.nombreBanco = nombreBanco;
         this.numeroBancario = numeroBancario;
         this.cci = cci;
         this.moneda = moneda;
         this.empleadoAdministrador = empleadoAdministrador;
         this.areaAdministradora = areaAdministradora;
+        this.cajasChicas = cajasChicas != null ? cajasChicas : new ArrayList<>();
         this.recepciones = recepciones;
         this.transferencias = transferencias;
     }
@@ -98,6 +102,12 @@ public class CuentaBancaria {
     public void setAreaAdministradora(Area areaAdministradora) {
         this.areaAdministradora = areaAdministradora;
     }
+    public List<CajaChica> getCajasChicas() {
+        return cajasChicas;
+    }
+    public void setCajasChicas(List<CajaChica> cajasChicas) {
+        this.cajasChicas = cajasChicas != null ? cajasChicas : new ArrayList<>();
+    }
     public List<Transaccion> getRecepciones() {
         return recepciones;
     }
@@ -122,8 +132,7 @@ public class CuentaBancaria {
                 ", numeroBancario='" + numeroBancario + '\'' +
                 ", cci='" + cci + '\'' +
                 ", moneda=" + moneda +
-                ", empleadoAdministrador=" + empleadoAdministrador +
-                ", areaAdministradora=" + areaAdministradora +
+                ", cajasChicas=" + cajasChicas +
                 ", recepciones=" + recepciones +
                 ", transferencias=" + transferencias +
                 '}';

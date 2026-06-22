@@ -10,4 +10,5 @@ public interface IRolDAO {
     int eliminar(int id, int idUsuarioAccion) throws SQLException;
     Rol buscarPorId(int id) throws SQLException;
     java.util.List<Rol> listarTodas() throws SQLException;
+    java.util.List<Rol> listarPorArea(int idArea) throws SQLException;
 }

@@ -1,112 +1,44 @@
 <div class="card rounded-4 p-3 m-3 bg-light actividad-card">
     <div class="d-flex justify-content-between align-items-start gap-3">
         <div class="d-flex gap-3">
-            <div class="actividad-icon @ClaseIcono(actividad.Modulo)">
-                @InicialModulo(actividad.Modulo)
+            <div class="actividad-icon @ClaseIcono(Modulo)">
+                @InicialModulo(Modulo)
             </div>
             <div>
                 <div class="d-flex align-items-center gap-2 mb-1">
-                    <p class="h6 mb-0">@actividad.Titulo</p>
-                    <span class="badge @ClaseModulo(actividad.Modulo) rounded-pill">@actividad.Modulo</span>
+                    <p class="h6 mb-0">@Titulo</p>
+                    <span class="badge @ClaseModulo(Modulo) rounded-pill">@Modulo</span>
                 </div>
-                <p class="text-muted mb-1">@actividad.Descripcion</p>
+                <p class="text-muted mb-1">@Descripcion</p>
                 <div class="d-flex flex-wrap gap-2 small text-muted">
-                    <span>@actividad.Usuario</span>
-                    <span>•</span>
-                    <span>@actividad.Area</span>
-                    <span>•</span>
-                    <span>@actividad.Fecha.ToString("dd/MM/yyyy HH:mm")</span>
+                    <span>@Usuario</span>
+                    <span>&middot;</span>
+                    <span>@Area</span>
+                    <span>&middot;</span>
+                    <span>@Fecha.ToString("dd/MM/yyyy HH:mm")</span>
                 </div>
             </div>
         </div>
 
         <div class="text-end">
-            <p class="fw-bold mb-1">@actividad.Monto</p>
-            <span class="badge @ClaseEstado(actividad.Estado) rounded-pill">@actividad.Estado</span>
+            @if (!string.IsNullOrEmpty(Monto) && Monto != "-")
+            {
+                <p class="fw-bold mb-1">@Monto</p>
+            }
+            <span class="badge @ClaseEstado(Estado) rounded-pill">@Estado</span>
         </div>
     </div>
 </div>
 
 @code {
-    private string Busqueda { get; set; } = string.Empty;
-    private string ModuloFiltro { get; set; } = "Todos";
-    private DateTime? FechaFiltro { get; set; }
-    private int FechaInputKey { get; set; }
-    private List<ActividadRegistro> ActividadesFiltradas { get; set; } = new();
-    private string FechaFiltroTexto => FechaFiltro?.ToString("yyyy-MM-dd") ?? string.Empty;
-
-    private List<ActividadRegistro> Actividades { get; set; } = new()
-    {
-        new("SG-1025 enviada", "Solicitud", "María González", "Recursos Humanos", "Nueva solicitud de compra de materiales de oficina.", "S/ 500.00", "Pendiente", new DateTime(2026, 5, 12, 9, 15, 0)),
-        new("CP-340 registrado", "Comprobante", "Juan Preciado", "Comercial", "Factura de Distribuidora Lima SAC asociada a SG-1025.", "S/ 450.00", "Pendiente", new DateTime(2026, 5, 12, 10, 5, 0)),
-        new("OP-123213 confirmada", "Transacción", "Ana Mendoza", "Finanzas", "Desembolso confirmado mediante Yape para solicitud aprobada.", "S/ 500.00", "Confirmado", new DateTime(2026, 5, 12, 11, 30, 0)),
-        new("Caja Recursos Humanos actualizada", "Caja Chica", "Carlos Ruiz", "Recursos Humanos", "Se actualizó el saldo disponible del ciclo vigente.", "S/ 15,400.00", "Activa", new DateTime(2026, 5, 12, 12, 20, 0)),
-        new("SG-1019 pagada", "Solicitud", "Augusto Pérez Niebla", "Finanzas", "Solicitud de movilidad operativa marcada como pagada.", "S/ 80.00", "Pagado", new DateTime(2026, 5, 11, 16, 45, 0)),
-        new("CP-338 observado", "Comprobante", "Ramiro Villanueva", "Logística", "Comprobante observado por inconsistencia en RUC y monto declarado.", "S/ 100.00", "Observado", new DateTime(2026, 5, 11, 14, 10, 0)),
-        new("Usuario creado", "Usuario", "Ana Mendoza", "General", "Se registró a Sofía Zárate como empleada del área comercial.", "-", "Correcto", new DateTime(2026, 5, 10, 18, 0, 0)),
-        new("Área Marketing revisada", "Área", "Pedro Gutiérrez", "Marketing", "El área mantiene fondo máximo pendiente de revisión.", "S/ 4,000.00", "Revisión", new DateTime(2026, 5, 10, 13, 30, 0)),
-        new("OP-123216 pendiente", "Transacción", "Luis García", "Logística", "Transacción pendiente de confirmación bancaria.", "S/ 450.00", "Pendiente", new DateTime(2026, 5, 9, 8, 25, 0)),
-        new("CP-339 validado", "Comprobante", "Eva Luna", "Operaciones", "Boleta de movilidad urbana validada para la rendición del ciclo.", "S/ 45.00", "Validada", new DateTime(2026, 5, 9, 10, 40, 0)),
-        new("SG-1031 aprobada", "Solicitud", "Laura Díaz", "Comercial", "Viáticos de reunión con clientes aprobados por jefatura.", "S/ 380.00", "Aprobada", new DateTime(2026, 5, 8, 15, 5, 0)),
-        new("Moneda USD actualizada", "Moneda", "Ana Mendoza", "General", "Se actualizó el catálogo de monedas para comprobantes en dólares.", "$", "Correcto", new DateTime(2026, 5, 8, 9, 0, 0))
-    };
-
-    protected override void OnInitialized()
-    {
-        FiltrarActividades();
-    }
-    private ActividadRegistro actividad => ActividadesFiltradas.FirstOrDefault() ?? new ActividadRegistro("Sin actividades recientes", "N/A", "-", "-", "-", "-", "N/A", DateTime.Now);
-
-    private void ActualizarBusqueda(Microsoft.AspNetCore.Components.ChangeEventArgs e)
-    {
-        Busqueda = e.Value?.ToString() ?? string.Empty;
-        FiltrarActividades();
-    }
-
-    private void ActualizarModulo(Microsoft.AspNetCore.Components.ChangeEventArgs e)
-    {
-        ModuloFiltro = e.Value?.ToString() ?? "Todos";
-        FiltrarActividades();
-    }
-
-    private void ActualizarFecha(Microsoft.AspNetCore.Components.ChangeEventArgs e)
-    {
-        var valor = e.Value?.ToString() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(valor))
-        {
-            FechaFiltro = null;
-        }
-        else if (DateTime.TryParseExact(valor, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var fecha))
-        {
-            FechaFiltro = fecha;
-        }
-
-        FiltrarActividades();
-    }
-
-    private void FiltrarActividades()
-    {
-        ActividadesFiltradas = Actividades
-            .Where(a => string.IsNullOrWhiteSpace(Busqueda)
-                || a.Titulo.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
-                || a.Usuario.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
-                || a.Area.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
-                || a.Modulo.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)
-                || a.Descripcion.Contains(Busqueda, StringComparison.OrdinalIgnoreCase))
-            .Where(a => ModuloFiltro == "Todos" || a.Modulo == ModuloFiltro)
-            .Where(a => FechaFiltro is null || a.Fecha.Date == FechaFiltro.Value.Date)
-            .OrderByDescending(a => a.Fecha)
-            .ToList();
-    }
-
-    private void LimpiarFiltros()
-    {
-        Busqueda = string.Empty;
-        ModuloFiltro = "Todos";
-        FechaFiltro = null;
-        FechaInputKey++;
-        FiltrarActividades();
-    }
+    [Parameter] public string Titulo { get; set; } = string.Empty;
+    [Parameter] public string Modulo { get; set; } = string.Empty;
+    [Parameter] public string Usuario { get; set; } = string.Empty;
+    [Parameter] public string Area { get; set; } = string.Empty;
+    [Parameter] public string Descripcion { get; set; } = string.Empty;
+    [Parameter] public string Monto { get; set; } = "-";
+    [Parameter] public string Estado { get; set; } = string.Empty;
+    [Parameter] public DateTime Fecha { get; set; } = DateTime.Now;
 
     private static string InicialModulo(string modulo) => modulo switch
     {
@@ -157,15 +89,4 @@
         "Revisión" => "bg-warning-subtle text-warning-emphasis",
         _ => "bg-secondary-subtle text-secondary"
     };
-
-    private sealed record ActividadRegistro(
-        string Titulo,
-        string Modulo,
-        string Usuario,
-        string Area,
-        string Descripcion,
-        string Monto,
-        string Estado,
-        DateTime Fecha);
 }
-

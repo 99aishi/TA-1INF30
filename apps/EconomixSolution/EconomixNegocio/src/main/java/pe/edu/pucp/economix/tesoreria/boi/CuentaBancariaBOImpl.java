@@ -5,10 +5,13 @@ import pe.edu.pucp.economix.rrhh.idao.IEmpleadoDAO;
 import pe.edu.pucp.economix.rrhh.daoi.AreaDAOImpl;
 import pe.edu.pucp.economix.rrhh.daoi.EmpleadoDAOImpl;
 import pe.edu.pucp.economix.tesoreria.ibo.ICuentaBancariaBO;
+import pe.edu.pucp.economix.tesoreria.idao.ICajaChicaDAO;
 import pe.edu.pucp.economix.tesoreria.idao.ICuentaBancariaDAO;
 import pe.edu.pucp.economix.tesoreria.idao.IMonedaDAO;
+import pe.edu.pucp.economix.tesoreria.daoi.CajaChicaDAOImpl;
 import pe.edu.pucp.economix.tesoreria.daoi.CuentaBancariaDAOImpl;
 import pe.edu.pucp.economix.tesoreria.daoi.MonedaDAOImpl;
+import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
@@ -19,11 +22,13 @@ public class CuentaBancariaBOImpl implements ICuentaBancariaBO {
     private final IEmpleadoDAO empleadoDAO;
     private final IAreaDAO areaDAO;
     private final IMonedaDAO monedaDAO;
+    private final ICajaChicaDAO cajaChicaDAO;
     public CuentaBancariaBOImpl(){
         cuentaDAO=new CuentaBancariaDAOImpl();
         empleadoDAO= new EmpleadoDAOImpl();
         areaDAO=new AreaDAOImpl();
         monedaDAO=new MonedaDAOImpl();
+        cajaChicaDAO=new CajaChicaDAOImpl();
     }
     private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
         if (idUsuarioAccion <= 0) {
@@ -71,6 +76,15 @@ public class CuentaBancariaBOImpl implements ICuentaBancariaBO {
     public List<CuentaBancaria> listarActivas() throws Exception {
         return cuentaDAO.listarActivas();
     }
+
+    @Override
+    public List<CajaChica> listarCajasChicas(int idCuentaBancaria) throws Exception {
+        if (idCuentaBancaria <= 0) {
+            throw new Exception("El id de la cuenta bancaria debe ser mayor que cero.");
+        }
+        return cajaChicaDAO.listarPorCuentaBancaria(idCuentaBancaria);
+    }
+
     public void validar(CuentaBancaria cuenta, boolean esModificacion)throws Exception{
         if(cuenta==null){
             throw new Exception("La cuenta bancaria no puede ser nula.");

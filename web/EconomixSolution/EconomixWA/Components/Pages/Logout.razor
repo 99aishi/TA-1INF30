@@ -1,13 +1,11 @@
 @page "/logout"
 @layout LoginLayout
 @rendermode InteractiveServer
-@inject IUsuarioWS UsuarioWS
 @inject NavigationManager Navigation
 
 @code {
     protected override async Task OnInitializedAsync()
     {
-        UsuarioWS.Logout();
-        Navigation.NavigateTo("/", forceLoad: true);
+        Navigation.NavigateTo("/auth/logout", forceLoad: true);
     }
 }

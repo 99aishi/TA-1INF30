@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using EconomixModel.Model;
 using Microsoft.AspNetCore.Http;
 
@@ -10,16 +9,14 @@ public class CajaChicaWSImpl : ICajaChicaWS
 {
     private readonly HttpClient _httpClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private static readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        ReferenceHandler = ReferenceHandler.IgnoreCycles
-    };
+    private readonly JsonSerializerOptions _jsonOptions;
 
-    public CajaChicaWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
+    public CajaChicaWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor, JsonSerializerOptions jsonOptions)
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(httpClient.BaseAddress + "CajaChicaWS/");
         _httpContextAccessor = httpContextAccessor;
+        _jsonOptions = jsonOptions;
     }
 
     private int ObtenerIdUsuarioAccion()
@@ -74,7 +71,7 @@ public class CajaChicaWSImpl : ICajaChicaWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<CajaChica>();
-            return JsonSerializer.Deserialize<List<CajaChica>>(json) ?? new List<CajaChica>();
+            return JsonSerializer.Deserialize<List<CajaChica>>(json, _jsonOptions) ?? new List<CajaChica>();
         }
         catch
         {
@@ -92,11 +89,29 @@ public class CajaChicaWSImpl : ICajaChicaWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
-            return JsonSerializer.Deserialize<CajaChica>(json);
+            return JsonSerializer.Deserialize<CajaChica>(json, _jsonOptions);
         }
         catch
         {
             return null;
+        }
+    }
+
+    public List<CajaChica> listarPorCuentaBancaria(int idCuentaBancaria)
+    {
+        try
+        {
+            var response = _httpClient.GetAsync($"ListarPorCuentaBancaria?idCuentaBancaria={idCuentaBancaria}").GetAwaiter().GetResult();
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                return new List<CajaChica>();
+            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            if (string.IsNullOrEmpty(json) || json == "null")
+                return new List<CajaChica>();
+            return JsonSerializer.Deserialize<List<CajaChica>>(json, _jsonOptions) ?? new List<CajaChica>();
+        }
+        catch
+        {
+            return new List<CajaChica>();
         }
     }
 

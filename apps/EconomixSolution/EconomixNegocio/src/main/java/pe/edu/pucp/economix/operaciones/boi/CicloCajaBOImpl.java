@@ -159,9 +159,9 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
         CajaChica cajaChica = ciclo.getCajaChica();
         if (cajaChica == null) throw new Exception("El ciclo no tiene caja chica asignada.");
 
-        CuentaBancaria cuentaArea = cajaChica.getCuentaOrigen();
+        CuentaBancaria cuentaArea = cajaChica.getCuentaBancaria();
         if (cuentaArea == null || cuentaArea.getIdCuenta() <= 0) {
-            throw new Exception("La caja chica no tiene cuenta bancaria origen.");
+            throw new Exception("La caja chica no tiene cuenta bancaria asignada.");
         }
 
         // Calcular monto consumido real a partir de comprobantes aprobados

@@ -1,4 +1,5 @@
 @inject IRolWS RolWS
+@inject IAreaWS AreaWS
 @inject IUsuarioWS UsuarioWS
 
 <div class="d-flex flex-column h-100">
@@ -38,6 +39,22 @@
                             @if (Errores.ContainsKey("Titulo"))
                             {
                                 <div class="text-danger small mt-1">@Errores["Titulo"]</div>
+                            }
+                        </div>
+
+                        <div class="col-6 mt-3">
+                            <label for="AreaRol" class="form-label">Área</label>
+                            <select id="AreaRol" class="form-select form-select-lg rounded-4 bg-light @(Errores.ContainsKey("Area") ? "is-invalid" : "")"
+                                    @bind="AreaSeleccionadaId" disabled="@(!EsCreacion)">
+                                <option value="0">Seleccione un área</option>
+                                @foreach (var area in Areas)
+                                {
+                                    <option value="@area.AreaID">@area.Nombre</option>
+                                }
+                            </select>
+                            @if (Errores.ContainsKey("Area"))
+                            {
+                                <div class="text-danger small mt-1">@Errores["Area"]</div>
                             }
                         </div>
 
@@ -100,6 +117,22 @@
     private bool EsCreacion { get; set; }
     private string ErrorMessage { get; set; } = string.Empty;
     private Dictionary<string, string> Errores { get; set; } = new();
+    private List<Area> Areas { get; set; } = new();
+
+    private int AreaSeleccionadaId
+    {
+        get => Rol.Area?.AreaID ?? 0;
+        set => Rol.Area = value == 0 ? null : Areas.FirstOrDefault(a => a.AreaID == value);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Areas = await Task.Run(() => new List<Area>(AreaWS.listarActivas()));
+        }
+        catch { Areas = new List<Area>(); }
+    }
 
     protected override void OnParametersSet()
     {
@@ -120,6 +153,9 @@
 
         if (string.IsNullOrWhiteSpace(Rol.Descripcion))
             Errores["Descripcion"] = "La descripción del rol es obligatoria.";
+
+        if (Rol.Area == null || Rol.Area.AreaID <= 0)
+            Errores["Area"] = "El área del rol es obligatoria.";
 
         return Errores.Count == 0;
     }

@@ -1,18 +1,25 @@
-<div class="card rounded-4 p-3 mb-2 @(Seleccionada ? "border-primary" : "")" @onclick="OnSeleccionar">
+<div class="card rounded-4 p-3 mb-2 @(Seleccionada ? "border-primary" : "")">
     <div class="d-flex justify-content-between align-items-start">
-        <div>
-            <p class="h6 mb-1">@Cuenta.NombreBanco</p>
+        <div @onclick="OnSeleccionar" style="cursor: pointer; flex: 1;">
+            <p class="h6 mb-1"> @(ObtenerNombreDueno()) · @Cuenta.NombreBanco</p>
             <p class="text-muted small mb-0">
                 @Cuenta.NumeroBancario · CCI: @Cuenta.Cci
             </p>
             <p class="text-muted small mb-0">
                 Moneda: @(Cuenta.Moneda?.Simbolo ?? "-")
-                · Dueño: @(ObtenerNombreDueno())
             </p>
         </div>
-        <span class="badge @(Cuenta.Moneda?.Activa == true ? "text-bg-success" : "text-bg-secondary") rounded-pill">
-            @(Cuenta.Moneda?.CodigoISO ?? "-")
-        </span>
+        <div class="d-flex flex-column align-items-end gap-2">
+            <span class="badge @(Cuenta.Activa ? "text-bg-success" : "text-bg-secondary") rounded-pill">
+                @(Cuenta.Activa ? "Activa" : "Inactiva")
+            </span>
+            @if (OnVer.HasDelegate)
+            {
+                <button type="button" class="btn btn-sm btn-outline-primary" @onclick="Ver" @onclick:stopPropagation>
+                    Ver
+                </button>
+            }
+        </div>
     </div>
 </div>
 
@@ -21,21 +28,41 @@
     public CuentaBancaria Cuenta { get; set; } = new();
 
     [Parameter]
+    public List<Empleado> Empleados { get; set; } = new();
+
+    [Parameter]
+    public List<Area> Areas { get; set; } = new();
+
+    [Parameter]
     public bool Seleccionada { get; set; }
 
     [Parameter]
     public EventCallback OnSeleccionar { get; set; }
 
+    [Parameter]
+    public EventCallback OnVer { get; set; }
+
+    private async Task Ver()
+    {
+        await OnVer.InvokeAsync();
+    }
+
     private string ObtenerNombreDueno()
     {
-        if (Cuenta.EmpleadoAdministrador != null)
+        var empId = Cuenta.EmpleadoAdministrador?.UsuarioID ?? 0;
+        if (empId > 0)
         {
-            return $"{Cuenta.EmpleadoAdministrador.Nombres} {Cuenta.EmpleadoAdministrador.ApellidoPaterno}".Trim();
+            var emp = Empleados.FirstOrDefault(e => e.UsuarioID == empId);
+            return emp != null ? $"{emp.Nombres} {emp.ApellidoPaterno}".Trim() : $"Empleado #{empId}";
         }
-        if (Cuenta.AreaAdministradora != null)
+
+        var areaId = Cuenta.AreaAdministradora?.AreaID ?? 0;
+        if (areaId > 0)
         {
-            return Cuenta.AreaAdministradora.Nombre;
+            var area = Areas.FirstOrDefault(a => a.AreaID == areaId);
+            return area?.Nombre ?? $"Área #{areaId}";
         }
+
         return "Sin dueño";
     }
 }

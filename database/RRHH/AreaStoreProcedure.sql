@@ -1,3 +1,4 @@
+
 DELIMITER $$
 
 DROP PROCEDURE IF EXISTS pa_insertar_area  $$
@@ -89,13 +90,14 @@ BEGIN
     UPDATE rrhh_area
        SET esta_activo = 0,
            id_usuario_modificacion = p_id_usuario_accion
-    WHERE id_area = p_id_area;
+     WHERE id_area = p_id_area;
 
     UPDATE tes_fondo f
        INNER JOIN tes_caja_chica cc ON f.id_fondo = cc.id_fondo
+       INNER JOIN tes_cuenta_bancaria cb ON cc.id_cuenta_bancaria = cb.id_cuenta_bancaria
        SET f.estado_fondo = 'INACTIVO',
            f.id_usuario_modificacion = p_id_usuario_accion
-     WHERE cc.id_area = p_id_area;
+     WHERE cb.id_area = p_id_area;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_buscar_area_por_id  $$
@@ -113,25 +115,16 @@ BEGIN
         a.descripcion_area, 
         a.id_jefe,
         a.esta_activo,
-        cc.id_fondo AS id_fondo_caja_chica,
         e.id_usuario AS jefe_id_usuario,
         u.nombres AS jefe_nombres,
         u.apellido_paterno AS jefe_apellido_paterno,
         u.apellido_materno AS jefe_apellido_materno,
         u.correo AS jefe_correo,
         e.numero_celular AS jefe_numero_celular,
-        e.rol_flujo AS jefe_rol_flujo,
-        cc.monto_techo AS cc_monto_techo,
-        cc.id_moneda AS cc_id_moneda,
-        cc.id_cuenta_origen AS cc_id_cuenta_origen,
-        cc.id_area AS cc_id_area,
-        f.nombre_fondo AS cc_nombre_fondo,
-        f.estado_fondo AS cc_estado_fondo
+        e.rol_flujo AS jefe_rol_flujo
     FROM rrhh_area a
     LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
     LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
-    LEFT JOIN tes_caja_chica cc ON a.id_area = cc.id_area
-    LEFT JOIN tes_fondo f ON cc.id_fondo = f.id_fondo
     WHERE a.id_area = p_id_area;
 END$$
 
@@ -144,25 +137,16 @@ BEGIN
         a.descripcion_area,
         a.id_jefe,
         a.esta_activo,
-        cc.id_fondo AS id_fondo_caja_chica,
         e.id_usuario AS jefe_id_usuario,
         u.nombres AS jefe_nombres,
         u.apellido_paterno AS jefe_apellido_paterno,
         u.apellido_materno AS jefe_apellido_materno,
         u.correo AS jefe_correo,
         e.numero_celular AS jefe_numero_celular,
-        e.rol_flujo AS jefe_rol_flujo,
-        cc.monto_techo AS cc_monto_techo,
-        cc.id_moneda AS cc_id_moneda,
-        cc.id_cuenta_origen AS cc_id_cuenta_origen,
-        cc.id_area AS cc_id_area,
-        f.nombre_fondo AS cc_nombre_fondo,
-        f.estado_fondo AS cc_estado_fondo
+        e.rol_flujo AS jefe_rol_flujo
     FROM rrhh_area a
     LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
     LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
-    LEFT JOIN tes_caja_chica cc ON a.id_area = cc.id_area
-    LEFT JOIN tes_fondo f ON cc.id_fondo = f.id_fondo
     ORDER BY a.esta_activo DESC, a.id_area;
 END$$
 
@@ -175,25 +159,16 @@ BEGIN
         a.descripcion_area,
         a.id_jefe,
         a.esta_activo,
-        cc.id_fondo AS id_fondo_caja_chica,
         e.id_usuario AS jefe_id_usuario,
         u.nombres AS jefe_nombres,
         u.apellido_paterno AS jefe_apellido_paterno,
         u.apellido_materno AS jefe_apellido_materno,
         u.correo AS jefe_correo,
         e.numero_celular AS jefe_numero_celular,
-        e.rol_flujo AS jefe_rol_flujo,
-        cc.monto_techo AS cc_monto_techo,
-        cc.id_moneda AS cc_id_moneda,
-        cc.id_cuenta_origen AS cc_id_cuenta_origen,
-        cc.id_area AS cc_id_area,
-        f.nombre_fondo AS cc_nombre_fondo,
-        f.estado_fondo AS cc_estado_fondo
+        e.rol_flujo AS jefe_rol_flujo
     FROM rrhh_area a
     LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
     LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
-    LEFT JOIN tes_caja_chica cc ON a.id_area = cc.id_area
-    LEFT JOIN tes_fondo f ON cc.id_fondo = f.id_fondo
     WHERE a.esta_activo = 1
     ORDER BY a.id_area;
 END$$
@@ -213,13 +188,14 @@ BEGIN
     UPDATE rrhh_area
        SET esta_activo = 1,
            id_usuario_modificacion = p_id_usuario_accion
-    WHERE id_area = p_id_area;
+     WHERE id_area = p_id_area;
 
     UPDATE tes_fondo f
        INNER JOIN tes_caja_chica cc ON f.id_fondo = cc.id_fondo
+       INNER JOIN tes_cuenta_bancaria cb ON cc.id_cuenta_bancaria = cb.id_cuenta_bancaria
        SET f.estado_fondo = 'ACTIVO',
            f.id_usuario_modificacion = p_id_usuario_accion
-     WHERE cc.id_area = p_id_area;
+     WHERE cb.id_area = p_id_area;
 END$$
 
 DELIMITER ;

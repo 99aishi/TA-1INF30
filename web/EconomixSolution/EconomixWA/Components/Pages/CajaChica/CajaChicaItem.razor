@@ -1,22 +1,21 @@
 <div class="row align-items-center px-4 py-3 border-bottom">
-
     <div class="col-3">
         <div class="d-flex align-items-center gap-2">
-            <h6 class="fw-bold mb-0">@Area</h6>
-
-            <span class="badge bg-success-subtle text-success">
-                ACTIVO
-            </span>
+            <h6 class="fw-bold mb-0">@(Titulo ?? CuentaBancariaText)</h6>
+            @if (string.IsNullOrEmpty(Titulo))
+            {
+                <span class="badge @(CajaChica?.Estado == "ACTIVO" ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary")">
+                    @(CajaChica?.Estado ?? "-")
+                </span>
+            }
         </div>
-
         <small class="text-muted">
-            <i class="bi bi-person"></i> @Responsable
+            <i class="bi bi-person"></i> @(Subtitulo ?? CajaChica?.Nombre)
         </small>
     </div>
 
     <div class="col-3">
         <small>Uso de Fondos (@PorcentajeUso%)</small>
-
         <div class="progress rounded-4 mt-2" style="height: 8px">
             <div class="progress-bar rounded-4 @(PorcentajeUso >= 90 ? "bg-warning" : "bg-primary")"
                  style="width: @($"{PorcentajeUso}%")"
@@ -29,20 +28,20 @@
     </div>
 
     <div class="col-1 text-end">
-        <strong>S/ @MontoTotal.ToString("N2")</strong>
+        <strong>@(CajaChica?.Moneda?.Simbolo ?? "S/") @MontoTotal.ToString("N2")</strong>
     </div>
 
     <div class="col-1">
         <small class="text-muted">GASTADO</small>
         <p class="text-danger fw-bold mb-0">
-            S/ @Gastado.ToString("N2")
+            @(CajaChica?.Moneda?.Simbolo ?? "S/") @Gastado.ToString("N2")
         </p>
     </div>
 
     <div class="col-1">
         <small class="text-muted">DISPONIBLE</small>
         <p class="@(Disponible <= 500 ? "text-danger" : "text-success") fw-bold mb-0">
-            S/ @Disponible.ToString("N2")
+            @(CajaChica?.Moneda?.Simbolo ?? "S/") @Disponible.ToString("N2")
         </p>
     </div>
 
@@ -50,7 +49,6 @@
         <small class="@(CerrarPronto ? "text-warning fw-bold" : "text-muted")">
             @(CerrarPronto ? "CERRAR PRONTO" : "PRÓX CIERRE")
         </small>
-
         <p class="fw-bold mb-0">@ProximoCierre</p>
     </div>
 
@@ -60,15 +58,20 @@
             Detalle
         </button>
     </div>
-
 </div>
 
 @code {
     [Parameter]
-    public string Area { get; set; } = string.Empty;
+    public CajaChica? CajaChica { get; set; }
 
     [Parameter]
-    public string Responsable { get; set; } = string.Empty;
+    public List<CuentaBancaria> CuentasBancarias { get; set; } = new();
+
+    [Parameter]
+    public string? Titulo { get; set; }
+
+    [Parameter]
+    public string? Subtitulo { get; set; }
 
     [Parameter]
     public int PorcentajeUso { get; set; }
@@ -90,6 +93,18 @@
 
     [Parameter]
     public EventCallback OnMuestraDetalle { get; set; }
+
+    private string CuentaBancariaText
+    {
+        get
+        {
+            var id = CajaChica?.CuentaBancaria?.IdCuenta ?? 0;
+            if (id <= 0) return "Sin cuenta bancaria";
+            var cuenta = CuentasBancarias.FirstOrDefault(c => c.IdCuenta == id);
+            if (cuenta == null) return $"Cuenta #{id}";
+            return $"{cuenta.NombreBanco} - {cuenta.NumeroBancario}";
+        }
+    }
 
     private async Task AbrirDetalle()
     {

@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface ICajaChicaBO extends IBaseBO<CajaChica> {
     List<CajaChica> listarActivas() throws Exception;
+    List<CajaChica> listarPorCuentaBancaria(int idCuentaBancaria) throws Exception;
 }

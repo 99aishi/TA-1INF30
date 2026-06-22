@@ -1,3 +1,7 @@
+@inject ICajaChicaWS CajaChicaWS
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
 <div class="card rounded-4 p-3 mt-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <p class="h5 mb-0">@Titulo</p>
@@ -24,6 +28,7 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
+                        <th style="width: 40px;"></th>
                         <th>Banco</th>
                         <th>Número</th>
                         <th>CCI</th>
@@ -35,6 +40,11 @@
                     @foreach (var cuenta in Cuentas)
                     {
                         <tr>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-link p-0" @onclick="() => ToggleExpand(cuenta)">
+                                    @(EstaExpandida(cuenta) ? "▼" : "▶")
+                                </button>
+                            </td>
                             <td>@cuenta.NombreBanco</td>
                             <td>@cuenta.NumeroBancario</td>
                             <td>@cuenta.Cci</td>
@@ -48,6 +58,81 @@
                                 </button>
                             </td>
                         </tr>
+                        @if (EstaExpandida(cuenta))
+                        {
+                            <tr>
+                                <td colspan="6" class="bg-light">
+                                    <div class="p-2">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="fw-semibold">Cajas chicas</span>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" @onclick="() => AgregarCajaChica(cuenta)">
+                                                + Agregar caja chica
+                                            </button>
+                                        </div>
+                                        @if (CajasChicasCache.ContainsKey(cuenta.IdCuenta))
+                                        {
+                                            var cajas = CajasChicasCache[cuenta.IdCuenta];
+                                            @if (cajas.Count == 0)
+                                            {
+                                                <p class="text-muted small mb-0">No hay cajas chicas registradas.</p>
+                                            }
+                                            else
+                                            {
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-borderless align-middle mb-0">
+                                                        <thead>
+                                                            <tr class="small text-muted">
+                                                                <th>Nombre</th>
+                                                                <th>Monto techo</th>
+                                                                <th>Moneda</th>
+                                                                <th>Estado</th>
+                                                                <th class="text-end">Acciones</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var caja in cajas)
+                                                            {
+                                                                <tr>
+                                                                    <td>@caja.Nombre</td>
+                                                                    <td>@caja.MontoTecho.ToString("N2")</td>
+                                                                    <td>@(caja.Moneda?.Simbolo ?? "-")</td>
+                                                                    <td>
+                                                                        <span class="badge @(caja.Estado == "ACTIVO" ? "bg-success" : "bg-secondary")">
+                                                                            @caja.Estado
+                                                                        </span>
+                                                                    </td>
+                                                                    <td class="text-end">
+                                                                        <button type="button" class="btn btn-sm btn-outline-warning me-1" @onclick="() => EditarCajaChica(caja)">
+                                                                            Editar
+                                                                        </button>
+                                                                        @if (caja.Estado == "ACTIVO")
+                                                                        {
+                                                                            <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => EliminarCajaChica(caja, cuenta)">
+                                                                                Eliminar
+                                                                            </button>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <button type="button" class="btn btn-sm btn-outline-success" @onclick="() => RecuperarCajaChica(caja, cuenta)">
+                                                                                Recuperar
+                                                                            </button>
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <p class="text-muted small mb-0">Cargando...</p>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>
@@ -66,6 +151,9 @@
     public List<Moneda> Monedas { get; set; } = new();
 
     [Parameter]
+    public int IdUsuarioAccion { get; set; }
+
+    [Parameter]
     public EventCallback<CuentaBancaria> OnGuardar { get; set; }
 
     [Parameter]
@@ -73,6 +161,10 @@
 
     private bool MostrarEditor { get; set; }
     private CuentaBancaria CuentaEnEdicion { get; set; } = new();
+    private HashSet<int> ExpandedAccounts { get; set; } = new();
+    private Dictionary<int, List<CajaChica>> CajasChicasCache { get; set; } = new();
+
+    private bool EstaExpandida(CuentaBancaria cuenta) => ExpandedAccounts.Contains(cuenta.IdCuenta);
 
     private void IniciarNueva()
     {
@@ -113,5 +205,64 @@
     {
         MostrarEditor = false;
         CuentaEnEdicion = new CuentaBancaria();
+    }
+
+    private async Task ToggleExpand(CuentaBancaria cuenta)
+    {
+        if (ExpandedAccounts.Contains(cuenta.IdCuenta))
+        {
+            ExpandedAccounts.Remove(cuenta.IdCuenta);
+        }
+        else
+        {
+            ExpandedAccounts.Add(cuenta.IdCuenta);
+            if (!CajasChicasCache.ContainsKey(cuenta.IdCuenta))
+            {
+                CajasChicasCache[cuenta.IdCuenta] = await Task.Run(() => CajaChicaWS.listarPorCuentaBancaria(cuenta.IdCuenta));
+            }
+        }
+    }
+
+    private void AgregarCajaChica(CuentaBancaria cuenta)
+    {
+        Navigation.NavigateTo($"/Caja Chica/Crear?cuentaId={cuenta.IdCuenta}");
+    }
+
+    private void EditarCajaChica(CajaChica caja)
+    {
+        Navigation.NavigateTo($"/Caja Chica/detalle?cajaId={caja.IdFondo}");
+    }
+
+    private async Task EliminarCajaChica(CajaChica caja, CuentaBancaria cuenta)
+    {
+        if (!await JSRuntime.InvokeAsync<bool>("confirm", $"¿Eliminar la caja chica '{caja.Nombre}'?"))
+            return;
+
+        try
+        {
+            await Task.Run(() => CajaChicaWS.eliminar(caja.IdFondo, IdUsuarioAccion));
+            CajasChicasCache[cuenta.IdCuenta] = await Task.Run(() => CajaChicaWS.listarPorCuentaBancaria(cuenta.IdCuenta));
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+        }
+    }
+
+    private async Task RecuperarCajaChica(CajaChica caja, CuentaBancaria cuenta)
+    {
+        if (!await JSRuntime.InvokeAsync<bool>("confirm", $"¿Recuperar la caja chica '{caja.Nombre}'?"))
+            return;
+
+        try
+        {
+            caja.Estado = "ACTIVO";
+            await Task.Run(() => CajaChicaWS.actualizar(caja, IdUsuarioAccion));
+            CajasChicasCache[cuenta.IdCuenta] = await Task.Run(() => CajaChicaWS.listarPorCuentaBancaria(cuenta.IdCuenta));
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+        }
     }
 }

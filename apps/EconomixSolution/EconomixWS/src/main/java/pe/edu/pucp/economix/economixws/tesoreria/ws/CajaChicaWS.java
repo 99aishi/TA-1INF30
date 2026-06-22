@@ -76,4 +76,19 @@ public class CajaChicaWS {
                     .entity(Map.of("error", e.getMessage())).build();
         }
     }
+
+    @GET
+    @Path("ListarPorCuentaBancaria")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listarPorCuentaBancaria(@QueryParam("idCuentaBancaria") int idCuentaBancaria) {
+        try {
+            List<CajaChica> cajas = cajaChicaBO.listarPorCuentaBancaria(idCuentaBancaria);
+            if (cajas == null || cajas.isEmpty())
+                return Response.status(Response.Status.NO_CONTENT).build();
+            return Response.ok(cajas).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage())).build();
+        }
+    }
 }

@@ -2,14 +2,24 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject IComprobantePagoWS ComprobantePagoWS
+@inject IUsuarioWS UsuarioWS
 
 <div class="h-100 d-flex flex-column">
     
-    <div class="d-flex flex-row justify-content-between">
-        <p class="h4">Comprobantes de Pago</p>
-        <button type="button" class="btn btn-primary" @onclick="CrearDetalleComprobante">
-            + Agregar Comprobante
-        </button>
+    <div class="d-flex flex-row align-items-center mb-4">
+        <div class="flex-grow-1">
+            <p class="h4 mb-1">Comprobantes de Pago</p>
+            <p class="text-muted mb-0">Gestión de comprobantes de pago asociados a solicitudes de gasto</p>
+        </div>
+        <LiveClock />
+        <div class="flex-grow-1 text-end">
+            @if (!EsAdministrador)
+            {
+                <button type="button" class="btn btn-primary" @onclick="CrearDetalleComprobante">
+                    + Agregar Comprobante
+                </button>
+            }
+        </div>
     </div>
 
     @if (!string.IsNullOrEmpty(ErrorMessage))
@@ -71,6 +81,7 @@
     private DateTime? FiltroFechaFin { get; set; }
     private List<ComprobantePago> Comprobantes { get; set; } = new();
     private ComprobantePago? ComprobanteSeleccionado { get; set; }
+    private bool EsAdministrador { get; set; }
 
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(FiltroTexto)
@@ -109,6 +120,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        EsAdministrador = UsuarioWS.GetCurrentUser() is Administrador;
         Cargando = true;
         await ListarComprobantes();
         Cargando = false;

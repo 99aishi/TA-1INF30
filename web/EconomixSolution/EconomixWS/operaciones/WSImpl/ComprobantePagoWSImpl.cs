@@ -10,16 +10,14 @@ public class ComprobantePagoWSImpl : IComprobantePagoWS
 {
     private readonly HttpClient _httpClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private static readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        ReferenceHandler = ReferenceHandler.IgnoreCycles
-    };
+    private readonly JsonSerializerOptions _jsonOptions;
 
-    public ComprobantePagoWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
+    public ComprobantePagoWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor, JsonSerializerOptions jsonOptions)
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(httpClient.BaseAddress + "ComprobantePagoWS/");
         _httpContextAccessor = httpContextAccessor;
+        _jsonOptions = jsonOptions;
     }
 
     private int ObtenerIdUsuarioAccion()
@@ -74,7 +72,7 @@ public class ComprobantePagoWSImpl : IComprobantePagoWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<ComprobantePago>();
-            return JsonSerializer.Deserialize<List<ComprobantePago>>(json) ?? new List<ComprobantePago>();
+            return JsonSerializer.Deserialize<List<ComprobantePago>>(json, _jsonOptions) ?? new List<ComprobantePago>();
         }
         catch
         {
@@ -92,7 +90,7 @@ public class ComprobantePagoWSImpl : IComprobantePagoWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
-            return JsonSerializer.Deserialize<ComprobantePago>(json);
+            return JsonSerializer.Deserialize<ComprobantePago>(json, _jsonOptions);
         }
         catch
         {
@@ -109,7 +107,7 @@ public class ComprobantePagoWSImpl : IComprobantePagoWS
             var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<ComprobantePago>();
-            return JsonSerializer.Deserialize<List<ComprobantePago>>(json) ?? new List<ComprobantePago>();
+            return JsonSerializer.Deserialize<List<ComprobantePago>>(json, _jsonOptions) ?? new List<ComprobantePago>();
         }
         catch
         {

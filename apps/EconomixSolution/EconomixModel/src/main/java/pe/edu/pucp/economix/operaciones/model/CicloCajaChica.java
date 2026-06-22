@@ -4,7 +4,6 @@ import java.util.Date;
 import java.util.List;
 
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoCicloCaja;
-import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 
 public class CicloCajaChica{
@@ -14,7 +13,7 @@ public class CicloCajaChica{
     private Date fechaCierre;
     private double saldoInicial;
     private double totalGastado;
-    private EstadoCicloCaja estado; // este enum es solo activo/inactivo no veo necesario hacer un enum para esto. puede ser un boolean
+    private EstadoCicloCaja estado;
 
     //Relaciones
     private CajaChica cajaChica;

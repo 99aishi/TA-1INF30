@@ -7,15 +7,22 @@ import pe.edu.pucp.economix.rrhh.idao.IEmpleadoDAO;
 import pe.edu.pucp.economix.rrhh.daoi.AreaDAOImpl;
 import pe.edu.pucp.economix.rrhh.daoi.EmpleadoDAOImpl;
 import pe.edu.pucp.economix.rrhh.model.Area;
+import pe.edu.pucp.economix.tesoreria.idao.ICuentaBancariaDAO;
+import pe.edu.pucp.economix.tesoreria.daoi.CuentaBancariaDAOImpl;
+import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class AreaBOImpl implements IAreaBO {
     private final IAreaDAO areaDAO;
     private final IEmpleadoDAO empleadoDAO;
+    private final ICuentaBancariaDAO cuentaBancariaDAO;
     public AreaBOImpl(){
         areaDAO=new AreaDAOImpl();
         empleadoDAO=new EmpleadoDAOImpl();
+        cuentaBancariaDAO=new CuentaBancariaDAOImpl();
     }
     private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
         if (idUsuarioAccion <= 0) {
@@ -56,12 +63,29 @@ public class AreaBOImpl implements IAreaBO {
 
     @Override
     public List<Area> listarTodas() throws Exception {
-        return areaDAO.listarTodas();
+        return cargarCuentasBancarias(areaDAO.listarTodas());
     }
 
     @Override
     public List<Area> listarActivas() throws Exception {
-        return areaDAO.listarActivas();
+        return cargarCuentasBancarias(areaDAO.listarActivas());
+    }
+
+    private List<Area> cargarCuentasBancarias(List<Area> areas) throws Exception {
+        if (areas == null || areas.isEmpty()) {
+            return areas;
+        }
+        List<CuentaBancaria> cuentas = cuentaBancariaDAO.listarTodas();
+        if (cuentas == null || cuentas.isEmpty()) {
+            return areas;
+        }
+        Map<Integer, List<CuentaBancaria>> cuentasPorArea = cuentas.stream()
+                .filter(c -> c.getAreaAdministradora() != null)
+                .collect(Collectors.groupingBy(c -> c.getAreaAdministradora().getIdArea()));
+        for (Area area : areas) {
+            area.setCuentasBancarias(cuentasPorArea.getOrDefault(area.getIdArea(), new java.util.ArrayList<>()));
+        }
+        return areas;
     }
 
     @Override

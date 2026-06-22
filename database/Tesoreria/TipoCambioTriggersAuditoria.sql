@@ -1,3 +1,4 @@
+
 -- ================================================================
 -- Triggers para tes_tipo_cambio
 -- TABLA: tes_tipo_cambio

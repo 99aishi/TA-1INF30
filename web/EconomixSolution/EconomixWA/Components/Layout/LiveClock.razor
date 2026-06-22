@@ -1,0 +1,24 @@
+<div class="d-flex align-items-center gap-2">
+    <span class="text-muted small">@FechaActual</span>
+    <span class="text-muted">&middot;</span>
+    <span class="fw-semibold text-dark" style="font-size: 0.95rem;">@HoraActual</span>
+</div>
+
+@code {
+    private string HoraActual => DateTime.Now.ToString("HH:mm:ss");
+    private string FechaActual => DateTime.Now.ToString("dddd, dd MMM yyyy", new System.Globalization.CultureInfo("es-PE"));
+    private Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new Timer(_ =>
+        {
+            InvokeAsync(StateHasChanged);
+        }, null, 0, 1000);
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}

@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using EconomixModel.Model;
 using Microsoft.AspNetCore.Http;
 
@@ -10,16 +9,14 @@ public class MonedaWSImpl : IMonedaWS
 {
     private readonly HttpClient _httpClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private static readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        ReferenceHandler = ReferenceHandler.IgnoreCycles
-    };
+    private readonly JsonSerializerOptions _jsonOptions;
 
-    public MonedaWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
+    public MonedaWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor, JsonSerializerOptions jsonOptions)
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(httpClient.BaseAddress + "MonedaWS/");
         _httpContextAccessor = httpContextAccessor;
+        _jsonOptions = jsonOptions;
     }
 
     private int ObtenerIdUsuarioAccion()
@@ -77,7 +74,7 @@ public class MonedaWSImpl : IMonedaWS
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<Moneda>();
 
-            return System.Text.Json.JsonSerializer.Deserialize<List<Moneda>>(json) ?? new List<Moneda>();
+            return System.Text.Json.JsonSerializer.Deserialize<List<Moneda>>(json, _jsonOptions) ?? new List<Moneda>();
         }
         catch
         {
@@ -98,7 +95,7 @@ public class MonedaWSImpl : IMonedaWS
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
 
-            return System.Text.Json.JsonSerializer.Deserialize<Moneda>(json);
+            return System.Text.Json.JsonSerializer.Deserialize<Moneda>(json, _jsonOptions);
         }
         catch
         {
@@ -119,7 +116,7 @@ public class MonedaWSImpl : IMonedaWS
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<Moneda>();
 
-            return System.Text.Json.JsonSerializer.Deserialize<List<Moneda>>(json) ?? new List<Moneda>();
+            return System.Text.Json.JsonSerializer.Deserialize<List<Moneda>>(json, _jsonOptions) ?? new List<Moneda>();
         }
         catch
         {
@@ -136,7 +133,7 @@ public class MonedaWSImpl : IMonedaWS
             throw new Exception(error);
         }
         var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-        return System.Text.Json.JsonSerializer.Deserialize<int>(json);
+        return System.Text.Json.JsonSerializer.Deserialize<int>(json, _jsonOptions);
     }
 
     public List<Moneda> buscarMonedas(string q)
@@ -152,7 +149,7 @@ public class MonedaWSImpl : IMonedaWS
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<Moneda>();
 
-            return System.Text.Json.JsonSerializer.Deserialize<List<Moneda>>(json) ?? new List<Moneda>();
+            return System.Text.Json.JsonSerializer.Deserialize<List<Moneda>>(json, _jsonOptions) ?? new List<Moneda>();
         }
         catch
         {
@@ -173,7 +170,7 @@ public class MonedaWSImpl : IMonedaWS
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<Moneda>();
 
-            return System.Text.Json.JsonSerializer.Deserialize<List<Moneda>>(json) ?? new List<Moneda>();
+            return System.Text.Json.JsonSerializer.Deserialize<List<Moneda>>(json, _jsonOptions) ?? new List<Moneda>();
         }
         catch
         {

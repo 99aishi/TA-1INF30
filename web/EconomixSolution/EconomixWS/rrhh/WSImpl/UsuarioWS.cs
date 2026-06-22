@@ -14,19 +14,21 @@ public class UsuarioWS : IUsuarioWS
 {
     private readonly HttpClient _httpClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly JsonSerializerOptions _jsonOptions;
 
-    public UsuarioWS(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
+    public UsuarioWS(HttpClient httpClient, IHttpContextAccessor httpContextAccessor, JsonSerializerOptions jsonOptions)
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(_httpClient.BaseAddress + "UsuarioWS/");
         _httpContextAccessor = httpContextAccessor;
+        _jsonOptions = jsonOptions;
     }
 
     public Usuario? ValidarCredenciales(LoginRequest request)
     {
         try
         {
-            var response = _httpClient.PostAsJsonAsync("login", request).GetAwaiter().GetResult();
+            var response = _httpClient.PostAsJsonAsync("login", request, _jsonOptions).GetAwaiter().GetResult();
             
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
             {
@@ -49,11 +51,11 @@ public class UsuarioWS : IUsuarioWS
 
                 if (isEmpleado)
                 {
-                    return System.Text.Json.JsonSerializer.Deserialize<Empleado>(jsonString);
+                    return System.Text.Json.JsonSerializer.Deserialize<Empleado>(jsonString, _jsonOptions);
                 }
                 else
                 {
-                    return System.Text.Json.JsonSerializer.Deserialize<Administrador>(jsonString);
+                    return System.Text.Json.JsonSerializer.Deserialize<Administrador>(jsonString, _jsonOptions);
                 }
             }
             return null;

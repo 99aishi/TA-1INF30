@@ -1,11 +1,10 @@
+
 DELIMITER $$
 
 DROP PROCEDURE IF EXISTS pa_insertar_administrador $$
 CREATE PROCEDURE pa_insertar_administrador(
-
-        IN p_id_usuario_accion INT,
-IN p_id_usuario INT
-
+    IN p_id_usuario_accion INT,
+	IN p_id_usuario INT
 )
 BEGIN
     IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN

@@ -6,19 +6,23 @@
 
 <div class="h-100 d-flex flex-column">
 
-    <div class="d-flex flex-row justify-content-between align-items-center mb-3">
-        <div>
+    <div class="d-flex flex-row align-items-center mb-4">
+        <div class="flex-grow-1">
             <p class="h4 mb-1">Gestión de Áreas</p>
             <p class="text-muted mb-0">Listado de áreas operativas del sistema</p>
         </div>
 
-        <button type="button"
-                class="btn btn-primary"
-                @onclick="IrRegistrarArea">
+        <LiveClock />
 
-            + Agregar Área
+        <div class="flex-grow-1 text-end">
+            <button type="button"
+                    class="btn btn-primary"
+                    @onclick="IrRegistrarArea">
 
-        </button>
+                + Agregar Área
+
+            </button>
+        </div>
     </div>
 
     @if (!string.IsNullOrEmpty(ErrorMessage))
@@ -30,8 +34,8 @@
     }
 
     <AreaSearchBar @bind-FiltroNombre="FiltroNombre"
-                   @bind-FiltroMontoMin="FiltroMontoMin"
-                   @bind-FiltroMontoMax="FiltroMontoMax"
+                   @bind-FiltroCuentasMin="FiltroCuentasMin"
+                   @bind-FiltroCuentasMax="FiltroCuentasMax"
                    @bind-FiltroEstado="FiltroEstado" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
@@ -58,10 +62,10 @@
                     }
                     else
                     {
-                        foreach(Area area in AreasFiltradas)
-                        {
-                             <AreaItem OnMuestraDetalle=" () => MostrarDetalleArea(area)" Area="area"/>
-                        }
+                         foreach(Area area in AreasFiltradas)
+                         {
+                              <AreaItem OnMuestraDetalle=" () => MostrarDetalleArea(area)" Area="area" />
+                         }
                     }
                 </div>
 
@@ -83,23 +87,23 @@
     private bool Cargando { get; set; } = true;
     private string ErrorMessage { get; set; } = string.Empty;
     private string FiltroNombre { get; set; } = string.Empty;
-    private double? FiltroMontoMin { get; set; }
-    private double? FiltroMontoMax { get; set; }
+    private int? FiltroCuentasMin { get; set; }
+    private int? FiltroCuentasMax { get; set; }
     private string FiltroEstado { get; set; } = "Todas";
     private List<Area> Areas { get; set; } = new List<Area>();
     private Area? AreaSeleccionada { get; set; }
 
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(FiltroNombre)
-        || FiltroMontoMin.HasValue
-        || FiltroMontoMax.HasValue
+        || FiltroCuentasMin.HasValue
+        || FiltroCuentasMax.HasValue
         || FiltroEstado != "Todas";
 
     private IEnumerable<Area> AreasFiltradas => Areas
         .Where(a => string.IsNullOrWhiteSpace(FiltroNombre)
             || a.Nombre.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase))
-        .Where(a => !FiltroMontoMin.HasValue || (a.CajaChica?.MontoTecho ?? 0) >= FiltroMontoMin.Value)
-        .Where(a => !FiltroMontoMax.HasValue || (a.CajaChica?.MontoTecho ?? 0) <= FiltroMontoMax.Value)
+        .Where(a => !FiltroCuentasMin.HasValue || (a.CuentasBancarias?.Count ?? 0) >= FiltroCuentasMin.Value)
+        .Where(a => !FiltroCuentasMax.HasValue || (a.CuentasBancarias?.Count ?? 0) <= FiltroCuentasMax.Value)
         .Where(a => FiltroEstado == "Todas"
             || (FiltroEstado == "Activa" && a.EstaActivo)
             || (FiltroEstado == "Inactiva" && !a.EstaActivo));

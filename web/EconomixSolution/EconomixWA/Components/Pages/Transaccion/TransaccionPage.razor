@@ -3,8 +3,13 @@
 @inject ITransaccionWS TransaccionWS
 
 <div class="h-100 d-flex flex-column">
-    <div class="d-flex flex-row justify-content-between mb-2">
-        <p class="h4">Transacciones</p>
+    <div class="d-flex flex-row align-items-center mb-4">
+        <div class="flex-grow-1">
+            <p class="h4 mb-1">Transacciones</p>
+            <p class="text-muted mb-0">Registro de transacciones financieras y movimientos de fondos</p>
+        </div>
+        <LiveClock />
+        <div class="flex-grow-1 text-end"></div>
     </div>
 
     @if (!string.IsNullOrEmpty(ErrorMessage))

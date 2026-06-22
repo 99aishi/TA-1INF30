@@ -4,15 +4,19 @@
 @inject IMonedaWS MonedaWS
 
 <div class="h-100 d-flex flex-column">
-    <div class="d-flex flex-row justify-content-between align-items-center mb-3">
-        <div>
+    <div class="d-flex flex-row align-items-center mb-4">
+        <div class="flex-grow-1">
             <p class="h4 mb-1">Monedas</p>
             <p class="text-muted mb-0">Catálogo de monedas utilizadas para solicitudes, comprobantes y transacciones.</p>
         </div>
 
-        <button type="button" class="btn btn-primary" @onclick="PrepararNuevaMoneda">
-            + Agregar moneda
-        </button>
+        <LiveClock />
+
+        <div class="flex-grow-1 text-end">
+            <button type="button" class="btn btn-primary" @onclick="PrepararNuevaMoneda">
+                + Agregar moneda
+            </button>
+        </div>
     </div>
 
     <MonedaSearchBar @bind-Busqueda="Busqueda"

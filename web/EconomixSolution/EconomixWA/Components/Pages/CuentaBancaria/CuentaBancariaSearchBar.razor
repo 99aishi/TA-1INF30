@@ -1,11 +1,16 @@
 <div class="card rounded-4 p-3 mb-3">
     <div class="row g-2 align-items-end">
         <div class="col-12 col-md-3">
-            <label class="form-label mb-1">Banco / Cuenta / CCI</label>
-            <input type="text" class="form-control rounded-4" placeholder="Buscar..."
-                   @bind="Busqueda" @bind:after="() => OnBuscar.InvokeAsync()">
+            <label class="form-label mb-1">Banco</label>
+            <input type="text" class="form-control rounded-4" placeholder="Nombre del banco..."
+                   @bind="BusquedaBanco" @bind:after="() => OnBuscar.InvokeAsync()">
         </div>
         <div class="col-12 col-md-3">
+            <label class="form-label mb-1">Cuenta / CCI</label>
+            <input type="text" class="form-control rounded-4" placeholder="Número o CCI..."
+                   @bind="BusquedaCuentaCCI" @bind:after="() => OnBuscar.InvokeAsync()">
+        </div>
+        <div class="col-12 col-md-2">
             <label class="form-label mb-1">Moneda</label>
             <select class="form-select rounded-4" @bind="MonedaSeleccionadaId" @bind:after="() => OnBuscar.InvokeAsync()">
                 <option value="0">Todas</option>
@@ -15,7 +20,7 @@
                 }
             </select>
         </div>
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-2">
             <label class="form-label mb-1">Tipo de dueño</label>
             <select class="form-select rounded-4" @bind="TipoDueno" @bind:after="() => OnBuscar.InvokeAsync()">
                 <option value="Todos">Todos</option>
@@ -23,9 +28,10 @@
                 <option value="Area">Área</option>
             </select>
         </div>
-        <div class="col-12 col-md-3">
-            <button type="button" class="btn btn-outline-secondary w-100 rounded-4" @onclick="Limpiar">
-                Limpiar filtros
+        <div class="col-12 col-md-2 d-grid">
+            <label class="form-label mb-1">&nbsp;</label>
+            <button type="button" class="btn btn-secondary rounded-4" @onclick="Limpiar">
+                Limpiar
             </button>
         </div>
     </div>
@@ -33,10 +39,16 @@
 
 @code {
     [Parameter]
-    public string Busqueda { get; set; } = string.Empty;
+    public string BusquedaBanco { get; set; } = string.Empty;
 
     [Parameter]
-    public EventCallback<string> BusquedaChanged { get; set; }
+    public EventCallback<string> BusquedaBancoChanged { get; set; }
+
+    [Parameter]
+    public string BusquedaCuentaCCI { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> BusquedaCuentaCCIChanged { get; set; }
 
     [Parameter]
     public int MonedaSeleccionadaId { get; set; }
@@ -58,10 +70,12 @@
 
     private async Task Limpiar()
     {
-        Busqueda = string.Empty;
+        BusquedaBanco = string.Empty;
+        BusquedaCuentaCCI = string.Empty;
         MonedaSeleccionadaId = 0;
         TipoDueno = "Todos";
-        await BusquedaChanged.InvokeAsync(Busqueda);
+        await BusquedaBancoChanged.InvokeAsync(BusquedaBanco);
+        await BusquedaCuentaCCIChanged.InvokeAsync(BusquedaCuentaCCI);
         await MonedaSeleccionadaIdChanged.InvokeAsync(MonedaSeleccionadaId);
         await TipoDuenoChanged.InvokeAsync(TipoDueno);
         await OnBuscar.InvokeAsync();

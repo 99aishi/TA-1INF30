@@ -11,6 +11,7 @@ import pe.edu.pucp.economix.rrhh.daoi.RolDAOImpl;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.rrhh.model.Rol;
+import pe.edu.pucp.economix.rrhh.model.RolFlujo;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -34,7 +35,23 @@ public class EmpleadoBOImpl implements IEmpleadoBO {
     public int insertar(Empleado empleado, int idUsuarioAccion) throws Exception {
         validarIdUsuarioAccion(idUsuarioAccion);
         validar(empleado,false);
-        return empleadoDAO.insertar(empleado, idUsuarioAccion);
+
+        Area area = areaDAO.buscarPorId(empleado.getArea().getIdArea());
+        if (area.getJefe() == null) {
+            empleado.setRolFlujo(RolFlujo.JEFE_AREA);
+            empleado.setJefeDirecto(null);
+        } else {
+            empleado.setRolFlujo(RolFlujo.EMPLEADO);
+            empleado.setJefeDirecto(area.getJefe());
+        }
+
+        int id = empleadoDAO.insertar(empleado, idUsuarioAccion);
+
+        if (empleado.getRolFlujo() == RolFlujo.JEFE_AREA) {
+            areaDAO.asignarJefe(area, empleado, idUsuarioAccion);
+        }
+
+        return id;
     }
 
     @Override
@@ -80,12 +97,8 @@ public class EmpleadoBOImpl implements IEmpleadoBO {
         }
         validarRol(empleado.getRol());
         validarArea(empleado.getArea());
-        if(empleadoDAO.listarActivas()!=null) {
-            validarJefe(empleado.getJefeDirecto());
-        }
         validarNombre(empleado.getNombres());
         validarApellidoPaterno(empleado.getApellidoPaterno());
-        validarApellidoMaterno(empleado.getApellidoMaterno());
         validarPassword(empleado.getPassword());
         validarCorreo(empleado.getCorreo());
         validarNumeroCelular(empleado.getNumeroCelular());
@@ -131,11 +144,6 @@ public class EmpleadoBOImpl implements IEmpleadoBO {
     public void validarNombre(String nombre) throws Exception{
         if (nombre == null || nombre.trim().isEmpty()) {
             throw new Exception("El nombre del empleado es obligatorio.");
-        }
-    }
-    public void validarApellidoMaterno(String apMaterno) throws Exception{
-        if (apMaterno == null || apMaterno.trim().isEmpty()) {
-            throw new Exception("El apellido materno del empleado es obligatorio.");
         }
     }
     public void validarApellidoPaterno(String apPaterno) throws Exception{

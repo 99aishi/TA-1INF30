@@ -11,20 +11,20 @@
                    @oninput="OnNombreCambiado" />
         </div>
         <div class="col-3 col-md-2">
-            <label class="form-label small text-muted">Techo mín.</label>
+            <label class="form-label small text-muted">Ctas. mín.</label>
             <input type="number"
                    class="form-control bg-light rounded-4"
                    placeholder="-"
-                   value="@FiltroMontoMin"
-                   @oninput="OnMontoMinCambiado" />
+                   value="@FiltroCuentasMin"
+                   @oninput="OnCuentasMinCambiado" />
         </div>
         <div class="col-3 col-md-2">
-            <label class="form-label small text-muted">Techo máx.</label>
+            <label class="form-label small text-muted">Ctas. máx.</label>
             <input type="number"
                    class="form-control bg-light rounded-4"
                    placeholder="-"
-                   value="@FiltroMontoMax"
-                   @oninput="OnMontoMaxCambiado" />
+                   value="@FiltroCuentasMax"
+                   @oninput="OnCuentasMaxCambiado" />
         </div>
         <div class="col-3 col-md-2">
             <label class="form-label small text-muted">Estado</label>
@@ -53,16 +53,16 @@
     public EventCallback<string> FiltroNombreChanged { get; set; }
 
     [Parameter]
-    public double? FiltroMontoMin { get; set; }
+    public int? FiltroCuentasMin { get; set; }
 
     [Parameter]
-    public EventCallback<double?> FiltroMontoMinChanged { get; set; }
+    public EventCallback<int?> FiltroCuentasMinChanged { get; set; }
 
     [Parameter]
-    public double? FiltroMontoMax { get; set; }
+    public int? FiltroCuentasMax { get; set; }
 
     [Parameter]
-    public EventCallback<double?> FiltroMontoMaxChanged { get; set; }
+    public EventCallback<int?> FiltroCuentasMaxChanged { get; set; }
 
     [Parameter]
     public string FiltroEstado { get; set; } = "Todas";
@@ -79,22 +79,22 @@
         await FiltroNombreChanged.InvokeAsync(FiltroNombre);
     }
 
-    private async Task OnMontoMinCambiado(ChangeEventArgs e)
+    private async Task OnCuentasMinCambiado(ChangeEventArgs e)
     {
-        if (double.TryParse(e.Value?.ToString(), out var val))
-            FiltroMontoMin = val;
+        if (int.TryParse(e.Value?.ToString(), out var val))
+            FiltroCuentasMin = val;
         else
-            FiltroMontoMin = null;
-        await FiltroMontoMinChanged.InvokeAsync(FiltroMontoMin);
+            FiltroCuentasMin = null;
+        await FiltroCuentasMinChanged.InvokeAsync(FiltroCuentasMin);
     }
 
-    private async Task OnMontoMaxCambiado(ChangeEventArgs e)
+    private async Task OnCuentasMaxCambiado(ChangeEventArgs e)
     {
-        if (double.TryParse(e.Value?.ToString(), out var val))
-            FiltroMontoMax = val;
+        if (int.TryParse(e.Value?.ToString(), out var val))
+            FiltroCuentasMax = val;
         else
-            FiltroMontoMax = null;
-        await FiltroMontoMaxChanged.InvokeAsync(FiltroMontoMax);
+            FiltroCuentasMax = null;
+        await FiltroCuentasMaxChanged.InvokeAsync(FiltroCuentasMax);
     }
 
     private async Task OnEstadoCambiado(ChangeEventArgs e)
@@ -108,11 +108,11 @@
         FiltroNombre = string.Empty;
         await FiltroNombreChanged.InvokeAsync(string.Empty);
 
-        FiltroMontoMin = null;
-        await FiltroMontoMinChanged.InvokeAsync(null);
+        FiltroCuentasMin = null;
+        await FiltroCuentasMinChanged.InvokeAsync(null);
 
-        FiltroMontoMax = null;
-        await FiltroMontoMaxChanged.InvokeAsync(null);
+        FiltroCuentasMax = null;
+        await FiltroCuentasMaxChanged.InvokeAsync(null);
 
         FiltroEstado = "Todas";
         await FiltroEstadoChanged.InvokeAsync("Todas");

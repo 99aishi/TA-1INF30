@@ -1,16 +1,21 @@
 package pe.edu.pucp.economix.rrhh.boi;
 
 import pe.edu.pucp.economix.rrhh.ibo.IRolBO;
+import pe.edu.pucp.economix.rrhh.idao.IAreaDAO;
 import pe.edu.pucp.economix.rrhh.idao.IRolDAO;
+import pe.edu.pucp.economix.rrhh.daoi.AreaDAOImpl;
 import pe.edu.pucp.economix.rrhh.daoi.RolDAOImpl;
+import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Rol;
 
 import java.util.List;
 
 public class RolBOImpl implements IRolBO {
     private final IRolDAO rolDAO;
+    private final IAreaDAO areaDAO;
     public RolBOImpl(){
         rolDAO=new RolDAOImpl();
+        areaDAO=new AreaDAOImpl();
     }
     private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
         if (idUsuarioAccion <= 0) {
@@ -53,6 +58,15 @@ public class RolBOImpl implements IRolBO {
     public List<Rol> listarTodas() throws Exception {
         return rolDAO.listarTodas();
     }
+
+    @Override
+    public List<Rol> listarPorArea(int idArea) throws Exception {
+        if (idArea <= 0) {
+            throw new Exception("El id del area debe ser mayor que cero.");
+        }
+        return rolDAO.listarPorArea(idArea);
+    }
+
     public void validar(Rol rol, boolean esModificacion)throws Exception{
         if(rol==null){
             throw new Exception("El rol no puede ser nulo.");
@@ -63,6 +77,18 @@ public class RolBOImpl implements IRolBO {
         }
         validarTitulo(rol.getTitulo());
         validarDescripcion(rol.getDescripcion());
+        validarArea(rol.getArea());
+    }
+    public void validarArea(Area area) throws Exception {
+        if (area == null) {
+            throw new Exception("El area del rol es obligatoria.");
+        }
+        if (area.getIdArea() <= 0) {
+            throw new Exception("El area del rol no es válida.");
+        }
+        if (areaDAO.buscarPorId(area.getIdArea()) == null) {
+            throw new Exception("El area del rol no existe.");
+        }
     }
     public void validarTitulo(String titulo) throws Exception{
         if (titulo== null || titulo.trim().isEmpty()) {

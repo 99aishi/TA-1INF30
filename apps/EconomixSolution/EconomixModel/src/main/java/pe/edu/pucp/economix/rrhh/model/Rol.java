@@ -5,18 +5,21 @@ public class Rol {
     private String titulo;
     private String descripcion;
     private boolean estaActivo;
+    private Area area;
     // Constructor
     public Rol(){}
 
-    public Rol(int rolID, String titulo, String descripcion) {
+    public Rol(int rolID, String titulo, String descripcion, Area area) {
         this.rolID = rolID;
         this.titulo = titulo;
         this.descripcion = descripcion;
+        this.area = area;
         this.estaActivo = true;
     }
-    public Rol(String titulo, String descripcion) {
+    public Rol(String titulo, String descripcion, Area area) {
         this.titulo = titulo;
         this.descripcion = descripcion;
+        this.area = area;
         this.estaActivo = true;
     }
 
@@ -45,6 +48,12 @@ public class Rol {
     public void setEstaActivo(boolean estaActivo) {
         this.estaActivo = estaActivo;
     }
+    public Area getArea() {
+        return area;
+    }
+    public void setArea(Area area) {
+        this.area = area;
+    }
 
     //Metodos
 
@@ -54,6 +63,7 @@ public class Rol {
                 "rolID=" + rolID +
                 ", titulo='" + titulo + '\'' +
                 ", descripcion='" + descripcion + '\'' +
+                ", area=" + area +
                 '}';
     }
 }

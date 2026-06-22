@@ -6,17 +6,21 @@
 
 <div class="h-100 d-flex flex-column">
 
-    <div class="d-flex flex-row justify-content-between align-items-center mb-3">
-        <div>
+    <div class="d-flex flex-row align-items-center mb-4">
+        <div class="flex-grow-1">
             <p class="h4 mb-1">Gestión de Roles</p>
             <p class="text-muted mb-0">Catálogo de roles del sistema</p>
         </div>
 
-        <button type="button"
-                class="btn btn-primary"
-                @onclick="PrepararNuevoRol">
-            + Agregar Rol
-        </button>
+        <LiveClock />
+
+        <div class="flex-grow-1 text-end">
+            <button type="button"
+                    class="btn btn-primary"
+                    @onclick="PrepararNuevoRol">
+                + Agregar Rol
+            </button>
+        </div>
     </div>
 
     <RolSearchBar @bind-FiltroTitulo="FiltroTitulo"

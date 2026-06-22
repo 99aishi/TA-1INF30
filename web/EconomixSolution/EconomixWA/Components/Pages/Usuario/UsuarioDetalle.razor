@@ -89,19 +89,10 @@
                             </div>
 
                             <div class="col-6 mt-3">
-                                <label for="RolFlujo" class="form-label mb-1">Rol en flujo</label>
-                                <select id="RolFlujo" class="form-select form-select-lg rounded-4 bg-light"
-                                        @bind="EmpleadoEdicion.RolFlujo">
-                                    <option value="@RolFlujo.EMPLEADO">Empleado</option>
-                                    <option value="@RolFlujo.JEFE_AREA">Jefe de Área</option>
-                                </select>
-                            </div>
-
-                            <div class="col-6 mt-3">
                                 <label for="Area" class="form-label mb-1">Área</label>
                                 <select id="Area" class="form-select form-select-lg rounded-4 bg-light"
                                         @bind="AreaSeleccionadaId">
-                                    <option value="0">Sin área</option>
+                                    <option value="0">Seleccione un área</option>
                                     @foreach (var area in Areas)
                                     {
                                         <option value="@area.AreaID">@area.Nombre</option>
@@ -113,8 +104,8 @@
                                 <label for="Rol" class="form-label mb-1">Rol</label>
                                 <select id="Rol" class="form-select form-select-lg rounded-4 bg-light"
                                         @bind="RolSeleccionadoId">
-                                    <option value="0">Sin rol</option>
-                                    @foreach (var rol in Roles)
+                                    <option value="0">Seleccione un rol</option>
+                                    @foreach (var rol in RolesFiltrados)
                                     {
                                         <option value="@rol.RolID">@rol.Titulo</option>
                                     }
@@ -122,26 +113,23 @@
                             </div>
 
                             <div class="col-6 mt-3">
-                                <label for="JefeDirecto" class="form-label mb-1">Jefe directo</label>
-                                <select id="JefeDirecto" class="form-select form-select-lg rounded-4 bg-light"
-                                        @bind="JefeDirectoSeleccionadoId">
-                                    <option value="0">Sin jefe directo</option>
-                                    @foreach (var emp in Jefes)
-                                    {
-                                        <option value="@emp.UsuarioID">@emp.Nombres @emp.ApellidoPaterno</option>
-                                    }
-                                </select>
+                                <label class="form-label mb-1">Jefe directo (automático)</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" disabled
+                                       value="@(ObtenerNombreJefeDirecto())" />
                             </div>
                         }
 
-                        <div class="col-6 mt-3">
-                            <label for="Estado" class="form-label mb-1">Estado</label>
-                            <select id="Estado" class="form-select form-select-lg rounded-4 bg-light"
-                                    @bind="UsuarioEdicion.Estado">
-                                <option value="@EstadoUsuario.ACTIVO">Activo</option>
-                                <option value="@EstadoUsuario.INACTIVO">Inactivo</option>
-                            </select>
-                        </div>
+                        @if (false)
+                        {
+                            <div class="col-6 mt-3">
+                                <label for="Estado" class="form-label mb-1">Estado</label>
+                                <select id="Estado" class="form-select form-select-lg rounded-4 bg-light"
+                                        @bind="UsuarioEdicion.Estado">
+                                    <option value="@EstadoUsuario.ACTIVO">Activo</option>
+                                    <option value="@EstadoUsuario.INACTIVO">Inactivo</option>
+                                </select>
+                            </div>
+                        }
                     </div>
                 </div>
 
@@ -158,6 +146,7 @@
                     <CuentaBancariaListado Titulo="Cuentas bancarias del empleado"
                                            Cuentas="EmpleadoEdicion.Cuentas"
                                            Monedas="Monedas"
+                                           IdUsuarioAccion="IdUsuarioAccion"
                                            OnGuardar="GuardarCuentaEmpleado"
                                            OnEliminar="EliminarCuentaEmpleado" />
                 }
@@ -212,17 +201,24 @@
     private List<Moneda> Monedas { get; set; } = new();
     private List<Rol> Roles { get; set; } = new();
     private List<Area> Areas { get; set; } = new();
-    private List<Empleado> Jefes { get; set; } = new();
+    private int IdUsuarioAccion { get; set; }
 
     private bool EstadoActivo => UsuarioEdicion.Estado == EstadoUsuario.ACTIVO;
+
+    private List<Rol> RolesFiltrados => EmpleadoEdicion?.Area?.AreaID > 0
+        ? Roles.Where(r => r.Area?.AreaID == EmpleadoEdicion.Area.AreaID).ToList()
+        : new List<Rol>();
+
+    private bool EsJefeArea => EmpleadoEdicion?.RolFlujo == RolFlujo.JEFE_AREA;
 
     private int AreaSeleccionadaId
     {
         get => EmpleadoEdicion?.Area?.AreaID ?? 0;
         set
         {
-            if (EmpleadoEdicion != null)
-                EmpleadoEdicion.Area = value == 0 ? null : Areas.FirstOrDefault(a => a.AreaID == value);
+            if (EmpleadoEdicion == null) return;
+            EmpleadoEdicion.Area = value == 0 ? null : Areas.FirstOrDefault(a => a.AreaID == value);
+            EmpleadoEdicion.Rol = null;
         }
     }
 
@@ -236,28 +232,20 @@
         }
     }
 
-    private int JefeDirectoSeleccionadoId
-    {
-        get => EmpleadoEdicion?.JefeDirecto?.UsuarioID ?? 0;
-        set
-        {
-            if (EmpleadoEdicion != null)
-                EmpleadoEdicion.JefeDirecto = value == 0 ? null : Jefes.FirstOrDefault(e => e.UsuarioID == value);
-        }
-    }
-
     protected override async Task OnInitializedAsync()
     {
         EsCreacion = Navigation.Uri.Contains("/Crear");
         if (EsCreacion)
         {
             UsuarioEdicion = new Empleado();
+            UsuarioEdicion.Estado = EstadoUsuario.ACTIVO;
         }
         else if (Usuario != null)
         {
             UsuarioEdicion = Usuario;
         }
 
+        IdUsuarioAccion = UsuarioWS.GetCurrentUserId();
         await CargarCatalogos();
     }
 
@@ -273,18 +261,19 @@
     {
         try { Monedas = await Task.Run(() => new List<Moneda>(MonedaWS.listar())); } catch { Monedas = new List<Moneda>(); }
         try { Roles = await Task.Run(() => new List<Rol>(RolWS.listar())); } catch { Roles = new List<Rol>(); }
-        try { Areas = await Task.Run(() => new List<Area>(AreaWS.listar())); } catch { Areas = new List<Area>(); }
-        try
-        {
-            var empleados = await Task.Run(() => new List<Empleado>(EmpleadoWS.listar()));
-            Jefes = empleados.Where(e => e.RolFlujo == RolFlujo.JEFE_AREA).ToList();
-        }
-        catch { Jefes = new List<Empleado>(); }
+        try { Areas = await Task.Run(() => new List<Area>(AreaWS.listarActivas())); } catch { Areas = new List<Area>(); }
     }
 
     public async Task CerrarDetalle()
     {
         await OnCerrarDetalle.InvokeAsync();
+    }
+
+    private string ObtenerNombreJefeDirecto()
+    {
+        if (EmpleadoEdicion?.JefeDirecto == null)
+            return "Sin jefe directo";
+        return $"{EmpleadoEdicion.JefeDirecto.Nombres} {EmpleadoEdicion.JefeDirecto.ApellidoPaterno}".Trim();
     }
 
     private void IrAUsuarios()

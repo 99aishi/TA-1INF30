@@ -1,6 +1,6 @@
-namespace EconomixModel.Model;
-
 using System.Text.Json.Serialization;
+
+namespace EconomixModel.Model;
 
 public class Area
 {
@@ -18,9 +18,9 @@ public class Area
     [JsonPropertyName("estaActivo")]
     public bool EstaActivo { get; set; }
 
-    [JsonPropertyName("cajaChica")]
-    public CajaChica? CajaChica { get; set; }
-
     [JsonPropertyName("cuentasBancarias")]
     public List<CuentaBancaria> CuentasBancarias { get; set; } = new();
+
+    [JsonPropertyName("roles")]
+    public List<Rol> Roles { get; set; } = new();
 }

@@ -22,9 +22,6 @@ public class CajaChica
     [JsonPropertyName("moneda")]
     public Moneda? Moneda { get; set; }
 
-    [JsonPropertyName("cuentaOrigen")]
-    public CuentaBancaria? CuentaOrigen { get; set; }
-
-    [JsonPropertyName("areaAsignada")]
-    public Area? AreaAsignada { get; set; }
+    [JsonPropertyName("cuentaBancaria")]
+    public CuentaBancaria? CuentaBancaria { get; set; }
 }

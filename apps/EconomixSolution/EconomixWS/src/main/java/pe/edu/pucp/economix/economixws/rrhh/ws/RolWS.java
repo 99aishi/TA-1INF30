@@ -22,6 +22,20 @@ public class RolWS {
     }
 
     @GET
+    @Path("ListarPorArea")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listarRolesPorArea(@QueryParam("idArea") int idArea) {
+        try {
+            List<Rol> roles = rolBO.listarPorArea(idArea);
+            return Response.ok(roles).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage()))
+                    .build();
+        }
+    }
+
+    @GET
     @Path("BuscarPorId")
     @Produces(MediaType.APPLICATION_JSON)
     public Rol buscarPorId(@QueryParam("id") int id) throws Exception {
