@@ -1,0 +1,104 @@
+<div class="card rounded-4 p-3 mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-3">
+            <label class="form-label small text-muted">Nombre Caja Chica</label>
+            <input type="text" class="form-control bg-light rounded-4"
+                   placeholder="Buscar..."
+                   @bind="FiltroNombre" @bind:event="oninput" />
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label small text-muted">Área</label>
+            <select class="form-select bg-light rounded-4" @bind="FiltroAreaId">
+                <option value="0">Todas</option>
+                @foreach (var area in Areas)
+                {
+                    <option value="@area.AreaID">@area.Nombre</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label small text-muted">Cuenta bancaria</label>
+            <select class="form-select bg-light rounded-4" @bind="FiltroCuentaBancariaId">
+                <option value="0">Todas</option>
+                @foreach (var cuenta in CuentasBancarias)
+                {
+                    <option value="@cuenta.IdCuenta">@cuenta.NombreBanco - @cuenta.NumeroBancario</option>
+                }
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-muted">Estado</label>
+            <select class="form-select bg-light rounded-4" @bind="FiltroEstado">
+                <option value="Todos">Todos</option>
+                <option value="ABIERTO">Abierto</option>
+                <option value="CERRADO">Cerrado</option>
+                <option value="LIQUIDADO">Liquidado</option>
+                <option value="EN_EXCEPCION">En excepción</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-1 d-grid">
+            <label class="form-label small text-muted">&nbsp;</label>
+            <button type="button" class="btn btn-secondary rounded-4" @onclick="Limpiar">
+                Limpiar
+            </button>
+        </div>
+    </div>
+    <div class="row g-2 align-items-end mt-2">
+        <div class="col-6 col-md-3">
+            <label class="form-label small text-muted">Fecha apertura desde</label>
+            <input type="date" class="form-control bg-light rounded-4" @bind="FiltroFechaDesde" />
+        </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label small text-muted">Fecha apertura hasta</label>
+            <input type="date" class="form-control bg-light rounded-4" @bind="FiltroFechaHasta" />
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string FiltroNombre { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> FiltroNombreChanged { get; set; }
+
+    [Parameter] public int FiltroAreaId { get; set; }
+    [Parameter] public EventCallback<int> FiltroAreaIdChanged { get; set; }
+
+    [Parameter] public int FiltroCuentaBancariaId { get; set; }
+    [Parameter] public EventCallback<int> FiltroCuentaBancariaIdChanged { get; set; }
+
+    [Parameter] public string FiltroEstado { get; set; } = "Todos";
+    [Parameter] public EventCallback<string> FiltroEstadoChanged { get; set; }
+
+    [Parameter] public DateTime? FiltroFechaDesde { get; set; }
+    [Parameter] public EventCallback<DateTime?> FiltroFechaDesdeChanged { get; set; }
+
+    [Parameter] public DateTime? FiltroFechaHasta { get; set; }
+    [Parameter] public EventCallback<DateTime?> FiltroFechaHastaChanged { get; set; }
+
+    [Parameter] public List<Area> Areas { get; set; } = new();
+    [Parameter] public List<CuentaBancaria> CuentasBancarias { get; set; } = new();
+
+    [Parameter] public EventCallback OnLimpiar { get; set; }
+
+    private async Task Limpiar()
+    {
+        FiltroNombre = string.Empty;
+        await FiltroNombreChanged.InvokeAsync(string.Empty);
+
+        FiltroAreaId = 0;
+        await FiltroAreaIdChanged.InvokeAsync(0);
+
+        FiltroCuentaBancariaId = 0;
+        await FiltroCuentaBancariaIdChanged.InvokeAsync(0);
+
+        FiltroEstado = "Todos";
+        await FiltroEstadoChanged.InvokeAsync("Todos");
+
+        FiltroFechaDesde = null;
+        await FiltroFechaDesdeChanged.InvokeAsync(null);
+
+        FiltroFechaHasta = null;
+        await FiltroFechaHastaChanged.InvokeAsync(null);
+
+        await OnLimpiar.InvokeAsync();
+    }
+}

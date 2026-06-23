@@ -28,7 +28,7 @@ public class CajaChicaDAOImpl implements ICajaChicaDAO{
         parametrosEntrada.put("p_nombre_fondo", cajaChica.getNombre());
         parametrosEntrada.put("p_estado_fondo", cajaChica.getEstado().toString());
 
-        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_fondo", parametrosEntrada, parametrosSalida);
+        DBManager.getDBManager().ejecutarProcedimientoTransaccion("pa_insertar_fondo", parametrosEntrada, parametrosSalida);
         cajaChica.setIdFondo((int)parametrosSalida.get("p_id_fondo"));
 
         parametrosEntrada = new HashMap<>();
@@ -44,7 +44,7 @@ public class CajaChicaDAOImpl implements ICajaChicaDAO{
         else
             parametrosEntrada.put("p_id_moneda", null);
 
-        DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_caja_chica", parametrosEntrada, null);
+        DBManager.getDBManager().ejecutarProcedimientoTransaccion("pa_insertar_caja_chica", parametrosEntrada, null);
 
         return cajaChica.getIdFondo();
     }

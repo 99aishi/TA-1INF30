@@ -121,7 +121,8 @@ BEGIN
         u.apellido_materno AS jefe_apellido_materno,
         u.correo AS jefe_correo,
         e.numero_celular AS jefe_numero_celular,
-        e.rol_flujo AS jefe_rol_flujo
+        e.rol_flujo AS jefe_rol_flujo,
+        CASE WHEN u.esta_activo = 1 THEN 'ACTIVO' ELSE 'INACTIVO' END AS jefe_estado_usuario
     FROM rrhh_area a
     LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
     LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
@@ -143,7 +144,8 @@ BEGIN
         u.apellido_materno AS jefe_apellido_materno,
         u.correo AS jefe_correo,
         e.numero_celular AS jefe_numero_celular,
-        e.rol_flujo AS jefe_rol_flujo
+        e.rol_flujo AS jefe_rol_flujo,
+        CASE WHEN u.esta_activo = 1 THEN 'ACTIVO' ELSE 'INACTIVO' END AS jefe_estado_usuario
     FROM rrhh_area a
     LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
     LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
@@ -165,7 +167,8 @@ BEGIN
         u.apellido_materno AS jefe_apellido_materno,
         u.correo AS jefe_correo,
         e.numero_celular AS jefe_numero_celular,
-        e.rol_flujo AS jefe_rol_flujo
+        e.rol_flujo AS jefe_rol_flujo,
+        CASE WHEN u.esta_activo = 1 THEN 'ACTIVO' ELSE 'INACTIVO' END AS jefe_estado_usuario
     FROM rrhh_area a
     LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
     LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario

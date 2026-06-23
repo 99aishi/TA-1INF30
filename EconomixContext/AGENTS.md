@@ -12,8 +12,8 @@ Java WS (port 8080) → .NET WS proxy → Blazor UI.
 
 EconomixWS → EconomixNegocio (BO/BOI) → EconomixPersistencia (DAO/DAOI) → EconomixDBManager → MySQL.
 - `EconomixModel` — domain POJOs (`rrhh`, `tesoreria`, `operaciones`, `auditoria`)
-- `EconomixNegocio` — `ibo/` (interfaces), `boi/` (implementations)
-- `EconomixPersistencia` — `idao/` (interfaces), `daoi/` (impls), stored procedure calls via `DBManager`
+- `EconomixNegocio` — `ibo/` (interfaces), `boi/` (implementations). **BOs only call DAOs; BOs never call other BOs.**
+- `EconomixPersistencia` — `idao/` (interfaces), `daoi/` (impls), stored procedure calls via `DBManager`. **DAOs only call stored procedures; DAOs never call other DAOs.**
 - `EconomixDBManager` — `DBManager` singleton, reads `datosBD.properties` from classpath
 - `EconomixTest` — JUnit/integration test classes
 - `Economix` — launcher with `Main.java`
@@ -47,7 +47,7 @@ Convention per endpoint class in `pe.edu.pucp.economix.economixws.{domain}.ws/`:
 - `CajaChicaWS` — `ListarCajasChicas`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
 - `CuentaBancariaWS` — `ListarCuentas`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
 - `MonedaWS` — `ListarMonedas`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`, `ListarActivas`, `Recuperar`
-- `CicloCajaWS` — `ListarCiclos`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
+- `CicloCajaWS` — `ListarCiclos`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`, `CerrarCiclo`
 - `SolicitudGastoWS` — `ListarSolicitudes`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
 - `ComprobantePagoWS` — `ListarComprobantes`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
 - `RendicionWS` — `ListarRendiciones`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
@@ -84,6 +84,173 @@ WS proxy layer (`EconomixWS/{domain}/` — subdirectories `rrhh/`, `tesoreria/`,
 
 MySQL. Stored procedure files in `database/{domain}/` (named `{entidad}StoreProcedure.sql`). Module prefixes: `rrhh_`, `tes_`, `ope_`.
 Audit trail is maintained dynamically via triggers in `{entidad}TriggersAuditoria.sql` mapping changes to `log_auditoria`.
+
+## Business Rules — Auto-Calculations (SP Layer)
+
+All calculations for cycle/rendición totals happen at the database SP level, not in Java or .NET:
+
+### Cycle (`CicloCajaStoreProcedure.sql`)
+- **`pa_insertar_ciclo_caja`**: If `p_numero_semana ≤ 0`, auto-calculates `WEEK(fecha_apertura, 1)` using MySQL's `WEEK()`.
+- **`pa_modificar_ciclo_caja`** (close/liquidate):
+  1. **Auto `totalGastado`**: Overrides any passed value with `SUM(monto_solicitado)` of `APROBADO` solicitudes in the cycle.
+  2. **Auto rendición**: If status changes to `CERRADO`/`LIQUIDADO` and no rendición exists, creates one with:
+     - `totalDeclarado` = `SUM(cp.monto_total)` of non-`ANULADO` comprobantes across all solicitudes in the cycle
+     - `totalAprobado` = same calculated `totalGastado`
+     - `saldoFinal` = `saldoInicial - totalAprobado`
+     - `estado` = `EN_ESPERA`, `fechaPresentacion` = `CURDATE()`
+     - Cycle's `id_rendicion` FK updated to the new row.
+- **All read SPs**: Return live calculated values via LEFT JOIN subqueries (`COALESCE(calculated, stored_value)`) — always reflects current state regardless of stored data.
+
+### Rendición (`RendicionStoreProcedure.sql`)
+- **`pa_insertar_rendicion`**: Added `p_id_ciclo_caja` (was missing from table insert). Auto-calculates `totalDeclarado`, `totalAprobado`, `saldoFinal` when totals are 0 and a valid cycle ID is provided.
+- **`pa_modificar_rendicion`**: Same auto-calculation logic. Falls back to the stored `id_ciclo_caja` from the existing row if not provided.
+- **All read SPs**: Live calculated values via subqueries (same pattern as cycles).
+
+### Solicitud → comprobantes chain
+- `totalDeclarado` (rendición) = `SUM(cp.monto_total)` where `cp.estado_comprobante != 'ANULADO'` for solicitudes in the cycle.
+- `totalGastado` (cycle) / `totalAprobado` (rendición) = `SUM(sg.monto_solicitado)` where `sg.estado_solicitud = 'APROBADO'` in the cycle.
+
+### File locations
+- `database/Operaciones/CicloCajaStoreProcedure.sql`
+- `database/Operaciones/RendicionStoreProcedure.sql`
+- `apps/EconomixSolution/EconomixPersistencia/src/main/java/.../daoi/RendicionDAOImpl.java`
+
+## Business Rules — Edit Validation / Permission System (Comprobantes)
+
+When a `ope_comprobante_pago` is modified, the database enforces whether the edit is allowed based on the parent cycle's state.
+
+### Cycle states and edit permission
+- **`ABIERTO`**: free edit allowed.
+- **`CERRADO`**, **`LIQUIDADO`**, **`EN_EXCEPCION`**: edit requires an active 48-hour permission (`ope_permiso_edicion`).
+
+### Database enforcement
+- `ope_ciclo_caja.estado_ciclo` enum includes `EN_EXCEPCION`.
+- `BEFORE UPDATE` trigger on `ope_comprobante_pago` (`ComprobantePagoTriggersAuditoria.sql`):
+  1. Resolves the cycle via `comprobante → solicitud → ciclo`.
+  2. If cycle is not `ABIERTO`, looks for an active permission for that comprobante where the current modifier is either the `id_usuario_solicitante` or the `id_usuario_autorizador`.
+  3. If found, marks the permission `USADO` and allows the update.
+  4. If not found, raises `SIGNAL SQLSTATE '45000'` with message `El ciclo de caja chica no permite ediciones. Solicite autorizacion a Jefe o Tesorero (48h).`
+
+### Permission lifecycle (`ope_permiso_edicion`)
+1. **Employee requests** (`pa_solicitar_permiso_edicion`): inserts row with `id_usuario_autorizador = NULL`, `estado = 'ACTIVO'`, `fecha_expiracion = NOW() + 48h`.
+2. **Jefe/Tesorero grants** (`pa_otorgar_permiso_edicion`): sets `id_usuario_autorizador`, `motivo_autorizacion`, and resets `fecha_expiracion = NOW() + 48h`.
+3. **Revoke** (`pa_revocar_permiso_edicion`): sets `estado = 'REVOCADO'`.
+4. **Use**: trigger consumes the permission on first successful edit (`USADO`).
+
+### UI/UX
+- `ComprobanteDePagoDetalle.razor` / `ComprobanteDePagoDatos.razor`: read-only mode when cycle is closed/liquidated/in-exception. Inputs disabled, no save button, shows "Solicitar autorización" modal.
+- `PermisosPendientes.razor`: review page for Jefe/Tesorero with two tabs:
+  - **Pendientes**: requested + granted-but-unused permissions.
+  - **Excepción (fin de semana)**: comprobantes in cycles with `estado_ciclo = 'EN_EXCEPCION'`.
+- Menu item `Permisos Pendientes` added to both `Jefe` and `Tesoreria` sidebars.
+
+### Endpoints
+- Java: `PermisoEdicionWS` (`Solicitar`, `Otorgar`, `Revocar`, `ListarPendientes`, `ListarEnExcepcion`).
+- .NET proxy: `IPermisoEdicionWS` / `PermisoEdicionWSImpl`.
+
+### File locations
+- `database/General/Creacion.sql` — `ope_permiso_edicion` table + `EN_EXCEPCION` enum.
+- `database/Operaciones/PermisoEdicionStoreProcedure.sql`
+- `database/Operaciones/PermisoEdicionTriggersAuditoria.sql`
+- `database/Operaciones/ComprobantePagoTriggersAuditoria.sql`
+- `apps/.../operaciones/model/PermisoEdicion.java`, `idao/IPermisoEdicionDAO.java`, `daoi/PermisoEdicionDAOImpl.java`, `ibo/IPermisoEdicionBO.java`, `boi/PermisoEdicionBOImpl.java`, `economixws/operaciones/ws/PermisoEdicionWS.java`
+- `web/.../EconomixModel/Model/operaciones/PermisoEdicion.cs`
+- `web/.../EconomixWS/operaciones/IWS/IPermisoEdicionWS.cs`, `WSImpl/PermisoEdicionWSImpl.cs`
+- `web/.../EconomixWA/Components/Pages/PermisosPendientes.razor`
+- `web/.../EconomixWA/Components/Pages/ComprobanteDePago/ComprobanteDePagoDetalle.razor`
+- `web/.../EconomixWA/Components/Pages/ComprobanteDePago/ComprobanteDePagoDatos.razor`
+- `web/.../EconomixWA/Components/Pages/ComprobanteDePago/ComprobanteDePagoSustento.razor`
+- `web/.../EconomixWA/Components/Layout/NavMenu.razor`
+
+## Business Rules — Caja Chica First Cycle Auto-Creation
+
+When a new `CajaChica` is inserted, the Java BO atomically creates the first `CicloCajaChica` for the current week inside a single transaction:
+- `fecha_apertura = today`
+- `numero_semana = Calendar.WEEK_OF_YEAR`
+- `saldo_inicial = cajaChica.monto_techo`
+- `total_gastado = 0`
+- `estado = ABIERTO`
+
+### Transaction orchestration
+1. `CajaChicaBOImpl.insertar()` validates the business object (null checks, default `estado = ACTIVO`, valid cuenta bancaria/moneda, positive `montoTecho`) and starts a `DBManager` transaction.
+2. `CajaChicaDAOImpl.insertar()` executes `pa_insertar_fondo` and `pa_insertar_caja_chica` using `DBManager.ejecutarProcedimientoTransaccion()`.
+3. `CicloCajaChicaDAOImpl.insertarEnTransaccion()` executes `pa_insertar_ciclo_caja` using the same transactional connection.
+4. BO validates both generated IDs and commits; any exception triggers `cancelarTransaccion()`.
+
+This avoids the previous bug where creating a Caja Chica from the bank-account page could leave a Caja Chica without its first cycle.
+
+### Validation rules
+- Caja Chica cannot be null.
+- `CuentaBancaria` is required and must exist.
+- `Moneda` is required and must exist.
+- `Nombre` is required (non-empty).
+- `MontoTecho` must be > 0.
+- `Estado` defaults to `ACTIVO` when null.
+
+### File locations
+- `apps/.../tesoreria/boi/CajaChicaBOImpl.java`
+- `apps/.../tesoreria/daoi/CajaChicaDAOImpl.java`
+- `apps/.../operaciones/idao/ICicloCajaChicaDAO.java`
+- `apps/.../operaciones/daoi/CicloCajaChicaDAOImpl.java`
+
+## UI — Cuenta Bancaria
+
+- `CuentaBancariaPage` keeps the account list on the left.
+- Selecting an account opens the right panel with:
+  - Account editor at the top.
+  - **List of Cajas Chicas** belonging to that account below, using the new `CajaChicaItemSimple` style (clean card, main info only).
+- A "+ Agregar Caja Chica" button inside the Cajas Chicas section opens `CajaChicaDetalle` as a component for creation.
+- `CajaChicaItemSimple` actions:
+  - **Ver ciclos** navigates to `/Caja Chica?cajaId={id}`.
+  - **Editar** opens `CajaChicaDetalle` for editing.
+  - **Eliminar** deletes the caja chica (visible when `ACTIVO`).
+  - **Recuperar** reactivates the caja chica (visible when `INACTIVO`).
+- When editing an existing account, the **owner type** (`Empleado`/`Área`) and the selected owner are **disabled/locked** to prevent switching an account from one owner type to another.
+
+### File locations
+- `web/.../EconomixWA/Components/Pages/CuentaBancaria/CuentaBancariaPage.razor`
+- `web/.../EconomixWA/Components/Pages/CuentaBancaria/CuentaBancariaItem.razor`
+- `web/.../EconomixWA/Components/Pages/CajaChica/CajaChicaItemSimple.razor`
+- `web/.../EconomixWA/Components/Pages/CajaChica/CajaChicaDetalle.razor`
+
+## UI — Caja Chica / Ciclos
+
+The `/Caja Chica` route now shows **all cycles** (not the list of cajas chicas):
+- Filters: Caja Chica name, Área, Cuenta bancaria, Estado, Fecha apertura desde/hasta.
+- List item (`CicloCajaItem`) shows cycle info plus a summary of its expenses/requests:
+  - Caja Chica name, week number, estado badge, fechas.
+  - Solicitudes count + approved count.
+  - Comprobantes count.
+  - Techo, disponible.
+- Detail side-panel (`CicloCajaDetalle`) supports view/edit/create; only Tesoreria can modify.
+- State can be set to `ABIERTO`, `CERRADO`, `LIQUIDADO`, or `EN_EXCEPCION`.
+- When a cycle is `EN_EXCEPCION`, Tesoreria sees a "Marcar como revisado" button to switch it back to `ABIERTO`.
+- "Cerrar Ciclo" action calls `CicloCajaWS.cerrarCiclo()`.
+- Routes:
+  - `/Caja Chica` — all cycles.
+  - `/Caja Chica/Detalle` — view/edit cycle.
+  - `/Caja Chica/Crear` — create cycle.
+- NavMenu keeps only "Caja Chica" under Tesoreria; the separate "Ciclos Caja Chica" entry was removed.
+
+### File locations
+- `web/.../EconomixWA/Components/Pages/CajaChica/CajaChicaPage.razor`
+- `web/.../EconomixWA/Components/Pages/CajaChica/CicloCajaItem.razor`
+- `web/.../EconomixWA/Components/Pages/CajaChica/CicloCajaDetalle.razor`
+- `web/.../EconomixWA/Components/Pages/CajaChica/CicloCajaSearchBar.razor`
+- `web/.../EconomixWA/Components/Pages/CajaChica/CajaChicaItem.razor` (kept for DashboardTesoreria)
+- `web/.../EconomixWA/Components/Layout/NavMenu.razor`
+
+## UI — Dashboard Administrador
+
+The administrator dashboard now uses reusable card components instead of inline tables/list groups:
+- `SolicitudRecienteItem`: clickable card that navigates to `/Mis Solicitudes De Gasto/Detalle/{id}`.
+- `ActividadDashboardItem`: read-only activity card with relative timestamps.
+- Responsive two-column grid with scroll overflow and unified empty state "No hay registros".
+
+### File locations
+- `web/.../EconomixWA/Components/Pages/MainDashBoard/DashboardAdministrador.razor`
+- `web/.../EconomixWA/Components/Pages/MainDashBoard/SolicitudRecienteItem.razor`
+- `web/.../EconomixWA/Components/Pages/MainDashBoard/ActividadDashboardItem.razor`
 
 ## TO-DO / Pending Tasks
 

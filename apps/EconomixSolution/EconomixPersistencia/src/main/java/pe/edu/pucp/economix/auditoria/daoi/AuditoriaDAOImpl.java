@@ -59,6 +59,34 @@ public class AuditoriaDAOImpl implements IAuditoriaDAO {
         return dto;
     }
 
+    @Override
+    public void registrarLogin(String correo, Integer idUsuario, boolean exitoso,
+                               int intentosFallidos, boolean bloqueado) throws SQLException {
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_nombre_tabla", "rrhh_usuario");
+        parametrosEntrada.put("p_tipo_evento", exitoso ? "LOGIN_SUCCESS" : "LOGIN_FAILED");
+        parametrosEntrada.put("p_id_registro", correo);
+        parametrosEntrada.put("p_valores_antiguos", null);
+
+        String valoresNuevos = String.format(
+            "{\"correo\":\"%s\",\"exitoso\":%s,\"intentos_fallidos\":%d,\"bloqueado\":%s}",
+            correo,
+            exitoso,
+            intentosFallidos,
+            bloqueado
+        );
+        parametrosEntrada.put("p_valores_nuevos", valoresNuevos);
+        parametrosEntrada.put("p_id_usuario_accion", idUsuario);
+
+        try {
+            DBManager.getDBManager().ejecutarProcedimiento(
+                "pa_insertar_auditoria", parametrosEntrada, null);
+        } catch (SQLException ex) {
+            System.out.println("Error al registrar auditoria de login: " + ex.getMessage());
+            throw ex;
+        }
+    }
+
     private void generarDescripcionUsuario(AuditoriaLogDto dto) {
         String tabla = dto.getNombreTabla();
         String accion = dto.getTipoEvento();
@@ -91,8 +119,21 @@ public class AuditoriaDAOImpl implements IAuditoriaDAO {
         acciones.put("INSERT", "Creó");
         acciones.put("UPDATE", "Modificó");
         acciones.put("DELETE", "Eliminó");
+        acciones.put("LOGIN_FAILED", "Intento de login fallido");
+        acciones.put("LOGIN_SUCCESS", "Inicio de sesión exitoso");
         String accionVerb = acciones.getOrDefault(accion, accion);
         dto.setAccionNombre(accionVerb);
+
+        // Eventos de login: descripcion personalizada
+        if ("LOGIN_FAILED".equals(accion) || "LOGIN_SUCCESS".equals(accion)) {
+            StringBuilder descripcionLogin = new StringBuilder();
+            descripcionLogin.append(accionVerb).append(" para el usuario '").append(dto.getIdRegistroAfectado()).append("'");
+            if ("LOGIN_FAILED".equals(accion)) {
+                descripcionLogin.append(" (intentos fallidos: ").append(extraerIntentos(valoresNuevos)).append(")");
+            }
+            dto.setDescripcion(descripcionLogin.toString());
+            return;
+        }
 
         // Extraer nombre del registro afectado
         String nombreRegistro = extraerNombre(valoresNuevos, valoresAntiguos, tabla);
@@ -112,6 +153,16 @@ public class AuditoriaDAOImpl implements IAuditoriaDAO {
         }
 
         dto.setDescripcion(descripcion.toString());
+    }
+
+    private String extraerIntentos(String valoresNuevos) {
+        try {
+            if (valoresNuevos == null || valoresNuevos.isEmpty()) return "?";
+            JsonNode node = mapper.readTree(valoresNuevos);
+            return node.path("intentos_fallidos").asText("?");
+        } catch (Exception e) {
+            return "?";
+        }
     }
 
     private String extraerNombre(String valoresNuevos, String valoresAntiguos, String tabla) {

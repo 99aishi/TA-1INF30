@@ -10,6 +10,7 @@ import pe.edu.pucp.economix.rrhh.daoi.EmpleadoDAOImpl;
 import pe.edu.pucp.economix.rrhh.daoi.RolDAOImpl;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
+import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
 import pe.edu.pucp.economix.rrhh.model.Rol;
 import pe.edu.pucp.economix.rrhh.model.RolFlujo;
 
@@ -37,21 +38,44 @@ public class EmpleadoBOImpl implements IEmpleadoBO {
         validar(empleado,false);
 
         Area area = areaDAO.buscarPorId(empleado.getArea().getIdArea());
-        if (area.getJefe() == null) {
+        if (area == null) {
+            throw new Exception("El área del empleado no existe.");
+        }
+
+        Empleado jefeActual = determinarJefeActivo(area);
+
+        if (jefeActual == null) {
+            // Primer empleado activo del área: se convierte en jefe
             empleado.setRolFlujo(RolFlujo.JEFE_AREA);
             empleado.setJefeDirecto(null);
+            System.out.println("[EmpleadoBO] Area " + area.getNombre() + " sin jefe activo. Nuevo empleado sera JEFE_AREA.");
         } else {
+            // El área ya tiene jefe activo: el nuevo empleado reporta a él
             empleado.setRolFlujo(RolFlujo.EMPLEADO);
-            empleado.setJefeDirecto(area.getJefe());
+            empleado.setJefeDirecto(jefeActual);
+            System.out.println("[EmpleadoBO] Area " + area.getNombre() + " tiene jefe " + jefeActual.getUsuarioID()
+                    + ". Nuevo empleado reporta a ese jefe.");
         }
 
         int id = empleadoDAO.insertar(empleado, idUsuarioAccion);
 
         if (empleado.getRolFlujo() == RolFlujo.JEFE_AREA) {
             areaDAO.asignarJefe(area, empleado, idUsuarioAccion);
+            System.out.println("[EmpleadoBO] Asignado empleado " + id + " como jefe del area " + area.getIdArea());
         }
 
         return id;
+    }
+
+    private Empleado determinarJefeActivo(Area area) {
+        Empleado jefe = area.getJefe();
+        if (jefe == null) return null;
+        // Consideramos activo si tiene estado (cargado por el DAO) o si no se cargo estado asumimos activo
+        if (jefe.getEstado() != null && jefe.getEstado() != EstadoUsuario.ACTIVO) {
+            System.out.println("[EmpleadoBO] Jefe existente del area " + area.getIdArea() + " esta inactivo. Se tratara como sin jefe.");
+            return null;
+        }
+        return jefe;
     }
 
     @Override

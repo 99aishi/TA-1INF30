@@ -1,14 +1,13 @@
 package pe.edu.pucp.economix.operaciones.boi;
 
-import pe.edu.pucp.economix.operaciones.ibo.ICicloCajaBO;
-import pe.edu.pucp.economix.operaciones.ibo.IComprobantePagoBO;
 import pe.edu.pucp.economix.operaciones.ibo.ISolicitudGastoBO;
-import pe.edu.pucp.economix.operaciones.ibo.ITransaccionBO;
-import pe.edu.pucp.economix.operaciones.idao.IComprobantePagoDAO;
+import pe.edu.pucp.economix.operaciones.idao.ICicloCajaChicaDAO;
 import pe.edu.pucp.economix.operaciones.idao.ISolicitudGastoDAO;
+import pe.edu.pucp.economix.operaciones.idao.ITransaccionDAO;
+import pe.edu.pucp.economix.operaciones.daoi.CicloCajaChicaDAOImpl;
 import pe.edu.pucp.economix.operaciones.daoi.SolicitudGastoDAOImpl;
+import pe.edu.pucp.economix.operaciones.daoi.TransaccionDAOImpl;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
-import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.operaciones.model.Transaccion;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
@@ -18,8 +17,8 @@ import pe.edu.pucp.economix.operaciones.model.enums.TipoTransaccion;
 import pe.edu.pucp.economix.rrhh.idao.IEmpleadoDAO;
 import pe.edu.pucp.economix.rrhh.daoi.EmpleadoDAOImpl;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
-import pe.edu.pucp.economix.tesoreria.boi.CuentaBancariaBOImpl;
-import pe.edu.pucp.economix.tesoreria.ibo.ICuentaBancariaBO;
+import pe.edu.pucp.economix.tesoreria.idao.ICuentaBancariaDAO;
+import pe.edu.pucp.economix.tesoreria.daoi.CuentaBancariaDAOImpl;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 
@@ -30,17 +29,15 @@ import java.util.List;
 public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
 
     private final ISolicitudGastoDAO solicitudGastoDAO;
-    private final ICicloCajaBO cicloCajaBO ;
-    private final IComprobantePagoBO comprobantePagoBO;
-    private final ITransaccionBO transaccionBO;
-    private final ICuentaBancariaBO cuentaBancariaBO;
+    private final ICicloCajaChicaDAO cicloCajaChicaDAO;
+    private final ITransaccionDAO transaccionDAO;
+    private final ICuentaBancariaDAO cuentaBancariaDAO;
     private final IEmpleadoDAO empleadoDAO;
     public SolicitudGastoBOImpl(){
         solicitudGastoDAO= new SolicitudGastoDAOImpl();
-        cicloCajaBO =  new CicloCajaBOImpl();
-        comprobantePagoBO=new ComprobantePagoBOImpl();
-        transaccionBO=new TransaccionBOImpl();
-        cuentaBancariaBO=new CuentaBancariaBOImpl();
+        cicloCajaChicaDAO =  new CicloCajaChicaDAOImpl();
+        transaccionDAO=new TransaccionDAOImpl();
+        cuentaBancariaDAO=new CuentaBancariaDAOImpl();
         empleadoDAO=new EmpleadoDAOImpl();
     }
     private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
@@ -124,7 +121,7 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         if(fecha==null){
             throw new Exception("La fecha no puede ser nula.");
         }
-        CicloCajaChica ciclo =cicloCajaBO.buscarPorId(solicitudGasto.getCiclo().getIdCicloCaja());
+        CicloCajaChica ciclo =cicloCajaChicaDAO.buscarPorId(solicitudGasto.getCiclo().getIdCicloCaja());
         Calendar cal = Calendar.getInstance();
         cal.setTime(fecha);
         int diaDeLaSemana = cal.get(Calendar.DAY_OF_WEEK);
@@ -153,7 +150,7 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         if(ciclo==null){
             throw new Exception("El ciclo no puede ser nulo.");
         }
-        if(cicloCajaBO.buscarPorId(ciclo.getIdCicloCaja())==null){
+        if(cicloCajaChicaDAO.buscarPorId(ciclo.getIdCicloCaja())==null){
             throw new Exception("El ciclo no existe.");
         }
     }
@@ -263,7 +260,7 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
 
             // Actualizar total gastado del ciclo
             if (solicitud.getCiclo() != null) {
-                cicloCajaBO.calcularTotalGastado(solicitud.getCiclo(), idUsuarioAccion);
+                calcularTotalGastado(solicitud.getCiclo(), idUsuarioAccion);
             }
 
             return idModificado;
@@ -293,7 +290,7 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         Empleado solicitante = solicitud.getSolicitante();
         if (solicitante == null) throw new Exception("La solicitud no tiene solicitante.");
 
-        List<CuentaBancaria> cuentasEmpleado = cuentaBancariaBO.listarTodas().stream()
+        List<CuentaBancaria> cuentasEmpleado = cuentaBancariaDAO.listarTodas().stream()
                 .filter(c -> c.getEmpleadoAdministrador() != null
                         && c.getEmpleadoAdministrador().getUsuarioID() == solicitante.getUsuarioID())
                 .toList();
@@ -314,7 +311,20 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         transaccion.setBeneficiario(solicitante);
         transaccion.setEstadoTransaccion(EstadoTransaccion.COMPLETADA);
 
-        transaccionBO.insertar(transaccion, idUsuarioAccion);
+        transaccionDAO.insertar(transaccion, idUsuarioAccion);
+    }
+
+    private void calcularTotalGastado(CicloCajaChica ciclo, int idUsuarioAccion) throws Exception {
+        double total = 0;
+        List<SolicitudGasto> solicitudesDeGasto = solicitudGastoDAO.listarPorCiclo(ciclo.getIdCicloCaja());
+        for (SolicitudGasto s : solicitudesDeGasto) {
+            if (s.getEstado() == EstadoSolicitudGasto.APROBADO) {
+                total += s.getMontoSolicitado();
+            }
+        }
+        CicloCajaChica ciclito = cicloCajaChicaDAO.buscarPorId(ciclo.getIdCicloCaja());
+        ciclito.setTotalGastado(total);
+        cicloCajaChicaDAO.modificar(ciclito, idUsuarioAccion);
     }
 
 }

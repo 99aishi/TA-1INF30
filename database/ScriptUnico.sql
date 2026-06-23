@@ -244,7 +244,7 @@ CREATE TABLE IF NOT EXISTS ope_ciclo_caja (
     fecha_cierre DATE NULL,
     monto_saldo_inicial DECIMAL(12,2) DEFAULT 0.00,
     monto_total_gastado DECIMAL(12,2) DEFAULT 0.00,
-    estado_ciclo ENUM('ABIERTO', 'CERRADO', 'LIQUIDADO') DEFAULT 'ABIERTO',
+    estado_ciclo ENUM('ABIERTO', 'CERRADO', 'LIQUIDADO', 'EN_EXCEPCION') DEFAULT 'ABIERTO',
     id_caja_chica INT NOT NULL,
     id_rendicion INT NULL,
     
@@ -353,6 +353,33 @@ CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
         REFERENCES tes_moneda(id_moneda)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS ope_permiso_edicion (
+    id_permiso INT NOT NULL AUTO_INCREMENT,
+    id_usuario_solicitante INT NOT NULL,
+    id_usuario_autorizador INT NULL,
+    id_comprobante INT NOT NULL,
+    estado ENUM('ACTIVO', 'USADO', 'EXPIRADO', 'REVOCADO') DEFAULT 'ACTIVO',
+    motivo_solicitud VARCHAR(500),
+    motivo_autorizacion VARCHAR(500),
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fecha_expiracion DATETIME NULL,
+    fecha_uso DATETIME NULL,
+
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+
+    CONSTRAINT pk_ope_permiso_edicion PRIMARY KEY (id_permiso),
+    CONSTRAINT fk_ope_permiso_edicion_solicitante FOREIGN KEY (id_usuario_solicitante)
+        REFERENCES rrhh_empleado(id_usuario),
+    CONSTRAINT fk_ope_permiso_edicion_autorizador FOREIGN KEY (id_usuario_autorizador)
+        REFERENCES rrhh_empleado(id_usuario),
+    CONSTRAINT fk_ope_permiso_edicion_comprobante FOREIGN KEY (id_comprobante)
+        REFERENCES ope_comprobante_pago(id_comprobante)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS ope_transaccion (
     id_transaccion INT NOT NULL AUTO_INCREMENT,
     tipo_operacion ENUM('DESEMBOLSO', 'DEVOLUCION_SOBRANTE', 'REEMBOLSO_DEFICIT', 'REPOSICION_FONDO') NOT NULL,
@@ -398,18 +425,22 @@ CREATE PROCEDURE pa_insertar_ciclo_caja(
 	IN p_fecha_cierre DATE,
 	IN p_monto_saldo_inicial DECIMAL(12,2),
 	IN p_monto_total_gastado DECIMAL(12,2),
-	IN p_estado_ciclo ENUM('ABIERTO','CERRADO','LIQUIDADO'),
+	IN p_estado_ciclo ENUM('ABIERTO','CERRADO','LIQUIDADO','EN_EXCEPCION'),
 	IN p_id_caja_chica INT,
 	IN p_id_rendicion INT,
 	OUT p_id_generado INT
 )
 BEGIN
     IF p_id_caja_chica IS NULL OR p_id_caja_chica <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de ciclo de caja chica no válido';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de caja chica no valido';
+    END IF;
+
+    -- Auto-calcular numero de semana desde fecha_apertura si no se proporciona
+    IF p_numero_semana IS NULL OR p_numero_semana <= 0 THEN
+        SET p_numero_semana = WEEK(p_fecha_apertura, 1);
     END IF;
 
     INSERT INTO ope_ciclo_caja(
-
         numero_semana,
         fecha_apertura,
         fecha_cierre,
@@ -419,41 +450,103 @@ BEGIN
         id_caja_chica,
         id_rendicion,
         id_usuario_creacion,
-        id_usuario_modificacion    )
-    VALUES(
-
+        id_usuario_modificacion
+    ) VALUES(
         p_numero_semana,
         p_fecha_apertura,
         p_fecha_cierre,
         p_monto_saldo_inicial,
-        p_monto_total_gastado,
-        p_estado_ciclo,
+        COALESCE(p_monto_total_gastado, 0),
+        COALESCE(p_estado_ciclo, 'ABIERTO'),
         p_id_caja_chica,
         p_id_rendicion,
         p_id_usuario_accion,
-        p_id_usuario_accion    );
+        p_id_usuario_accion
+    );
     
     SET p_id_generado = LAST_INSERT_ID();
 END$$
 
 DROP PROCEDURE IF EXISTS pa_modificar_ciclo_caja $$
 CREATE PROCEDURE pa_modificar_ciclo_caja(
-
-        IN p_id_usuario_accion INT,
-IN p_id_ciclo_caja INT,
+    IN p_id_usuario_accion INT,
+    IN p_id_ciclo_caja INT,
     IN p_numero_semana INT,
     IN p_fecha_apertura DATE,
     IN p_fecha_cierre DATE,
     IN p_monto_saldo_inicial DECIMAL(12,2),
     IN p_monto_total_gastado DECIMAL(12,2),
-    IN p_estado_ciclo ENUM('ABIERTO','CERRADO','LIQUIDADO'),
+    IN p_estado_ciclo ENUM('ABIERTO','CERRADO','LIQUIDADO','EN_EXCEPCION'),
     IN p_id_caja_chica INT,
     IN p_id_rendicion INT
-
 )
 BEGIN
+    DECLARE v_total_gastado DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_total_declarado DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_total_aprobado DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_saldo_final DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_ciclo_saldo_inicial DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_nuevo_rendicion_id INT DEFAULT NULL;
+
     IF p_id_ciclo_caja IS NULL OR p_id_ciclo_caja <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de ciclo de caja no válido';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de ciclo de caja no valido';
+    END IF;
+
+    -- Siempre recalcular monto_total_gastado desde solicitudes APROBADAS del ciclo
+    SET v_total_gastado = COALESCE((
+        SELECT SUM(sg.monto_solicitado)
+        FROM ope_solicitud_gasto sg
+        WHERE sg.id_ciclo_caja = p_id_ciclo_caja
+          AND sg.estado_solicitud = 'APROBADO'
+    ), 0);
+
+    -- Auto-crear rendicion si se cierra/liquida y no existe
+    IF p_estado_ciclo IN ('CERRADO', 'LIQUIDADO') AND (p_id_rendicion IS NULL OR p_id_rendicion <= 0) THEN
+        -- Obtener saldo inicial del ciclo
+        SET v_ciclo_saldo_inicial = COALESCE((
+            SELECT occ.monto_saldo_inicial
+            FROM ope_ciclo_caja occ
+            WHERE occ.id_ciclo_caja = p_id_ciclo_caja
+        ), 0);
+
+        -- Calcular total declarado desde comprobantes de pago del ciclo
+        SET v_total_declarado = COALESCE((
+            SELECT SUM(cp.monto_total)
+            FROM ope_solicitud_gasto sg
+            JOIN ope_comprobante_pago cp ON sg.id_solicitud_gasto = cp.id_solicitud_gasto
+            WHERE sg.id_ciclo_caja = p_id_ciclo_caja
+              AND cp.estado_comprobante != 'ANULADO'
+        ), 0);
+
+        SET v_total_aprobado = v_total_gastado;
+        SET v_saldo_final = v_ciclo_saldo_inicial - v_total_aprobado;
+
+        INSERT INTO ope_rendicion(
+            fecha_presentacion,
+            fecha_aprobacion,
+            monto_total_declarado,
+            monto_total_aprobado,
+            monto_saldo_final,
+            estado_rendicion,
+            comentario,
+            id_ciclo_caja,
+            id_usuario_creacion,
+            id_usuario_modificacion
+        ) VALUES(
+            CURDATE(),
+            NULL,
+            v_total_declarado,
+            v_total_aprobado,
+            v_saldo_final,
+            'EN_ESPERA',
+            'Rendicion generada automaticamente al cerrar ciclo',
+            p_id_ciclo_caja,
+            p_id_usuario_accion,
+            p_id_usuario_accion
+        );
+
+        SET v_nuevo_rendicion_id = LAST_INSERT_ID();
+        SET p_id_rendicion = v_nuevo_rendicion_id;
     END IF;
 
     UPDATE ope_ciclo_caja
@@ -461,31 +554,28 @@ BEGIN
            fecha_apertura = p_fecha_apertura,
            fecha_cierre = p_fecha_cierre,
            monto_saldo_inicial = p_monto_saldo_inicial,
-           monto_total_gastado = p_monto_total_gastado,
+           monto_total_gastado = v_total_gastado,
            estado_ciclo = p_estado_ciclo,
            id_caja_chica = p_id_caja_chica,
            id_rendicion = p_id_rendicion,
            id_usuario_modificacion = p_id_usuario_accion
-    WHERE id_ciclo_caja = p_id_ciclo_caja;
+     WHERE id_ciclo_caja = p_id_ciclo_caja;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_eliminar_ciclo_caja $$
 CREATE PROCEDURE pa_eliminar_ciclo_caja(
-
-        IN p_id_usuario_accion INT,
-IN p_id_ciclo_caja INT
-
+    IN p_id_usuario_accion INT,
+    IN p_id_ciclo_caja INT
 )
 BEGIN
-
     IF p_id_ciclo_caja IS NULL OR p_id_ciclo_caja <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de ciclo de caja no válido';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de ciclo de caja no valido';
     END IF;
 
     UPDATE ope_ciclo_caja
        SET estado_ciclo = 'CERRADO',
            id_usuario_modificacion = p_id_usuario_accion
-    WHERE id_ciclo_caja = p_id_ciclo_caja;
+     WHERE id_ciclo_caja = p_id_ciclo_caja;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_buscar_ciclo_caja_por_id $$
@@ -494,7 +584,7 @@ CREATE PROCEDURE pa_buscar_ciclo_caja_por_id(
 )
 BEGIN
     IF p_id_ciclo_caja IS NULL OR p_id_ciclo_caja <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de ciclo de caja no válido';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de ciclo de caja no valido';
     END IF;
 
     SELECT 
@@ -503,7 +593,7 @@ BEGIN
         occ.fecha_apertura, 
         occ.fecha_cierre, 
         occ.monto_saldo_inicial, 
-        occ.monto_total_gastado, 
+        COALESCE(vtg.total_gastado, occ.monto_total_gastado) AS monto_total_gastado, 
         occ.estado_ciclo, 
         occ.id_caja_chica, 
         occ.id_rendicion,
@@ -516,15 +606,44 @@ BEGIN
         ren.id_rendicion AS ren_id_rendicion,
         ren.fecha_presentacion AS ren_fecha_presentacion,
         ren.fecha_aprobacion AS ren_fecha_aprobacion,
-        ren.monto_total_declarado AS ren_monto_total_declarado,
-        ren.monto_total_aprobado AS ren_monto_total_aprobado,
-        ren.monto_saldo_final AS ren_monto_saldo_final,
+        COALESCE(vtd.total_declarado, ren.monto_total_declarado) AS ren_monto_total_declarado,
+        COALESCE(vta.total_aprobado, ren.monto_total_aprobado) AS ren_monto_total_aprobado,
+        COALESCE(vsf.saldo_final, ren.monto_saldo_final) AS ren_monto_saldo_final,
         ren.estado_rendicion AS ren_estado_rendicion,
         ren.comentario AS ren_comentario
     FROM ope_ciclo_caja occ
     LEFT JOIN tes_caja_chica ccj ON occ.id_caja_chica = ccj.id_fondo
     LEFT JOIN tes_fondo f ON ccj.id_fondo = f.id_fondo
     LEFT JOIN ope_rendicion ren ON occ.id_rendicion = ren.id_rendicion
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtg ON vtg.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(cp.monto_total) AS total_declarado
+        FROM ope_solicitud_gasto sg
+        JOIN ope_comprobante_pago cp ON sg.id_solicitud_gasto = cp.id_solicitud_gasto
+        WHERE cp.estado_comprobante != 'ANULADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtd ON vtd.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_aprobado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vta ON vta.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT occ2.id_ciclo_caja, (occ2.monto_saldo_inicial - COALESCE(vtg2.total_gastado, 0)) AS saldo_final
+        FROM ope_ciclo_caja occ2
+        LEFT JOIN (
+            SELECT sg2.id_ciclo_caja, SUM(sg2.monto_solicitado) AS total_gastado
+            FROM ope_solicitud_gasto sg2
+            WHERE sg2.estado_solicitud = 'APROBADO'
+            GROUP BY sg2.id_ciclo_caja
+        ) vtg2 ON vtg2.id_ciclo_caja = occ2.id_ciclo_caja
+    ) vsf ON vsf.id_ciclo_caja = occ.id_ciclo_caja
     WHERE occ.id_ciclo_caja = p_id_ciclo_caja
     ORDER BY occ.estado_ciclo DESC;
 END$$
@@ -538,7 +657,7 @@ BEGIN
         occ.fecha_apertura, 
         occ.fecha_cierre, 
         occ.monto_saldo_inicial, 
-        occ.monto_total_gastado, 
+        COALESCE(vtg.total_gastado, occ.monto_total_gastado) AS monto_total_gastado, 
         occ.estado_ciclo, 
         occ.id_caja_chica, 
         occ.id_rendicion,
@@ -551,15 +670,44 @@ BEGIN
         ren.id_rendicion AS ren_id_rendicion,
         ren.fecha_presentacion AS ren_fecha_presentacion,
         ren.fecha_aprobacion AS ren_fecha_aprobacion,
-        ren.monto_total_declarado AS ren_monto_total_declarado,
-        ren.monto_total_aprobado AS ren_monto_total_aprobado,
-        ren.monto_saldo_final AS ren_monto_saldo_final,
+        COALESCE(vtd.total_declarado, ren.monto_total_declarado) AS ren_monto_total_declarado,
+        COALESCE(vta.total_aprobado, ren.monto_total_aprobado) AS ren_monto_total_aprobado,
+        COALESCE(vsf.saldo_final, ren.monto_saldo_final) AS ren_monto_saldo_final,
         ren.estado_rendicion AS ren_estado_rendicion,
         ren.comentario AS ren_comentario
     FROM ope_ciclo_caja occ
     LEFT JOIN tes_caja_chica ccj ON occ.id_caja_chica = ccj.id_fondo
     LEFT JOIN tes_fondo f ON ccj.id_fondo = f.id_fondo
     LEFT JOIN ope_rendicion ren ON occ.id_rendicion = ren.id_rendicion
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtg ON vtg.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(cp.monto_total) AS total_declarado
+        FROM ope_solicitud_gasto sg
+        JOIN ope_comprobante_pago cp ON sg.id_solicitud_gasto = cp.id_solicitud_gasto
+        WHERE cp.estado_comprobante != 'ANULADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtd ON vtd.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_aprobado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vta ON vta.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT occ2.id_ciclo_caja, (occ2.monto_saldo_inicial - COALESCE(vtg2.total_gastado, 0)) AS saldo_final
+        FROM ope_ciclo_caja occ2
+        LEFT JOIN (
+            SELECT sg2.id_ciclo_caja, SUM(sg2.monto_solicitado) AS total_gastado
+            FROM ope_solicitud_gasto sg2
+            WHERE sg2.estado_solicitud = 'APROBADO'
+            GROUP BY sg2.id_ciclo_caja
+        ) vtg2 ON vtg2.id_ciclo_caja = occ2.id_ciclo_caja
+    ) vsf ON vsf.id_ciclo_caja = occ.id_ciclo_caja
     WHERE occ.estado_ciclo = 'ABIERTO'
     ORDER BY occ.id_ciclo_caja DESC;
 END$$
@@ -573,7 +721,7 @@ BEGIN
         occ.fecha_apertura, 
         occ.fecha_cierre, 
         occ.monto_saldo_inicial, 
-        occ.monto_total_gastado, 
+        COALESCE(vtg.total_gastado, occ.monto_total_gastado) AS monto_total_gastado, 
         occ.estado_ciclo, 
         occ.id_caja_chica, 
         occ.id_rendicion,
@@ -586,16 +734,45 @@ BEGIN
         ren.id_rendicion AS ren_id_rendicion,
         ren.fecha_presentacion AS ren_fecha_presentacion,
         ren.fecha_aprobacion AS ren_fecha_aprobacion,
-        ren.monto_total_declarado AS ren_monto_total_declarado,
-        ren.monto_total_aprobado AS ren_monto_total_aprobado,
-        ren.monto_saldo_final AS ren_monto_saldo_final,
+        COALESCE(vtd.total_declarado, ren.monto_total_declarado) AS ren_monto_total_declarado,
+        COALESCE(vta.total_aprobado, ren.monto_total_aprobado) AS ren_monto_total_aprobado,
+        COALESCE(vsf.saldo_final, ren.monto_saldo_final) AS ren_monto_saldo_final,
         ren.estado_rendicion AS ren_estado_rendicion,
         ren.comentario AS ren_comentario
     FROM ope_ciclo_caja occ
     LEFT JOIN tes_caja_chica ccj ON occ.id_caja_chica = ccj.id_fondo
     LEFT JOIN tes_fondo f ON ccj.id_fondo = f.id_fondo
     LEFT JOIN ope_rendicion ren ON occ.id_rendicion = ren.id_rendicion
-    ORDER BY FIELD(occ.estado_ciclo, 'ABIERTO', 'CERRADO', 'LIQUIDADO'), occ.id_ciclo_caja DESC;
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtg ON vtg.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(cp.monto_total) AS total_declarado
+        FROM ope_solicitud_gasto sg
+        JOIN ope_comprobante_pago cp ON sg.id_solicitud_gasto = cp.id_solicitud_gasto
+        WHERE cp.estado_comprobante != 'ANULADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtd ON vtd.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_aprobado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vta ON vta.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT occ2.id_ciclo_caja, (occ2.monto_saldo_inicial - COALESCE(vtg2.total_gastado, 0)) AS saldo_final
+        FROM ope_ciclo_caja occ2
+        LEFT JOIN (
+            SELECT sg2.id_ciclo_caja, SUM(sg2.monto_solicitado) AS total_gastado
+            FROM ope_solicitud_gasto sg2
+            WHERE sg2.estado_solicitud = 'APROBADO'
+            GROUP BY sg2.id_ciclo_caja
+        ) vtg2 ON vtg2.id_ciclo_caja = occ2.id_ciclo_caja
+    ) vsf ON vsf.id_ciclo_caja = occ.id_ciclo_caja
+    ORDER BY FIELD(occ.estado_ciclo, 'ABIERTO', 'EN_EXCEPCION', 'CERRADO', 'LIQUIDADO'), occ.id_ciclo_caja DESC;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_listar_ciclos_activos $$
@@ -607,7 +784,7 @@ BEGIN
         occ.fecha_apertura,
         occ.fecha_cierre,
         occ.monto_saldo_inicial,
-        occ.monto_total_gastado,
+        COALESCE(vtg.total_gastado, occ.monto_total_gastado) AS monto_total_gastado,
         occ.estado_ciclo,
         occ.id_caja_chica,
         occ.id_rendicion,
@@ -620,15 +797,44 @@ BEGIN
         ren.id_rendicion AS ren_id_rendicion,
         ren.fecha_presentacion AS ren_fecha_presentacion,
         ren.fecha_aprobacion AS ren_fecha_aprobacion,
-        ren.monto_total_declarado AS ren_monto_total_declarado,
-        ren.monto_total_aprobado AS ren_monto_total_aprobado,
-        ren.monto_saldo_final AS ren_monto_saldo_final,
+        COALESCE(vtd.total_declarado, ren.monto_total_declarado) AS ren_monto_total_declarado,
+        COALESCE(vta.total_aprobado, ren.monto_total_aprobado) AS ren_monto_total_aprobado,
+        COALESCE(vsf.saldo_final, ren.monto_saldo_final) AS ren_monto_saldo_final,
         ren.estado_rendicion AS ren_estado_rendicion,
         ren.comentario AS ren_comentario
     FROM ope_ciclo_caja occ
     LEFT JOIN tes_caja_chica ccj ON occ.id_caja_chica = ccj.id_fondo
     LEFT JOIN tes_fondo f ON ccj.id_fondo = f.id_fondo
     LEFT JOIN ope_rendicion ren ON occ.id_rendicion = ren.id_rendicion
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtg ON vtg.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(cp.monto_total) AS total_declarado
+        FROM ope_solicitud_gasto sg
+        JOIN ope_comprobante_pago cp ON sg.id_solicitud_gasto = cp.id_solicitud_gasto
+        WHERE cp.estado_comprobante != 'ANULADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtd ON vtd.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_aprobado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vta ON vta.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT occ2.id_ciclo_caja, (occ2.monto_saldo_inicial - COALESCE(vtg2.total_gastado, 0)) AS saldo_final
+        FROM ope_ciclo_caja occ2
+        LEFT JOIN (
+            SELECT sg2.id_ciclo_caja, SUM(sg2.monto_solicitado) AS total_gastado
+            FROM ope_solicitud_gasto sg2
+            WHERE sg2.estado_solicitud = 'APROBADO'
+            GROUP BY sg2.id_ciclo_caja
+        ) vtg2 ON vtg2.id_ciclo_caja = occ2.id_ciclo_caja
+    ) vsf ON vsf.id_ciclo_caja = occ.id_ciclo_caja
     WHERE occ.estado_ciclo = 'ABIERTO'
     ORDER BY occ.fecha_apertura DESC;
 END$$
@@ -642,7 +848,7 @@ BEGIN
         occ.fecha_apertura,
         occ.fecha_cierre,
         occ.monto_saldo_inicial,
-        occ.monto_total_gastado,
+        COALESCE(vtg.total_gastado, occ.monto_total_gastado) AS monto_total_gastado,
         occ.estado_ciclo,
         occ.id_caja_chica,
         occ.id_rendicion,
@@ -655,20 +861,50 @@ BEGIN
         ren.id_rendicion AS ren_id_rendicion,
         ren.fecha_presentacion AS ren_fecha_presentacion,
         ren.fecha_aprobacion AS ren_fecha_aprobacion,
-        ren.monto_total_declarado AS ren_monto_total_declarado,
-        ren.monto_total_aprobado AS ren_monto_total_aprobado,
-        ren.monto_saldo_final AS ren_monto_saldo_final,
+        COALESCE(vtd.total_declarado, ren.monto_total_declarado) AS ren_monto_total_declarado,
+        COALESCE(vta.total_aprobado, ren.monto_total_aprobado) AS ren_monto_total_aprobado,
+        COALESCE(vsf.saldo_final, ren.monto_saldo_final) AS ren_monto_saldo_final,
         ren.estado_rendicion AS ren_estado_rendicion,
         ren.comentario AS ren_comentario
     FROM ope_ciclo_caja occ
     LEFT JOIN tes_caja_chica ccj ON occ.id_caja_chica = ccj.id_fondo
     LEFT JOIN tes_fondo f ON ccj.id_fondo = f.id_fondo
     LEFT JOIN ope_rendicion ren ON occ.id_rendicion = ren.id_rendicion
-    WHERE occ.estado_ciclo IN ('CERRADO', 'LIQUIDADO')
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtg ON vtg.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(cp.monto_total) AS total_declarado
+        FROM ope_solicitud_gasto sg
+        JOIN ope_comprobante_pago cp ON sg.id_solicitud_gasto = cp.id_solicitud_gasto
+        WHERE cp.estado_comprobante != 'ANULADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtd ON vtd.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_aprobado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vta ON vta.id_ciclo_caja = occ.id_ciclo_caja
+    LEFT JOIN (
+        SELECT occ2.id_ciclo_caja, (occ2.monto_saldo_inicial - COALESCE(vtg2.total_gastado, 0)) AS saldo_final
+        FROM ope_ciclo_caja occ2
+        LEFT JOIN (
+            SELECT sg2.id_ciclo_caja, SUM(sg2.monto_solicitado) AS total_gastado
+            FROM ope_solicitud_gasto sg2
+            WHERE sg2.estado_solicitud = 'APROBADO'
+            GROUP BY sg2.id_ciclo_caja
+        ) vtg2 ON vtg2.id_ciclo_caja = occ2.id_ciclo_caja
+    ) vsf ON vsf.id_ciclo_caja = occ.id_ciclo_caja
+    WHERE occ.estado_ciclo IN ('CERRADO', 'LIQUIDADO', 'EN_EXCEPCION')
     ORDER BY occ.fecha_cierre DESC, occ.estado_ciclo, occ.id_ciclo_caja DESC;
 END$$
 
 DELIMITER ;
+
 DELIMITER //
 
 -- ===============================================================================
@@ -1166,7 +1402,42 @@ CREATE TRIGGER trg_ope_comprobante_pago_before_update
 BEFORE UPDATE ON ope_comprobante_pago
 FOR EACH ROW
 BEGIN
+    DECLARE v_estado_ciclo VARCHAR(20) DEFAULT NULL;
+    DECLARE v_permiso_id INT DEFAULT NULL;
+
     SET NEW.actualizado_at = NOW();
+
+    -- Validate edit permission when cycle is closed, liquidated or in exception window
+    IF NEW.id_solicitud_gasto IS NOT NULL AND NEW.id_solicitud_gasto > 0 THEN
+        SELECT occ.estado_ciclo INTO v_estado_ciclo
+        FROM ope_solicitud_gasto sg
+        JOIN ope_ciclo_caja occ ON sg.id_ciclo_caja = occ.id_ciclo_caja
+        WHERE sg.id_solicitud_gasto = NEW.id_solicitud_gasto
+        LIMIT 1;
+
+        IF v_estado_ciclo IS NOT NULL AND v_estado_ciclo != 'ABIERTO' THEN
+            SELECT pe.id_permiso INTO v_permiso_id
+            FROM ope_permiso_edicion pe
+            WHERE pe.id_comprobante = NEW.id_comprobante
+              AND pe.estado = 'ACTIVO'
+              AND pe.fecha_expiracion > NOW()
+              AND (pe.id_usuario_solicitante = NEW.id_usuario_modificacion
+                   OR pe.id_usuario_autorizador = NEW.id_usuario_modificacion)
+            LIMIT 1;
+
+            IF v_permiso_id IS NULL THEN
+                SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'El ciclo de caja chica no permite ediciones. Solicite autorizacion a Jefe o Tesorero (48h).';
+            ELSE
+                UPDATE ope_permiso_edicion
+                   SET estado = 'USADO',
+                       fecha_uso = NOW(),
+                       actualizado_at = NOW(),
+                       id_usuario_modificacion = NEW.id_usuario_modificacion
+                 WHERE id_permiso = v_permiso_id;
+            END IF;
+        END IF;
+    END IF;
 END //
 
 DROP TRIGGER IF EXISTS trg_ope_comprobante_pago_after_insert //
@@ -1281,21 +1552,356 @@ END //
 -- ===============================================================================
 DELIMITER $$
 
+DROP PROCEDURE IF EXISTS pa_solicitar_permiso_edicion $$
+CREATE PROCEDURE pa_solicitar_permiso_edicion(
+    IN p_id_usuario_accion INT,
+    IN p_id_usuario_solicitante INT,
+    IN p_id_comprobante INT,
+    IN p_motivo_solicitud VARCHAR(500),
+    OUT p_id_generado INT
+)
+BEGIN
+    DECLARE v_permiso_existente INT DEFAULT NULL;
+
+    -- Check existing active permission/request for same comprobante and solicitante
+    SELECT pe.id_permiso INTO v_permiso_existente
+    FROM ope_permiso_edicion pe
+    WHERE pe.id_comprobante = p_id_comprobante
+      AND pe.id_usuario_solicitante = p_id_usuario_solicitante
+      AND pe.estado IN ('ACTIVO')
+      AND pe.fecha_expiracion > NOW()
+    LIMIT 1;
+
+    IF v_permiso_existente IS NOT NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Ya existe una solicitud o permiso activo para este comprobante';
+    END IF;
+
+    INSERT INTO ope_permiso_edicion(
+        id_usuario_solicitante,
+        id_usuario_autorizador,
+        id_comprobante,
+        estado,
+        motivo_solicitud,
+        fecha_creacion,
+        fecha_expiracion,
+        creado_at,
+        actualizado_at,
+        id_usuario_creacion,
+        id_usuario_modificacion
+    ) VALUES(
+        p_id_usuario_solicitante,
+        NULL,
+        p_id_comprobante,
+        'ACTIVO',
+        p_motivo_solicitud,
+        NOW(),
+        DATE_ADD(NOW(), INTERVAL 48 HOUR),
+        NOW(),
+        NOW(),
+        p_id_usuario_accion,
+        p_id_usuario_accion
+    );
+
+    SET p_id_generado = LAST_INSERT_ID();
+END$$
+
+DROP PROCEDURE IF EXISTS pa_otorgar_permiso_edicion $$
+CREATE PROCEDURE pa_otorgar_permiso_edicion(
+    IN p_id_usuario_accion INT,
+    IN p_id_permiso INT,
+    IN p_id_usuario_autorizador INT,
+    IN p_motivo_autorizacion VARCHAR(500)
+)
+BEGIN
+    IF p_id_permiso IS NULL OR p_id_permiso <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de permiso invalido';
+    END IF;
+
+    UPDATE ope_permiso_edicion
+       SET id_usuario_autorizador = p_id_usuario_autorizador,
+           motivo_autorizacion = p_motivo_autorizacion,
+           fecha_expiracion = DATE_ADD(NOW(), INTERVAL 48 HOUR),
+           actualizado_at = NOW(),
+           id_usuario_modificacion = p_id_usuario_accion
+     WHERE id_permiso = p_id_permiso
+       AND estado = 'ACTIVO'
+       AND id_usuario_autorizador IS NULL;
+
+    IF ROW_COUNT() = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El permiso no existe o ya fue otorgado/revocado';
+    END IF;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_revocar_permiso_edicion $$
+CREATE PROCEDURE pa_revocar_permiso_edicion(
+    IN p_id_usuario_accion INT,
+    IN p_id_permiso INT
+)
+BEGIN
+    IF p_id_permiso IS NULL OR p_id_permiso <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de permiso invalido';
+    END IF;
+
+    UPDATE ope_permiso_edicion
+       SET estado = 'REVOCADO',
+           actualizado_at = NOW(),
+           id_usuario_modificacion = p_id_usuario_accion
+     WHERE id_permiso = p_id_permiso
+       AND estado = 'ACTIVO';
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_permisos_pendientes $$
+CREATE PROCEDURE pa_listar_permisos_pendientes(
+    IN p_id_autorizador INT
+)
+BEGIN
+    SELECT
+        pe.id_permiso,
+        pe.id_usuario_solicitante,
+        pe.id_usuario_autorizador,
+        pe.id_comprobante,
+        pe.estado,
+        pe.motivo_solicitud,
+        pe.motivo_autorizacion,
+        pe.fecha_creacion,
+        pe.fecha_expiracion,
+        pe.fecha_uso,
+        u_sol.nombres AS sol_nombres,
+        u_sol.apellido_paterno AS sol_apellido_paterno,
+        u_sol.apellido_materno AS sol_apellido_materno,
+        cp.tipo_documento AS cp_tipo_documento,
+        cp.ruc_proveedor AS cp_ruc_proveedor,
+        cp.razon_social AS cp_razon_social,
+        cp.monto_total AS cp_monto_total,
+        cp.estado_comprobante AS cp_estado_comprobante,
+        sg.id_solicitud_gasto AS sg_id_solicitud_gasto,
+        sg.monto_solicitado AS sg_monto_solicitado,
+        occ.id_ciclo_caja AS ciclo_id_ciclo_caja,
+        occ.estado_ciclo AS ciclo_estado_ciclo
+    FROM ope_permiso_edicion pe
+    JOIN rrhh_usuario u_sol ON pe.id_usuario_solicitante = u_sol.id_usuario
+    JOIN ope_comprobante_pago cp ON pe.id_comprobante = cp.id_comprobante
+    JOIN ope_solicitud_gasto sg ON cp.id_solicitud_gasto = sg.id_solicitud_gasto
+    JOIN ope_ciclo_caja occ ON sg.id_ciclo_caja = occ.id_ciclo_caja
+    WHERE pe.estado = 'ACTIVO'
+      AND pe.fecha_expiracion > NOW()
+    ORDER BY
+      CASE WHEN pe.id_usuario_autorizador IS NULL THEN 0 ELSE 1 END,
+      pe.fecha_creacion DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_comprobantes_en_excepcion $$
+CREATE PROCEDURE pa_listar_comprobantes_en_excepcion()
+BEGIN
+    SELECT
+        cp.id_comprobante,
+        cp.tipo_documento,
+        cp.ruc_proveedor,
+        cp.razon_social,
+        cp.monto_total,
+        cp.estado_comprobante,
+        cp.id_solicitud_gasto,
+        sg.monto_solicitado AS sg_monto_solicitado,
+        sg.id_usuario_solicitante AS sg_id_usuario_solicitante,
+        u_sol.nombres AS sol_nombres,
+        u_sol.apellido_paterno AS sol_apellido_paterno,
+        u_sol.apellido_materno AS sol_apellido_materno,
+        occ.id_ciclo_caja AS ciclo_id_ciclo_caja,
+        occ.numero_semana AS ciclo_numero_semana,
+        occ.fecha_apertura AS ciclo_fecha_apertura,
+        occ.fecha_cierre AS ciclo_fecha_cierre,
+        occ.monto_saldo_inicial AS ciclo_saldo_inicial,
+        ccj.id_fondo AS ccj_id_fondo,
+        f.nombre_fondo AS ccj_nombre_fondo
+    FROM ope_ciclo_caja occ
+    JOIN tes_caja_chica ccj ON occ.id_caja_chica = ccj.id_fondo
+    JOIN tes_fondo f ON ccj.id_fondo = f.id_fondo
+    JOIN ope_solicitud_gasto sg ON sg.id_ciclo_caja = occ.id_ciclo_caja
+    JOIN ope_comprobante_pago cp ON cp.id_solicitud_gasto = sg.id_solicitud_gasto
+    JOIN rrhh_usuario u_sol ON sg.id_usuario_solicitante = u_sol.id_usuario
+    WHERE occ.estado_ciclo = 'EN_EXCEPCION'
+    ORDER BY occ.id_ciclo_caja DESC, cp.id_comprobante DESC;
+END$$
+
+DELIMITER ;
+
+DELIMITER //
+
+-- ===============================================================================
+-- TABLA: ope_permiso_edicion
+-- ===============================================================================
+
+DROP TRIGGER IF EXISTS trg_ope_permiso_edicion_before_insert //
+CREATE TRIGGER trg_ope_permiso_edicion_before_insert
+BEFORE INSERT ON ope_permiso_edicion
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_permiso_edicion_before_update //
+CREATE TRIGGER trg_ope_permiso_edicion_before_update
+BEFORE UPDATE ON ope_permiso_edicion
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_permiso_edicion_after_insert //
+CREATE TRIGGER trg_ope_permiso_edicion_after_insert
+AFTER INSERT ON ope_permiso_edicion
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_permiso_edicion',
+        'INSERT',
+        CAST(NEW.id_permiso AS CHAR),
+        NULL,
+        JSON_OBJECT(
+            'id_permiso', NEW.id_permiso,
+            'id_usuario_solicitante', NEW.id_usuario_solicitante,
+            'id_usuario_autorizador', NEW.id_usuario_autorizador,
+            'id_comprobante', NEW.id_comprobante,
+            'estado', NEW.estado,
+            'motivo_solicitud', NEW.motivo_solicitud,
+            'motivo_autorizacion', NEW.motivo_autorizacion,
+            'fecha_creacion', NEW.fecha_creacion,
+            'fecha_expiracion', NEW.fecha_expiracion,
+            'fecha_uso', NEW.fecha_uso
+        ),
+        NEW.id_usuario_creacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_permiso_edicion_after_update //
+CREATE TRIGGER trg_ope_permiso_edicion_after_update
+AFTER UPDATE ON ope_permiso_edicion
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_permiso_edicion',
+        'UPDATE',
+        CAST(NEW.id_permiso AS CHAR),
+        JSON_OBJECT(
+            'id_permiso', OLD.id_permiso,
+            'id_usuario_solicitante', OLD.id_usuario_solicitante,
+            'id_usuario_autorizador', OLD.id_usuario_autorizador,
+            'id_comprobante', OLD.id_comprobante,
+            'estado', OLD.estado,
+            'motivo_solicitud', OLD.motivo_solicitud,
+            'motivo_autorizacion', OLD.motivo_autorizacion,
+            'fecha_creacion', OLD.fecha_creacion,
+            'fecha_expiracion', OLD.fecha_expiracion,
+            'fecha_uso', OLD.fecha_uso
+        ),
+        JSON_OBJECT(
+            'id_permiso', NEW.id_permiso,
+            'id_usuario_solicitante', NEW.id_usuario_solicitante,
+            'id_usuario_autorizador', NEW.id_usuario_autorizador,
+            'id_comprobante', NEW.id_comprobante,
+            'estado', NEW.estado,
+            'motivo_solicitud', NEW.motivo_solicitud,
+            'motivo_autorizacion', NEW.motivo_autorizacion,
+            'fecha_creacion', NEW.fecha_creacion,
+            'fecha_expiracion', NEW.fecha_expiracion,
+            'fecha_uso', NEW.fecha_uso
+        ),
+        NEW.id_usuario_modificacion
+    );
+END //
+
+DROP TRIGGER IF EXISTS trg_ope_permiso_edicion_after_delete //
+CREATE TRIGGER trg_ope_permiso_edicion_after_delete
+AFTER DELETE ON ope_permiso_edicion
+FOR EACH ROW
+BEGIN
+    CALL pa_insertar_auditoria(
+        'ope_permiso_edicion',
+        'DELETE',
+        CAST(OLD.id_permiso AS CHAR),
+        JSON_OBJECT(
+            'id_permiso', OLD.id_permiso,
+            'id_usuario_solicitante', OLD.id_usuario_solicitante,
+            'id_usuario_autorizador', OLD.id_usuario_autorizador,
+            'id_comprobante', OLD.id_comprobante,
+            'estado', OLD.estado,
+            'motivo_solicitud', OLD.motivo_solicitud,
+            'motivo_autorizacion', OLD.motivo_autorizacion,
+            'fecha_creacion', OLD.fecha_creacion,
+            'fecha_expiracion', OLD.fecha_expiracion,
+            'fecha_uso', OLD.fecha_uso
+        ),
+        NULL,
+        OLD.id_usuario_modificacion
+    );
+END //
+
+-- ===============================================================================
+
+DELIMITER $$
+
 DROP PROCEDURE IF EXISTS pa_insertar_rendicion $$
 CREATE PROCEDURE pa_insertar_rendicion(
     IN p_id_usuario_accion INT,
-IN p_fecha_presentacion DATE,
-IN p_fecha_aprobacion DATE,
-IN p_monto_total_declarado DECIMAL(12,2),
-IN p_monto_total_aprobado DECIMAL(12,2),
-IN p_monto_saldo_final DECIMAL(12,2),
-IN p_estado_rendicion ENUM('ACEPTADO','EN_ESPERA','DENEGADO','ANULADO'),
-IN p_comentario VARCHAR(500),OUT p_id_generado INT
+    IN p_fecha_presentacion DATE,
+    IN p_fecha_aprobacion DATE,
+    IN p_monto_total_declarado DECIMAL(12,2),
+    IN p_monto_total_aprobado DECIMAL(12,2),
+    IN p_monto_saldo_final DECIMAL(12,2),
+    IN p_estado_rendicion ENUM('ACEPTADO','EN_ESPERA','DENEGADO','ANULADO'),
+    IN p_comentario VARCHAR(500),
+    IN p_id_ciclo_caja INT,
+    OUT p_id_generado INT
 )
 BEGIN
+    DECLARE v_total_declarado DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_total_aprobado DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_saldo_final DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_saldo_inicial DECIMAL(12,2) DEFAULT 0;
+
+    -- Auto-calcular totales si se proporciona id_ciclo_caja y los montos son 0
+    IF p_id_ciclo_caja IS NOT NULL AND p_id_ciclo_caja > 0 THEN
+        IF p_monto_total_declarado IS NULL OR p_monto_total_declarado = 0 THEN
+            SET v_total_declarado = COALESCE((
+                SELECT SUM(cp.monto_total)
+                FROM ope_solicitud_gasto sg
+                JOIN ope_comprobante_pago cp ON sg.id_solicitud_gasto = cp.id_solicitud_gasto
+                WHERE sg.id_ciclo_caja = p_id_ciclo_caja
+                  AND cp.estado_comprobante != 'ANULADO'
+            ), 0);
+        ELSE
+            SET v_total_declarado = p_monto_total_declarado;
+        END IF;
+
+        IF p_monto_total_aprobado IS NULL OR p_monto_total_aprobado = 0 THEN
+            SET v_total_aprobado = COALESCE((
+                SELECT SUM(sg.monto_solicitado)
+                FROM ope_solicitud_gasto sg
+                WHERE sg.id_ciclo_caja = p_id_ciclo_caja
+                  AND sg.estado_solicitud = 'APROBADO'
+            ), 0);
+        ELSE
+            SET v_total_aprobado = p_monto_total_aprobado;
+        END IF;
+
+        IF p_monto_saldo_final IS NULL OR p_monto_saldo_final = 0 THEN
+            SET v_saldo_inicial = COALESCE((
+                SELECT occ.monto_saldo_inicial
+                FROM ope_ciclo_caja occ
+                WHERE occ.id_ciclo_caja = p_id_ciclo_caja
+            ), 0);
+            SET v_saldo_final = v_saldo_inicial - v_total_aprobado;
+        ELSE
+            SET v_saldo_final = p_monto_saldo_final;
+        END IF;
+    ELSE
+        SET v_total_declarado = COALESCE(p_monto_total_declarado, 0);
+        SET v_total_aprobado = COALESCE(p_monto_total_aprobado, 0);
+        SET v_saldo_final = COALESCE(p_monto_saldo_final, 0);
+    END IF;
 
     INSERT INTO ope_rendicion(
-
         fecha_presentacion,
         fecha_aprobacion,
         monto_total_declarado,
@@ -1303,27 +1909,27 @@ BEGIN
         monto_saldo_final,
         estado_rendicion,
         comentario,
+        id_ciclo_caja,
         id_usuario_creacion,
-        id_usuario_modificacion    )
-    VALUES(
-
+        id_usuario_modificacion
+    ) VALUES(
         p_fecha_presentacion,
         p_fecha_aprobacion,
-        p_monto_total_declarado,
-        p_monto_total_aprobado,
-        p_monto_saldo_final,
+        v_total_declarado,
+        v_total_aprobado,
+        v_saldo_final,
         p_estado_rendicion,
         p_comentario,
+        p_id_ciclo_caja,
         p_id_usuario_accion,
-        p_id_usuario_accion    );
+        p_id_usuario_accion
+    );
     
     SET p_id_generado = LAST_INSERT_ID();
 END$$
 
-
 DROP PROCEDURE IF EXISTS pa_modificar_rendicion $$
 CREATE PROCEDURE pa_modificar_rendicion(
-
     IN p_id_usuario_accion INT,
 	IN p_id_rendicion INT,
     IN p_fecha_presentacion DATE,
@@ -1332,41 +1938,95 @@ CREATE PROCEDURE pa_modificar_rendicion(
     IN p_monto_total_aprobado DECIMAL(12,2),
     IN p_monto_saldo_final DECIMAL(12,2),
     IN p_estado_rendicion ENUM('ACEPTADO','EN_ESPERA','DENEGADO','ANULADO'),
-    IN p_comentario VARCHAR(500)
+    IN p_comentario VARCHAR(500),
+    IN p_id_ciclo_caja INT
 )
 BEGIN
+    DECLARE v_total_declarado DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_total_aprobado DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_saldo_final DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_saldo_inicial DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_ciclo_id INT DEFAULT NULL;
+
     IF p_id_rendicion IS NULL OR p_id_rendicion <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de rendición inválido';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de rendicion invalido';
+    END IF;
+
+    -- Obtener id_ciclo_caja si no se proporciona
+    IF p_id_ciclo_caja IS NULL OR p_id_ciclo_caja <= 0 THEN
+        SET v_ciclo_id = (SELECT id_ciclo_caja FROM ope_rendicion WHERE id_rendicion = p_id_rendicion);
+    ELSE
+        SET v_ciclo_id = p_id_ciclo_caja;
+    END IF;
+
+    -- Auto-recalcular totales si hay ciclo asociado y montos son 0
+    IF v_ciclo_id IS NOT NULL AND v_ciclo_id > 0 THEN
+        IF p_monto_total_declarado IS NULL OR p_monto_total_declarado = 0 THEN
+            SET v_total_declarado = COALESCE((
+                SELECT SUM(cp.monto_total)
+                FROM ope_solicitud_gasto sg
+                JOIN ope_comprobante_pago cp ON sg.id_solicitud_gasto = cp.id_solicitud_gasto
+                WHERE sg.id_ciclo_caja = v_ciclo_id
+                  AND cp.estado_comprobante != 'ANULADO'
+            ), 0);
+        ELSE
+            SET v_total_declarado = p_monto_total_declarado;
+        END IF;
+
+        IF p_monto_total_aprobado IS NULL OR p_monto_total_aprobado = 0 THEN
+            SET v_total_aprobado = COALESCE((
+                SELECT SUM(sg.monto_solicitado)
+                FROM ope_solicitud_gasto sg
+                WHERE sg.id_ciclo_caja = v_ciclo_id
+                  AND sg.estado_solicitud = 'APROBADO'
+            ), 0);
+        ELSE
+            SET v_total_aprobado = p_monto_total_aprobado;
+        END IF;
+
+        IF p_monto_saldo_final IS NULL OR p_monto_saldo_final = 0 THEN
+            SET v_saldo_inicial = COALESCE((
+                SELECT occ.monto_saldo_inicial
+                FROM ope_ciclo_caja occ
+                WHERE occ.id_ciclo_caja = v_ciclo_id
+            ), 0);
+            SET v_saldo_final = v_saldo_inicial - v_total_aprobado;
+        ELSE
+            SET v_saldo_final = p_monto_saldo_final;
+        END IF;
+    ELSE
+        SET v_total_declarado = COALESCE(p_monto_total_declarado, 0);
+        SET v_total_aprobado = COALESCE(p_monto_total_aprobado, 0);
+        SET v_saldo_final = COALESCE(p_monto_saldo_final, 0);
     END IF;
 
     UPDATE ope_rendicion
        SET fecha_presentacion = p_fecha_presentacion,
            fecha_aprobacion = p_fecha_aprobacion,
-           monto_total_declarado = p_monto_total_declarado,
-           monto_total_aprobado = p_monto_total_aprobado,
-           monto_saldo_final = p_monto_saldo_final,
+           monto_total_declarado = v_total_declarado,
+           monto_total_aprobado = v_total_aprobado,
+           monto_saldo_final = v_saldo_final,
            estado_rendicion = p_estado_rendicion,
            comentario = p_comentario,
+           id_ciclo_caja = v_ciclo_id,
            id_usuario_modificacion = p_id_usuario_accion
-    WHERE id_rendicion = p_id_rendicion;
+     WHERE id_rendicion = p_id_rendicion;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_eliminar_rendicion $$
 CREATE PROCEDURE pa_eliminar_rendicion(
-
-        IN p_id_usuario_accion INT,
-IN p_id_rendicion INT
-
+    IN p_id_usuario_accion INT,
+    IN p_id_rendicion INT
 )
 BEGIN
     IF p_id_rendicion IS NULL OR p_id_rendicion <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de rendición inválido';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de rendicion invalido';
     END IF;
 
     UPDATE ope_rendicion
        SET estado_rendicion = 'ANULADO',
            id_usuario_modificacion = p_id_usuario_accion
-    WHERE id_rendicion = p_id_rendicion;
+     WHERE id_rendicion = p_id_rendicion;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_buscar_rendicion_por_id $$
@@ -1378,9 +2038,9 @@ BEGIN
         r.id_rendicion,
         r.fecha_presentacion,
         r.fecha_aprobacion,
-        r.monto_total_declarado,
-        r.monto_total_aprobado,
-        r.monto_saldo_final,
+        COALESCE(vtd.total_declarado, r.monto_total_declarado) AS monto_total_declarado,
+        COALESCE(vta.total_aprobado, r.monto_total_aprobado) AS monto_total_aprobado,
+        COALESCE(vsf.saldo_final, r.monto_saldo_final) AS monto_saldo_final,
         r.estado_rendicion,
         r.comentario,
         r.id_ciclo_caja,
@@ -1389,12 +2049,41 @@ BEGIN
         cc.fecha_apertura AS cc_fecha_apertura,
         cc.fecha_cierre AS cc_fecha_cierre,
         cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
-        cc.monto_total_gastado AS cc_monto_total_gastado,
+        COALESCE(vtg.total_gastado, cc.monto_total_gastado) AS cc_monto_total_gastado,
         cc.estado_ciclo AS cc_estado_ciclo,
         cc.id_caja_chica AS cc_id_caja_chica,
         cc.id_rendicion AS cc_id_rendicion
     FROM ope_rendicion r
     LEFT JOIN ope_ciclo_caja cc ON r.id_ciclo_caja = cc.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtg ON vtg.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(cp.monto_total) AS total_declarado
+        FROM ope_solicitud_gasto sg
+        JOIN ope_comprobante_pago cp ON sg.id_solicitud_gasto = cp.id_solicitud_gasto
+        WHERE cp.estado_comprobante != 'ANULADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtd ON vtd.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_aprobado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vta ON vta.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT occ.id_ciclo_caja, (occ.monto_saldo_inicial - COALESCE(vtg2.total_gastado, 0)) AS saldo_final
+        FROM ope_ciclo_caja occ
+        LEFT JOIN (
+            SELECT sg2.id_ciclo_caja, SUM(sg2.monto_solicitado) AS total_gastado
+            FROM ope_solicitud_gasto sg2
+            WHERE sg2.estado_solicitud = 'APROBADO'
+            GROUP BY sg2.id_ciclo_caja
+        ) vtg2 ON vtg2.id_ciclo_caja = occ.id_ciclo_caja
+    ) vsf ON vsf.id_ciclo_caja = r.id_ciclo_caja
     WHERE r.id_rendicion = p_id_rendicion;
 END$$
 
@@ -1405,9 +2094,9 @@ BEGIN
         r.id_rendicion,
         r.fecha_presentacion,
         r.fecha_aprobacion,
-        r.monto_total_declarado,
-        r.monto_total_aprobado,
-        r.monto_saldo_final,
+        COALESCE(vtd.total_declarado, r.monto_total_declarado) AS monto_total_declarado,
+        COALESCE(vta.total_aprobado, r.monto_total_aprobado) AS monto_total_aprobado,
+        COALESCE(vsf.saldo_final, r.monto_saldo_final) AS monto_saldo_final,
         r.estado_rendicion,
         r.comentario,
         r.id_ciclo_caja,
@@ -1416,12 +2105,41 @@ BEGIN
         cc.fecha_apertura AS cc_fecha_apertura,
         cc.fecha_cierre AS cc_fecha_cierre,
         cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
-        cc.monto_total_gastado AS cc_monto_total_gastado,
+        COALESCE(vtg.total_gastado, cc.monto_total_gastado) AS cc_monto_total_gastado,
         cc.estado_ciclo AS cc_estado_ciclo,
         cc.id_caja_chica AS cc_id_caja_chica,
         cc.id_rendicion AS cc_id_rendicion
     FROM ope_rendicion r
     LEFT JOIN ope_ciclo_caja cc ON r.id_ciclo_caja = cc.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtg ON vtg.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(cp.monto_total) AS total_declarado
+        FROM ope_solicitud_gasto sg
+        JOIN ope_comprobante_pago cp ON sg.id_solicitud_gasto = cp.id_solicitud_gasto
+        WHERE cp.estado_comprobante != 'ANULADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtd ON vtd.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_aprobado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vta ON vta.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT occ.id_ciclo_caja, (occ.monto_saldo_inicial - COALESCE(vtg2.total_gastado, 0)) AS saldo_final
+        FROM ope_ciclo_caja occ
+        LEFT JOIN (
+            SELECT sg2.id_ciclo_caja, SUM(sg2.monto_solicitado) AS total_gastado
+            FROM ope_solicitud_gasto sg2
+            WHERE sg2.estado_solicitud = 'APROBADO'
+            GROUP BY sg2.id_ciclo_caja
+        ) vtg2 ON vtg2.id_ciclo_caja = occ.id_ciclo_caja
+    ) vsf ON vsf.id_ciclo_caja = r.id_ciclo_caja
     ORDER BY r.estado_rendicion DESC;
 END$$
 
@@ -1432,9 +2150,9 @@ BEGIN
         r.id_rendicion,
         r.fecha_presentacion,
         r.fecha_aprobacion,
-        r.monto_total_declarado,
-        r.monto_total_aprobado,
-        r.monto_saldo_final,
+        COALESCE(vtd.total_declarado, r.monto_total_declarado) AS monto_total_declarado,
+        COALESCE(vta.total_aprobado, r.monto_total_aprobado) AS monto_total_aprobado,
+        COALESCE(vsf.saldo_final, r.monto_saldo_final) AS monto_saldo_final,
         r.estado_rendicion,
         r.comentario,
         r.id_ciclo_caja,
@@ -1443,12 +2161,41 @@ BEGIN
         cc.fecha_apertura AS cc_fecha_apertura,
         cc.fecha_cierre AS cc_fecha_cierre,
         cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
-        cc.monto_total_gastado AS cc_monto_total_gastado,
+        COALESCE(vtg.total_gastado, cc.monto_total_gastado) AS cc_monto_total_gastado,
         cc.estado_ciclo AS cc_estado_ciclo,
         cc.id_caja_chica AS cc_id_caja_chica,
         cc.id_rendicion AS cc_id_rendicion
     FROM ope_rendicion r
     LEFT JOIN ope_ciclo_caja cc ON r.id_ciclo_caja = cc.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtg ON vtg.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(cp.monto_total) AS total_declarado
+        FROM ope_solicitud_gasto sg
+        JOIN ope_comprobante_pago cp ON sg.id_solicitud_gasto = cp.id_solicitud_gasto
+        WHERE cp.estado_comprobante != 'ANULADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtd ON vtd.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_aprobado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vta ON vta.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT occ.id_ciclo_caja, (occ.monto_saldo_inicial - COALESCE(vtg2.total_gastado, 0)) AS saldo_final
+        FROM ope_ciclo_caja occ
+        LEFT JOIN (
+            SELECT sg2.id_ciclo_caja, SUM(sg2.monto_solicitado) AS total_gastado
+            FROM ope_solicitud_gasto sg2
+            WHERE sg2.estado_solicitud = 'APROBADO'
+            GROUP BY sg2.id_ciclo_caja
+        ) vtg2 ON vtg2.id_ciclo_caja = occ.id_ciclo_caja
+    ) vsf ON vsf.id_ciclo_caja = r.id_ciclo_caja
     ORDER BY r.estado_rendicion DESC;
 END$$
 
@@ -1459,9 +2206,9 @@ BEGIN
         r.id_rendicion,
         r.fecha_presentacion,
         r.fecha_aprobacion,
-        r.monto_total_declarado,
-        r.monto_total_aprobado,
-        r.monto_saldo_final,
+        COALESCE(vtd.total_declarado, r.monto_total_declarado) AS monto_total_declarado,
+        COALESCE(vta.total_aprobado, r.monto_total_aprobado) AS monto_total_aprobado,
+        COALESCE(vsf.saldo_final, r.monto_saldo_final) AS monto_saldo_final,
         r.estado_rendicion,
         r.comentario,
         r.id_ciclo_caja,
@@ -1470,17 +2217,47 @@ BEGIN
         cc.fecha_apertura AS cc_fecha_apertura,
         cc.fecha_cierre AS cc_fecha_cierre,
         cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
-        cc.monto_total_gastado AS cc_monto_total_gastado,
+        COALESCE(vtg.total_gastado, cc.monto_total_gastado) AS cc_monto_total_gastado,
         cc.estado_ciclo AS cc_estado_ciclo,
         cc.id_caja_chica AS cc_id_caja_chica,
         cc.id_rendicion AS cc_id_rendicion
     FROM ope_rendicion r
     LEFT JOIN ope_ciclo_caja cc ON r.id_ciclo_caja = cc.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtg ON vtg.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(cp.monto_total) AS total_declarado
+        FROM ope_solicitud_gasto sg
+        JOIN ope_comprobante_pago cp ON sg.id_solicitud_gasto = cp.id_solicitud_gasto
+        WHERE cp.estado_comprobante != 'ANULADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtd ON vtd.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_aprobado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vta ON vta.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT occ.id_ciclo_caja, (occ.monto_saldo_inicial - COALESCE(vtg2.total_gastado, 0)) AS saldo_final
+        FROM ope_ciclo_caja occ
+        LEFT JOIN (
+            SELECT sg2.id_ciclo_caja, SUM(sg2.monto_solicitado) AS total_gastado
+            FROM ope_solicitud_gasto sg2
+            WHERE sg2.estado_solicitud = 'APROBADO'
+            GROUP BY sg2.id_ciclo_caja
+        ) vtg2 ON vtg2.id_ciclo_caja = occ.id_ciclo_caja
+    ) vsf ON vsf.id_ciclo_caja = r.id_ciclo_caja
     WHERE r.estado_rendicion != 'ANULADO'
     ORDER BY r.estado_rendicion DESC, r.id_rendicion DESC;
 END$$
 
 DELIMITER ;
+
 DELIMITER //
 
 -- ===============================================================================
@@ -2934,10 +3711,8 @@ DELIMITER $$
 
 DROP PROCEDURE IF EXISTS pa_insertar_administrador $$
 CREATE PROCEDURE pa_insertar_administrador(
-
-        IN p_id_usuario_accion INT,
-IN p_id_usuario INT
-
+    IN p_id_usuario_accion INT,
+	IN p_id_usuario INT
 )
 BEGIN
     IF p_id_usuario IS NULL OR p_id_usuario <= 0 THEN
@@ -3261,7 +4036,8 @@ BEGIN
         u.apellido_materno AS jefe_apellido_materno,
         u.correo AS jefe_correo,
         e.numero_celular AS jefe_numero_celular,
-        e.rol_flujo AS jefe_rol_flujo
+        e.rol_flujo AS jefe_rol_flujo,
+        CASE WHEN u.esta_activo = 1 THEN 'ACTIVO' ELSE 'INACTIVO' END AS jefe_estado_usuario
     FROM rrhh_area a
     LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
     LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
@@ -3283,7 +4059,8 @@ BEGIN
         u.apellido_materno AS jefe_apellido_materno,
         u.correo AS jefe_correo,
         e.numero_celular AS jefe_numero_celular,
-        e.rol_flujo AS jefe_rol_flujo
+        e.rol_flujo AS jefe_rol_flujo,
+        CASE WHEN u.esta_activo = 1 THEN 'ACTIVO' ELSE 'INACTIVO' END AS jefe_estado_usuario
     FROM rrhh_area a
     LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
     LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
@@ -3305,7 +4082,8 @@ BEGIN
         u.apellido_materno AS jefe_apellido_materno,
         u.correo AS jefe_correo,
         e.numero_celular AS jefe_numero_celular,
-        e.rol_flujo AS jefe_rol_flujo
+        e.rol_flujo AS jefe_rol_flujo,
+        CASE WHEN u.esta_activo = 1 THEN 'ACTIVO' ELSE 'INACTIVO' END AS jefe_estado_usuario
     FROM rrhh_area a
     LEFT JOIN rrhh_empleado e ON a.id_jefe = e.id_usuario
     LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
@@ -3998,6 +4776,7 @@ DELIMITER $$
 
 DROP PROCEDURE IF EXISTS pa_insertar_usuario $$
 CREATE PROCEDURE pa_insertar_usuario(
+	OUT p_id_generado INT, 
     IN p_id_usuario_accion INT,
     IN p_nombres VARCHAR(60),
     IN p_apellido_paterno VARCHAR(40),
@@ -4014,7 +4793,7 @@ BEGIN
         p_nombres, p_apellido_paterno, p_apellido_materno, p_password_hash, p_correo,
         NOW(), NOW(), p_id_usuario_accion, p_id_usuario_accion
     );
-    SELECT LAST_INSERT_ID() AS p_id_generado;
+    SET p_id_generado = LAST_INSERT_ID();
 END$$
 
 DROP PROCEDURE IF EXISTS pa_modificar_usuario $$
@@ -5463,5 +6242,125 @@ BEGIN
         NOW()
     );
 END //
+
+DELIMITER ;
+
+-- ===============================================================================
+-- TABLA Y PROCEDIMIENTOS PARA CONTROL DE INTENTOS DE LOGIN
+-- Reglas: maximo 5 intentos fallidos, bloqueo de 15 minutos
+-- ===============================================================================
+
+CREATE TABLE IF NOT EXISTS rrhh_intentos_login (
+    id_intento INT NOT NULL AUTO_INCREMENT,
+    id_usuario INT NULL,
+    correo VARCHAR(255) NOT NULL,
+    intentos_fallidos INT DEFAULT 0,
+    bloqueado_hasta DATETIME NULL,
+    ultimo_intento DATETIME DEFAULT CURRENT_TIMESTAMP,
+    creado_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    actualizado_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT pk_rrhh_intentos_login PRIMARY KEY (id_intento),
+    CONSTRAINT fk_intentos_usuario FOREIGN KEY (id_usuario)
+        REFERENCES rrhh_usuario(id_usuario)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE,
+    CONSTRAINT uk_intentos_correo UNIQUE (correo)
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_intentos_bloqueado ON rrhh_intentos_login(bloqueado_hasta);
+CREATE INDEX idx_intentos_correo ON rrhh_intentos_login(correo);
+CREATE INDEX idx_intentos_ultimo ON rrhh_intentos_login(ultimo_intento);
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS pa_verificar_bloqueo $$
+CREATE PROCEDURE pa_verificar_bloqueo(
+    IN p_correo VARCHAR(255),
+    OUT p_bloqueado TINYINT,
+    OUT p_intentos_restantes INT,
+    OUT p_minutos_restantes INT,
+    OUT p_id_usuario INT
+)
+BEGIN
+    DECLARE v_bloqueado_hasta DATETIME;
+    DECLARE v_intentos INT DEFAULT 0;
+    DECLARE v_id_usuario INT DEFAULT NULL;
+    DECLARE v_max_intentos INT DEFAULT 5;
+    DECLARE v_minutos_bloqueo INT DEFAULT 15;
+
+    SET p_bloqueado = 0;
+    SET p_intentos_restantes = v_max_intentos;
+    SET p_minutos_restantes = 0;
+    SET p_id_usuario = NULL;
+
+    -- Buscar usuario por correo para obtener id_usuario
+    SELECT u.id_usuario INTO v_id_usuario
+    FROM rrhh_usuario u
+    WHERE u.correo = p_correo;
+
+    SET p_id_usuario = v_id_usuario;
+
+    -- Obtener registro de intentos si existe
+    SELECT intentos_fallidos, bloqueado_hasta
+      INTO v_intentos, v_bloqueado_hasta
+    FROM rrhh_intentos_login
+    WHERE correo = p_correo;
+
+    -- Si no hay registro, el usuario puede intentar con todos los intentos disponibles
+    IF v_intentos IS NULL THEN
+        SET p_intentos_restantes = v_max_intentos;
+    ELSE
+        -- Verificar si ya paso el tiempo de bloqueo
+        IF v_bloqueado_hasta IS NOT NULL AND v_bloqueado_hasta > NOW() THEN
+            SET p_bloqueado = 1;
+            SET p_minutos_restantes = TIMESTAMPDIFF(MINUTE, NOW(), v_bloqueado_hasta);
+            SET p_intentos_restantes = 0;
+        ELSE
+            -- Bloqueo expiro o no estaba bloqueado, calcular intentos restantes
+            SET p_intentos_restantes = GREATEST(v_max_intentos - v_intentos, 0);
+        END IF;
+    END IF;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_registrar_intento_fallido $$
+CREATE PROCEDURE pa_registrar_intento_fallido(
+    IN p_correo VARCHAR(255),
+    IN p_id_usuario INT
+)
+BEGIN
+    DECLARE v_intentos INT DEFAULT 0;
+    DECLARE v_max_intentos INT DEFAULT 5;
+    DECLARE v_minutos_bloqueo INT DEFAULT 15;
+
+    -- Intentar insertar si no existe
+    INSERT INTO rrhh_intentos_login (id_usuario, correo, intentos_fallidos, ultimo_intento)
+    VALUES (p_id_usuario, p_correo, 1, NOW())
+    ON DUPLICATE KEY UPDATE
+        id_usuario = COALESCE(p_id_usuario, id_usuario),
+        intentos_fallidos = intentos_fallidos + 1,
+        ultimo_intento = NOW();
+
+    -- Obtener contador actualizado
+    SELECT intentos_fallidos INTO v_intentos
+    FROM rrhh_intentos_login
+    WHERE correo = p_correo;
+
+    -- Si se supera el limite, establecer bloqueo de 15 minutos
+    IF v_intentos >= v_max_intentos THEN
+        UPDATE rrhh_intentos_login
+           SET bloqueado_hasta = DATE_ADD(NOW(), INTERVAL v_minutos_bloqueo MINUTE)
+         WHERE correo = p_correo;
+    END IF;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_resetear_intentos $$
+CREATE PROCEDURE pa_resetear_intentos(
+    IN p_correo VARCHAR(255)
+)
+BEGIN
+    DELETE FROM rrhh_intentos_login
+    WHERE correo = p_correo;
+END$$
 
 DELIMITER ;

@@ -2,6 +2,8 @@ package pe.edu.pucp.economix.rrhh.daoi;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.util.HashMap;
 import java.util.Map;
 
 import pe.edu.pucp.economix.config.DBManager;
@@ -132,5 +134,59 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
         admin.setEstado("ACTIVO".equals(estadoStr) ? EstadoUsuario.ACTIVO : EstadoUsuario.INACTIVO);
         
         return admin;
+    }
+
+    @Override
+    public Map<String, Object> verificarBloqueo(String correo) throws SQLException {
+        Map<String, Object> resultado = new HashMap<>();
+        Map<String, Object> parametrosEntrada = Map.of("p_correo", correo);
+        Map<String, Object> parametrosSalida = new HashMap<>();
+        parametrosSalida.put("p_bloqueado", Types.INTEGER);
+        parametrosSalida.put("p_intentos_restantes", Types.INTEGER);
+        parametrosSalida.put("p_minutos_restantes", Types.INTEGER);
+        parametrosSalida.put("p_id_usuario", Types.INTEGER);
+
+        try {
+            DBManager.getDBManager().ejecutarProcedimiento(
+                "pa_verificar_bloqueo", parametrosEntrada, parametrosSalida);
+
+            resultado.put("bloqueado", Integer.valueOf(1).equals(parametrosSalida.get("p_bloqueado")));
+            resultado.put("intentosRestantes", parametrosSalida.getOrDefault("p_intentos_restantes", 5));
+            resultado.put("minutosRestantes", parametrosSalida.getOrDefault("p_minutos_restantes", 0));
+            resultado.put("idUsuario", parametrosSalida.get("p_id_usuario"));
+        } catch (SQLException ex) {
+            System.out.println("Error al verificar bloqueo: " + ex.getMessage());
+            throw ex;
+        }
+
+        return resultado;
+    }
+
+    @Override
+    public void registrarIntentoFallido(String correo, Integer idUsuario) throws SQLException {
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_correo", correo);
+        parametrosEntrada.put("p_id_usuario", idUsuario);
+
+        try {
+            DBManager.getDBManager().ejecutarProcedimiento(
+                "pa_registrar_intento_fallido", parametrosEntrada, null);
+        } catch (SQLException ex) {
+            System.out.println("Error al registrar intento fallido: " + ex.getMessage());
+            throw ex;
+        }
+    }
+
+    @Override
+    public void resetearIntentos(String correo) throws SQLException {
+        Map<String, Object> parametrosEntrada = Map.of("p_correo", correo);
+
+        try {
+            DBManager.getDBManager().ejecutarProcedimiento(
+                "pa_resetear_intentos", parametrosEntrada, null);
+        } catch (SQLException ex) {
+            System.out.println("Error al resetear intentos: " + ex.getMessage());
+            throw ex;
+        }
     }
 }

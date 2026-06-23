@@ -52,10 +52,14 @@
         <p class="fw-bold mb-0">@ProximoCierre</p>
     </div>
 
-    <div class="col-1 text-end">
-        <button class="btn btn-outline-primary btn-sm px-3"
+    <div class="col-2 text-end">
+        <button class="btn btn-outline-primary btn-sm px-2 me-1"
                 @onclick="AbrirDetalle">
             Detalle
+        </button>
+        <button class="btn btn-outline-dark btn-sm px-2"
+                @onclick="GestionarCiclos">
+            Ciclos
         </button>
     </div>
 </div>
@@ -94,6 +98,9 @@
     [Parameter]
     public EventCallback OnMuestraDetalle { get; set; }
 
+    [Parameter]
+    public EventCallback OnGestionarCiclos { get; set; }
+
     private string CuentaBancariaText
     {
         get
@@ -109,5 +116,10 @@
     private async Task AbrirDetalle()
     {
         await OnMuestraDetalle.InvokeAsync();
+    }
+
+    private async Task GestionarCiclos()
+    {
+        await OnGestionarCiclos.InvokeAsync();
     }
 }

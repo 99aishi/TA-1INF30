@@ -1,14 +1,23 @@
 @inject NavigationManager Navigation
 @inject IComprobantePagoWS ComprobantePagoWS
+@inject IPermisoEdicionWS PermisoEdicionWS
 @inject IUsuarioWS UsuarioWS
 
 <div class="card p-3 h-100 rounded-4 d-flex justify-content-between flex-column">
     
     <div class="row">
-        <p class="h5">Datos extraidos</p> 
+        <div class="col-12 d-flex justify-content-between align-items-center mb-2">
+            <p class="h5 mb-0">Datos extraidos</p> 
+            @if (RequiereAutorizacion)
+            {
+                <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill" style="font-size: 0.95rem;">
+                    <i class="bi bi-lock-fill me-1"></i> Solo lectura: ciclo @Comprobante?.Solicitud?.Ciclo?.Estado
+                </span>
+            }
+        </div>
         <div class="col-4 mt-3">
             <label for="TipoDocumento" class="form-label">Tipo de Documento</label>    
-            <select class="form-control bg-light">
+            <select class="form-control bg-light" disabled="@RequiereAutorizacion">
                 <option selected>Tipo de Documento</option>
                 <option>Boleta</option>
                 <option>Factura</option>
@@ -16,27 +25,27 @@
         </div>
         <div class="col-4 mt-3">
             <label for="RUC" class="form-label">RUC</label>    
-            <input type="text" id="RUC" placeholder="RUC" disbled="@(!EsEvaluacion)" 
+            <input type="text" id="RUC" placeholder="RUC" disabled="@(!EsEvaluacion || RequiereAutorizacion)" 
                     class="form-control form-control-lg rounded-4 bg-light" >
         </div>
         <div class="col-4 mt-3">
             <label for="RazonSocial" class="form-label">Razón Social</label>    
-            <input type="text" id="RazonSocial" placeholder="Razón Social" disbled="@(!EsEvaluacion)" 
+            <input type="text" id="RazonSocial" placeholder="Razón Social" disabled="@(!EsEvaluacion || RequiereAutorizacion)" 
                     class="form-control form-control-lg rounded-4 bg-light" >
         </div>
         <div class="col-4 mt-3">
             <label for="NumeroSerial" class="form-label">Número Serial</label>    
-            <input type="text" id="NumeroSerial" placeholder="Número Serial" disbled="@(!EsEvaluacion)"
+            <input type="text" id="NumeroSerial" placeholder="Número Serial" disabled="@(!EsEvaluacion || RequiereAutorizacion)"
                     class="form-control form-control-lg rounded-4 bg-light" >
         </div>
         <div class="col-4 mt-3">
             <label for="FechaDeEmision" class="form-label">Fecha de Emisión</label>    
-            <input type="date" id="FechaDeEmision" placeholder="Fecha de Emisión" disbled="@(!EsEvaluacion)"
+            <input type="date" id="FechaDeEmision" placeholder="Fecha de Emisión" disabled="@(!EsEvaluacion || RequiereAutorizacion)"
                     class="form-control form-control-lg rounded-4 bg-light" >
         </div>
         <div class="col-4 mt-3">
             <label for="Total" class="form-label">Total*</label>    
-            <input type="text" id="Total" placeholder=" @SimboloMoneda 0.00" disbled="@(!EsEvaluacion)"
+            <input type="text" id="Total" placeholder=" @SimboloMoneda 0.00" disabled="@(!EsEvaluacion || RequiereAutorizacion)"
                     class="form-control form-control-lg rounded-4 bg-light" >
         </div>
         <div class="col-2 mt-3 d-flex flex-column align-items-start">
@@ -47,7 +56,7 @@
         </div>
         <div class="col-10 mt-3">
             <label for="Comentario" class="form-label">Comentario</label>    
-            <input readonly type="text" id="Comentario" placeholder="Por Evaluar" disbled="@(EsEvaluacion)"
+            <input readonly type="text" id="Comentario" placeholder="Por Evaluar" disabled="@(EsEvaluacion || RequiereAutorizacion)"
                     class="form-control form-control-lg rounded-4 bg-light">
         </div>
     </div>
@@ -57,6 +66,37 @@
         <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
             @ErrorMessage
             <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+        </div>
+    }
+
+    @if (MostrarModalSolicitud)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-4">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Solicitar autorización de edición</h5>
+                        <button type="button" class="btn-close" @onclick="CerrarModalSolicitud"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>El ciclo se encuentra <strong>@Comprobante?.Solicitud?.Ciclo?.Estado</strong>. Para editar este comprobante necesitas autorización de un Jefe o Tesorero (válida por 48 horas).</p>
+                        <div class="mb-3">
+                            <label for="MotivoSolicitud" class="form-label">Motivo de la solicitud</label>
+                            <textarea id="MotivoSolicitud" class="form-control" rows="3" @bind="MotivoSolicitud" placeholder="Explique por qué necesita editar el comprobante..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CerrarModalSolicitud">Cancelar</button>
+                        <button type="button" class="btn btn-primary" @onclick="SolicitarAutorizacion" disabled="@Solicitando">
+                            @if (Solicitando)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1"></span>
+                            }
+                            Enviar solicitud
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     }
 
@@ -97,6 +137,17 @@
                     Rechazar
                 </button>
             }
+            else if (RequiereAutorizacion)
+            {
+                <button type="button" class="btn btn-primary align-self-start mt-3"
+                        @onclick="AbrirModalSolicitud">
+                    <i class="bi bi-key-fill me-1"></i> Solicitar autorización
+                </button>
+                <button type="button" class="btn btn-outline-info align-self-start mt-3"
+                        @onclick="MostrarItemsComprobante">
+                    Volver
+                </button>
+            }
             else
             {
                 <button type="button" class="btn btn-outline-info align-self-start mt-3"
@@ -123,6 +174,9 @@
     public bool EsAsociacion { get; set; }
 
     [Parameter]
+    public bool RequiereAutorizacion { get; set; }
+
+    [Parameter]
     public ComprobantePago? Comprobante { get; set; }
 
     [Parameter]
@@ -130,10 +184,52 @@
 
     private string SimboloMoneda = "S/.";
     private string ErrorMessage { get; set; } = string.Empty;
+    private bool MostrarModalSolicitud { get; set; }
+    private string MotivoSolicitud { get; set; } = string.Empty;
+    private bool Solicitando { get; set; }
 
     public void MostrarItemsComprobante()
     {
         Navigation.NavigateTo("/Comprobantes de Pago");
+    }
+
+    private void AbrirModalSolicitud()
+    {
+        MotivoSolicitud = string.Empty;
+        MostrarModalSolicitud = true;
+    }
+
+    private void CerrarModalSolicitud()
+    {
+        MostrarModalSolicitud = false;
+    }
+
+    private async Task SolicitarAutorizacion()
+    {
+        ErrorMessage = string.Empty;
+        if (Comprobante == null || Comprobante.Solicitud?.Solicitante == null) return;
+
+        Solicitando = true;
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            var permiso = new PermisoEdicion
+            {
+                Solicitante = Comprobante.Solicitud.Solicitante,
+                Comprobante = Comprobante,
+                MotivoSolicitud = MotivoSolicitud
+            };
+            await Task.Run(() => PermisoEdicionWS.Solicitar(permiso, idUsuarioAccion));
+            MostrarModalSolicitud = false;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Solicitando = false;
+        }
     }
 
     private async Task Aprobar()

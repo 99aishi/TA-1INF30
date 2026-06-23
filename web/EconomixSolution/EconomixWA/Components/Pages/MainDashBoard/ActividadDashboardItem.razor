@@ -1,0 +1,33 @@
+<div class="card rounded-4 p-3 mb-2">
+    <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1">
+            <p class="mb-1">@Actividad?.Descripcion</p>
+            <small class="text-muted">
+                <i class="bi bi-person-circle me-1"></i>@Actividad?.NombreCompletoUsuario
+                <span class="mx-1">&middot;</span>
+                <span class="badge bg-light text-dark border">@Actividad?.EntidadNombre</span>
+            </small>
+        </div>
+        <small class="text-muted text-nowrap ms-2">@FechaRelativa</small>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public AuditLogEntry? Actividad { get; set; }
+
+    private string FechaRelativa
+    {
+        get
+        {
+            var fecha = Actividad?.CreadoAt ?? DateTime.MinValue;
+            if (fecha == DateTime.MinValue) return "-";
+            var diff = DateTime.Now - fecha;
+            if (diff.TotalMinutes < 1) return "ahora";
+            if (diff.TotalMinutes < 60) return $"hace {diff.Minutes}m";
+            if (diff.TotalHours < 24) return $"hace {diff.Hours}h";
+            if (diff.TotalDays < 7) return $"hace {diff.Days}d";
+            return fecha.ToString("dd/MM/yyyy");
+        }
+    }
+}

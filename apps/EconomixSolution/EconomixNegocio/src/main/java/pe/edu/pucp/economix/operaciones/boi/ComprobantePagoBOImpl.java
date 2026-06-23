@@ -1,15 +1,18 @@
 package pe.edu.pucp.economix.operaciones.boi;
 
-import pe.edu.pucp.economix.operaciones.ibo.ICicloCajaBO;
 import pe.edu.pucp.economix.operaciones.ibo.IComprobantePagoBO;
-import pe.edu.pucp.economix.operaciones.ibo.ISolicitudGastoBO;
+import pe.edu.pucp.economix.operaciones.idao.ICicloCajaChicaDAO;
 import pe.edu.pucp.economix.operaciones.idao.IComprobantePagoDAO;
+import pe.edu.pucp.economix.operaciones.idao.ISolicitudGastoDAO;
+import pe.edu.pucp.economix.operaciones.daoi.CicloCajaChicaDAOImpl;
 import pe.edu.pucp.economix.operaciones.daoi.ComprobantePagoDAOImpl;
+import pe.edu.pucp.economix.operaciones.daoi.SolicitudGastoDAOImpl;
+import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
 import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoComprobante;
-import pe.edu.pucp.economix.tesoreria.boi.MonedaBOImpl;
-import pe.edu.pucp.economix.tesoreria.ibo.IMonedaBO;
+import pe.edu.pucp.economix.tesoreria.idao.IMonedaDAO;
+import pe.edu.pucp.economix.tesoreria.daoi.MonedaDAOImpl;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 import java.util.Date;
@@ -17,14 +20,14 @@ import java.util.List;
 
 public class ComprobantePagoBOImpl implements IComprobantePagoBO {
     private final IComprobantePagoDAO comprobantePagoDAO;
-    private final IMonedaBO monedaBO;
-    private final ISolicitudGastoBO solicitudGastoBO;
-    private final ICicloCajaBO cicloBO;
+    private final IMonedaDAO monedaDAO;
+    private final ISolicitudGastoDAO solicitudGastoDAO;
+    private final ICicloCajaChicaDAO cicloCajaChicaDAO;
     public ComprobantePagoBOImpl(){
         comprobantePagoDAO= new ComprobantePagoDAOImpl();
-        monedaBO=new MonedaBOImpl();
-        solicitudGastoBO=new SolicitudGastoBOImpl();
-        cicloBO= new CicloCajaBOImpl();
+        monedaDAO=new MonedaDAOImpl();
+        solicitudGastoDAO=new SolicitudGastoDAOImpl();
+        cicloCajaChicaDAO= new CicloCajaChicaDAOImpl();
     }
     private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
         if (idUsuarioAccion <= 0) {
@@ -84,7 +87,7 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         validarFecha(comprobante);
         validarContraSolicitud(comprobante, EsModificacion);
 
-        SolicitudGasto soli = solicitudGastoBO.buscarPorId(comprobante.getSolicitud().getIdSolicitudGasto());
+        SolicitudGasto soli = solicitudGastoDAO.buscarPorId(comprobante.getSolicitud().getIdSolicitudGasto());
         boolean esGastoExcepcional = soli.getMontoSolicitado() <= 50;
 
         // 2. Validación de números adaptada
@@ -99,7 +102,7 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
     }
 
     public void validarContraSolicitud(ComprobantePago comprobante, boolean esModificacion) throws Exception {
-        SolicitudGasto soli = solicitudGastoBO.buscarPorId(comprobante.getSolicitud().getIdSolicitudGasto());
+        SolicitudGasto soli = solicitudGastoDAO.buscarPorId(comprobante.getSolicitud().getIdSolicitudGasto());
         List<ComprobantePago> comprobantesExistentes = comprobantePagoDAO.listarPorSolicitud(soli.getIdSolicitudGasto());
 
         double montoComprobantes = 0;
@@ -126,7 +129,7 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
             throw new Exception("El comprobante tiene que tener una solicitud asociada.");
         }
 
-        if(solicitudGastoBO.buscarPorId(solicitud.getIdSolicitudGasto())==null){
+        if(solicitudGastoDAO.buscarPorId(solicitud.getIdSolicitudGasto())==null){
             throw new Exception("La solicitud asociada no existe.");
         }
     }
@@ -135,7 +138,7 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         if(moneda==null){
             throw new Exception("El comprobante tiene que tener una moneda asignada.");
         }
-        if(monedaBO.buscarPorId(moneda.getIdMoneda())==null){
+        if(monedaDAO.buscarPorId(moneda.getIdMoneda())==null){
             throw new Exception("La moneda no esta registrada.");
         }
     }
@@ -189,7 +192,7 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         if(fechaEmision == null) {
             throw new Exception("La fecha de emisión es obligatoria.");
         }
-        SolicitudGasto soli = solicitudGastoBO.buscarPorId(comprobante.getSolicitud().getIdSolicitudGasto());
+        SolicitudGasto soli = solicitudGastoDAO.buscarPorId(comprobante.getSolicitud().getIdSolicitudGasto());
         Date fechaSolicitado= soli.getFechaSolicitud();
         Date fechaActual= new Date();
         if(fechaEmision.after(fechaActual)){
@@ -198,8 +201,9 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         if(fechaEmision.before(fechaSolicitado)){
             throw new Exception("La fecha del comprobante no puede ser antes de la fecha de la solicitud relacionada.");
         }
-        Date inicioCiclo = cicloBO.buscarPorId(soli.getCiclo().getIdCicloCaja()).getFechaApertura();
-        Date finCiclo = cicloBO.buscarPorId(soli.getCiclo().getIdCicloCaja()).getFechaCierre();
+        CicloCajaChica ciclo = cicloCajaChicaDAO.buscarPorId(soli.getCiclo().getIdCicloCaja());
+        Date inicioCiclo = ciclo.getFechaApertura();
+        Date finCiclo = ciclo.getFechaCierre();
 
         if (fechaEmision.before(inicioCiclo) || (finCiclo != null && fechaEmision.after(finCiclo))) {
             throw new Exception("La fecha del comprobante no pertenece al ciclo activo de la caja chica.");

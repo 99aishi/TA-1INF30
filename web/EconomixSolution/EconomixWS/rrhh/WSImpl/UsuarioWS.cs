@@ -1,14 +1,26 @@
 namespace EconomixWS.UsuarioWS;
 
+using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using EconomixModel.Model;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http;
+
+public class LoginException : Exception
+{
+    public HttpStatusCode StatusCode { get; }
+
+    public LoginException(string message, HttpStatusCode statusCode) : base(message)
+    {
+        StatusCode = statusCode;
+    }
+}
 
 public class UsuarioWS : IUsuarioWS
 {
@@ -29,10 +41,22 @@ public class UsuarioWS : IUsuarioWS
         try
         {
             var response = _httpClient.PostAsJsonAsync("login", request, _jsonOptions).GetAwaiter().GetResult();
-            
-            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+
+            if (response.StatusCode == HttpStatusCode.NoContent)
             {
                 return null;
+            }
+
+            if (response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                var error = response.Content.ReadFromJsonAsync<ErrorResponse>(_jsonOptions).GetAwaiter().GetResult();
+                throw new LoginException(error?.Mensaje ?? "Cuenta bloqueada.", HttpStatusCode.Forbidden);
+            }
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                var error = response.Content.ReadFromJsonAsync<ErrorResponse>(_jsonOptions).GetAwaiter().GetResult();
+                throw new LoginException(error?.Mensaje ?? "Usuario o contraseña incorrectos.", HttpStatusCode.Unauthorized);
             }
 
             if (response.IsSuccessStatusCode)
@@ -60,10 +84,20 @@ public class UsuarioWS : IUsuarioWS
             }
             return null;
         }
+        catch (LoginException)
+        {
+            throw;
+        }
         catch
         {
             return null;
         }
+    }
+
+    public class ErrorResponse
+    {
+        [JsonPropertyName("mensaje")]
+        public string? Mensaje { get; set; }
     }
 
     public bool IsAuthenticated()

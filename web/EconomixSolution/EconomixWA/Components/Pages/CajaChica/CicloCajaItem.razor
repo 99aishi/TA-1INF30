@@ -1,0 +1,87 @@
+<div class="card rounded-4 p-3 bg-light mb-2">
+    <div class="d-flex flex-row justify-content-between align-items-center gap-3">
+        <div class="d-flex flex-column gap-1">
+            <p class="h6 mb-0">
+                @(Ciclo?.CajaChica?.Nombre ?? "Caja Chica")
+                <span class="text-muted small">· Semana @(Ciclo?.NumeroSemana ?? 0)</span>
+            </p>
+            <div class="d-flex flex-row gap-3">
+                <span class="badge @EstadoClase rounded-pill">@(Ciclo?.Estado ?? "-")</span>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-calendar-week me-1"></i>
+                    @(Ciclo?.FechaApertura?.ToString("dd/MM/yyyy") ?? "-") – @ProximoCierreTexto
+                </p>
+            </div>
+            <div class="d-flex flex-row gap-3 text-muted small">
+                <p class="mb-0">
+                    <i class="bi bi-receipt me-1"></i>
+                    @SolicitudesCount solicitudes
+                    @if (SolicitudesAprobadas > 0)
+                    {
+                        <span class="text-success">(@SolicitudesAprobadas aprobadas)</span>
+                    }
+                </p>
+                <p class="mb-0">
+                    <i class="bi bi-file-earmark-text me-1"></i>
+                    @ComprobantesCount comprobantes
+                </p>
+            </div>
+        </div>
+        <div class="d-flex flex-row align-items-center gap-3">
+            <div class="text-end">
+                <p class="h6 mb-0">@(SimboloMoneda) @Disponible.ToString("N2")</p>
+                <small class="text-muted">de @(SimboloMoneda) @MontoTecho.ToString("N2")</small>
+            </div>
+            <button type="button" class="btn btn-outline-primary" @onclick="VerDetalle">
+                Ver
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public CicloCajaChica? Ciclo { get; set; }
+
+    [Parameter]
+    public EventCallback OnMuestraDetalle { get; set; }
+
+    private string SimboloMoneda => Ciclo?.CajaChica?.Moneda?.Simbolo ?? "S/";
+
+    private double MontoTecho => Ciclo?.CajaChica?.MontoTecho ?? 0;
+
+    private double TotalGastado => Ciclo?.TotalGastado ?? 0;
+
+    private double Disponible => MontoTecho - TotalGastado;
+
+    private int SolicitudesCount => Ciclo?.SolicitudesDeGasto?.Count ?? 0;
+
+    private int SolicitudesAprobadas => Ciclo?.SolicitudesDeGasto?.Count(s => s.Estado?.ToUpperInvariant() == "APROBADO") ?? 0;
+
+    private int ComprobantesCount => Ciclo?.SolicitudesDeGasto?.Sum(s => s.Comprobantes?.Count ?? 0) ?? 0;
+
+    private string EstadoClase => Ciclo?.Estado?.ToUpperInvariant() switch
+    {
+        "ABIERTO" => "bg-success-subtle text-success",
+        "CERRADO" => "bg-secondary-subtle text-secondary",
+        "LIQUIDADO" => "bg-info-subtle text-info",
+        "EN_EXCEPCION" => "bg-warning-subtle text-warning",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+
+    private string ProximoCierreTexto
+    {
+        get
+        {
+            if (Ciclo?.FechaApertura == null) return "-";
+            var inicioSemana = Ciclo.FechaApertura.Value.AddDays(-(int)Ciclo.FechaApertura.Value.DayOfWeek + (int)DayOfWeek.Monday);
+            var viernes = inicioSemana.AddDays(4);
+            return viernes.ToString("dd/MM/yyyy");
+        }
+    }
+
+    private async Task VerDetalle()
+    {
+        await OnMuestraDetalle.InvokeAsync();
+    }
+}

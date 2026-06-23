@@ -6,9 +6,9 @@ import pe.edu.pucp.economix.operaciones.daoi.TransaccionDAOImpl;
 import pe.edu.pucp.economix.operaciones.model.enums.MedioPago;
 import pe.edu.pucp.economix.operaciones.model.enums.TipoTransaccion;
 import pe.edu.pucp.economix.operaciones.model.Transaccion;
-import pe.edu.pucp.economix.tesoreria.boi.MonedaBOImpl;
-import pe.edu.pucp.economix.tesoreria.ibo.IMonedaBO;
+import pe.edu.pucp.economix.tesoreria.idao.IMonedaDAO;
 import pe.edu.pucp.economix.tesoreria.idao.ICuentaBancariaDAO;
+import pe.edu.pucp.economix.tesoreria.daoi.MonedaDAOImpl;
 import pe.edu.pucp.economix.tesoreria.daoi.CuentaBancariaDAOImpl;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
@@ -20,11 +20,11 @@ public class TransaccionBOImpl implements ITransaccionBO {
 
     private final ITransaccionDAO transaccionDAO;
     private final ICuentaBancariaDAO cbDAO;
-    private final IMonedaBO monedaBO;
+    private final IMonedaDAO monedaDAO;
     public TransaccionBOImpl() {
         transaccionDAO= new TransaccionDAOImpl();
         cbDAO = new CuentaBancariaDAOImpl();
-        monedaBO= new MonedaBOImpl();
+        monedaDAO= new MonedaDAOImpl();
     }
 
 
@@ -142,8 +142,13 @@ public class TransaccionBOImpl implements ITransaccionBO {
     }
 
     public void validarMoneda(Moneda moneda) throws Exception{
-
-        if(monedaBO.buscarPorId(moneda.getIdMoneda())==null){
+        if(moneda == null){
+            throw new Exception("La moneda no puede ser nula.");
+        }
+        if(moneda.getIdMoneda() <= 0){
+            throw new Exception("El id de la moneda debe ser mayor que cero.");
+        }
+        if(monedaDAO.buscarPorId(moneda.getIdMoneda())==null){
             throw new Exception("La moneda seleccionada no esta registrada.");
         }
     }

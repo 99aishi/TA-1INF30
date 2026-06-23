@@ -58,6 +58,40 @@ public class CicloCajaChicaDAOImpl implements ICicloCajaChicaDAO {
     }
 
     @Override
+    public int insertarEnTransaccion(CicloCajaChica cicloCajaChica, int idUsuarioAccion) throws SQLException {
+        Map<String,Object> parametrosSalida = new HashMap<>();
+        Map<String,Object> parametrosEntrada = new HashMap<>();
+        parametrosSalida.put("p_id_generado", Types.INTEGER);
+        parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
+        parametrosEntrada.put("p_numero_semana", cicloCajaChica.getNumeroSemana());
+        if(cicloCajaChica.getFechaApertura()!= null)
+            parametrosEntrada.put("p_fecha_apertura", new java.sql.Date(cicloCajaChica.getFechaApertura().getTime()));
+        else
+            parametrosEntrada.put("p_fecha_apertura", null);
+
+        if(cicloCajaChica.getFechaCierre()!= null)
+            parametrosEntrada.put("p_fecha_cierre", new java.sql.Date(cicloCajaChica.getFechaCierre().getTime()));
+        else
+            parametrosEntrada.put("p_fecha_cierre", null);
+        parametrosEntrada.put("p_monto_saldo_inicial", cicloCajaChica.getSaldoInicial());
+        parametrosEntrada.put("p_monto_total_gastado", cicloCajaChica.getTotalGastado());
+        parametrosEntrada.put("p_estado_ciclo", cicloCajaChica.getEstado().toString());
+        if(cicloCajaChica.getCajaChica() != null)
+            parametrosEntrada.put("p_id_caja_chica", cicloCajaChica.getCajaChica().getIdFondo());
+        else
+            parametrosEntrada.put("p_id_caja_chica", null);
+        if(cicloCajaChica.getRendicion()!= null)
+            parametrosEntrada.put("p_id_rendicion", cicloCajaChica.getRendicion().getIdRendicion());
+        else
+            parametrosEntrada.put("p_id_rendicion", null);
+
+        DBManager.getDBManager().ejecutarProcedimientoTransaccion("pa_insertar_ciclo_caja", parametrosEntrada, parametrosSalida);
+        cicloCajaChica.setIdCicloCaja((int)parametrosSalida.get("p_id_generado"));
+
+        return cicloCajaChica.getIdCicloCaja();
+    }
+
+    @Override
     public int modificar(CicloCajaChica cicloCajaChica, int idUsuarioAccion) throws SQLException{
         Map<String,Object> parametrosEntrada = new HashMap<>();
         parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);

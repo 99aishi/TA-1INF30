@@ -1,11 +1,14 @@
 package pe.edu.pucp.economix.operaciones.boi;
 
 import pe.edu.pucp.economix.operaciones.ibo.ICicloCajaBO;
-import pe.edu.pucp.economix.operaciones.ibo.ISolicitudGastoBO;
-import pe.edu.pucp.economix.operaciones.ibo.ITransaccionBO;
 import pe.edu.pucp.economix.operaciones.idao.ICicloCajaChicaDAO;
-import pe.edu.pucp.economix.operaciones.daoi.CicloCajaChicaDAOImpl;
+import pe.edu.pucp.economix.operaciones.idao.IComprobantePagoDAO;
 import pe.edu.pucp.economix.operaciones.idao.ISolicitudGastoDAO;
+import pe.edu.pucp.economix.operaciones.idao.ITransaccionDAO;
+import pe.edu.pucp.economix.operaciones.daoi.CicloCajaChicaDAOImpl;
+import pe.edu.pucp.economix.operaciones.daoi.ComprobantePagoDAOImpl;
+import pe.edu.pucp.economix.operaciones.daoi.SolicitudGastoDAOImpl;
+import pe.edu.pucp.economix.operaciones.daoi.TransaccionDAOImpl;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
 import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
@@ -16,10 +19,10 @@ import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoTransaccion;
 import pe.edu.pucp.economix.operaciones.model.enums.MedioPago;
 import pe.edu.pucp.economix.operaciones.model.enums.TipoTransaccion;
-import pe.edu.pucp.economix.tesoreria.boi.CajaChicaBOImpl;
-import pe.edu.pucp.economix.tesoreria.boi.CuentaBancariaBOImpl;
-import pe.edu.pucp.economix.tesoreria.ibo.ICajaChicaBO;
-import pe.edu.pucp.economix.tesoreria.ibo.ICuentaBancariaBO;
+import pe.edu.pucp.economix.tesoreria.idao.ICajaChicaDAO;
+import pe.edu.pucp.economix.tesoreria.idao.ICuentaBancariaDAO;
+import pe.edu.pucp.economix.tesoreria.daoi.CajaChicaDAOImpl;
+import pe.edu.pucp.economix.tesoreria.daoi.CuentaBancariaDAOImpl;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
@@ -29,17 +32,19 @@ import java.util.List;
 
 public class CicloCajaBOImpl implements ICicloCajaBO {
     private final ICicloCajaChicaDAO cicloCajaChicaDAO;
-    private final ICajaChicaBO cajaBO;
-    private final ISolicitudGastoBO solicitudGastoBO;
-    private final ITransaccionBO transaccionBO;
-    private final ICuentaBancariaBO cuentaBancariaBO;
+    private final IComprobantePagoDAO comprobantePagoDAO;
+    private final ISolicitudGastoDAO solicitudGastoDAO;
+    private final ITransaccionDAO transaccionDAO;
+    private final ICajaChicaDAO cajaChicaDAO;
+    private final ICuentaBancariaDAO cuentaBancariaDAO;
     public CicloCajaBOImpl(){
 
         cicloCajaChicaDAO= new CicloCajaChicaDAOImpl();
-        cajaBO = new CajaChicaBOImpl();
-        solicitudGastoBO=new SolicitudGastoBOImpl();
-        transaccionBO=new TransaccionBOImpl();
-        cuentaBancariaBO=new CuentaBancariaBOImpl();
+        comprobantePagoDAO= new ComprobantePagoDAOImpl();
+        solicitudGastoDAO=new SolicitudGastoDAOImpl();
+        transaccionDAO=new TransaccionDAOImpl();
+        cajaChicaDAO=new CajaChicaDAOImpl();
+        cuentaBancariaDAO=new CuentaBancariaDAOImpl();
     }
 
     private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
@@ -104,7 +109,7 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
         validarIdUsuarioAccion(idUsuarioAccion);
 
         double total=0;
-        List<SolicitudGasto> solicitudesDeGasto= solicitudGastoBO.listarPorCiclo(ciclo.getIdCicloCaja());
+        List<SolicitudGasto> solicitudesDeGasto= solicitudGastoDAO.listarPorCiclo(ciclo.getIdCicloCaja());
         for (SolicitudGasto s: solicitudesDeGasto){
             if(s.getEstado()== EstadoSolicitudGasto.APROBADO){
                 total+=s.getMontoSolicitado();
@@ -138,7 +143,7 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
         if(cajaChica.getIdFondo()<=0){
             throw new Exception("El id de la Caja Chica es obligatorio para la modificación.");
         }
-        if(cajaBO.buscarPorId(cajaChica.getIdFondo())==null){
+        if(cajaChicaDAO.buscarPorId(cajaChica.getIdFondo())==null){
             throw new Exception("La Caja Chica no existe.");
         }
     }
@@ -166,10 +171,10 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
 
         // Calcular monto consumido real a partir de comprobantes aprobados
         double totalComprobantesAprobados = 0;
-        List<SolicitudGasto> solicitudes = solicitudGastoBO.listarPorCiclo(idCicloCaja);
+        List<SolicitudGasto> solicitudes = solicitudGastoDAO.listarPorCiclo(idCicloCaja);
         for (SolicitudGasto s : solicitudes) {
             if (s.getEstado() == EstadoSolicitudGasto.APROBADO || s.getEstado() == EstadoSolicitudGasto.PAGADO || s.getEstado() == EstadoSolicitudGasto.RENDIDO) {
-                List<ComprobantePago> comprobantes = listarComprobantesPorSolicitud(s.getIdSolicitudGasto());
+                List<ComprobantePago> comprobantes = comprobantePagoDAO.listarPorSolicitud(s.getIdSolicitudGasto());
                 for (ComprobantePago c : comprobantes) {
                     if (c.getEstado() == EstadoComprobante.APROBADO) {
                         totalComprobantesAprobados += c.getTotal();
@@ -194,10 +199,6 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
         return cicloCajaChicaDAO.modificar(ciclo, idUsuarioAccion);
     }
 
-    private List<ComprobantePago> listarComprobantesPorSolicitud(int idSolicitud) throws Exception {
-        // Acceso directo al DAO para evitar referencia circular
-        return new pe.edu.pucp.economix.operaciones.daoi.ComprobantePagoDAOImpl().listarPorSolicitud(idSolicitud);
-    }
 
     private void generarTransaccionCierre(TipoTransaccion tipo, double monto, CuentaBancaria cuentaArea, CuentaBancaria cuentaEmpleado, Moneda moneda, int idUsuarioAccion) throws Exception {
         Transaccion transaccion = new Transaccion();
@@ -219,7 +220,7 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
 
         transaccion.setMoneda(moneda);
         transaccion.setEstadoTransaccion(EstadoTransaccion.COMPLETADA);
-        transaccionBO.insertar(transaccion, idUsuarioAccion);
+        transaccionDAO.insertar(transaccion, idUsuarioAccion);
     }
 
 }

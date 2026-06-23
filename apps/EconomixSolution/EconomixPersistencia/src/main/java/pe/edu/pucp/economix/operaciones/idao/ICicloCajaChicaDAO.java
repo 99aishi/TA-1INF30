@@ -6,6 +6,7 @@ import java.sql.SQLException;
 
 public interface ICicloCajaChicaDAO {
     int insertar(CicloCajaChica cicloCajaChica, int idUsuarioAccion) throws SQLException;
+    int insertarEnTransaccion(CicloCajaChica cicloCajaChica, int idUsuarioAccion) throws SQLException;
     int modificar(CicloCajaChica cicloCajaChica, int idUsuarioAccion) throws SQLException;
     int eliminar(int id, int idUsuarioAccion) throws SQLException;
     CicloCajaChica buscarPorId(int id) throws SQLException;

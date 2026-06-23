@@ -1,0 +1,296 @@
+@page "/Permisos Pendientes"
+@inject IPermisoEdicionWS PermisoEdicionWS
+@inject IUsuarioWS UsuarioWS
+@inject NavigationManager Navigation
+
+<div class="h-100 d-flex flex-column p-3">
+    <div class="rounded-4 bg-white p-4 mb-3 shadow-sm">
+        <h3 class="mb-1">Permisos de edición</h3>
+        <p class="text-muted mb-0">Revise las solicitudes de edición de comprobantes y los comprobantes en ventana de excepción.</p>
+    </div>
+
+    <div class="card rounded-4 flex-fill overflow-hidden">
+        <div class="card-header bg-white border-0 pt-3 px-4">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <button class="nav-link @(TabActiva == "pendientes" ? "active" : "")" @onclick='() => TabActiva = "pendientes"'>
+                        <i class="bi bi-clock-history me-1"></i> Pendientes
+                        @if (PermisosPendientesLista.Any())
+                        {
+                            <span class="badge bg-primary ms-1">@PermisosPendientesLista.Count</span>
+                        }
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link @(TabActiva == "excepcion" ? "active" : "")" @onclick='() => TabActiva = "excepcion"'>
+                        <i class="bi bi-exclamation-triangle me-1"></i> Excepción (fin de semana)
+                        @if (ComprobantesExcepcion.Any())
+                        {
+                            <span class="badge bg-warning text-dark ms-1">@ComprobantesExcepcion.Count</span>
+                        }
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body overflow-auto p-4">
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @ErrorMessage
+                    <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+                </div>
+            }
+
+            @if (TabActiva == "pendientes")
+            {
+                @if (Cargando)
+                {
+                    <div class="d-flex justify-content-center p-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                }
+                else if (!PermisosPendientesLista.Any())
+                {
+                    <div class="text-center text-muted p-5">
+                        <i class="bi bi-inbox fs-1"></i>
+                        <p class="mt-2">No hay solicitudes de edición pendientes.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Solicitante</th>
+                                    <th>Comprobante</th>
+                                    <th>Motivo</th>
+                                    <th>Ciclo</th>
+                                    <th>Creado</th>
+                                    <th>Expira</th>
+                                    <th>Estado</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var permiso in PermisosPendientesLista)
+                                {
+                                    <tr>
+                                        <td>@NombreCompleto(permiso.Solicitante)</td>
+                                        <td>
+                                            <small>@permiso.Comprobante?.TipoDocumento</small><br />
+                                            <span class="fw-semibold">@permiso.Comprobante?.RazonSocial</span><br />
+                                            <small class="text-muted">@FormatearMonto(permiso.Comprobante?.MontoTotal ?? 0)</small>
+                                        </td>
+                                        <td>@(string.IsNullOrWhiteSpace(permiso.MotivoSolicitud) ? "-" : permiso.MotivoSolicitud)</td>
+                                        <td>
+                                            <span class="badge bg-secondary">@permiso.Comprobante?.Solicitud?.Ciclo?.Estado</span>
+                                        </td>
+                                        <td>@FormatearFecha(permiso.FechaCreacion)</td>
+                                        <td>@FormatearFecha(permiso.FechaExpiracion)</td>
+                                        <td>
+                                            @if (permiso.Autorizador == null)
+                                            {
+                                                <span class="badge bg-warning text-dark">Por autorizar</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">Autorizado</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            @if (permiso.Autorizador == null)
+                                            {
+                                                <button class="btn btn-sm btn-success me-1" @onclick="() => Otorgar(permiso)">Autorizar</button>
+                                                <button class="btn btn-sm btn-outline-danger" @onclick="() => Revocar(permiso.IdPermiso)">Rechazar</button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-sm btn-outline-danger" @onclick="() => Revocar(permiso.IdPermiso)">Revocar</button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+            else
+            {
+                @if (Cargando)
+                {
+                    <div class="d-flex justify-content-center p-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                }
+                else if (!ComprobantesExcepcion.Any())
+                {
+                    <div class="text-center text-muted p-5">
+                        <i class="bi bi-calendar-check fs-1"></i>
+                        <p class="mt-2">No hay comprobantes en ventana de excepción.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Empleado</th>
+                                    <th>Caja Chica</th>
+                                    <th>Ciclo</th>
+                                    <th>Comprobante</th>
+                                    <th>Monto</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in ComprobantesExcepcion)
+                                {
+                                    <tr>
+                                        <td>@NombreCompleto(item.Comprobante?.Solicitud?.Solicitante)</td>
+                                        <td>@item.Comprobante?.Solicitud?.Ciclo?.CajaChica?.Nombre</td>
+                                        <td>
+                                            Semana @item.Comprobante?.Solicitud?.Ciclo?.NumeroSemana<br />
+                                            <small class="text-muted">@item.Comprobante?.Solicitud?.Ciclo?.Estado</small>
+                                        </td>
+                                        <td>
+                                            <small>@item.Comprobante?.TipoDocumento</small><br />
+                                            <span class="fw-semibold">@item.Comprobante?.RazonSocial</span>
+                                        </td>
+                                        <td>@FormatearMonto(item.Comprobante?.MontoTotal ?? 0)</td>
+                                        <td class="text-end">
+                                            <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => VerComprobante(item.Comprobante?.IdComprobante ?? 0)">Ver</button>
+                                            <button class="btn btn-sm btn-success" @onclick="() => AutorizarDesdeExcepcion(item)">Autorizar edición</button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string TabActiva { get; set; } = "pendientes";
+    private List<PermisoEdicion> PermisosPendientesLista { get; set; } = new();
+    private List<PermisoEdicion> ComprobantesExcepcion { get; set; } = new();
+    private string ErrorMessage { get; set; } = string.Empty;
+    private bool Cargando { get; set; }
+
+    protected override void OnInitialized()
+    {
+        CargarDatos();
+    }
+
+    private void CargarDatos()
+    {
+        Cargando = true;
+        try
+        {
+            var idAutorizador = UsuarioWS.GetCurrentUserId();
+            PermisosPendientesLista = PermisoEdicionWS.ListarPendientes(idAutorizador);
+            ComprobantesExcepcion = PermisoEdicionWS.ListarEnExcepcion();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Cargando = false;
+        }
+    }
+
+    private string NombreCompleto(Empleado? empleado)
+    {
+        if (empleado == null) return "-";
+        return $"{empleado.Nombres} {empleado.ApellidoPaterno}".Trim();
+    }
+
+    private string FormatearFecha(DateTime? fecha)
+    {
+        return fecha?.ToString("dd/MM/yyyy HH:mm") ?? "-";
+    }
+
+    private string FormatearMonto(double monto)
+    {
+        return $"S/. {monto:N2}";
+    }
+
+    private void VerComprobante(int idComprobante)
+    {
+        Navigation.NavigateTo($"/Comprobantes de Pago/Detalle/{idComprobante}");
+    }
+
+    private void Otorgar(PermisoEdicion permiso)
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            var idAutorizador = UsuarioWS.GetCurrentUserId();
+            PermisoEdicionWS.Otorgar(permiso.IdPermiso, idAutorizador, "Autorizado desde panel de permisos", idAutorizador);
+            CargarDatos();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private void AutorizarDesdeExcepcion(PermisoEdicion item)
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            var idAutorizador = UsuarioWS.GetCurrentUserId();
+            var comprobante = item.Comprobante;
+            if (comprobante?.Solicitud?.Solicitante == null) return;
+
+            // Crear solicitud de permiso si no existe
+            var permiso = new PermisoEdicion
+            {
+                Solicitante = comprobante.Solicitud.Solicitante,
+                Comprobante = comprobante,
+                MotivoSolicitud = "Autorización generada desde ventana de excepción"
+            };
+            PermisoEdicionWS.Solicitar(permiso, idAutorizador);
+
+            // Recargar para obtener el id generado y otorgar
+            PermisosPendientesLista = PermisoEdicionWS.ListarPendientes(idAutorizador);
+            var creado = PermisosPendientesLista
+                .FirstOrDefault(p => p.Comprobante?.IdComprobante == comprobante.IdComprobante
+                                  && p.Autorizador == null
+                                  && p.Estado == "ACTIVO");
+            if (creado != null)
+            {
+                PermisoEdicionWS.Otorgar(creado.IdPermiso, idAutorizador, "Autorizado desde ventana de excepción", idAutorizador);
+            }
+            CargarDatos();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private void Revocar(int idPermiso)
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            PermisoEdicionWS.Revocar(idPermiso, idUsuarioAccion);
+            CargarDatos();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+}

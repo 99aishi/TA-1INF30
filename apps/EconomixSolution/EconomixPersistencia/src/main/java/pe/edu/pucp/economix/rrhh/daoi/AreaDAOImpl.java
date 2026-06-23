@@ -13,6 +13,7 @@ import pe.edu.pucp.economix.config.DBManager;
 import pe.edu.pucp.economix.rrhh.idao.IAreaDAO;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
+import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
 import pe.edu.pucp.economix.rrhh.model.RolFlujo;
 
 
@@ -161,6 +162,9 @@ public class AreaDAOImpl implements  IAreaDAO{
                 String rolFlujo = rs.getString(prefijo + "rol_flujo");
                 if (rolFlujo != null)
                     e.setRolFlujo(RolFlujo.valueOf(rolFlujo));
+                String estado = rs.getString(prefijo + "estado_usuario");
+                if (estado != null)
+                    e.setEstado(EstadoUsuario.valueOf(estado));
             } catch (SQLException ex) {
                 throw new RuntimeException(ex);
             }

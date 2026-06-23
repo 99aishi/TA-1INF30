@@ -35,6 +35,10 @@ public class RendicionDAOImpl implements IRendicionDAO{
         parametrosEntrada.put("p_monto_saldo_final", rendicion.getSaldoFinal());
         parametrosEntrada.put("p_estado_rendicion", rendicion.getEstado().toString());
         parametrosEntrada.put("p_comentario", rendicion.getComentario());
+        if(rendicion.getCicloCajaChica() != null)
+            parametrosEntrada.put("p_id_ciclo_caja", rendicion.getCicloCajaChica().getIdCicloCaja());
+        else
+            parametrosEntrada.put("p_id_ciclo_caja", null);
 
         DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_rendicion", parametrosEntrada, parametrosSalida);
         rendicion.setIdRendicion((int)parametrosSalida.get("p_id_generado"));
@@ -55,6 +59,10 @@ public class RendicionDAOImpl implements IRendicionDAO{
         parametrosEntrada.put("p_monto_saldo_final", rendicion.getSaldoFinal());
         parametrosEntrada.put("p_estado_rendicion", rendicion.getEstado().toString());
         parametrosEntrada.put("p_comentario", rendicion.getComentario());
+        if(rendicion.getCicloCajaChica() != null)
+            parametrosEntrada.put("p_id_ciclo_caja", rendicion.getCicloCajaChica().getIdCicloCaja());
+        else
+            parametrosEntrada.put("p_id_ciclo_caja", null);
 
         int resultado = DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_rendicion", parametrosEntrada, null);
         return resultado;

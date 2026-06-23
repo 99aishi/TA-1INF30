@@ -16,6 +16,14 @@
         </div>
     }
 
+    @if (MostrarBloqueo)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            Cuenta bloqueada por demasiados intentos fallidos. Intente nuevamente en 15 minutos.
+            <button type="button" class="btn-close" @onclick="() => MostrarBloqueo = false" aria-label="close"></button>
+        </div>
+    }
+
     <form action="/auth/login" method="post">
         <input type="hidden" name="returnUrl" value="@ReturnUrl" />
         <div class="mb-3">
@@ -38,6 +46,7 @@
 
 @code {
     private bool MostrarError { get; set; } = false;
+    private bool MostrarBloqueo { get; set; } = false;
     private string ReturnUrl { get; set; } = "";
 
     protected override void OnInitialized()
@@ -46,6 +55,7 @@
         if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query).TryGetValue("error", out var errorVal))
         {
             MostrarError = errorVal == "1";
+            MostrarBloqueo = errorVal == "blocked";
         }
         if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query).TryGetValue("returnUrl", out var returnUrlVal))
         {

@@ -1,12 +1,14 @@
 package pe.edu.pucp.economix.operaciones.boi;
 
-import pe.edu.pucp.economix.operaciones.ibo.ICicloCajaBO;
-import pe.edu.pucp.economix.operaciones.ibo.IComprobantePagoBO;
 import pe.edu.pucp.economix.operaciones.ibo.IRendicionBO;
-import pe.edu.pucp.economix.operaciones.ibo.ISolicitudGastoBO;
+import pe.edu.pucp.economix.operaciones.idao.ICicloCajaChicaDAO;
 import pe.edu.pucp.economix.operaciones.idao.IComprobantePagoDAO;
 import pe.edu.pucp.economix.operaciones.idao.IRendicionDAO;
+import pe.edu.pucp.economix.operaciones.idao.ISolicitudGastoDAO;
+import pe.edu.pucp.economix.operaciones.daoi.CicloCajaChicaDAOImpl;
+import pe.edu.pucp.economix.operaciones.daoi.ComprobantePagoDAOImpl;
 import pe.edu.pucp.economix.operaciones.daoi.RendicionDAOImpl;
+import pe.edu.pucp.economix.operaciones.daoi.SolicitudGastoDAOImpl;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
 import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
@@ -20,20 +22,20 @@ import java.util.List;
 public class RendicionBOImpl implements IRendicionBO {
 
     private final IRendicionDAO rendicionDAO;
-    private final ICicloCajaBO cicloCajaBO;
-    private final ISolicitudGastoBO solicitudGastoBO;
-    private final IComprobantePagoBO comprobantePagoBO;
+    private final ICicloCajaChicaDAO cicloCajaChicaDAO;
+    private final ISolicitudGastoDAO solicitudGastoDAO;
+    private final IComprobantePagoDAO comprobantePagoDAO;
     public RendicionBOImpl(){
         rendicionDAO = new RendicionDAOImpl();
-        cicloCajaBO =new CicloCajaBOImpl();
-        solicitudGastoBO= new SolicitudGastoBOImpl();
-        comprobantePagoBO=new ComprobantePagoBOImpl();
+        cicloCajaChicaDAO =new CicloCajaChicaDAOImpl();
+        solicitudGastoDAO= new SolicitudGastoDAOImpl();
+        comprobantePagoDAO=new ComprobantePagoDAOImpl();
     }
 
     public Rendicion generarRendicionDeCiclo(int idCiclo, int idUsuarioAccion) throws Exception {
         validarIdUsuarioAccion(idUsuarioAccion);
-        CicloCajaChica ciclo = cicloCajaBO.buscarPorId(idCiclo);
-        cicloCajaBO.calcularTotalGastado(ciclo, idUsuarioAccion);
+        CicloCajaChica ciclo = cicloCajaChicaDAO.buscarPorId(idCiclo);
+        calcularTotalGastado(ciclo, idUsuarioAccion);
         if(ciclo == null){
             throw new Exception("El ciclo no existe.");
         }
@@ -118,18 +120,31 @@ public class RendicionBOImpl implements IRendicionBO {
     public void calcularTotales(Rendicion rendicion, int idUsuarioAccion) throws Exception {
         validarIdUsuarioAccion(idUsuarioAccion);
 //        rendicion.setTotalDeclarado(calcularTotalDeclaradoValidado(rendicion));
-        cicloCajaBO.calcularTotalGastado(rendicion.getCicloCajaChica(), idUsuarioAccion);
+        calcularTotalGastado(rendicion.getCicloCajaChica(), idUsuarioAccion);
         rendicion.setTotalAprobado(calcularTotalAprobado(rendicion)); // usa CICLOCAJA
         modificar(rendicion, idUsuarioAccion);
     }
 
+    private void calcularTotalGastado(CicloCajaChica ciclo, int idUsuarioAccion) throws Exception {
+        double total = 0;
+        List<SolicitudGasto> solicitudesDeGasto = solicitudGastoDAO.listarPorCiclo(ciclo.getIdCicloCaja());
+        for (SolicitudGasto s : solicitudesDeGasto) {
+            if (s.getEstado() == EstadoSolicitudGasto.APROBADO) {
+                total += s.getMontoSolicitado();
+            }
+        }
+        CicloCajaChica ciclito = cicloCajaChicaDAO.buscarPorId(ciclo.getIdCicloCaja());
+        ciclito.setTotalGastado(total);
+        cicloCajaChicaDAO.modificar(ciclito, idUsuarioAccion);
+    }
+
     public double calcularTotalDeclaradoValidado(CicloCajaChica ciclo)throws Exception{
         double total = 0;
-        List<SolicitudGasto> solicitudes = solicitudGastoBO.listarPorCiclo(ciclo.getIdCicloCaja());
+        List<SolicitudGasto> solicitudes = solicitudGastoDAO.listarPorCiclo(ciclo.getIdCicloCaja());
 
         for(SolicitudGasto s : solicitudes){
             if(s.getEstado() == EstadoSolicitudGasto.APROBADO) {
-                List<ComprobantePago> comprobantes = comprobantePagoBO.listarPorSolicitud(s.getIdSolicitudGasto());
+                List<ComprobantePago> comprobantes = comprobantePagoDAO.listarPorSolicitud(s.getIdSolicitudGasto());
                 for(ComprobantePago c : comprobantes){
                     total += c.getTotal();
                 }
@@ -139,9 +154,7 @@ public class RendicionBOImpl implements IRendicionBO {
     }
 
     public double calcularTotalAprobado(Rendicion rendicion)throws Exception{
-        double total=0;
-        total = cicloCajaBO.buscarPorId(rendicion.getIdRendicion()).getTotalGastado();
-        return total;
+        return cicloCajaChicaDAO.buscarPorId(rendicion.getCicloCajaChica().getIdCicloCaja()).getTotalGastado();
     }
 
     public void validarMontos(Rendicion rendicion) throws Exception {
@@ -180,7 +193,7 @@ public class RendicionBOImpl implements IRendicionBO {
             throw new Exception("La rendicion tiene que tener un ciclo de caja chica asociado.");
         }
 
-        if(cicloCajaBO.buscarPorId(cicloCajaChica.getIdCicloCaja())==null) {
+        if(cicloCajaChicaDAO.buscarPorId(cicloCajaChica.getIdCicloCaja())==null) {
             throw new Exception("El ciclo caja chica asignado no existe.");
         }
 

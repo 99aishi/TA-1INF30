@@ -21,4 +21,10 @@ public class AuditoriaBOImpl implements IAuditoriaBO {
         }
         return auditoriaDAO.listarRecientes(limite);
     }
+
+    @Override
+    public void registrarLogin(String correo, Integer idUsuario, boolean exitoso,
+                               int intentosFallidos, boolean bloqueado) throws Exception {
+        auditoriaDAO.registrarLogin(correo, idUsuario, exitoso, intentosFallidos, bloqueado);
+    }
 }

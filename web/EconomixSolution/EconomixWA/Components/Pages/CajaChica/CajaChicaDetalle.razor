@@ -1,14 +1,9 @@
-@page "/Caja Chica/detalle"
-@page "/Caja Chica/Crear"
-
 @rendermode InteractiveServer
-@inject NavigationManager Navigation
 @inject ICajaChicaWS CajaChicaWS
 @inject ICuentaBancariaWS CuentaBancariaWS
 @inject IMonedaWS MonedaWS
 @inject IAreaWS AreaWS
 @inject IUsuarioWS UsuarioWS
-@using Microsoft.AspNetCore.WebUtilities
 
 <div class="d-flex flex-column h-100 mb-3">
     <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
@@ -82,10 +77,10 @@
                 <button type="button" class="btn btn-outline-primary" @onclick="InsertarCajaChica">
                     Registrar
                 </button>
-                <button type="button" class="btn btn-outline-info" @onclick="IrACajaChica">
+                <button type="button" class="btn btn-outline-info" @onclick="VolverAlPanel">
                     Cerrar
                 </button>
-                <button type="button" class="btn btn-outline-danger" @onclick="IrACajaChica">
+                <button type="button" class="btn btn-outline-danger" @onclick="VolverAlPanel">
                     Cancelar
                 </button>
             }
@@ -158,14 +153,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        EsCreacion = Navigation.Uri.Contains("/Crear");
         await CargarCatalogos();
-        await InicializarDesdeParametros();
+        InicializarDesdeParametro();
     }
 
-    protected override async Task OnParametersSetAsync()
+    protected override void OnParametersSet()
     {
-        await InicializarDesdeParametros();
+        InicializarDesdeParametro();
     }
 
     private async Task CargarCatalogos()
@@ -175,56 +169,16 @@
         try { Areas = await Task.Run(() => new List<Area>(AreaWS.listar())); } catch { Areas = new List<Area>(); }
     }
 
-    private async Task InicializarDesdeParametros()
+    private void InicializarDesdeParametro()
     {
-        CajaChica ??= new CajaChica();
-        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-        var query = QueryHelpers.ParseQuery(uri.Query);
+        CajaChica ??= new CajaChica { Estado = "ACTIVO", Moneda = new Moneda() };
+        EsCreacion = CajaChica.IdFondo <= 0;
 
-        if (EsCreacion)
-        {
-            if (CajaChica == null || CajaChica.IdFondo > 0)
-                CajaChica = new CajaChica { Estado = "ACTIVO", Moneda = new Moneda() };
+        if (CajaChica.CuentaBancaria?.AreaAdministradora != null)
+            AreaSeleccionadaId = CajaChica.CuentaBancaria.AreaAdministradora.AreaID;
 
-            if (query.TryGetValue("cuentaId", out var cuentaIdValue)
-                && int.TryParse(cuentaIdValue, out var cuentaId))
-            {
-                var cuenta = CuentasBancarias.FirstOrDefault(c => c.IdCuenta == cuentaId)
-                             ?? await Task.Run(() => CuentaBancariaWS.obtenerPorId(cuentaId));
-                if (cuenta != null)
-                {
-                    CajaChica.CuentaBancaria = cuenta;
-                    if (cuenta.AreaAdministradora != null)
-                        AreaSeleccionadaId = cuenta.AreaAdministradora.AreaID;
-                    if (CajaChica.Moneda == null || CajaChica.Moneda.IdMoneda <= 0)
-                        CajaChica.Moneda = cuenta.Moneda != null
-                            ? new Moneda { IdMoneda = cuenta.Moneda.IdMoneda, Nombre = cuenta.Moneda.Nombre, Simbolo = cuenta.Moneda.Simbolo, CodigoISO = cuenta.Moneda.CodigoISO }
-                            : new Moneda();
-                    if (!CuentasBancarias.Any(c => c.IdCuenta == cuenta.IdCuenta))
-                        CuentasBancarias.Add(cuenta);
-                }
-            }
-        }
-        else
-        {
-            if (CajaChica == null || CajaChica.IdFondo <= 0)
-            {
-                if (query.TryGetValue("cajaId", out var cajaIdValue)
-                    && int.TryParse(cajaIdValue, out var cajaId))
-                {
-                    CajaChica = await Task.Run(() => CajaChicaWS.obtenerPorId(cajaId)) ?? new CajaChica();
-                }
-                else
-                {
-                    CajaChica = new CajaChica();
-                }
-            }
-
-            if (CajaChica.Moneda == null) CajaChica.Moneda = new Moneda();
-
-            if (CajaChica.CuentaBancaria?.AreaAdministradora != null)
-                AreaSeleccionadaId = CajaChica.CuentaBancaria.AreaAdministradora.AreaID;
-        }
+        if (CajaChica.Moneda == null)
+            CajaChica.Moneda = new Moneda();
     }
 
     private async Task CerrarDetalle()
@@ -232,9 +186,9 @@
         await OnCerrarDetalle.InvokeAsync();
     }
 
-    private void IrACajaChica()
+    private async Task VolverAlPanel()
     {
-        Navigation.NavigateTo("/Caja Chica");
+        await OnCerrarDetalle.InvokeAsync();
     }
 
     private bool Validar()
@@ -270,7 +224,7 @@
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
             await Task.Run(() => CajaChicaWS.insertar(CajaChica, idUsuarioAccion));
-            IrACajaChica();
+            await VolverAlPanel();
         }
         catch (Exception ex)
         {

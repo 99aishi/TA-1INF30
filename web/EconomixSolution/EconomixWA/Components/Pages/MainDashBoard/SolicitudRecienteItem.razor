@@ -1,0 +1,51 @@
+<div class="card rounded-4 p-3 mb-2 hover-shadow" style="cursor: pointer;" @onclick="VerDetalle">
+    <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1">
+            <p class="h6 mb-1">@NombreSolicitante</p>
+            <small class="text-muted d-block">@AreaSolicitante</small>
+        </div>
+        <span class="badge @ClaseBadge">@Solicitud?.Estado</span>
+    </div>
+    <div class="d-flex justify-content-between align-items-end mt-2">
+        <div>
+            <small class="text-muted">MONTO</small>
+            <p class="fw-bold mb-0">@MontoFormateado</p>
+        </div>
+        <small class="text-muted">@FechaFormateada</small>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public SolicitudGasto? Solicitud { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnVerDetalle { get; set; }
+
+    private string NombreSolicitante => $"{Solicitud?.Solicitante?.Nombres} {Solicitud?.Solicitante?.ApellidoPaterno}".Trim();
+
+    private string AreaSolicitante => Solicitud?.Solicitante?.Area?.Nombre ?? "Sin área";
+
+    private string MontoFormateado => $"{(Solicitud?.MontoSolicitado ?? 0).ToString("N2")} {Solicitud?.MonedaOriginal?.Simbolo ?? "-"}";
+
+    private string FechaFormateada => Solicitud?.FechaSolicitud.ToString("dd/MM/yyyy") ?? "-";
+
+    private string ClaseBadge => Solicitud?.Estado?.ToUpperInvariant() switch
+    {
+        "PENDIENTE" => "bg-warning-subtle text-warning-emphasis",
+        "APROBADO" => "bg-success-subtle text-success-emphasis",
+        "PAGADO" => "bg-primary-subtle text-primary-emphasis",
+        "RENDIDO" => "bg-info-subtle text-info-emphasis",
+        "RECHAZADO" => "bg-danger-subtle text-danger-emphasis",
+        "ANULADO" => "bg-secondary-subtle text-secondary-emphasis",
+        _ => "bg-light text-dark"
+    };
+
+    private async Task VerDetalle()
+    {
+        if (Solicitud?.IdSolicitudGasto > 0)
+        {
+            await OnVerDetalle.InvokeAsync(Solicitud.IdSolicitudGasto);
+        }
+    }
+}

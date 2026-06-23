@@ -1,0 +1,388 @@
+@page "/Caja Chica/Detalle"
+@page "/Caja Chica/Crear"
+
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject ICicloCajaWS CicloCajaWS
+@inject ICajaChicaWS CajaChicaWS
+@inject IUsuarioWS UsuarioWS
+@using Microsoft.AspNetCore.WebUtilities
+
+<div class="d-flex flex-column h-100 mb-3">
+    <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
+        <div class="p-3 pb-2 d-flex gap-4 align-items-center">
+            @if (EsCreacion)
+            {
+                <p class="h3 mb-0">Registrar Ciclo de Caja Chica</p>
+            }
+            else
+            {
+                <p class="h3 mb-0">Ciclo Semana @(Ciclo?.NumeroSemana ?? 0)</p>
+                <span class="badge @EstadoClase rounded-pill">@(Ciclo?.Estado ?? "-")</span>
+            }
+        </div>
+        <hr class="my-0" />
+        <div class="flex-fill overflow-auto p-3">
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                    @ErrorMessage
+                    <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+                </div>
+            }
+
+            @if (!PuedeEditar && !EsCreacion)
+            {
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Solo un usuario de Tesorería puede modificar ciclos de caja chica.
+                </div>
+            }
+
+            <div class="row">
+                <div class="col-12 col-md-6 mt-3">
+                    <label class="form-label">Caja Chica</label>
+                    <select class="form-select form-select-lg rounded-4 bg-light @(Errores.ContainsKey("CajaChica") ? "is-invalid" : "")"
+                            @bind="CajaChicaSeleccionadaId"
+                            disabled="@(!EsCreacion || !PuedeEditar)">
+                        <option value="0">Seleccione una caja chica</option>
+                        @foreach (var caja in CajasChicas)
+                        {
+                            <option value="@caja.IdFondo">@caja.Nombre</option>
+                        }
+                    </select>
+                    @if (Errores.ContainsKey("CajaChica"))
+                    {
+                        <div class="text-danger small mt-1">@Errores["CajaChica"]</div>
+                    }
+                </div>
+
+                <div class="col-12 col-md-6 mt-3">
+                    <label class="form-label">Monto Techo (saldo inicial)</label>
+                    <input type="number" step="0.01" min="0"
+                           class="form-control form-control-lg rounded-4 bg-light"
+                           value="@MontoTecho.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)"
+                           disabled />
+                </div>
+
+                <div class="col-12 col-md-6 mt-3">
+                    <label class="form-label">Fecha de apertura</label>
+                    <input type="date" class="form-control form-control-lg rounded-4 bg-light @(Errores.ContainsKey("FechaApertura") ? "is-invalid" : "")"
+                           @bind="Ciclo!.FechaApertura"
+                           disabled="@(!PuedeEditar)" />
+                    @if (Errores.ContainsKey("FechaApertura"))
+                    {
+                        <div class="text-danger small mt-1">@Errores["FechaApertura"]</div>
+                    }
+                </div>
+
+                <div class="col-12 col-md-6 mt-3">
+                    <label class="form-label">Fecha de cierre</label>
+                    <input type="date" class="form-control form-control-lg rounded-4 bg-light"
+                           @bind="Ciclo!.FechaCierre"
+                           disabled="@(!PuedeEditar)" />
+                </div>
+
+                <div class="col-12 col-md-6 mt-3">
+                    <label class="form-label">Estado</label>
+                    <select class="form-select form-select-lg rounded-4 bg-light"
+                            @bind="Ciclo!.Estado"
+                            disabled="@(!PuedeEditar)">
+                        <option value="ABIERTO">Abierto</option>
+                        <option value="CERRADO">Cerrado</option>
+                        <option value="LIQUIDADO">Liquidado</option>
+                        <option value="EN_EXCEPCION">En excepción</option>
+                    </select>
+                </div>
+
+                @if (!EsCreacion && Ciclo?.Estado == "EN_EXCEPCION" && PuedeEditar)
+                {
+                    <div class="col-12 mt-3">
+                        <div class="alert alert-warning d-flex align-items-center justify-content-between">
+                            <span>
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                El ciclo está en excepción por fin de semana.
+                            </span>
+                            <button type="button" class="btn btn-sm btn-warning" @onclick="MarcarRevisado">
+                                Marcar como revisado
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                @if (!EsCreacion)
+                {
+                    <div class="col-12 col-md-6 mt-3">
+                        <label class="form-label">Total gastado</label>
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light"
+                               value="@(SimboloMoneda) @((Ciclo?.TotalGastado ?? 0).ToString("N2"))"
+                               disabled />
+                    </div>
+                    <div class="col-12 col-md-6 mt-3">
+                        <label class="form-label">Disponible</label>
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light"
+                               value="@(SimboloMoneda) @Disponible.ToString("N2")"
+                               disabled />
+                    </div>
+                }
+            </div>
+        </div>
+        <hr class="my-0" />
+        <div class="p-3 d-flex justify-content-end gap-3">
+            @if (EsCreacion)
+            {
+                <button type="button" class="btn btn-outline-primary" @onclick="InsertarCiclo">
+                    Registrar
+                </button>
+                <button type="button" class="btn btn-outline-info" @onclick="IrACiclos">
+                    Cerrar
+                </button>
+                <button type="button" class="btn btn-outline-danger" @onclick="IrACiclos">
+                    Cancelar
+                </button>
+            }
+            else
+            {
+                @if (PuedeEditar && Ciclo?.Estado == "ABIERTO")
+                {
+                    <button type="button" class="btn btn-outline-warning" @onclick="GuardarCambios">
+                        Guardar Cambios
+                    </button>
+                    <button type="button" class="btn btn-outline-dark" @onclick="CerrarCiclo">
+                        Cerrar Ciclo
+                    </button>
+                }
+                else if (PuedeEditar)
+                {
+                    <button type="button" class="btn btn-outline-warning" @onclick="GuardarCambios">
+                        Guardar Cambios
+                    </button>
+                }
+                <button type="button" class="btn btn-outline-info" @onclick="CerrarDetalle">
+                    Cerrar
+                </button>
+                @if (PuedeEditar)
+                {
+                    <button type="button" class="btn btn-outline-danger" @onclick="EliminarCiclo">
+                        Eliminar
+                    </button>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback OnCerrarDetalle { get; set; }
+
+    [Parameter]
+    public CicloCajaChica Ciclo { get; set; } = new();
+
+    [Parameter]
+    public List<CajaChica> CajasChicas { get; set; } = new();
+
+    private bool EsCreacion { get; set; }
+    private string ErrorMessage { get; set; } = string.Empty;
+    private Dictionary<string, string> Errores { get; set; } = new();
+    private string? RolUsuario { get; set; }
+
+    private bool PuedeEditar => RolUsuario is "Tesorero" or "Tesoreria" or "Tesorero y Finanzas";
+
+    private string EstadoClase => Ciclo?.Estado?.ToUpperInvariant() switch
+    {
+        "ABIERTO" => "bg-success-subtle text-success",
+        "CERRADO" => "bg-secondary-subtle text-secondary",
+        "LIQUIDADO" => "bg-info-subtle text-info",
+        "EN_EXCEPCION" => "bg-warning-subtle text-warning",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+
+    private string SimboloMoneda => Ciclo?.CajaChica?.Moneda?.Simbolo ?? "S/";
+
+    private double MontoTecho => CajaChicaSeleccionada?.MontoTecho ?? Ciclo?.CajaChica?.MontoTecho ?? 0;
+
+    private double Disponible => MontoTecho - (Ciclo?.TotalGastado ?? 0);
+
+    private CajaChica? CajaChicaSeleccionada => CajasChicas.FirstOrDefault(c => c.IdFondo == CajaChicaSeleccionadaId);
+
+    private int CajaChicaSeleccionadaId
+    {
+        get => Ciclo.CajaChica?.IdFondo ?? 0;
+        set
+        {
+            var caja = value == 0 ? null : CajasChicas.FirstOrDefault(c => c.IdFondo == value);
+            Ciclo.CajaChica = caja;
+            Ciclo.SaldoInicial = caja?.MontoTecho ?? 0;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        EsCreacion = Navigation.Uri.Contains("/Crear");
+        RolUsuario = UsuarioWS.GetCurrentUser()?.Rol?.Titulo;
+
+        if (EsCreacion && PuedeEditar)
+        {
+            Ciclo = new CicloCajaChica
+            {
+                FechaApertura = DateTime.Today,
+                Estado = "ABIERTO",
+                SaldoInicial = 0,
+                TotalGastado = 0
+            };
+        }
+        else
+        {
+            await InicializarDesdeParametros();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!EsCreacion)
+        {
+            await InicializarDesdeParametros();
+        }
+    }
+
+    private async Task InicializarDesdeParametros()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("cicloId", out var cicloIdValue)
+            && int.TryParse(cicloIdValue, out var cicloId)
+            && cicloId > 0)
+        {
+            Ciclo = await Task.Run(() => CicloCajaWS.obtenerPorId(cicloId)) ?? new CicloCajaChica();
+        }
+        else if (Ciclo?.IdCicloCaja <= 0)
+        {
+            Ciclo = new CicloCajaChica();
+        }
+
+        if (EsCreacion && query.TryGetValue("cajaId", out var cajaIdValue)
+            && int.TryParse(cajaIdValue, out var cajaId)
+            && cajaId > 0)
+        {
+            var caja = CajasChicas.FirstOrDefault(c => c.IdFondo == cajaId)
+                       ?? await Task.Run(() => CajaChicaWS.obtenerPorId(cajaId));
+            if (caja != null)
+            {
+                Ciclo.CajaChica = caja;
+                Ciclo.SaldoInicial = caja.MontoTecho;
+                if (!CajasChicas.Any(c => c.IdFondo == caja.IdFondo))
+                    CajasChicas.Add(caja);
+            }
+        }
+    }
+
+    private async Task CerrarDetalle()
+    {
+        await OnCerrarDetalle.InvokeAsync();
+    }
+
+    private void IrACiclos()
+    {
+        Navigation.NavigateTo("/Caja Chica");
+    }
+
+    private bool Validar()
+    {
+        Errores.Clear();
+
+        if (Ciclo?.CajaChica == null || Ciclo.CajaChica.IdFondo <= 0)
+            Errores["CajaChica"] = "Debe seleccionar una caja chica.";
+
+        if (Ciclo?.FechaApertura == null)
+            Errores["FechaApertura"] = "La fecha de apertura es obligatoria.";
+
+        return Errores.Count == 0;
+    }
+
+    private async Task InsertarCiclo()
+    {
+        if (!PuedeEditar)
+        {
+            ErrorMessage = "No tiene permisos para registrar ciclos.";
+            return;
+        }
+        if (!Validar()) return;
+
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => CicloCajaWS.insertar(Ciclo, idUsuarioAccion));
+            IrACiclos();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task GuardarCambios()
+    {
+        if (!PuedeEditar)
+        {
+            ErrorMessage = "No tiene permisos para modificar ciclos.";
+            return;
+        }
+        if (!Validar()) return;
+
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => CicloCajaWS.actualizar(Ciclo, idUsuarioAccion));
+            await CerrarDetalle();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task CerrarCiclo()
+    {
+        if (!PuedeEditar || Ciclo?.IdCicloCaja <= 0) return;
+
+        ErrorMessage = string.Empty;
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => CicloCajaWS.cerrarCiclo(Ciclo.IdCicloCaja, idUsuarioAccion));
+            await CerrarDetalle();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task MarcarRevisado()
+    {
+        if (!PuedeEditar || Ciclo == null) return;
+
+        Ciclo.Estado = "ABIERTO";
+        await GuardarCambios();
+    }
+
+    private async Task EliminarCiclo()
+    {
+        if (!PuedeEditar || Ciclo?.IdCicloCaja <= 0) return;
+
+        ErrorMessage = string.Empty;
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => CicloCajaWS.eliminar(Ciclo.IdCicloCaja, idUsuarioAccion));
+            await CerrarDetalle();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+}

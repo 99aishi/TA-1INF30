@@ -1,21 +1,35 @@
 package pe.edu.pucp.economix.tesoreria.boi;
 
+import pe.edu.pucp.economix.config.DBManager;
+import pe.edu.pucp.economix.operaciones.daoi.CicloCajaChicaDAOImpl;
+import pe.edu.pucp.economix.operaciones.idao.ICicloCajaChicaDAO;
+import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoCicloCaja;
 import pe.edu.pucp.economix.tesoreria.ibo.ICajaChicaBO;
 import pe.edu.pucp.economix.tesoreria.idao.ICajaChicaDAO;
 import pe.edu.pucp.economix.tesoreria.idao.ICuentaBancariaDAO;
+import pe.edu.pucp.economix.tesoreria.idao.IMonedaDAO;
 import pe.edu.pucp.economix.tesoreria.daoi.CajaChicaDAOImpl;
 import pe.edu.pucp.economix.tesoreria.daoi.CuentaBancariaDAOImpl;
+import pe.edu.pucp.economix.tesoreria.daoi.MonedaDAOImpl;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
+import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
+import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
+import java.util.Calendar;
 import java.util.List;
 
 public class CajaChicaBOImpl implements ICajaChicaBO {
     private final ICajaChicaDAO cajaDAO;
     private final ICuentaBancariaDAO cuentaBancariaDAO;
+    private final IMonedaDAO monedaDAO;
+    private final ICicloCajaChicaDAO cicloDAO;
     public CajaChicaBOImpl(){
         cajaDAO=new CajaChicaDAOImpl();
         cuentaBancariaDAO=new CuentaBancariaDAOImpl();
+        monedaDAO=new MonedaDAOImpl();
+        cicloDAO=new CicloCajaChicaDAOImpl();
     }
     private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
         if (idUsuarioAccion <= 0) {
@@ -27,7 +41,34 @@ public class CajaChicaBOImpl implements ICajaChicaBO {
     public int insertar(CajaChica caja, int idUsuarioAccion) throws Exception {
         validarIdUsuarioAccion(idUsuarioAccion);
         validar(caja,false);
-        return cajaDAO.insertar(caja, idUsuarioAccion);
+
+        DBManager db = DBManager.getDBManager();
+        db.iniciarTransaccion();
+        try {
+            int idGenerado = cajaDAO.insertar(caja, idUsuarioAccion);
+            if (idGenerado <= 0) {
+                throw new Exception("No se pudo generar el identificador de la caja chica.");
+            }
+
+            CicloCajaChica primerCiclo = new CicloCajaChica();
+            primerCiclo.setCajaChica(caja);
+            primerCiclo.setFechaApertura(Calendar.getInstance().getTime());
+            primerCiclo.setNumeroSemana(Calendar.getInstance().get(Calendar.WEEK_OF_YEAR));
+            primerCiclo.setSaldoInicial(caja.getMontoTecho());
+            primerCiclo.setTotalGastado(0);
+            primerCiclo.setEstado(EstadoCicloCaja.ABIERTO);
+
+            int idCiclo = cicloDAO.insertarEnTransaccion(primerCiclo, idUsuarioAccion);
+            if (idCiclo <= 0) {
+                throw new Exception("No se pudo generar el primer ciclo de la caja chica.");
+            }
+
+            db.confirmarTransaccion();
+            return idGenerado;
+        } catch (Exception ex) {
+            db.cancelarTransaccion();
+            throw ex;
+        }
     }
 
     @Override
@@ -81,7 +122,12 @@ public class CajaChicaBOImpl implements ICajaChicaBO {
             throw new Exception("El id de la caja chica es obligatoria para la modificación.");
         }
 
+        if (caja.getEstado() == null) {
+            caja.setEstado(EstadoFondo.ACTIVO);
+        }
+
         validarCuentaBancaria(caja.getCuentaBancaria());
+        validarMoneda(caja.getMoneda());
         validarNombre(caja.getNombre());
         validarMontoTecho(caja.getMontoTecho());
 
@@ -96,6 +142,19 @@ public class CajaChicaBOImpl implements ICajaChicaBO {
         }
         if(cuentaBancariaDAO.buscarPorId(cuentaBancaria.getIdCuenta())==null){
             throw new Exception("La cuenta bancaria de la caja chica no existe.");
+        }
+
+    }
+    public void validarMoneda(Moneda moneda) throws Exception{
+        if (moneda == null) {
+            throw new Exception("La moneda de la caja chica es obligatoria.");
+        }
+
+        if (moneda.getIdMoneda() <= 0) {
+            throw new Exception("La moneda de la caja chica no es válida.");
+        }
+        if(monedaDAO.buscarPorId(moneda.getIdMoneda())==null){
+            throw new Exception("La moneda de la caja chica no existe.");
         }
 
     }

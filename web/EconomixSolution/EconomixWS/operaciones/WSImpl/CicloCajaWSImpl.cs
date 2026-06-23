@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using EconomixModel.Model;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace EconomixWS.OperacionesWS;
 
@@ -11,13 +12,15 @@ public class CicloCajaWSImpl : ICicloCajaWS
     private readonly HttpClient _httpClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly JsonSerializerOptions _jsonOptions;
+    private readonly ILogger<CicloCajaWSImpl> _logger;
 
-    public CicloCajaWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor, JsonSerializerOptions jsonOptions)
+    public CicloCajaWSImpl(HttpClient httpClient, IHttpContextAccessor httpContextAccessor, JsonSerializerOptions jsonOptions, ILogger<CicloCajaWSImpl> logger)
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(httpClient.BaseAddress + "CicloCajaWS/");
         _httpContextAccessor = httpContextAccessor;
         _jsonOptions = jsonOptions;
+        _logger = logger;
     }
 
     private int ObtenerIdUsuarioAccion()
@@ -74,8 +77,9 @@ public class CicloCajaWSImpl : ICicloCajaWS
                 return new List<CicloCajaChica>();
             return JsonSerializer.Deserialize<List<CicloCajaChica>>(json, _jsonOptions) ?? new List<CicloCajaChica>();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al listar ciclos de caja chica");
             return new List<CicloCajaChica>();
         }
     }
@@ -92,8 +96,9 @@ public class CicloCajaWSImpl : ICicloCajaWS
                 return null;
             return JsonSerializer.Deserialize<CicloCajaChica>(json, _jsonOptions);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al obtener ciclo de caja chica por id {Id}", id);
             return null;
         }
     }

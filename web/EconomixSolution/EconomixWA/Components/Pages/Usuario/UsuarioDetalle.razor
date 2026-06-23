@@ -271,9 +271,14 @@
 
     private string ObtenerNombreJefeDirecto()
     {
-        if (EmpleadoEdicion?.JefeDirecto == null)
-            return "Sin jefe directo";
-        return $"{EmpleadoEdicion.JefeDirecto.Nombres} {EmpleadoEdicion.JefeDirecto.ApellidoPaterno}".Trim();
+        if (EmpleadoEdicion?.JefeDirecto != null)
+            return $"{EmpleadoEdicion.JefeDirecto.Nombres} {EmpleadoEdicion.JefeDirecto.ApellidoPaterno}".Trim();
+
+        var jefeArea = EmpleadoEdicion?.Area?.Jefe;
+        if (jefeArea != null)
+            return $"{jefeArea.Nombres} {jefeArea.ApellidoPaterno}".Trim();
+
+        return "Sin jefe directo (será el jefe del área)";
     }
 
     private void IrAUsuarios()

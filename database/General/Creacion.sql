@@ -214,7 +214,7 @@ CREATE TABLE IF NOT EXISTS ope_ciclo_caja (
     fecha_cierre DATE NULL,
     monto_saldo_inicial DECIMAL(12,2) DEFAULT 0.00,
     monto_total_gastado DECIMAL(12,2) DEFAULT 0.00,
-    estado_ciclo ENUM('ABIERTO', 'CERRADO', 'LIQUIDADO') DEFAULT 'ABIERTO',
+    estado_ciclo ENUM('ABIERTO', 'CERRADO', 'LIQUIDADO', 'EN_EXCEPCION') DEFAULT 'ABIERTO',
     id_caja_chica INT NOT NULL,
     id_rendicion INT NULL,
     
@@ -321,6 +321,33 @@ CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
         REFERENCES ope_solicitud_gasto(id_solicitud_gasto),
     CONSTRAINT fk_ope_comprobante_pago_tes_moneda FOREIGN KEY (id_moneda) 
         REFERENCES tes_moneda(id_moneda)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS ope_permiso_edicion (
+    id_permiso INT NOT NULL AUTO_INCREMENT,
+    id_usuario_solicitante INT NOT NULL,
+    id_usuario_autorizador INT NULL,
+    id_comprobante INT NOT NULL,
+    estado ENUM('ACTIVO', 'USADO', 'EXPIRADO', 'REVOCADO') DEFAULT 'ACTIVO',
+    motivo_solicitud VARCHAR(500),
+    motivo_autorizacion VARCHAR(500),
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fecha_expiracion DATETIME NULL,
+    fecha_uso DATETIME NULL,
+
+    -- Auditoría
+    creado_at DATETIME,
+    actualizado_at DATETIME,
+    id_usuario_creacion INT,
+    id_usuario_modificacion INT,
+
+    CONSTRAINT pk_ope_permiso_edicion PRIMARY KEY (id_permiso),
+    CONSTRAINT fk_ope_permiso_edicion_solicitante FOREIGN KEY (id_usuario_solicitante)
+        REFERENCES rrhh_empleado(id_usuario),
+    CONSTRAINT fk_ope_permiso_edicion_autorizador FOREIGN KEY (id_usuario_autorizador)
+        REFERENCES rrhh_empleado(id_usuario),
+    CONSTRAINT fk_ope_permiso_edicion_comprobante FOREIGN KEY (id_comprobante)
+        REFERENCES ope_comprobante_pago(id_comprobante)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS ope_transaccion (

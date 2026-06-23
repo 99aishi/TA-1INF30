@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using EconomixModel.Converters;
 using EconomixModel.Model;
 using EconomixWA.Components;
 using EconomixWS.OperacionesWS;
@@ -16,7 +17,8 @@ builder.Services.AddSingleton(new JsonSerializerOptions
 {
     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     PropertyNameCaseInsensitive = true,
-    ReferenceHandler = ReferenceHandler.IgnoreCycles
+    ReferenceHandler = ReferenceHandler.IgnoreCycles,
+    Converters = { new UnixDateTimeConverter() }
 });
 
 var baseURL = builder.Configuration["URLServices:BaseWSPath"];
@@ -93,6 +95,10 @@ builder.Services.AddHttpClient<ICicloCajaWS, CicloCajaWSImpl>(
     client => client.BaseAddress = new Uri(baseURL)
 );
 
+builder.Services.AddHttpClient<IPermisoEdicionWS, PermisoEdicionWSImpl>(
+    client => client.BaseAddress = new Uri(baseURL)
+);
+
 builder.Services.AddHttpClient<IAuditoriaWS, AuditoriaWSImpl>(
     client => client.BaseAddress = new Uri(baseURL)
 );
@@ -124,7 +130,19 @@ app.MapPost("/auth/login", async (HttpContext context, IUsuarioWS usuarioWS) =>
     string? returnUrl = form["returnUrl"].ToString();
 
     var request = new LoginRequest { Correo = usuarioInput, Password = passwordInput };
-    Usuario? usuarioEncontrado = usuarioWS.ValidarCredenciales(request);
+    Usuario? usuarioEncontrado;
+    try
+    {
+        usuarioEncontrado = usuarioWS.ValidarCredenciales(request);
+    }
+    catch (LoginException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
+    {
+        return Results.Redirect("/?error=blocked" + (string.IsNullOrEmpty(returnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(returnUrl)}"));
+    }
+    catch (LoginException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+    {
+        return Results.Redirect("/?error=1" + (string.IsNullOrEmpty(returnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(returnUrl)}"));
+    }
 
     if (usuarioEncontrado == null)
     {

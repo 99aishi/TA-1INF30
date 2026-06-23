@@ -1,23 +1,30 @@
 @page "/Caja Chica"
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
+@inject ICicloCajaWS CicloCajaWS
 @inject ICajaChicaWS CajaChicaWS
 @inject ICuentaBancariaWS CuentaBancariaWS
+@inject IAreaWS AreaWS
+@inject IUsuarioWS UsuarioWS
+@using Microsoft.AspNetCore.WebUtilities
 
 <div class="h-100 d-flex flex-column">
 
     <div class="d-flex flex-row align-items-center mb-4">
         <div class="flex-grow-1">
-            <p class="h4 mb-1">Cajas Chicas</p>
-            <p class="text-muted mb-0">Configuración de fondos fijos y techos presupuestales por cuenta bancaria</p>
+            <p class="h4 mb-1">Ciclos de Caja Chica</p>
+            <p class="text-muted mb-0">Gestión de ciclos semanales, aperturas, cierres y excepciones.</p>
         </div>
 
         <LiveClock />
 
         <div class="flex-grow-1 text-end">
-            <button type="button" class="btn btn-primary" @onclick="IrRegistrarCajaChica">
-                + Agregar Caja Chica
-            </button>
+            @if (PuedeEditar)
+            {
+                <button type="button" class="btn btn-primary" @onclick="IrRegistrarCiclo">
+                    + Agregar Ciclo
+                </button>
+            }
         </div>
     </div>
 
@@ -29,57 +36,52 @@
         </div>
     }
 
-    <CajaChicaSearchBar @bind-FiltroNombre="FiltroNombre"
+    <CicloCajaSearchBar @bind-FiltroNombre="FiltroNombre"
+                        @bind-FiltroAreaId="FiltroAreaId"
                         @bind-FiltroCuentaBancariaId="FiltroCuentaBancariaId"
-                        CuentasBancarias="CuentasBancarias"
-                        @bind-FiltroMontoMin="FiltroMontoMin"
-                        @bind-FiltroMontoMax="FiltroMontoMax"
-                        @bind-FiltroEstado="FiltroEstado" />
+                        @bind-FiltroEstado="FiltroEstado"
+                        @bind-FiltroFechaDesde="FiltroFechaDesde"
+                        @bind-FiltroFechaHasta="FiltroFechaHasta"
+                        Areas="Areas"
+                        CuentasBancarias="CuentasBancarias" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
-
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
 
             <div class="@(MostrarDetalle ? "col-6" : "col-12") h-100 d-flex flex-column overflow-hidden">
-
-                <div class="card rounded-4 p-3 h-100 overflow-scroll">
+                <div class="card rounded-4 mt-3 mb-3 p-3 flex-fill overflow-scroll">
 
                     @if (Cargando)
                     {
                         <div class="d-flex justify-content-center align-items-center h-100">
-                            <p class="text-muted">Cargando cajas chicas...</p>
+                            <p class="text-muted">Cargando ciclos...</p>
                         </div>
                     }
-                    else if (CajasFiltradas.Count() == 0)
+                    else if (CiclosFiltrados.Count() == 0)
                     {
                         <div class="d-flex justify-content-center align-items-center h-100">
                             <p class="text-muted">
-                                @(HayFiltrosActivos ? "Ninguna caja chica coincide con los filtros" : "No hay cajas chicas registradas")
+                                @(HayFiltrosActivos ? "Ningún ciclo coincide con los filtros" : "No hay ciclos registrados")
                             </p>
                         </div>
                     }
                     else
                     {
-                        @foreach (var cc in CajasFiltradas)
+                        @foreach (var ciclo in CiclosFiltrados)
                         {
-                             <CajaChicaItem CajaChica="cc"
-                                            CuentasBancarias="CuentasBancarias"
-                                            PorcentajeUso="50"
-                                            MontoTotal="@((decimal)cc.MontoTecho)"
-                                            Gastado="0"
-                                            Disponible="@((decimal)cc.MontoTecho)"
-                                            ProximoCierre="Viernes 18:00"
-                                            CerrarPronto="false"
-                                            OnMuestraDetalle="() => SeleccionarCajaChica(cc)" />
+                            <CicloCajaItem Ciclo="ciclo"
+                                           OnMuestraDetalle="() => SeleccionarCiclo(ciclo)" />
                         }
                     }
                 </div>
             </div>
 
-            @if (MostrarDetalle && CajaSeleccionada != null)
+            @if (MostrarDetalle && CicloSeleccionado != null)
             {
                 <div class="col-6 h-100">
-                    <CajaChicaDetalle CajaChica="CajaSeleccionada" OnCerrarDetalle="CerrarDetalleCajaChica" />
+                    <CicloCajaDetalle Ciclo="CicloSeleccionado"
+                                      CajasChicas="CajasChicas"
+                                      OnCerrarDetalle="CerrarDetalleCiclo" />
                 </div>
             }
         </div>
@@ -91,85 +93,110 @@
     private bool Cargando { get; set; } = true;
     private string ErrorMessage { get; set; } = string.Empty;
     private string FiltroNombre { get; set; } = string.Empty;
+    private int FiltroAreaId { get; set; }
     private int FiltroCuentaBancariaId { get; set; }
-    private double? FiltroMontoMin { get; set; }
-    private double? FiltroMontoMax { get; set; }
-    private string FiltroEstado { get; set; } = "Todas";
-    private List<CajaChica> Cajas { get; set; } = new();
+    private string FiltroEstado { get; set; } = "Todos";
+    private DateTime? FiltroFechaDesde { get; set; }
+    private DateTime? FiltroFechaHasta { get; set; }
+
+    private List<CicloCajaChica> Ciclos { get; set; } = new();
+    private List<CajaChica> CajasChicas { get; set; } = new();
     private List<CuentaBancaria> CuentasBancarias { get; set; } = new();
-    private CajaChica? CajaSeleccionada { get; set; }
+    private List<Area> Areas { get; set; } = new();
+    private CicloCajaChica? CicloSeleccionado { get; set; }
+    private string? RolUsuario { get; set; }
+
+    private bool PuedeEditar => RolUsuario is "Tesorero" or "Tesoreria" or "Tesorero y Finanzas";
 
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(FiltroNombre)
+        || FiltroAreaId > 0
         || FiltroCuentaBancariaId > 0
-        || FiltroMontoMin.HasValue
-        || FiltroMontoMax.HasValue
-        || FiltroEstado != "Todas";
+        || FiltroEstado != "Todos"
+        || FiltroFechaDesde.HasValue
+        || FiltroFechaHasta.HasValue;
 
-    private IEnumerable<CajaChica> CajasFiltradas => Cajas
+    private IEnumerable<CicloCajaChica> CiclosFiltrados => Ciclos
         .Where(c => string.IsNullOrWhiteSpace(FiltroNombre)
-            || c.Nombre.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase)
-            || (CuentaBancariaTexto(c.CuentaBancaria?.IdCuenta ?? 0)).Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase))
-        .Where(c => FiltroCuentaBancariaId <= 0 || c.CuentaBancaria?.IdCuenta == FiltroCuentaBancariaId)
-        .Where(c => !FiltroMontoMin.HasValue || c.MontoTecho >= FiltroMontoMin.Value)
-        .Where(c => !FiltroMontoMax.HasValue || c.MontoTecho <= FiltroMontoMax.Value)
-        .Where(c => FiltroEstado == "Todas" || c.Estado == FiltroEstado);
-
-    private string CuentaBancariaTexto(int id)
-    {
-        if (id <= 0) return string.Empty;
-        var cuenta = CuentasBancarias.FirstOrDefault(c => c.IdCuenta == id);
-        return cuenta != null ? $"{cuenta.NombreBanco} {cuenta.NumeroBancario}" : string.Empty;
-    }
-
-    private void IrRegistrarCajaChica()
-    {
-        Navigation.NavigateTo("/Caja Chica/Crear");
-    }
-
-    private void SeleccionarCajaChica(CajaChica cc)
-    {
-        CajaSeleccionada = cc;
-        MostrarDetalle = true;
-    }
-
-    private async Task CerrarDetalleCajaChica()
-    {
-        await ListarCajas();
-        MostrarDetalle = false;
-        CajaSeleccionada = null;
-    }
+            || (c.CajaChica?.Nombre?.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase) ?? false))
+        .Where(c => FiltroAreaId <= 0 || c.CajaChica?.CuentaBancaria?.AreaAdministradora?.AreaID == FiltroAreaId)
+        .Where(c => FiltroCuentaBancariaId <= 0 || c.CajaChica?.CuentaBancaria?.IdCuenta == FiltroCuentaBancariaId)
+        .Where(c => FiltroEstado == "Todos" || c.Estado == FiltroEstado)
+        .Where(c => !FiltroFechaDesde.HasValue || c.FechaApertura >= FiltroFechaDesde.Value)
+        .Where(c => !FiltroFechaHasta.HasValue || c.FechaApertura <= FiltroFechaHasta.Value)
+        .OrderByDescending(c => c.FechaApertura)
+        .ThenByDescending(c => c.IdCicloCaja);
 
     protected override async Task OnInitializedAsync()
     {
         Cargando = true;
+        RolUsuario = UsuarioWS.GetCurrentUser()?.Rol?.Titulo;
         await CargarCatalogos();
-        await ListarCajas();
+        await ListarCiclos();
         Cargando = false;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("cajaId", out var cajaIdValue)
+            && int.TryParse(cajaIdValue, out var cajaId)
+            && cajaId > 0)
+        {
+            FiltroNombre = string.Empty;
+            var caja = CajasChicas.FirstOrDefault(c => c.IdFondo == cajaId)
+                       ?? await Task.Run(() => CajaChicaWS.obtenerPorId(cajaId));
+            if (caja != null)
+            {
+                FiltroCuentaBancariaId = caja.CuentaBancaria?.IdCuenta ?? 0;
+                if (!CajasChicas.Any(c => c.IdFondo == caja.IdFondo))
+                    CajasChicas.Add(caja);
+            }
+        }
     }
 
     private async Task CargarCatalogos()
     {
-        try
-        {
-            CuentasBancarias = await Task.Run(() => new List<CuentaBancaria>(CuentaBancariaWS.listar()));
-        }
-        catch
-        {
-            CuentasBancarias = new List<CuentaBancaria>();
-        }
+        try { CajasChicas = await Task.Run(() => new List<CajaChica>(CajaChicaWS.listar())); }
+        catch { CajasChicas = new List<CajaChica>(); }
+
+        try { CuentasBancarias = await Task.Run(() => new List<CuentaBancaria>(CuentaBancariaWS.listar())); }
+        catch { CuentasBancarias = new List<CuentaBancaria>(); }
+
+        try { Areas = await Task.Run(() => new List<Area>(AreaWS.listar())); }
+        catch { Areas = new List<Area>(); }
     }
 
-    private async Task ListarCajas()
+    private async Task ListarCiclos()
     {
         ErrorMessage = string.Empty;
         try
         {
-            Cajas = await Task.Run(() => new List<CajaChica>(CajaChicaWS.listar()));
+            Ciclos = await Task.Run(() => new List<CicloCajaChica>(CicloCajaWS.listar()));
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
         }
+    }
+
+    private void SeleccionarCiclo(CicloCajaChica ciclo)
+    {
+        CicloSeleccionado = ciclo;
+        MostrarDetalle = true;
+    }
+
+    private async Task CerrarDetalleCiclo()
+    {
+        await ListarCiclos();
+        MostrarDetalle = false;
+        CicloSeleccionado = null;
+    }
+
+    private void IrRegistrarCiclo()
+    {
+        Navigation.NavigateTo("/Caja Chica/Crear");
     }
 }

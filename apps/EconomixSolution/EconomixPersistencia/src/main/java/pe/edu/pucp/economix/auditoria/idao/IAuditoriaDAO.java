@@ -7,4 +7,7 @@ import pe.edu.pucp.economix.auditoria.model.AuditoriaLogDto;
 
 public interface IAuditoriaDAO {
     List<AuditoriaLogDto> listarRecientes(int limite) throws SQLException;
+
+    void registrarLogin(String correo, Integer idUsuario, boolean exitoso,
+                        int intentosFallidos, boolean bloqueado) throws SQLException;
 }

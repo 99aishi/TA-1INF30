@@ -9,10 +9,11 @@
 
     <div class="row h-100">
         <div class="col-4 h-100">
-            <ComprobanteDePagoSustento EsCreacion="EsCreacion" EsEvaluacion="EsEvaluacion" EsAsociacion="EsAsociacion"/>
+            <ComprobanteDePagoSustento EsCreacion="EsCreacion" EsEvaluacion="EsEvaluacion" EsAsociacion="EsAsociacion" RequiereAutorizacion="RequiereAutorizacion" />
         </div>
         <div class="col-8 h-100">
             <ComprobanteDePagoDatos EsCreacion="EsCreacion" EsEvaluacion="EsEvaluacion" EsAsociacion="EsAsociacion"
+                                    RequiereAutorizacion="RequiereAutorizacion"
                                     Comprobante="Comprobante" OnEvaluado="VolverALista"/>
         </div>
     </div>
@@ -23,6 +24,7 @@
     private bool EsCreacion { get; set; }
     private bool EsAsociacion { get; set; }
     private bool EsEvaluacion { get; set; }
+    private bool RequiereAutorizacion { get; set; }
     private ComprobantePago? Comprobante { get; set; }
 
     [Parameter]
@@ -43,7 +45,16 @@
         if (!EsCreacion && !EsAsociacion && IdComprobante > 0)
         {
             Comprobante = ComprobantePagoWS.obtenerPorId(IdComprobante);
+            RequiereAutorizacion = DeterminarSiRequiereAutorizacion();
         }
+    }
+
+    private bool DeterminarSiRequiereAutorizacion()
+    {
+        if (EsCreacion || EsAsociacion || EsEvaluacion) return false;
+        if (Comprobante?.Solicitud?.Ciclo == null) return false;
+        var estado = Comprobante.Solicitud.Ciclo.Estado?.ToUpperInvariant();
+        return estado == "CERRADO" || estado == "LIQUIDADO" || estado == "EN_EXCEPCION";
     }
 
     private void VolverALista()
