@@ -25,6 +25,6 @@ public class UnixDateTimeConverter : JsonConverter<DateTime>
 
     public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
     {
-        writer.WriteNumberValue(new DateTimeOffset(value).ToUnixTimeMilliseconds());
+        writer.WriteStringValue(value.ToString("yyyy-MM-ddTHH:mm:ss"));
     }
 }

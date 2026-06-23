@@ -18,9 +18,13 @@ import pe.edu.pucp.economix.rrhh.idao.IEmpleadoDAO;
 import pe.edu.pucp.economix.rrhh.daoi.EmpleadoDAOImpl;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.tesoreria.idao.ICuentaBancariaDAO;
+import pe.edu.pucp.economix.tesoreria.idao.ITipoCambioDAO;
 import pe.edu.pucp.economix.tesoreria.daoi.CuentaBancariaDAOImpl;
+import pe.edu.pucp.economix.tesoreria.daoi.TipoCambioDAOImpl;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
+import pe.edu.pucp.economix.tesoreria.model.Moneda;
+import pe.edu.pucp.economix.tesoreria.model.TipoCambio;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -33,12 +37,14 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
     private final ITransaccionDAO transaccionDAO;
     private final ICuentaBancariaDAO cuentaBancariaDAO;
     private final IEmpleadoDAO empleadoDAO;
+    private final ITipoCambioDAO tipoCambioDAO;
     public SolicitudGastoBOImpl(){
         solicitudGastoDAO= new SolicitudGastoDAOImpl();
         cicloCajaChicaDAO =  new CicloCajaChicaDAOImpl();
         transaccionDAO=new TransaccionDAOImpl();
         cuentaBancariaDAO=new CuentaBancariaDAOImpl();
         empleadoDAO=new EmpleadoDAOImpl();
+        tipoCambioDAO = new TipoCambioDAOImpl();
     }
     private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
         if (idUsuarioAccion <= 0) {
@@ -50,7 +56,41 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
     public int insertar(SolicitudGasto solicitud, int idUsuarioAccion) throws Exception {
         validarIdUsuarioAccion(idUsuarioAccion);
         validar(solicitud,false);
+        calcularTipoCambioYMontoConvertido(solicitud);
         return solicitudGastoDAO.insertar(solicitud, idUsuarioAccion);
+    }
+
+    private void calcularTipoCambioYMontoConvertido(SolicitudGasto solicitud) throws Exception {
+        if (solicitud.getMonedaOriginal() == null || solicitud.getCiclo() == null) {
+            solicitud.setTipoCambio(1.0);
+            solicitud.setMontoConvertido(solicitud.getMontoSolicitado());
+            return;
+        }
+
+        Moneda monedaSolicitud = solicitud.getMonedaOriginal();
+        CicloCajaChica cicloCompleto = cicloCajaChicaDAO.buscarPorId(solicitud.getCiclo().getIdCicloCaja());
+        if (cicloCompleto == null || cicloCompleto.getCajaChica() == null || cicloCompleto.getCajaChica().getMoneda() == null) {
+            throw new Exception("No se pudo determinar la moneda de la caja chica del ciclo.");
+        }
+        Moneda monedaCajaChica = cicloCompleto.getCajaChica().getMoneda();
+
+        if (monedaSolicitud.getIdMoneda() == monedaCajaChica.getIdMoneda()) {
+            solicitud.setTipoCambio(1.0);
+            solicitud.setMontoConvertido(solicitud.getMontoSolicitado());
+            return;
+        }
+
+        Date fecha = solicitud.getFechaSolicitud() != null ? solicitud.getFechaSolicitud() : new Date();
+        TipoCambio tipoCambio = tipoCambioDAO.buscarPorMonedasYFecha(
+                monedaSolicitud.getIdMoneda(), monedaCajaChica.getIdMoneda(), new java.sql.Date(fecha.getTime()));
+
+        if (tipoCambio == null) {
+            throw new Exception("No existe tipo de cambio registrado entre la moneda solicitada y la moneda de la caja chica para la fecha indicada.");
+        }
+
+        double factor = tipoCambio.getValor();
+        solicitud.setTipoCambio(factor);
+        solicitud.setMontoConvertido(solicitud.getMontoSolicitado() * factor);
     }
 
     @Override
@@ -129,7 +169,7 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
             throw new Exception("El ciclo semanal se encuentra cerrado.");
         }
 
-        if(fecha.before(ciclo.getFechaApertura()) || fecha.after(ciclo.getFechaCierre())){
+        if(fecha.before(ciclo.getFechaApertura()) || (ciclo.getFechaCierre() != null && fecha.after(ciclo.getFechaCierre()))){
             throw new Exception("La fecha de la solicitud no esta dentro del Ciclo Caja Chica indicado");
         }
     }
@@ -194,18 +234,21 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
                 solicitudGastoDAO.listarPorSolicitante(
                         solicitudGasto.getSolicitante().getUsuarioID());
 
-        Date hace24Horas = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000);
         double acumulado = 0;
+        if(solicitudesDelEmpleado != null){
+            Date hace24Horas = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000);
 
-        for(SolicitudGasto s : solicitudesDelEmpleado){
-            if(s.getEstado() == EstadoSolicitudGasto.PENDIENTE
-                    || s.getEstado() == EstadoSolicitudGasto.APROBADO){
-                if(s.getFechaSolicitud() != null
-                        && s.getFechaSolicitud().after(hace24Horas)){
-                    acumulado += s.getMontoSolicitado();
+            for(SolicitudGasto s : solicitudesDelEmpleado){
+                if(s.getEstado() == EstadoSolicitudGasto.PENDIENTE
+                        || s.getEstado() == EstadoSolicitudGasto.APROBADO){
+                    if(s.getFechaSolicitud() != null
+                            && s.getFechaSolicitud().after(hace24Horas)){
+                        acumulado += s.getMontoSolicitado();
+                    }
                 }
             }
         }
+
 
         double totalAcumulado = acumulado + solicitudGasto.getMontoSolicitado();
         double limiteMaximo = saldoDisponible * 0.50;

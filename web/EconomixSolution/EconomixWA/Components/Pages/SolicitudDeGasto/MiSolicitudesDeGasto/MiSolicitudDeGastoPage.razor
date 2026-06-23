@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject ISolicitudGastoWS SolicitudGastoWS
+@inject IUsuarioWS UsuarioWS
 
 <div class="h-100 d-flex flex-column">
     <div class="d-flex flex-row align-items-center mb-4">
@@ -30,21 +31,21 @@
                                  @bind-FiltroEstado="FiltroEstado"
                                  @bind-FiltroFechaInicio="FiltroFechaInicio"
                                  @bind-FiltroFechaFin="FiltroFechaFin" />
-        
+
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
 
             @if(MostrarDetalle)
             {
-                <div class="col-6 h-100 d-flex flex-column overflow-hidden">    
+                <div class="col-6 h-100 d-flex flex-column overflow-hidden">
                     <div class="card rounded-4 p-3 h-100 overflow-scroll">
                         @if (Cargando) { <p class="text-muted text-center mt-5">Cargando solicitudes...</p> }
                         else if (SolicitudesFiltradas.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ninguna solicitud coincide con los filtros" : "No tienes solicitudes de gasto")</p> }
-                        else { @foreach (var s in SolicitudesFiltradas) { <MiSolicitudDeGastoItem Solicitud="s" OnMuestraDetalle="() => MostrarDetalleSolicitud()"/> } }
+                        else { @foreach (var s in SolicitudesFiltradas) { <MiSolicitudDeGastoItem Solicitud="s" OnMuestraDetalle="() => MostrarDetalleSolicitud(s)"/> } }
                     </div>
                 </div>
-            
+
                 <div class="col-6 h-100">
-                    <MiSolicitudDeGastoDetalle OnCierraDetalle="CerrarDetalleSolicitud" IdSolicitud="1"/>
+                    <MiSolicitudDeGastoDetalle Solicitud="SolicitudSeleccionada" OnCierraDetalle="CerrarDetalleSolicitud"/>
                 </div>
             }
             else
@@ -53,7 +54,7 @@
                     <div class="card rounded-4 mt-3 mb-3 p-3 flex-fill overflow-scroll">
                         @if (Cargando) { <p class="text-muted text-center mt-5">Cargando solicitudes...</p> }
                         else if (SolicitudesFiltradas.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ninguna solicitud coincide con los filtros" : "No tienes solicitudes de gasto")</p> }
-                        else { @foreach (var s in SolicitudesFiltradas) { <MiSolicitudDeGastoItem Solicitud="s" OnMuestraDetalle="() => MostrarDetalleSolicitud()"/> } }
+                        else { @foreach (var s in SolicitudesFiltradas) { <MiSolicitudDeGastoItem Solicitud="s" OnMuestraDetalle="() => MostrarDetalleSolicitud(s)"/> } }
                     </div>
                 </div>
             }
@@ -72,6 +73,7 @@
     private DateTime? FiltroFechaInicio { get; set; }
     private DateTime? FiltroFechaFin { get; set; }
     private List<SolicitudGasto> Solicitudes { get; set; } = new();
+    private SolicitudGasto? SolicitudSeleccionada { get; set; }
 
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(FiltroTexto)
@@ -93,11 +95,16 @@
         .Where(s => !FiltroFechaFin.HasValue || s.FechaSolicitud.Date <= FiltroFechaFin.Value.Date);
 
     private void IrCrearSolicitud() => Navigation.NavigateTo("/Mis Solicitudes De Gasto/Crear");
-    public void MostrarDetalleSolicitud() => MostrarDetalle = true;
+    public void MostrarDetalleSolicitud(SolicitudGasto solicitud)
+    {
+        SolicitudSeleccionada = solicitud;
+        MostrarDetalle = true;
+    }
     public async Task CerrarDetalleSolicitud()
     {
         await ListarSolicitudes();
         MostrarDetalle = false;
+        SolicitudSeleccionada = null;
     }
 
     protected override async Task OnInitializedAsync()
@@ -110,7 +117,11 @@
     private async Task ListarSolicitudes()
     {
         ErrorMessage = string.Empty;
-        try { Solicitudes = await Task.Run(() => new List<SolicitudGasto>(SolicitudGastoWS.listar())); }
+        try
+        {
+            var idEmpleado = UsuarioWS.GetCurrentUserId();
+            Solicitudes = await Task.Run(() => new List<SolicitudGasto>(SolicitudGastoWS.listarPorSolicitante(idEmpleado)));
+        }
         catch (Exception ex) { ErrorMessage = ex.Message; }
     }
 }

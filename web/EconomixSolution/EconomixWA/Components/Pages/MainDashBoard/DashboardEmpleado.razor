@@ -1,4 +1,5 @@
 @rendermode InteractiveServer
+@inject NavigationManager Navigation
 @inject IUsuarioWS UsuarioWS
 @inject ISolicitudGastoWS SolicitudGastoWS
 @inject IComprobantePagoWS ComprobantePagoWS
@@ -6,7 +7,7 @@
 
 <div class="row g-3 mb-3">
     <div class="col-6 col-lg-4">
-        <div class="card rounded-4 h-100">
+        <div class="card rounded-4 h-100 cursor-pointer" @onclick="IrAMisSolicitudes">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-body-primary">Mis solicitudes pendientes</h6>
                 <p class="card-text h2">@MisSolicitudesPendientes</p>
@@ -110,5 +111,10 @@
     private string FormatearSoles(double monto)
     {
         return $"S/ {monto:N2}";
+    }
+
+    private void IrAMisSolicitudes()
+    {
+        Navigation.NavigateTo("/Mis Solicitudes De Gasto");
     }
 }

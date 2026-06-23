@@ -1,42 +1,16 @@
 @inject NavigationManager Navigation
 @inject ISolicitudGastoWS SolicitudGastoWS
 @inject IUsuarioWS UsuarioWS
+@inject IMonedaWS MonedaWS
+@inject ICuentaBancariaWS CuentaBancariaWS
+@using EconomixWA.Components.Pages.ComprobanteDePago
 
 <div class="d-flex flex-column h-100 mb-3">
     <div class="row h-100 mb-3">
         <div class="col-8 h-100 mb-3">
             <div class="card rounded-4 p-3 mb-3 h-100">
-                <p class="h3">Solicitud de Gasto  - No. 6767</p>
-                <div class="row">
-                    <div class="col-6 mt-3">
-                        <label for="Area" class="form-label">Area</label>    
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="Area" placeholder="Area">
-                    </div>
-                    <div class="col-6 mt-3">
-                        <label for="Fecha" class="form-label">Fecha</label>    
-                        <input type="date" class="form-control form-control-lg rounded-4 bg-light" id="Fecha" placeholder="Fecha">
-                    </div>
-                    <div class="col-6 mt-3">
-                        <label for="Solicitante" class="form-label">Solicitante</label>    
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="Solicitante" placeholder="Juan Preciado">
-                    </div>
-                    <div class="col-3 mt-3">
-                        <label for="Monto" class="form-label">Monto</label>    
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" id="Monto" placeholder=" @SimboloMoneda 0.00">
-                    </div>
-                    <div class="col-3 mt-3 align-self-center" style="height: 2rem">
-                        <span class="badge h-100 bg-warning-subtle text-warning-emphasis rounded-pill px-2 align-self-start mt-4">Pendiente</span>
-                    </div>
-                    <div class="col-12 mt-3">
-                        <label for="Motivo" class="form-label">Motivo</label>    
-                        <textarea class="form-control bg-light" id="exampleFormControlTextarea1" rows="3" placeholder="Motivo de la solicitud de gasto">  </textarea>
-                    </div>
-                    <div class="col-12 mt-3">
-                        <label for="Desición" class="form-label">Decisión</label>    
-                        <textarea class="form-control bg-light" id="exampleFormControlTextarea1" rows="3" placeholder="Decisión de la solicitud de gasto">  </textarea>
-                    </div>
+                <p class="h3">Solicitud de Gasto - No. @(Solicitud?.IdSolicitudGasto > 0 ? Solicitud.IdSolicitudGasto : "-")</p>
 
-                </div>
                 @if (!string.IsNullOrEmpty(ErrorMessage))
                 {
                     <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
@@ -45,42 +19,153 @@
                     </div>
                 }
 
-                <div class="col-12 mt-3">
-                    <label for="NumeroOperacion" class="form-label">Número de operación bancaria</label>
-                    <input type="text" class="form-control bg-light rounded-4" id="NumeroOperacion" placeholder="OP-12345678" @bind="NumeroOperacionBancaria">
-                </div>
+                @if (Solicitud == null)
+                {
+                    <p class="text-muted text-center mt-5">Seleccione una solicitud para evaluar</p>
+                }
+                else
+                {
+                    <div class="row">
+                        <div class="col-6 mt-3">
+                            <label class="form-label">Área</label>
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Solicitud.Solicitante?.Area?.Nombre ?? "-")" disabled="true">
+                        </div>
+                        <div class="col-6 mt-3">
+                            <label class="form-label">Fecha</label>
+                            <input type="date" class="form-control form-control-lg rounded-4 bg-light" value="@Solicitud.FechaSolicitud.ToString("yyyy-MM-dd")" disabled="true">
+                        </div>
+                        <div class="col-6 mt-3">
+                            <label class="form-label">Solicitante</label>
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(NombreSolicitante)" disabled="true">
+                        </div>
+                        <div class="col-6 mt-3">
+                            <label class="form-label">Destinatario</label>
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(NombreDestinatario)" disabled="true">
+                        </div>
+                        <div class="col-4 mt-3">
+                            <label class="form-label">Monto</label>
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SimboloMoneda) @(Solicitud.MontoSolicitado.ToString("N2"))" disabled="true">
+                        </div>
+                        <div class="col-4 mt-3">
+                            <label class="form-label">Moneda</label>
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Solicitud.MonedaOriginal?.Nombre ?? "-")" disabled="true">
+                        </div>
+                        <div class="col-4 mt-3 align-self-center" style="height: 2rem">
+                            <span class="badge h-100 @(EstadoClase) rounded-pill px-2 align-self-start mt-4">@(Solicitud.Estado ?? "PENDIENTE")</span>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <label class="form-label">Ciclo de Caja Chica</label>
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Solicitud.Ciclo?.CajaChica?.Nombre ?? "-") - Semana @(Solicitud.Ciclo?.NumeroSemana ?? 0)" disabled="true">
+                        </div>
+                        <div class="col-12 mt-3">
+                            <label class="form-label">Motivo</label>
+                            <textarea class="form-control bg-light" rows="3" disabled="true">@Solicitud.MotivoSolicitud</textarea>
+                        </div>
 
-                <div class="d-flex justify-content-end gap-3 mt-3">
-                    <button type="button" class="btn btn-success align-self-start mt-3"
-                            @onclick="Aprobar">
-                        Confirmar
-                    </button>
+                        @if (EsPendiente)
+                        {
+                            <div class="col-12 mt-3">
+                                <label class="form-label">Medio de Desembolso</label>
+                                <select class="form-select form-select-lg rounded-4 bg-light" @bind="MedioDesembolsoSeleccionado">
+                                    <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+                                    <option value="YAPE">Yape</option>
+                                    <option value="PLIN">Plin</option>
+                                    <option value="EFECTIVO">Efectivo</option>
+                                </select>
+                            </div>
 
-                    <button type="button" class="btn btn-outline-warning align-self-start mt-3"
-                            @onclick="Observar">
-                        Observar
-                    </button>
+                            @if (MedioDesembolsoSeleccionado == "TRANSFERENCIA")
+                            {
+                                <div class="col-12 mt-3">
+                                    <label class="form-label">Cuenta Bancaria Origen</label>
+                                    <select class="form-select form-select-lg rounded-4 bg-light" @bind="CuentaOrigenSeleccionadaId">
+                                        <option value="0">Seleccione...</option>
+                                        @foreach (var cuenta in CuentasBancarias)
+                                        {
+                                            <option value="@cuenta.IdCuenta">@(cuenta.NombreBanco) - @(cuenta.NumeroBancario) (@(cuenta.Moneda?.Simbolo ?? "S/"))</option>
+                                        }
+                                    </select>
+                                </div>
+                            }
 
-                    <button type="button" class="btn btn-outline-danger align-self-start mt-3"
-                            @onclick="Rechazar">
-                        Rechazar
-                    </button>
-                </div>
+                            <div class="col-12 mt-3">
+                                <label class="form-label">Número de operación bancaria</label>
+                                <input type="text" class="form-control bg-light rounded-4" placeholder="OP-12345678" @bind="NumeroOperacionBancaria">
+                            </div>
 
+                            <div class="col-12 mt-3">
+                                <label class="form-label">Decisión / Comentario</label>
+                                <textarea class="form-control bg-light" rows="3" placeholder="Comentario de la decisión" @bind="ComentarioDecision"></textarea>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-12 mt-3">
+                                <label class="form-label">Decisión / Comentario</label>
+                                <textarea class="form-control bg-light" rows="3" disabled="true">@Solicitud.ComentarioDecision</textarea>
+                            </div>
+                        }
+                    </div>
+
+                    @if (EsPendiente)
+                    {
+                        <div class="d-flex justify-content-end gap-3 mt-3">
+                            <button type="button" class="btn btn-success align-self-start mt-3" @onclick="Aprobar">
+                                Aprobar
+                            </button>
+                            <button type="button" class="btn btn-outline-warning align-self-start mt-3" @onclick="Observar">
+                                Observar
+                            </button>
+                            <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="Rechazar">
+                                Rechazar
+                            </button>
+                            <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="CerrarDetalle">
+                                Cerrar
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex justify-content-end gap-3 mt-3">
+                            <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="CerrarDetalle">
+                                Cerrar
+                            </button>
+                        </div>
+                    }
+
+                    <div class="d-flex flex-fill flex-column mt-4 gap-3 overflow-scroll">
+                        <div>
+                            @if (Solicitud.Comprobantes?.Any() == true)
+                            {
+                                @foreach (var comprobante in Solicitud.Comprobantes)
+                                {
+                                    <ComprobanteDePagoItem EsParteDeSolicitud="true" />
+                                }
+                            }
+                            else
+                            {
+                                <p class="text-muted text-center">No hay comprobantes registrados</p>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
         </div>
         <div class="col-4 h-100 mb-3">
-            <SolicitudDeGastoSeguimiento/>
+            <SolicitudDeGastoSeguimiento Solicitud="Solicitud" />
         </div>
     </div>
-
 </div>
 
-
 @code {
-    private string SimboloMoneda { get; set; } = "S/.";
+    private string SimboloMoneda => Solicitud?.MonedaOriginal?.Simbolo ?? "S/";
     private string ErrorMessage { get; set; } = string.Empty;
     private string NumeroOperacionBancaria { get; set; } = string.Empty;
+    private string ComentarioDecision { get; set; } = string.Empty;
+    private string MedioDesembolsoSeleccionado { get; set; } = "TRANSFERENCIA";
+    private int CuentaOrigenSeleccionadaId { get; set; } = 0;
+
+    private List<CuentaBancaria> CuentasBancarias { get; set; } = new();
 
     [Parameter]
     public SolicitudGasto? Solicitud { get; set; }
@@ -88,9 +173,64 @@
     [Parameter]
     public EventCallback OnCierraDetalle { get; set; }
 
+    private string NombreSolicitante => Solicitud?.Solicitante != null
+        ? $"{Solicitud.Solicitante.Nombres} {Solicitud.Solicitante.ApellidoPaterno}"
+        : string.Empty;
+
+    private string NombreDestinatario => Solicitud?.Destinatario != null
+        ? $"{Solicitud.Destinatario.Nombres} {Solicitud.Destinatario.ApellidoPaterno}"
+        : string.Empty;
+
+    private bool EsPendiente => Solicitud?.Estado?.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase) == true;
+
+    private string EstadoClase => Solicitud?.Estado?.ToUpperInvariant() switch
+    {
+        "PENDIENTE" => "bg-warning-subtle text-warning-emphasis",
+        "APROBADO" => "bg-success-subtle text-success",
+        "RECHAZADO" => "bg-danger-subtle text-danger",
+        "OBSERVADO" => "bg-info-subtle text-info",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCuentasBancarias();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Solicitud != null)
+        {
+            MedioDesembolsoSeleccionado = Solicitud.MedioDesembolso ?? "TRANSFERENCIA";
+            ComentarioDecision = string.Empty;
+            NumeroOperacionBancaria = string.Empty;
+        }
+    }
+
+    private async Task CargarCuentasBancarias()
+    {
+        try
+        {
+            CuentasBancarias = await Task.Run(() => new List<CuentaBancaria>(CuentaBancariaWS.listar()));
+        }
+        catch
+        {
+            CuentasBancarias = new List<CuentaBancaria>();
+        }
+    }
+
+    private bool ValidarAprobacion(out string error)
+    {
+        error = string.Empty;
+        if (MedioDesembolsoSeleccionado == "TRANSFERENCIA" && CuentaOrigenSeleccionadaId <= 0)
+            error = "Debe seleccionar una cuenta bancaria origen.";
+        else if (string.IsNullOrWhiteSpace(NumeroOperacionBancaria))
+            error = "El número de operación bancaria es obligatorio.";
+        return string.IsNullOrEmpty(error);
+    }
+
     public async Task CerrarDetalle()
     {
-        Navigation.NavigateTo("/Solicitudes De Gasto");
         await OnCierraDetalle.InvokeAsync();
     }
 
@@ -98,11 +238,16 @@
     {
         ErrorMessage = string.Empty;
         if (Solicitud == null) return;
+        if (!ValidarAprobacion(out var error))
+        {
+            ErrorMessage = error;
+            return;
+        }
 
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, true, string.Empty, idUsuarioAccion, NumeroOperacionBancaria, idUsuarioAccion));
+            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, true, ComentarioDecision, idUsuarioAccion, NumeroOperacionBancaria, idUsuarioAccion));
             await OnCierraDetalle.InvokeAsync();
         }
         catch (Exception ex)
@@ -119,7 +264,7 @@
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, false, "Observado", idUsuarioAccion, string.Empty, idUsuarioAccion));
+            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, false, string.IsNullOrWhiteSpace(ComentarioDecision) ? "Observado" : ComentarioDecision, idUsuarioAccion, string.Empty, idUsuarioAccion));
             await OnCierraDetalle.InvokeAsync();
         }
         catch (Exception ex)
@@ -136,17 +281,12 @@
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, false, "Rechazado", idUsuarioAccion, string.Empty, idUsuarioAccion));
+            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, false, string.IsNullOrWhiteSpace(ComentarioDecision) ? "Rechazado" : ComentarioDecision, idUsuarioAccion, string.Empty, idUsuarioAccion));
             await OnCierraDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
         }
-    }
-
-    private void MostrarItemsSolicitud()
-    {
-        Navigation.NavigateTo("/Solicitudes De Gasto");
     }
 }

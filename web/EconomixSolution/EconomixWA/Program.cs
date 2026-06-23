@@ -67,6 +67,10 @@ builder.Services.AddHttpClient<IMonedaWS, MonedaWSImpl>(
     client => client.BaseAddress = new Uri(baseURL)
 );
 
+builder.Services.AddHttpClient<ITipoCambioWS, TipoCambioWSImpl>(
+    client => client.BaseAddress = new Uri(baseURL)
+);
+
 builder.Services.AddHttpClient<IEmpleadoWS, EmpleadoWSImpl>(
     client => client.BaseAddress = new Uri(baseURL)
 );

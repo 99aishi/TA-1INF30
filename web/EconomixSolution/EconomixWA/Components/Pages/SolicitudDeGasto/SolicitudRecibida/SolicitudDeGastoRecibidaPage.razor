@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject ISolicitudGastoWS SolicitudGastoWS
+@inject IUsuarioWS UsuarioWS
 
 <div class="h-100 d-flex flex-column">
     <div class="d-flex flex-row align-items-center mb-4">
@@ -113,7 +114,11 @@
     private async Task ListarSolicitudes()
     {
         ErrorMessage = string.Empty;
-        try { Solicitudes = await Task.Run(() => new List<SolicitudGasto>(SolicitudGastoWS.listar())); }
+        try
+        {
+            var idJefe = UsuarioWS.GetCurrentUserId();
+            Solicitudes = await Task.Run(() => new List<SolicitudGasto>(SolicitudGastoWS.listarPendientesJefe(idJefe)));
+        }
         catch (Exception ex) { ErrorMessage = ex.Message; }
     }
 }
