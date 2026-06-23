@@ -1,4 +1,4 @@
-<div class="card h-100 p-3">
+<div class="card h-100 p-3 overflow-auto">
     @foreach (var paso in Pasos.Select((p, i) => new { p, i }))
     {
         <div class="timeline-item @(paso.i == Pasos.Count - 1 ? "mb-0" : "")">
@@ -43,38 +43,66 @@
 
         // 2. Evaluación del jefe
         bool evaluado = estado is "APROBADO" or "RECHAZADO" or "OBSERVADO" or "PAGADO" or "RENDIDO";
+        bool evaluacionRechazada = estado is "RECHAZADO" or "OBSERVADO";
         pasos.Add(new Paso(
             "Evaluación del Jefe",
-            evaluado
+            evaluacionRechazada
                 ? $"Solicitud {Solicitud?.Estado} por {Solicitud?.JefeAprobador?.Nombres} {Solicitud?.JefeAprobador?.ApellidoPaterno}"
-                : "Pendiente de aprobación del jefe",
+                : evaluado
+                    ? $"Solicitud aprobada por {Solicitud?.JefeAprobador?.Nombres} {Solicitud?.JefeAprobador?.ApellidoPaterno}"
+                    : "Pendiente de aprobación del jefe",
             evaluado));
 
-        // 3. Desembolso
-        bool desembolsado = estado is "APROBADO" or "PAGADO" or "RENDIDO";
+        // 3. Desembolso pendiente
+        bool desembolsoPendiente = estado is "APROBADO";
+        bool desembolsoCompletado = estado is "PAGADO" or "RENDIDO";
         pasos.Add(new Paso(
-            "Desembolso",
-            desembolsado
-                ? "Desembolso generado al aprobar la solicitud"
-                : "Pendiente de desembolso",
-            desembolsado));
+            "Desembolso pendiente",
+            desembolsoCompletado
+                ? "Desembolso ejecutado y completado"
+                : desembolsoPendiente
+                    ? "Desembolso aprobado, pendiente de ejecución"
+                    : evaluacionRechazada
+                        ? "No aplica"
+                        : "Pendiente de aprobación previa",
+            desembolsoPendiente || desembolsoCompletado));
 
-        // 4. Comprobantes
+        // 4. Desembolso completado
+        pasos.Add(new Paso(
+            "Desembolso completado",
+            desembolsoCompletado
+                ? "Fondos transferidos al solicitante"
+                : desembolsoPendiente
+                    ? "Pendiente de número de operación"
+                    : evaluacionRechazada
+                        ? "No aplica"
+                        : "Pendiente de desembolso",
+            desembolsoCompletado));
+
+        // 5. Comprobantes
         bool comprobantes = Solicitud?.Comprobantes?.Any() == true || estado is "RENDIDO";
         pasos.Add(new Paso(
             "Comprobantes",
             comprobantes
                 ? $"{Solicitud?.Comprobantes?.Count ?? 0} comprobante(s) registrado(s)"
-                : "Pendiente de comprobantes",
+                : desembolsoCompletado
+                    ? "Pendiente de comprobantes"
+                    : evaluacionRechazada
+                        ? "No aplica"
+                        : "Pendiente de desembolso",
             comprobantes));
 
-        // 5. Rendición
+        // 6. Rendición
         bool rendida = estado is "RENDIDO";
         pasos.Add(new Paso(
             "Rendición",
             rendida
                 ? "Solicitud rendida"
-                : "Pendiente de rendición",
+                : comprobantes
+                    ? "Pendiente de rendición"
+                    : evaluacionRechazada
+                        ? "No aplica"
+                        : "Pendiente de comprobantes",
             rendida));
 
         return pasos;

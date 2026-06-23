@@ -153,7 +153,7 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
 
     public void evaluar(int idSolicitudGasto, bool aprobado, string comentario, int idJefeEvaluador, string numeroOperacionBancaria, int idUsuarioAccion)
     {
-        var url = $"Evaluar?idSolicitudGasto={idSolicitudGasto}&aprobado={aprobado.ToString().ToLowerInvariant()}&comentario={Uri.EscapeDataString(comentario ?? "")}&idJefeEvaluador={idJefeEvaluador}&numeroOperacionBancaria={Uri.EscapeDataString(numeroOperacionBancaria ?? "")}&idUsuarioAccion={idUsuarioAccion}";
+        var url = $"Evaluar?idSolicitudGasto={idSolicitudGasto}&aprobado={aprobado.ToString().ToLowerInvariant()}&comentario={Uri.EscapeDataString(comentario ?? "")}&idJefeEvaluador={idJefeEvaluador}&idUsuarioAccion={idUsuarioAccion}&medioDesembolso=TRANSFERENCIA&idCuentaDestino=0";
         var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
         if (!response.IsSuccessStatusCode)
         {
@@ -162,4 +162,25 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
         }
     }
 
+    public void evaluar(int idSolicitudGasto, bool aprobado, string comentario, int idJefeEvaluador, int idUsuarioAccion, string medioDesembolso, int idCuentaDestino)
+    {
+        var url = $"Evaluar?idSolicitudGasto={idSolicitudGasto}&aprobado={aprobado.ToString().ToLowerInvariant()}&comentario={Uri.EscapeDataString(comentario ?? "")}&idJefeEvaluador={idJefeEvaluador}&idUsuarioAccion={idUsuarioAccion}&medioDesembolso={Uri.EscapeDataString(medioDesembolso ?? "TRANSFERENCIA")}&idCuentaDestino={idCuentaDestino}";
+        var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            throw new Exception(error);
+        }
+    }
+
+    public void ejecutarDesembolso(int idSolicitudGasto, string numeroOperacionBancaria, int idUsuarioAccion)
+    {
+        var url = $"EjecutarDesembolso?idSolicitudGasto={idSolicitudGasto}&numeroOperacionBancaria={Uri.EscapeDataString(numeroOperacionBancaria ?? "")}&idUsuarioAccion={idUsuarioAccion}";
+        var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            throw new Exception(error);
+        }
+    }
 }

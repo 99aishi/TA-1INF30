@@ -9,7 +9,7 @@
 <div class="d-flex flex-column h-100 overflow-hidden">
     <div class="row g-3 mb-3">
         <div class="col-6 col-lg-3">
-            <div class="card rounded-4 h-100">
+            <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrAUsuarios">
                 <div class="card-body">
                     <h6 class="card-subtitle mb-2 text-body-primary">Usuarios Activos</h6>
                     <p class="card-text h2">@UsuariosActivos</p>
@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="col-6 col-lg-3">
-            <div class="card rounded-4 h-100">
+            <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrAAreas">
                 <div class="card-body">
                     <h6 class="card-subtitle mb-2 text-body-primary">Áreas activas</h6>
                     <p class="card-text h2">@AreasActivas</p>
@@ -27,7 +27,7 @@
             </div>
         </div>
         <div class="col-6 col-lg-3">
-            <div class="card rounded-4 h-100">
+            <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrASolicitudes">
                 <div class="card-body">
                     <h6 class="card-subtitle mb-2 text-body-primary">Solicitudes del mes</h6>
                     <p class="card-text h2">@SolicitudesMes</p>
@@ -36,7 +36,7 @@
             </div>
         </div>
         <div class="col-6 col-lg-3">
-            <div class="card rounded-4 h-100">
+            <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrACajasChicas">
                 <div class="card-body">
                     <h6 class="card-subtitle mb-2 text-body-primary">Fondos administrados</h6>
                     <p class="card-text h2">@FormatearSoles(FondosAdministrados)</p>
@@ -48,8 +48,9 @@
     <div class="row g-3 flex-fill overflow-hidden mb-3">
         <div class="col-12 col-lg-6 h-100 d-flex flex-column overflow-hidden">
             <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden mb-3">
-                <div class="card-header bg-white py-3">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">Solicitudes Recientes</h6>
+                    <button class="btn btn-sm btn-outline-primary" @onclick="IrASolicitudes">Ver todas</button>
                 </div>
                 <hr class="my-0" />
                 <div class="card-body p-3 overflow-auto flex-fill">
@@ -81,7 +82,10 @@
             <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden mb-3">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">Actividad Reciente</h6>
-                    <span class="badge bg-secondary-subtle text-secondary">@ActividadReciente.Count eventos</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-secondary-subtle text-secondary">@ActividadReciente.Count eventos</span>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="IrAAuditoria">Ver todo</button>
+                    </div>
                 </div>
                 <hr class="my-0" />
                 <div class="card-body p-3 overflow-auto flex-fill">
@@ -235,4 +239,10 @@
     {
         Navigation.NavigateTo($"/Mis Solicitudes De Gasto/Detalle/{idSolicitud}");
     }
+
+    private void IrAUsuarios() => Navigation.NavigateTo("/Usuarios");
+    private void IrAAreas() => Navigation.NavigateTo("/Areas");
+    private void IrASolicitudes() => Navigation.NavigateTo("/Solicitudes De Gasto");
+    private void IrACajasChicas() => Navigation.NavigateTo("/Caja Chica");
+    private void IrAAuditoria() => Navigation.NavigateTo("/Auditoria");
 }

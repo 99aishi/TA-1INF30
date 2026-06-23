@@ -1,17 +1,23 @@
-<div class="card rounded-4 p-3 mb-2 hover-shadow" style="cursor: pointer;" @onclick="VerDetalle">
-    <div class="d-flex justify-content-between align-items-start">
-        <div class="flex-grow-1">
-            <p class="h6 mb-1">@NombreSolicitante</p>
-            <small class="text-muted d-block">@AreaSolicitante</small>
+<div class="card rounded-4 p-3 mb-2 bg-light hover-shadow cursor-pointer" @onclick="VerDetalle">
+    <div class="d-flex flex-row justify-content-between align-items-start">
+        <div class="d-flex flex-column">
+            <div class="d-flex justify-content-start align-items-center gap-3 mb-1">
+                <p class="h6 mb-0">SG-@Solicitud?.IdSolicitudGasto</p>
+                <span class="badge @ClaseBadge rounded-pill">@Solicitud?.Estado</span>
+            </div>
+            <div class="d-flex flex-column justify-content-start">
+                <p class="text-muted m-0">
+                    <i class="bi bi-person me-1"></i>@NombreSolicitante
+                    <span class="mx-1">&middot;</span>
+                    <span class="badge bg-light text-dark border">@AreaSolicitante</span>
+                </p>
+                <p class="text-muted m-0 small">@Solicitud?.MotivoSolicitud</p>
+            </div>
         </div>
-        <span class="badge @ClaseBadge">@Solicitud?.Estado</span>
-    </div>
-    <div class="d-flex justify-content-between align-items-end mt-2">
-        <div>
-            <small class="text-muted">MONTO</small>
-            <p class="fw-bold mb-0">@MontoFormateado</p>
+        <div class="d-flex flex-column align-items-end">
+            <p class="h5 mb-0">@(Solicitud?.MonedaOriginal?.Simbolo ?? "S/") @MontoFormateado</p>
+            <small class="text-muted">@FechaFormateada</small>
         </div>
-        <small class="text-muted">@FechaFormateada</small>
     </div>
 </div>
 
@@ -26,7 +32,7 @@
 
     private string AreaSolicitante => Solicitud?.Solicitante?.Area?.Nombre ?? "Sin área";
 
-    private string MontoFormateado => $"{(Solicitud?.MontoSolicitado ?? 0).ToString("N2")} {Solicitud?.MonedaOriginal?.Simbolo ?? "-"}";
+    private string MontoFormateado => (Solicitud?.MontoSolicitado ?? 0).ToString("N2");
 
     private string FechaFormateada => Solicitud?.FechaSolicitud.ToString("dd/MM/yyyy") ?? "-";
 

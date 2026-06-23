@@ -1,20 +1,26 @@
-<div class="card rounded-4 p-3 mb-3 bg-light h-100">
-    <div class="d-flex flex-row justify-content-between">
+<div class="card rounded-4 p-3 mb-3 bg-light hover-shadow cursor-pointer" @onclick="AbrirDetalle">
+    <div class="d-flex flex-row justify-content-between align-items-start">
         <div class="d-flex flex-column">
-            <div class="d-flex justify-content-start align-items-start gap-3">
-                <p class="h5">SG-@Solicitud?.IdSolicitudGasto</p>
-                <span class="badge rounded-pill @(Solicitud?.Estado == "PENDIENTE" ? "bg-warning-subtle text-warning-emphasis" : Solicitud?.Estado == "APROBADO" ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary")">@Solicitud?.Estado</span>
+            <div class="d-flex justify-content-start align-items-center gap-3 mb-1">
+                <p class="h5 mb-0">SG-@Solicitud?.IdSolicitudGasto</p>
+                <span class="badge rounded-pill @ClaseBadge">@Solicitud?.Estado</span>
             </div>
             <div class="d-flex flex-column justify-content-start">
-                <p class="text-muted m-0">@Solicitud?.Solicitante?.Nombres @Solicitud?.Solicitante?.ApellidoPaterno</p>
-                <p class="text-muted m-0">@Solicitud?.FechaSolicitud.ToString("dd/MM/yyyy")</p>
+                <p class="text-muted m-0">
+                    <i class="bi bi-person me-1"></i>@NombreSolicitante
+                    <span class="mx-1">&middot;</span>
+                    <span class="badge bg-light text-dark border">@AreaSolicitante</span>
+                </p>
+                <p class="text-muted m-0">
+                    <i class="bi bi-calendar me-1"></i>@Solicitud?.FechaSolicitud.ToString("dd/MM/yyyy")
+                </p>
             </div>
         </div>
         <div class="d-flex flex-row justify-content-between align-items-center gap-3">
             <div class="d-flex align-items-center gap-3">
-                <p class="h4">@(Solicitud?.MonedaOriginal?.Simbolo ?? "S/") @Solicitud?.MontoSolicitado.ToString("N2")</p>
+                <p class="h4 mb-0">@(Solicitud?.MonedaOriginal?.Simbolo ?? "S/") @Solicitud?.MontoSolicitado.ToString("N2")</p>
             </div>
-            <button class="btn btn-primary" @onclick="AbrirDetalle">Ver</button>
+            <button class="btn btn-primary" @onclick="AbrirDetalle" @onclick:stopPropagation>Ver</button>
         </div>
     </div>
 </div>
@@ -25,6 +31,21 @@
 
     [Parameter]
     public SolicitudGasto? Solicitud { get; set; }
+
+    private string NombreSolicitante => $"{Solicitud?.Solicitante?.Nombres} {Solicitud?.Solicitante?.ApellidoPaterno}".Trim();
+
+    private string AreaSolicitante => Solicitud?.Solicitante?.Area?.Nombre ?? "Sin área";
+
+    private string ClaseBadge => Solicitud?.Estado?.ToUpperInvariant() switch
+    {
+        "PENDIENTE" => "bg-warning-subtle text-warning-emphasis",
+        "APROBADO" => "bg-success-subtle text-success-emphasis",
+        "PAGADO" => "bg-primary-subtle text-primary-emphasis",
+        "RENDIDO" => "bg-info-subtle text-info-emphasis",
+        "RECHAZADO" => "bg-danger-subtle text-danger-emphasis",
+        "ANULADO" => "bg-secondary-subtle text-secondary-emphasis",
+        _ => "bg-light text-dark"
+    };
 
     public async Task AbrirDetalle()
     {

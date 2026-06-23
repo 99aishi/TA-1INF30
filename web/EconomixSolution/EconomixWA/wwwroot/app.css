@@ -92,3 +92,16 @@ h1:focus {
 .card{
     border-radius: 1rem;
 }
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.hover-shadow {
+    transition: box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.hover-shadow:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}

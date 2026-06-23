@@ -275,6 +275,12 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
 
     @Override
     public int evaluar(int idSolicitudGasto, boolean aprobado, String comentario, int idJefeEvaluador, String numeroOperacionBancaria, int idUsuarioAccion) throws Exception {
+        // Llamada legacy: mantiene compatibilidad, sin validar número de operación y creando transacción REGISTRADA
+        return evaluar(idSolicitudGasto, aprobado, comentario, idJefeEvaluador, idUsuarioAccion, null, 0);
+    }
+
+    @Override
+    public int evaluar(int idSolicitudGasto, boolean aprobado, String comentario, int idJefeEvaluador, int idUsuarioAccion, String medioDesembolso, int idCuentaDestino) throws Exception {
         validarIdUsuarioAccion(idUsuarioAccion);
         if (idSolicitudGasto <= 0) throw new Exception("El id de la solicitud debe ser mayor que cero.");
         if (idJefeEvaluador <= 0) throw new Exception("El id del jefe evaluador debe ser mayor que cero.");
@@ -289,22 +295,14 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         if (jefe == null) throw new Exception("El jefe evaluador no existe.");
 
         if (aprobado) {
-            if (numeroOperacionBancaria == null || numeroOperacionBancaria.trim().isEmpty()) {
-                throw new Exception("Debe ingresar el número de operación bancaria para aprobar el desembolso.");
-            }
             solicitud.setEstado(EstadoSolicitudGasto.APROBADO);
             solicitud.setJefeAprobador(jefe);
             solicitud.setComentarioDecision(comentario);
 
             int idModificado = solicitudGastoDAO.modificar(solicitud, idUsuarioAccion);
 
-            // Generar transacción de desembolso
-            generarTransaccionDesembolso(solicitud, numeroOperacionBancaria, idUsuarioAccion);
-
-            // Actualizar total gastado del ciclo
-            if (solicitud.getCiclo() != null) {
-                calcularTotalGastado(solicitud.getCiclo(), idUsuarioAccion);
-            }
+            // Generar transacción de desembolso pendiente (REGISTRADA)
+            generarTransaccionDesembolso(solicitud, idUsuarioAccion, medioDesembolso, idCuentaDestino);
 
             return idModificado;
         } else {
@@ -318,7 +316,7 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         }
     }
 
-    private void generarTransaccionDesembolso(SolicitudGasto solicitud, String numeroOperacionBancaria, int idUsuarioAccion) throws Exception {
+    private void generarTransaccionDesembolso(SolicitudGasto solicitud, int idUsuarioAccion, String medioDesembolso, int idCuentaDestino) throws Exception {
         CicloCajaChica ciclo = solicitud.getCiclo();
         if (ciclo == null || ciclo.getCajaChica() == null) {
             throw new Exception("La solicitud no tiene un ciclo/caja chica asignado.");
@@ -333,35 +331,97 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         Empleado solicitante = solicitud.getSolicitante();
         if (solicitante == null) throw new Exception("La solicitud no tiene solicitante.");
 
-        List<CuentaBancaria> cuentasEmpleado = cuentaBancariaDAO.listarTodas().stream()
-                .filter(c -> c.getEmpleadoAdministrador() != null
-                        && c.getEmpleadoAdministrador().getUsuarioID() == solicitante.getUsuarioID())
-                .toList();
-        if (cuentasEmpleado.isEmpty()) {
-            throw new Exception("El solicitante no tiene cuentas bancarias registradas.");
+        CuentaBancaria cuentaDestino = null;
+        if (idCuentaDestino > 0) {
+            cuentaDestino = cuentaBancariaDAO.buscarPorId(idCuentaDestino);
+            if (cuentaDestino == null || cuentaDestino.getEmpleadoAdministrador() == null
+                    || cuentaDestino.getEmpleadoAdministrador().getUsuarioID() != solicitante.getUsuarioID()) {
+                throw new Exception("La cuenta destino seleccionada no pertenece al solicitante.");
+            }
+        } else {
+            List<CuentaBancaria> cuentasEmpleado = cuentaBancariaDAO.listarTodas().stream()
+                    .filter(c -> c.getEmpleadoAdministrador() != null
+                            && c.getEmpleadoAdministrador().getUsuarioID() == solicitante.getUsuarioID())
+                    .toList();
+            if (cuentasEmpleado.isEmpty()) {
+                throw new Exception("El solicitante no tiene cuentas bancarias registradas.");
+            }
+            cuentaDestino = cuentasEmpleado.get(0);
         }
-        CuentaBancaria cuentaDestino = cuentasEmpleado.get(0);
+
+        MedioPago medioPago;
+        try {
+            medioPago = MedioPago.valueOf(medioDesembolso != null ? medioDesembolso.toUpperCase() : "TRANSFERENCIA");
+        } catch (IllegalArgumentException e) {
+            medioPago = MedioPago.TRANSFERENCIA;
+        }
 
         Transaccion transaccion = new Transaccion();
         transaccion.setTipoTransaccion(TipoTransaccion.DESEMBOLSO);
         transaccion.setFecha(new Date());
         transaccion.setMonto(solicitud.getMontoSolicitado());
-        transaccion.setNumeroOperacionBancaria(numeroOperacionBancaria);
-        transaccion.setMedioPago(solicitud.getMedioDesembolso() != null ? solicitud.getMedioDesembolso() : MedioPago.TRANSFERENCIA);
+        transaccion.setNumeroOperacionBancaria(null);
+        transaccion.setMedioPago(medioPago);
         transaccion.setCuentaOrigen(cuentaOrigen);
         transaccion.setCuentaDestino(cuentaDestino);
         transaccion.setMoneda(solicitud.getMonedaOriginal() != null ? solicitud.getMonedaOriginal() : cajaChica.getMoneda());
         transaccion.setBeneficiario(solicitante);
-        transaccion.setEstadoTransaccion(EstadoTransaccion.COMPLETADA);
+        transaccion.setEstadoTransaccion(EstadoTransaccion.REGISTRADA);
 
         transaccionDAO.insertar(transaccion, idUsuarioAccion);
+    }
+
+    @Override
+    public int ejecutarDesembolso(int idSolicitudGasto, String numeroOperacionBancaria, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
+        if (idSolicitudGasto <= 0) throw new Exception("El id de la solicitud debe ser mayor que cero.");
+        if (numeroOperacionBancaria == null || numeroOperacionBancaria.trim().isEmpty()) {
+            throw new Exception("Debe ingresar el número de operación bancaria.");
+        }
+
+        SolicitudGasto solicitud = solicitudGastoDAO.buscarPorId(idSolicitudGasto);
+        if (solicitud == null) throw new Exception("La solicitud de gasto no existe.");
+        if (solicitud.getEstado() != EstadoSolicitudGasto.APROBADO) {
+            throw new Exception("Solo se puede ejecutar el desembolso de una solicitud APROBADA.");
+        }
+
+        Empleado solicitante = solicitud.getSolicitante();
+        if (solicitante == null) throw new Exception("La solicitud no tiene solicitante.");
+
+        // Buscar transacción de desembolso pendiente asociada
+        List<Transaccion> transacciones = transaccionDAO.listarTodas();
+        Transaccion transaccion = transacciones.stream()
+                .filter(t -> t.getTipoTransaccion() == TipoTransaccion.DESEMBOLSO
+                        && t.getEstadoTransaccion() == EstadoTransaccion.REGISTRADA
+                        && t.getBeneficiario() != null
+                        && t.getBeneficiario().getUsuarioID() == solicitante.getUsuarioID()
+                        && Math.abs(t.getMonto() - solicitud.getMontoSolicitado()) < 0.0001
+                        && t.getCuentaDestino() != null
+                        && t.getCuentaDestino().getEmpleadoAdministrador() != null
+                        && t.getCuentaDestino().getEmpleadoAdministrador().getUsuarioID() == solicitante.getUsuarioID())
+                .findFirst()
+                .orElseThrow(() -> new Exception("No se encontró una transacción de desembolso pendiente para esta solicitud."));
+
+        transaccion.setEstadoTransaccion(EstadoTransaccion.COMPLETADA);
+        transaccion.setNumeroOperacionBancaria(numeroOperacionBancaria);
+        int r = transaccionDAO.modificar(transaccion, idUsuarioAccion);
+
+        solicitud.setEstado(EstadoSolicitudGasto.PAGADO);
+        solicitudGastoDAO.modificar(solicitud, idUsuarioAccion);
+
+        // Actualizar total gastado del ciclo
+        if (solicitud.getCiclo() != null) {
+            calcularTotalGastado(solicitud.getCiclo(), idUsuarioAccion);
+        }
+
+        return r;
     }
 
     private void calcularTotalGastado(CicloCajaChica ciclo, int idUsuarioAccion) throws Exception {
         double total = 0;
         List<SolicitudGasto> solicitudesDeGasto = solicitudGastoDAO.listarPorCiclo(ciclo.getIdCicloCaja());
         for (SolicitudGasto s : solicitudesDeGasto) {
-            if (s.getEstado() == EstadoSolicitudGasto.APROBADO) {
+            if (s.getEstado() == EstadoSolicitudGasto.APROBADO || s.getEstado() == EstadoSolicitudGasto.PAGADO) {
                 total += s.getMontoSolicitado();
             }
         }

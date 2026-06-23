@@ -52,9 +52,22 @@
     private string ObtenerClaseActiva(string opcion)
     {
         var uriActual = Navigation.Uri;
+        var rutaRelativa = Navigation.ToBaseRelativePath(uriActual);
 
-        string opcionUrl = opcion.Replace(" ", "%20");
-        if (uriActual.EndsWith($"/{opcionUrl}") || uriActual.Contains($"/{opcionUrl}/"))
+        // Remove query string
+        var indiceQuery = rutaRelativa.IndexOf('?');
+        if (indiceQuery >= 0)
+            rutaRelativa = rutaRelativa.Substring(0, indiceQuery);
+
+        var opcionNormalizada = opcion.Trim().Replace(" ", "%20");
+        var rutaNormalizada = rutaRelativa.Trim().Replace(" ", "%20");
+
+        if (string.IsNullOrEmpty(rutaNormalizada))
+            return opcion.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) ? "active" : "";
+
+        // Exact match or starts with the menu option path
+        if (rutaNormalizada.Equals(opcionNormalizada, StringComparison.OrdinalIgnoreCase)
+            || rutaNormalizada.StartsWith($"{opcionNormalizada}/", StringComparison.OrdinalIgnoreCase))
         {
             return "active";
         }
