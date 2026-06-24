@@ -15,11 +15,13 @@ else if (isAuthenticated)
 {
     <div class="page d-flex flex-column vh-100 overflow-hidden">
         <header class="top-row d-flex justify-content-between align-items-center px-3">
-            <Encabezado Usuario="currentUser"/>
-            
-            <div class="d-flex align-items-center gap-3">
-                <button class="btn btn-outline-danger btn-sm" @onclick="Logout"> 
-                    Cerrar sesion</button>
+            <Encabezado Usuario="currentUser" />
+
+            <!-- Agregamos mt-2 para empujarlo un poco hacia abajo -->
+            <div class="d-flex align-items-center ms-3 mt-2">
+                <button class="btn btn-outline-danger btn-sm text-nowrap" @onclick="Logout">
+                    Cerrar sesión
+                </button>
             </div>
         </header>
 
