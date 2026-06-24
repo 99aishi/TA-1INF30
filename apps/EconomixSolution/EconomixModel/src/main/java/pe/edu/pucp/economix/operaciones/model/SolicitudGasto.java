@@ -4,7 +4,6 @@ import java.util.Date;
 import java.util.List;
 
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
-import pe.edu.pucp.economix.operaciones.model.enums.MedioPago;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
@@ -18,8 +17,8 @@ public class SolicitudGasto{
     private double montoConvertido;
     private String motivoSolicitud;
     private EstadoSolicitudGasto estado;
-    private MedioPago medioDesembolso;
     private String comentarioDecision;
+    private int idTransaccion;
     //Relaciones
     private Empleado solicitante;
     private Empleado destinatario;
@@ -105,13 +104,6 @@ public class SolicitudGasto{
     public EstadoSolicitudGasto getEstado() {
         return estado;
     }
-    public MedioPago getMedioDesembolso() {
-        return medioDesembolso;
-    }
-    public void setMedioDesembolso(MedioPago medioDesembolso) {
-        this.medioDesembolso = medioDesembolso;
-    }
-
     public void setEstado(EstadoSolicitudGasto nuevoEstado) {
         this.estado = nuevoEstado;
     }
@@ -120,6 +112,12 @@ public class SolicitudGasto{
     }
     public void setComentarioDecision(String comentarioDecision){
         this.comentarioDecision=comentarioDecision;
+    }
+    public int getIdTransaccion() {
+        return idTransaccion;
+    }
+    public void setIdTransaccion(int idTransaccion) {
+        this.idTransaccion = idTransaccion;
     }
 
     public Empleado getSolicitante() {
@@ -171,7 +169,7 @@ public class SolicitudGasto{
                 ", montoConvertido=" + montoConvertido +
                 ", motivoSolicitud='" + motivoSolicitud + '\'' +
                 ", estado=" + estado +
-                ", medioDesembolso=" + medioDesembolso +
+                ", idTransaccion=" + idTransaccion +
                 ", comentarioDecision='" + comentarioDecision + '\'' +
                 ", solicitante=" + solicitante +
                 ", destinatario=" + destinatario +

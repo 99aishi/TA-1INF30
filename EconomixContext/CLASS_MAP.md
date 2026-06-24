@@ -55,8 +55,9 @@ BilleteraDigital (standalone)
 SolicitudGasto (standalone)
   int idSolicitudGasto, Date fechaSolicitud, double montoSolicitado
   String motivoSolicitud, EstadoSolicitudGasto estado, String comentarioDecision
-  Empleado solicitante, Empleado destinatario, CicloCajaChica ciclo, MedioPago medioDesembolso
+  Empleado solicitante, Empleado destinatario, CicloCajaChica ciclo, int idTransaccion
   List<ComprobantePago> comprobantes
+  Note: medio de desembolso lives only on Transaccion, not on SolicitudGasto.
 
 CicloCajaChica (standalone)
   int idCicloCaja, int numeroSemana, Date fechaApertura, Date fechaCierre
@@ -79,6 +80,7 @@ Transaccion (standalone)
   int idTransaccion, TipoTransaccion tipoTransaccion, Date fecha, double monto
   String numeroOperacionBancaria, MedioPago medioPago, double tipoCambio, EstadoTransaccion estadoTransaccion
   CuentaBancaria cuentaOrigen, cuentaDestino, Moneda moneda, Empleado beneficiario
+  int idSolicitudGasto
 
 AuditoriaLogDto (standalone)
   int idLog, String nombreTabla, String accion, int idRegistroAfectado, String valorAnterior, String valorNuevo, int idUsuarioAccion, Date momentoCambio
@@ -128,7 +130,7 @@ IBaseBO<T>                          (interface)
 | `ICajaChicaBO` | `tesoreria.ibo` | `IBaseBO<CajaChica>` | — |
 | `ICuentaBancariaBO` | `tesoreria.ibo` | `IBaseBO<CuentaBancaria>` | — |
 | `ICicloCajaBO` | `operaciones.ibo` | `IBaseBO<CicloCajaChica>` | `calcularTotalGastado(CicloCajaChica)` |
-| `ISolicitudGastoBO` | `operaciones.ibo` | `IBaseBO<SolicitudGasto>` | `listarPorSolicitante(int)`, `listarPendientesJefe(int)`, `listarPorCiclo(int)` |
+| `ISolicitudGastoBO` | `operaciones.ibo` | `IBaseBO<SolicitudGasto>` | `listarPorSolicitante(int)`, `listarPendientesJefe(int)`, `listarPorCiclo(int)`, `evaluar(...)`, `ejecutarDesembolso(...)` |
 | `IComprobantePagoBO` | `operaciones.ibo` | `IBaseBO<ComprobantePago>` | `listarPorSolicitud(int)` |
 | `IRendicionBO` | `operaciones.ibo` | `IBaseBO<Rendicion>` | `calcularTotales(Rendicion)`, `generarRendicionDeCiclo(int)` |
 | `ITransaccionBO` | `operaciones.ibo` | `IBaseBO<Transaccion>` | — |
@@ -184,7 +186,7 @@ All follow `@Path("XWS")` on base package `pe.edu.pucp.economix.economixws.{doma
 | `CuentaBancariaWS` | `CuentaBancariaWS` | `listarCuentas`, `buscarPorId`, `insertar`, `actualizar`, `eliminar` |
 | `MonedaWS` | `MonedaWS` | `listarMonedas`, `buscarPorId`, `insertar`, `actualizar`, `eliminar` |
 | `CicloCajaWS` | `CicloCajaWS` | `listarCiclos`, `buscarPorId`, `insertar`, `actualizar`, `eliminar` |
-| `SolicitudGastoWS` | `SolicitudGastoWS` | `listarSolicitudes`, `buscarPorId`, `insertar`, `actualizar`, `eliminar` |
+| `SolicitudGastoWS` | `SolicitudGastoWS` | `listarSolicitudes`, `buscarPorId`, `insertar`, `actualizar`, `eliminar`, `Evaluar`, `EjecutarDesembolso` |
 | `ComprobantePagoWS` | `ComprobantePagoWS` | `listarComprobantes`, `buscarPorId`, `insertar`, `actualizar`, `eliminar` |
 | `RendicionWS` | `RendicionWS` | `listarRendiciones`, `buscarPorId`, `insertar`, `actualizar`, `eliminar` |
 | `TransaccionWS` | `TransaccionWS` | `listarTransacciones`, `buscarPorId`, `insertar`, `actualizar`, `eliminar` |

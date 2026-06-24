@@ -151,31 +151,25 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
         }
     }
 
-    public void evaluar(int idSolicitudGasto, bool aprobado, string comentario, int idJefeEvaluador, string numeroOperacionBancaria, int idUsuarioAccion)
+    public SolicitudGasto? evaluar(int idSolicitudGasto, bool aprobado, string comentario, int idJefeEvaluador, int idUsuarioAccion)
     {
-        var url = $"Evaluar?idSolicitudGasto={idSolicitudGasto}&aprobado={aprobado.ToString().ToLowerInvariant()}&comentario={Uri.EscapeDataString(comentario ?? "")}&idJefeEvaluador={idJefeEvaluador}&idUsuarioAccion={idUsuarioAccion}&medioDesembolso=TRANSFERENCIA&idCuentaDestino=0";
+        var url = $"Evaluar?idSolicitudGasto={idSolicitudGasto}&aprobado={aprobado.ToString().ToLowerInvariant()}&comentario={Uri.EscapeDataString(comentario ?? "")}&idJefeEvaluador={idJefeEvaluador}&idUsuarioAccion={idUsuarioAccion}";
         var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
         if (!response.IsSuccessStatusCode)
         {
             var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             throw new Exception(error);
         }
+
+        var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+        if (string.IsNullOrEmpty(json) || json == "null")
+            return null;
+        return JsonSerializer.Deserialize<SolicitudGasto>(json, _jsonOptions);
     }
 
-    public void evaluar(int idSolicitudGasto, bool aprobado, string comentario, int idJefeEvaluador, int idUsuarioAccion, string medioDesembolso, int idCuentaDestino)
+    public void ejecutarDesembolso(int idSolicitudGasto, string medioDesembolso, int idCuentaDestino, string numeroOperacionBancaria, int idUsuarioAccion)
     {
-        var url = $"Evaluar?idSolicitudGasto={idSolicitudGasto}&aprobado={aprobado.ToString().ToLowerInvariant()}&comentario={Uri.EscapeDataString(comentario ?? "")}&idJefeEvaluador={idJefeEvaluador}&idUsuarioAccion={idUsuarioAccion}&medioDesembolso={Uri.EscapeDataString(medioDesembolso ?? "TRANSFERENCIA")}&idCuentaDestino={idCuentaDestino}";
-        var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
-        if (!response.IsSuccessStatusCode)
-        {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            throw new Exception(error);
-        }
-    }
-
-    public void ejecutarDesembolso(int idSolicitudGasto, string numeroOperacionBancaria, int idUsuarioAccion)
-    {
-        var url = $"EjecutarDesembolso?idSolicitudGasto={idSolicitudGasto}&numeroOperacionBancaria={Uri.EscapeDataString(numeroOperacionBancaria ?? "")}&idUsuarioAccion={idUsuarioAccion}";
+        var url = $"EjecutarDesembolso?idSolicitudGasto={idSolicitudGasto}&medioDesembolso={Uri.EscapeDataString(medioDesembolso ?? "")}&idCuentaDestino={idCuentaDestino}&numeroOperacionBancaria={Uri.EscapeDataString(numeroOperacionBancaria ?? "")}&idUsuarioAccion={idUsuarioAccion}";
         var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
         if (!response.IsSuccessStatusCode)
         {

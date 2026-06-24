@@ -14,6 +14,7 @@ CREATE PROCEDURE pa_insertar_transaccion(
     IN p_id_cuenta_destino INT,
     IN p_id_moneda INT,
     IN p_id_beneficiario INT,
+    IN p_id_solicitud_gasto INT,
     IN p_estado_transaccion ENUM('REGISTRADA','COMPLETADA','ANULADA'),
     OUT p_id_generado INT
 )
@@ -29,6 +30,7 @@ BEGIN
         id_cuenta_destino,
         id_moneda,
         id_beneficiario,
+        id_solicitud_gasto,
         estado_transaccion,
         id_usuario_creacion,
         id_usuario_modificacion
@@ -43,6 +45,7 @@ BEGIN
         p_id_cuenta_destino,
         p_id_moneda,
         p_id_beneficiario,
+        p_id_solicitud_gasto,
         p_estado_transaccion,
         p_id_usuario_accion,
         p_id_usuario_accion
@@ -64,6 +67,7 @@ CREATE PROCEDURE pa_modificar_transaccion(
     IN p_id_cuenta_destino INT,
     IN p_id_moneda INT,
     IN p_id_beneficiario INT,
+    IN p_id_solicitud_gasto INT,
     IN p_estado_transaccion ENUM('REGISTRADA','COMPLETADA','ANULADA')
 )
 BEGIN
@@ -83,6 +87,7 @@ BEGIN
         id_cuenta_destino = p_id_cuenta_destino,
         id_moneda = p_id_moneda,
         id_beneficiario = p_id_beneficiario,
+        id_solicitud_gasto = p_id_solicitud_gasto,
         estado_transaccion = p_estado_transaccion,
         id_usuario_modificacion = p_id_usuario_accion
     WHERE id_transaccion = p_id_transaccion;
@@ -138,6 +143,7 @@ BEGIN
         t.id_cuenta_destino,
         t.id_moneda,
         t.id_beneficiario,
+        t.id_solicitud_gasto,
         co.id_cuenta_bancaria AS co_id_cuenta,
         co.numero_cuenta AS co_numero_cuenta,
         co.nombre_banco AS co_nombre_banco,
@@ -212,6 +218,7 @@ BEGIN
         t.id_cuenta_destino,
         t.id_moneda,
         t.id_beneficiario,
+        t.id_solicitud_gasto,
         co.id_cuenta_bancaria AS co_id_cuenta,
         co.numero_cuenta AS co_numero_cuenta,
         co.nombre_banco AS co_nombre_banco,
@@ -285,6 +292,7 @@ BEGIN
         t.id_cuenta_destino,
         t.id_moneda,
         t.id_beneficiario,
+        t.id_solicitud_gasto,
         co.id_cuenta_bancaria AS co_id_cuenta,
         co.numero_cuenta AS co_numero_cuenta,
         co.nombre_banco AS co_nombre_banco,
@@ -358,6 +366,7 @@ BEGIN
         t.id_cuenta_destino,
         t.id_moneda,
         t.id_beneficiario,
+        t.id_solicitud_gasto,
         co.id_cuenta_bancaria AS co_id_cuenta,
         co.numero_cuenta AS co_numero_cuenta,
         co.nombre_banco AS co_nombre_banco,

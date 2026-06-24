@@ -17,13 +17,14 @@
 
 @code {
     [Parameter]
-    public EventCallback OnMuestraDetalle { get; set; }
+    public EventCallback<Transaccion> OnMuestraDetalle { get; set; }
 
     [Parameter]
     public Transaccion? Transaccion { get; set; }
 
     public async Task AbrirDetalle()
     {
-        await OnMuestraDetalle.InvokeAsync();
+        if (Transaccion != null)
+            await OnMuestraDetalle.InvokeAsync(Transaccion);
     }
 }

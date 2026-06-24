@@ -105,12 +105,10 @@ public class SolicitudGastoWS {
                             @QueryParam("aprobado") boolean aprobado,
                             @QueryParam("comentario") String comentario,
                             @QueryParam("idJefeEvaluador") int idJefeEvaluador,
-                            @QueryParam("idUsuarioAccion") int idUsuarioAccion,
-                            @QueryParam("medioDesembolso") String medioDesembolso,
-                            @QueryParam("idCuentaDestino") int idCuentaDestino) {
+                            @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
         try {
-            int r = solicitudBO.evaluar(idSolicitudGasto, aprobado, comentario, idJefeEvaluador, idUsuarioAccion, medioDesembolso, idCuentaDestino);
-            return Response.ok(r).build();
+            SolicitudGasto solicitud = solicitudBO.evaluar(idSolicitudGasto, aprobado, comentario, idJefeEvaluador, idUsuarioAccion);
+            return Response.ok(solicitud).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(Map.of("error", e.getMessage())).build();
@@ -121,10 +119,12 @@ public class SolicitudGastoWS {
     @Path("EjecutarDesembolso")
     @Produces(MediaType.APPLICATION_JSON)
     public Response ejecutarDesembolso(@QueryParam("idSolicitudGasto") int idSolicitudGasto,
+                                       @QueryParam("medioDesembolso") String medioDesembolso,
+                                       @QueryParam("idCuentaDestino") int idCuentaDestino,
                                        @QueryParam("numeroOperacionBancaria") String numeroOperacionBancaria,
                                        @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
         try {
-            int r = solicitudBO.ejecutarDesembolso(idSolicitudGasto, numeroOperacionBancaria, idUsuarioAccion);
+            int r = solicitudBO.ejecutarDesembolso(idSolicitudGasto, medioDesembolso, idCuentaDestino, numeroOperacionBancaria, idUsuarioAccion);
             return Response.ok(r).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)

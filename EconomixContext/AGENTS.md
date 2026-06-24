@@ -48,7 +48,7 @@ Convention per endpoint class in `pe.edu.pucp.economix.economixws.{domain}.ws/`:
 - `CuentaBancariaWS` — `ListarCuentas`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
 - `MonedaWS` — `ListarMonedas`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`, `ListarActivas`, `Recuperar`
 - `CicloCajaWS` — `ListarCiclos`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`, `CerrarCiclo`
-- `SolicitudGastoWS` — `ListarSolicitudes`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
+- `SolicitudGastoWS` — `Listar`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`, `Evaluar`, `EjecutarDesembolso`
 - `ComprobantePagoWS` — `ListarComprobantes`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
 - `RendicionWS` — `ListarRendiciones`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
 - `TransaccionWS` — `ListarTransacciones`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
@@ -251,6 +251,52 @@ The administrator dashboard now uses reusable card components instead of inline 
 - `web/.../EconomixWA/Components/Pages/MainDashBoard/DashboardAdministrador.razor`
 - `web/.../EconomixWA/Components/Pages/MainDashBoard/SolicitudRecienteItem.razor`
 - `web/.../EconomixWA/Components/Pages/MainDashBoard/ActividadDashboardItem.razor`
+
+## Business Rules — SolicitudGasto ↔ Transaccion Linkage
+
+### Schema
+- `ope_solicitud_gasto.id_transaccion` — nullable FK to `ope_transaccion(id_transaccion)`.
+- `ope_transaccion.id_solicitud_gasto` — nullable FK to `ope_solicitud_gasto(id_solicitud_gasto)`.
+- `ope_solicitud_gasto.medio_desembolso` was removed; the payment method belongs to `Transaccion`.
+
+### Approval atomic transaction
+`SolicitudGastoBOImpl.evaluar()` runs inside a `DBManager` transaction:
+1. Updates `SolicitudGasto` to `APROBADO` and sets `jefeAprobador`.
+2. Creates a `Transaccion` of type `DESEMBOLSO` in state `REGISTRADA`.
+3. Updates `SolicitudGasto.idTransaccion` with the generated transaction ID.
+4. Commits or rolls back as a unit.
+
+### Disbursement execution
+`SolicitudGastoBOImpl.ejecutarDesembolso()` also runs inside a `DBManager` transaction:
+1. Locates the pending `Transaccion` directly via `SolicitudGasto.idTransaccion`.
+2. Sets `medioPago`, `cuentaDestino`, and `numeroOperacionBancaria`.
+3. Marks the transaction `COMPLETADA` and the solicitud `PAGADO`.
+4. Recalculates the cycle's `totalGastado`.
+
+### UI behaviour
+- Boss list (`SolicitudDeGastoRecibidaPage`) lists every solicitud except `ANULADO`, ordered by cycle and status.
+- Boss detail (`SolicitudDeGastoRecibidaDetalle`) displays the linked transaction data (monto, moneda, cuenta origen, beneficiario, estado) when the solicitud is `APROBADO`/`PAGADO`/`RENDIDO`.
+- Employee detail (`MiSolicitudDeGastoDetalle`) shows the transaction summary when `IdTransaccion > 0`.
+- Transaction detail (`TransaccionDetalle`) is now a read-only data panel loaded from the selected transaction.
+
+### File locations
+- `apps/.../operaciones/model/SolicitudGasto.java`
+- `apps/.../operaciones/model/Transaccion.java`
+- `apps/.../operaciones/boi/SolicitudGastoBOImpl.java`
+- `apps/.../economixws/operaciones/ws/SolicitudGastoWS.java`
+- `web/.../EconomixModel/Model/operaciones/SolicitudGasto.cs`
+- `web/.../EconomixModel/Model/operaciones/Transaccion.cs`
+- `web/.../EconomixWS/operaciones/IWS/ISolicitudGastoWS.cs`
+- `web/.../EconomixWS/operaciones/WSImpl/SolicitudGastoWSImpl.cs`
+- `web/.../EconomixWA/Components/Pages/SolicitudDeGasto/SolicitudRecibida/SolicitudDeGastoRecibidaPage.razor`
+- `web/.../EconomixWA/Components/Pages/SolicitudDeGasto/SolicitudRecibida/SolicitudDeGastoRecibidaDetalle.razor`
+- `web/.../EconomixWA/Components/Pages/SolicitudDeGasto/MiSolicitudesDeGasto/MiSolicitudDeGastoDetalle.razor`
+- `web/.../EconomixWA/Components/Pages/Transaccion/TransaccionDetalle.razor`
+- `database/General/Creacion.sql`
+- `database/Operaciones/SolicitudGastoStoreProcedure.sql`
+- `database/Operaciones/TransaccionStoreProcedure.sql`
+- `database/Operaciones/ComprobantePagoStoreProcedure.sql`
+- `database/Operaciones/SolicitudGastoTriggersAuditoria.sql`
 
 ## TO-DO / Pending Tasks
 

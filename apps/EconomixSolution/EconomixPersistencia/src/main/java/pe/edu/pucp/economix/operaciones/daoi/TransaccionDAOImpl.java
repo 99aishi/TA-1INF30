@@ -66,6 +66,11 @@ public class TransaccionDAOImpl implements ITransaccionDAO {
         } else {
             parametrosEntrada.put("p_estado_transaccion", "REGISTRADA");
         }
+        if (transaccion.getIdSolicitudGasto() > 0) {
+            parametrosEntrada.put("p_id_solicitud_gasto", transaccion.getIdSolicitudGasto());
+        } else {
+            parametrosEntrada.put("p_id_solicitud_gasto", null);
+        }
 
         DBManager.getDBManager().ejecutarProcedimiento("pa_insertar_transaccion", parametrosEntrada, parametrosSalida);
         transaccion.setIdTransaccion((int) parametrosSalida.get("p_id_generado"));
@@ -112,6 +117,11 @@ public class TransaccionDAOImpl implements ITransaccionDAO {
             parametrosEntrada.put("p_estado_transaccion", transaccion.getEstadoTransaccion().toString());
         } else {
             parametrosEntrada.put("p_estado_transaccion", "REGISTRADA");
+        }
+        if (transaccion.getIdSolicitudGasto() > 0) {
+            parametrosEntrada.put("p_id_solicitud_gasto", transaccion.getIdSolicitudGasto());
+        } else {
+            parametrosEntrada.put("p_id_solicitud_gasto", null);
         }
 
         return DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_transaccion", parametrosEntrada, null);
@@ -293,6 +303,11 @@ public class TransaccionDAOImpl implements ITransaccionDAO {
 
         Empleado beneficiario = mapearEmpleadoBasico(rs, "id_beneficiario", "ben_", cache);
         transaccion.setBeneficiario(beneficiario);
+
+        int idSolicitudGasto = rs.getInt("id_solicitud_gasto");
+        if (!rs.wasNull()) {
+            transaccion.setIdSolicitudGasto(idSolicitudGasto);
+        }
 
         return transaccion;
     }

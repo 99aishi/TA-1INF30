@@ -1,10 +1,10 @@
 @inject NavigationManager Navigation
 @inject ISolicitudGastoWS SolicitudGastoWS
+@inject ITransaccionWS TransaccionWS
 @inject IUsuarioWS UsuarioWS
 @inject IMonedaWS MonedaWS
 @inject ICuentaBancariaWS CuentaBancariaWS
 @using EconomixWA.Components.Pages.ComprobanteDePago
-@using System.Globalization
 
 <div class="d-flex flex-column h-100 mb-3">
     <div class="row h-100 mb-3">
@@ -66,27 +66,6 @@
                         @if (EsPendiente)
                         {
                             <div class="col-12 mt-3">
-                                <label class="form-label">Medio de Desembolso</label>
-                                <select class="form-select form-select-lg rounded-4 bg-light" @bind="MedioDesembolsoSeleccionado">
-                                    <option value="TRANSFERENCIA">Transferencia Bancaria</option>
-                                    <option value="YAPE">Yape</option>
-                                    <option value="PLIN">Plin</option>
-                                    <option value="EFECTIVO">Efectivo</option>
-                                </select>
-                            </div>
-
-                            <div class="col-12 mt-3">
-                                <label class="form-label">Cuenta destino del solicitante</label>
-                                <select class="form-select form-select-lg rounded-4 bg-light" @bind="CuentaDestinoSeleccionadaId">
-                                    <option value="0">Seleccione...</option>
-                                    @foreach (var cuenta in CuentasSolicitante)
-                                    {
-                                        <option value="@cuenta.IdCuenta">@(cuenta.NombreBanco) - @(cuenta.NumeroBancario) @(MostrarCci(cuenta))</option>
-                                    }
-                                </select>
-                            </div>
-
-                            <div class="col-12 mt-3">
                                 <label class="form-label">Decisión / Comentario</label>
                                 <textarea class="form-control bg-light" rows="3" placeholder="Comentario de la decisión" @bind="ComentarioDecision"></textarea>
                             </div>
@@ -94,30 +73,103 @@
                         else
                         {
                             <div class="col-12 mt-3">
-                                <label class="form-label">Medio de Desembolso</label>
-                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(FormatearMedioPago(Solicitud.MedioDesembolso))" disabled="true">
-                            </div>
-                            <div class="col-12 mt-3">
                                 <label class="form-label">Decisión / Comentario</label>
                                 <textarea class="form-control bg-light" rows="3" disabled="true">@Solicitud.ComentarioDecision</textarea>
                             </div>
                         }
 
-                        @if (EsAprobado)
+                        @if (PuedeVerDesembolso)
                         {
                             <div class="col-12 mt-4">
                                 <div class="card rounded-4 border-success bg-success-subtle p-3">
-                                    <p class="h5 mb-3">Ejecutar desembolso</p>
+                                    <p class="h5 mb-3">@(EsAprobado ? "Ejecutar desembolso" : "Desembolso ejecutado")</p>
+
+                                    @if (TransaccionDesembolso != null)
+                                    {
+                                        <div class="row mb-3">
+                                            <div class="col-6">
+                                                <label class="form-label">Nro. Transacción</label>
+                                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="TR-@TransaccionDesembolso.IdTransaccion" disabled="true">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label">Estado</label>
+                                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@TransaccionDesembolso.EstadoTransaccion" disabled="true">
+                                            </div>
+                                            <div class="col-6 mt-2">
+                                                <label class="form-label">Monto</label>
+                                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TransaccionDesembolso.Moneda?.Simbolo ?? "S/") @TransaccionDesembolso.Monto.ToString("N2")" disabled="true">
+                                            </div>
+                                            <div class="col-6 mt-2">
+                                                <label class="form-label">Moneda</label>
+                                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TransaccionDesembolso.Moneda?.Nombre ?? "-")" disabled="true">
+                                            </div>
+                                            <div class="col-6 mt-2">
+                                                <label class="form-label">Cuenta origen</label>
+                                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TransaccionDesembolso.CuentaOrigen?.NombreBanco ?? "-") - @(TransaccionDesembolso.CuentaOrigen?.NumeroBancario ?? "-")" disabled="true">
+                                            </div>
+                                            <div class="col-6 mt-2">
+                                                <label class="form-label">Beneficiario</label>
+                                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TransaccionDesembolso.Beneficiario != null ? $"{TransaccionDesembolso.Beneficiario.Nombres} {TransaccionDesembolso.Beneficiario.ApellidoPaterno}" : "-")" disabled="true">
+                                            </div>
+                                        </div>
+                                    }
+                                    else if (Solicitud.IdTransaccion > 0)
+                                    {
+                                        <p class="text-muted">Cargando datos de la transacción...</p>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-warning">No se encontró transacción de desembolso registrada.</p>
+                                    }
+
                                     <div class="row">
                                         <div class="col-12 mb-3">
-                                            <label class="form-label">Número de operación bancaria</label>
-                                            <input type="text" class="form-control bg-white rounded-4" placeholder="OP-12345678" @bind="NumeroOperacionBancaria">
+                                            <label class="form-label">Medio de Pago</label>
+                                            <select class="form-select form-select-lg rounded-4 bg-white" @bind="MedioDesembolsoSeleccionado" disabled="@(!EsAprobado)">
+                                                <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+                                                <option value="YAPE">Yape</option>
+                                                <option value="PLIN">Plin</option>
+                                                <option value="EFECTIVO">Efectivo</option>
+                                            </select>
                                         </div>
-                                        <div class="col-12">
-                                            <button type="button" class="btn btn-success" @onclick="EjecutarDesembolso">
-                                                Marcar desembolso como completado
-                                            </button>
-                                        </div>
+
+                                        @if (MedioDesembolsoSeleccionado == "TRANSFERENCIA")
+                                        {
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label">Cuenta destino del solicitante</label>
+                                                <select class="form-select form-select-lg rounded-4 bg-white" @bind="CuentaDestinoSeleccionadaId" disabled="@(!EsAprobado)">
+                                                    <option value="0">Seleccione...</option>
+                                                    @foreach (var cuenta in CuentasSolicitante)
+                                                    {
+                                                        <option value="@cuenta.IdCuenta">@(cuenta.NombreBanco) - @(cuenta.NumeroBancario) @(MostrarCci(cuenta))</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        }
+                                        else if (MedioDesembolsoSeleccionado is "YAPE" or "PLIN")
+                                        {
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label">Teléfono / Billetera digital del solicitante</label>
+                                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Solicitud.Solicitante?.NumeroCelular ?? "-")" disabled="true">
+                                            </div>
+                                        }
+
+                                        @if (MedioDesembolsoSeleccionado != "EFECTIVO")
+                                        {
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label">Número de operación</label>
+                                                <input type="text" class="form-control bg-white rounded-4" placeholder="OP-12345678 / Código Yape / Código Plin" @bind="NumeroOperacionBancaria" disabled="@(!EsAprobado)">
+                                            </div>
+                                        }
+
+                                        @if (EsAprobado)
+                                        {
+                                            <div class="col-12">
+                                                <button type="button" class="btn btn-success" @onclick="EjecutarDesembolso" disabled="@Procesando">
+                                                    @(Procesando ? "Procesando..." : "Marcar desembolso como completado")
+                                                </button>
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -127,16 +179,16 @@
                     @if (EsPendiente)
                     {
                         <div class="d-flex justify-content-end gap-3 mt-3">
-                            <button type="button" class="btn btn-success align-self-start mt-3" @onclick="Aprobar">
-                                Aprobar
+                            <button type="button" class="btn btn-success align-self-start mt-3" @onclick="Aprobar" disabled="@Procesando">
+                                @(Procesando ? "Procesando..." : "Aprobar")
                             </button>
-                            <button type="button" class="btn btn-outline-warning align-self-start mt-3" @onclick="Observar">
+                            <button type="button" class="btn btn-outline-warning align-self-start mt-3" @onclick="Observar" disabled="@Procesando">
                                 Observar
                             </button>
-                            <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="Rechazar">
+                            <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="Rechazar" disabled="@Procesando">
                                 Rechazar
                             </button>
-                            <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="CerrarDetalle">
+                            <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="CerrarDetalle" disabled="@Procesando">
                                 Cerrar
                             </button>
                         </div>
@@ -144,7 +196,7 @@
                     else
                     {
                         <div class="d-flex justify-content-end gap-3 mt-3">
-                            <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="CerrarDetalle">
+                            <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="CerrarDetalle" disabled="@Procesando">
                                 Cerrar
                             </button>
                         </div>
@@ -233,8 +285,10 @@
     private string ComentarioDecision { get; set; } = string.Empty;
     private string MedioDesembolsoSeleccionado { get; set; } = "TRANSFERENCIA";
     private int CuentaDestinoSeleccionadaId { get; set; } = 0;
+    private bool Procesando { get; set; } = false;
 
     private List<CuentaBancaria> CuentasSolicitante { get; set; } = new();
+    private Transaccion? TransaccionDesembolso { get; set; }
 
     [Parameter]
     public SolicitudGasto? Solicitud { get; set; }
@@ -252,6 +306,9 @@
 
     private bool EsPendiente => Solicitud?.Estado?.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase) == true;
     private bool EsAprobado => Solicitud?.Estado?.Equals("APROBADO", StringComparison.OrdinalIgnoreCase) == true;
+    private bool PuedeVerDesembolso => EsAprobado
+        || Solicitud?.Estado?.Equals("PAGADO", StringComparison.OrdinalIgnoreCase) == true
+        || Solicitud?.Estado?.Equals("RENDIDO", StringComparison.OrdinalIgnoreCase) == true;
 
     private string EstadoClase => Solicitud?.Estado?.ToUpperInvariant() switch
     {
@@ -267,10 +324,30 @@
     {
         if (Solicitud != null)
         {
-            MedioDesembolsoSeleccionado = Solicitud.MedioDesembolso ?? "TRANSFERENCIA";
+            TransaccionDesembolso = null;
+            MedioDesembolsoSeleccionado = "TRANSFERENCIA";
             ComentarioDecision = string.Empty;
             NumeroOperacionBancaria = string.Empty;
+            CuentaDestinoSeleccionadaId = 0;
             CargarCuentasSolicitante();
+            await CargarTransaccionDesembolso();
+        }
+    }
+
+    private async Task CargarTransaccionDesembolso()
+    {
+        if (Solicitud?.IdTransaccion > 0)
+        {
+            TransaccionDesembolso = await Task.Run(() => TransaccionWS.obtenerPorId(Solicitud.IdTransaccion));
+            if (TransaccionDesembolso != null)
+            {
+                if (!string.IsNullOrWhiteSpace(TransaccionDesembolso.MedioPago))
+                    MedioDesembolsoSeleccionado = TransaccionDesembolso.MedioPago;
+                if (TransaccionDesembolso.CuentaDestino != null)
+                    CuentaDestinoSeleccionadaId = TransaccionDesembolso.CuentaDestino.IdCuenta;
+                if (!string.IsNullOrWhiteSpace(TransaccionDesembolso.NumeroOperacionBancaria))
+                    NumeroOperacionBancaria = TransaccionDesembolso.NumeroOperacionBancaria;
+            }
         }
     }
 
@@ -286,26 +363,23 @@
         }
     }
 
-    private static string FormatearMedioPago(string? medio) => medio?.ToUpperInvariant() switch
-    {
-        "TRANSFERENCIA" => "Transferencia Bancaria",
-        "YAPE" => "Yape",
-        "PLIN" => "Plin",
-        "EFECTIVO" => "Efectivo",
-        _ => medio ?? "-"
-    };
-
     private static string MostrarCci(CuentaBancaria cuenta)
     {
         if (string.IsNullOrWhiteSpace(cuenta.Cci)) return string.Empty;
         return $"(CCI: {cuenta.Cci})";
     }
 
-    private bool ValidarAprobacion(out string error)
+    private bool ValidarEjecucion(out string error)
     {
         error = string.Empty;
-        if (CuentaDestinoSeleccionadaId <= 0)
-            error = "Debe seleccionar una cuenta destino del solicitante.";
+        if (MedioDesembolsoSeleccionado == "TRANSFERENCIA" && CuentaDestinoSeleccionadaId <= 0)
+        {
+            error = "Debe seleccionar una cuenta bancaria destino.";
+        }
+        else if (MedioDesembolsoSeleccionado != "EFECTIVO" && string.IsNullOrWhiteSpace(NumeroOperacionBancaria))
+        {
+            error = "Debe ingresar el número de operación.";
+        }
         return string.IsNullOrEmpty(error);
     }
 
@@ -317,78 +391,93 @@
     private async Task Aprobar()
     {
         ErrorMessage = string.Empty;
-        if (Solicitud == null) return;
-        if (!ValidarAprobacion(out var error))
-        {
-            ErrorMessage = error;
-            return;
-        }
+        if (Solicitud == null || Procesando) return;
 
+        Procesando = true;
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, true, ComentarioDecision, idUsuarioAccion, idUsuarioAccion, MedioDesembolsoSeleccionado, CuentaDestinoSeleccionadaId));
+            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, true, ComentarioDecision, idUsuarioAccion, idUsuarioAccion));
             await OnCierraDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
     private async Task EjecutarDesembolso()
     {
         ErrorMessage = string.Empty;
-        if (Solicitud == null) return;
-        if (string.IsNullOrWhiteSpace(NumeroOperacionBancaria))
+        if (Solicitud == null || Procesando) return;
+        if (!ValidarEjecucion(out var error))
         {
-            ErrorMessage = "Debe ingresar el número de operación bancaria.";
+            ErrorMessage = error;
             return;
         }
 
+        Procesando = true;
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => SolicitudGastoWS.ejecutarDesembolso(Solicitud.IdSolicitudGasto, NumeroOperacionBancaria, idUsuarioAccion));
+            await Task.Run(() => SolicitudGastoWS.ejecutarDesembolso(Solicitud.IdSolicitudGasto, MedioDesembolsoSeleccionado, CuentaDestinoSeleccionadaId, NumeroOperacionBancaria, idUsuarioAccion));
             await OnCierraDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
     private async Task Observar()
     {
         ErrorMessage = string.Empty;
-        if (Solicitud == null) return;
+        if (Solicitud == null || Procesando) return;
 
+        Procesando = true;
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, false, string.IsNullOrWhiteSpace(ComentarioDecision) ? "Observado" : ComentarioDecision, idUsuarioAccion, string.Empty, idUsuarioAccion));
+            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, false, string.IsNullOrWhiteSpace(ComentarioDecision) ? "Observado" : ComentarioDecision, idUsuarioAccion, idUsuarioAccion));
             await OnCierraDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
     private async Task Rechazar()
     {
         ErrorMessage = string.Empty;
-        if (Solicitud == null) return;
+        if (Solicitud == null || Procesando) return;
 
+        Procesando = true;
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, false, string.IsNullOrWhiteSpace(ComentarioDecision) ? "Rechazado" : ComentarioDecision, idUsuarioAccion, string.Empty, idUsuarioAccion));
+            await Task.Run(() => SolicitudGastoWS.evaluar(Solicitud.IdSolicitudGasto, false, string.IsNullOrWhiteSpace(ComentarioDecision) ? "Rechazado" : ComentarioDecision, idUsuarioAccion, idUsuarioAccion));
             await OnCierraDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 }

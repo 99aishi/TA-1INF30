@@ -263,34 +263,36 @@ CREATE TABLE IF NOT EXISTS ope_solicitud_gasto (
     monto_convertido DECIMAL(12,2) DEFAULT 0.00,
     motivo_solicitud VARCHAR(200),
     estado_solicitud ENUM('PENDIENTE', 'APROBADO', 'PAGADO', 'RENDIDO', 'RECHAZADO', 'ANULADO') DEFAULT 'PENDIENTE',
-    medio_desembolso ENUM('YAPE', 'PLIN', 'TRANSFERENCIA', 'EFECTIVO'),
     comentario_decision VARCHAR(500),
-    
+
     id_usuario_solicitante INT NOT NULL,
     id_usuario_destinatario INT NULL,
     id_jefe_aprobador INT NULL,
     id_tesorero_aprobador INT NULL,
     id_ciclo_caja INT NULL,
-    
+    id_transaccion INT NULL,
+
     -- Auditoría
     creado_at DATETIME,
     actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
-    
+
     CONSTRAINT pk_ope_solicitud_gasto PRIMARY KEY (id_solicitud_gasto),
-    CONSTRAINT fk_ope_solicitud_gasto_tes_moneda FOREIGN KEY (id_moneda_original) 
+    CONSTRAINT fk_ope_solicitud_gasto_tes_moneda FOREIGN KEY (id_moneda_original)
         REFERENCES tes_moneda(id_moneda),
-    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_sol FOREIGN KEY (id_usuario_solicitante) 
+    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_sol FOREIGN KEY (id_usuario_solicitante)
         REFERENCES rrhh_empleado(id_usuario),
-    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_des FOREIGN KEY (id_usuario_destinatario) 
+    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_des FOREIGN KEY (id_usuario_destinatario)
         REFERENCES rrhh_empleado(id_usuario),
-    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_jefe FOREIGN KEY (id_jefe_aprobador) 
+    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_jefe FOREIGN KEY (id_jefe_aprobador)
         REFERENCES rrhh_empleado(id_usuario),
-    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_tes FOREIGN KEY (id_tesorero_aprobador) 
+    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_tes FOREIGN KEY (id_tesorero_aprobador)
         REFERENCES rrhh_empleado(id_usuario),
-    CONSTRAINT fk_ope_solicitud_gasto_ope_ciclo_caja FOREIGN KEY (id_ciclo_caja) 
-        REFERENCES ope_ciclo_caja(id_ciclo_caja)
+    CONSTRAINT fk_ope_solicitud_gasto_ope_ciclo_caja FOREIGN KEY (id_ciclo_caja)
+        REFERENCES ope_ciclo_caja(id_ciclo_caja),
+    CONSTRAINT fk_ope_solicitud_gasto_ope_transaccion FOREIGN KEY (id_transaccion)
+        REFERENCES ope_transaccion(id_transaccion)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
@@ -363,6 +365,7 @@ CREATE TABLE IF NOT EXISTS ope_transaccion (
     id_cuenta_destino INT NULL,
     id_moneda INT NOT NULL,
     id_beneficiario INT NULL,
+    id_solicitud_gasto INT NULL,
 
     -- Auditoría
     creado_at DATETIME,
@@ -380,7 +383,9 @@ CREATE TABLE IF NOT EXISTS ope_transaccion (
     CONSTRAINT fk_ope_transaccion_tes_moneda FOREIGN KEY (id_moneda)
         REFERENCES tes_moneda(id_moneda),
     CONSTRAINT fk_ope_transaccion_rrhh_empleado_ben FOREIGN KEY (id_beneficiario)
-        REFERENCES rrhh_empleado(id_usuario)
+        REFERENCES rrhh_empleado(id_usuario),
+    CONSTRAINT fk_ope_transaccion_ope_solicitud_gasto FOREIGN KEY (id_solicitud_gasto)
+        REFERENCES ope_solicitud_gasto(id_solicitud_gasto)
 ) ENGINE=InnoDB;
 
 SET FOREIGN_KEY_CHECKS = 1;

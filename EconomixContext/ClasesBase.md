@@ -17,15 +17,21 @@ Para garantizar un tipado fuerte y evitar el uso de identificadores numéricos s
    │                                                    [CicloCajaChica]
    │                                                         │
    │                                                         ▼ (1..*)
-   └─────────────────────────────────────────┐          [SolicitudGasto] <──(1..*) [ComprobantePago]
-                                             │               │
-                                             ▼               ▼
-                                           [Transaccion] ◄───┘
+   │                                                   [SolicitudGasto] <──(1..*) [ComprobantePago]
+   │                                                     │
+   │                           id_solicitud_gasto (FK)   │ id_transaccion (FK inversa)
+   │                                                     ▼
+   └────────────────────────────────────────────────> [Transaccion]
 ```
 
 **Flujo de Relaciones de Fondos**:
 - Cada **Área** puede tener cero o múltiples cuentas bancarias corporativas (`CuentaBancaria`). No es obligatorio que un área tenga una cuenta desde su creación.
 - Cada **Cuenta Bancaria** corporativa de la empresa asociada al área puede financiar múltiples fondos fijos de **Caja Chica**.
+
+**Relación SolicitudGasto ↔ Transaccion**:
+- `SolicitudGasto` no almacena el medio de desembolso; ese dato pertenece a `Transaccion`.
+- `ope_solicitud_gasto.id_transaccion` apunta a la transacción de desembolso generada al aprobar.
+- `ope_transaccion.id_solicitud_gasto` es una FK nullable que vincula el desembolso con su solicitud.
 
 ---
 

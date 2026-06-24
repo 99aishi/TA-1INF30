@@ -270,34 +270,36 @@ CREATE TABLE IF NOT EXISTS ope_solicitud_gasto (
     monto_convertido DECIMAL(12,2) DEFAULT 0.00,
     motivo_solicitud VARCHAR(200),
     estado_solicitud ENUM('PENDIENTE', 'APROBADO', 'PAGADO', 'RENDIDO', 'RECHAZADO', 'ANULADO') DEFAULT 'PENDIENTE',
-    medio_desembolso ENUM('YAPE', 'PLIN', 'TRANSFERENCIA', 'EFECTIVO'),
     comentario_decision VARCHAR(500),
-    
+
     id_usuario_solicitante INT NOT NULL,
     id_usuario_destinatario INT NULL,
     id_jefe_aprobador INT NULL,
     id_tesorero_aprobador INT NULL,
     id_ciclo_caja INT NULL,
-    
+    id_transaccion INT NULL,
+
     -- Auditoría
     creado_at DATETIME,
     actualizado_at DATETIME,
     id_usuario_creacion INT,
     id_usuario_modificacion INT,
-    
+
     CONSTRAINT pk_ope_solicitud_gasto PRIMARY KEY (id_solicitud_gasto),
-    CONSTRAINT fk_ope_solicitud_gasto_tes_moneda FOREIGN KEY (id_moneda_original) 
+    CONSTRAINT fk_ope_solicitud_gasto_tes_moneda FOREIGN KEY (id_moneda_original)
         REFERENCES tes_moneda(id_moneda),
-    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_sol FOREIGN KEY (id_usuario_solicitante) 
+    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_sol FOREIGN KEY (id_usuario_solicitante)
         REFERENCES rrhh_empleado(id_usuario),
-    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_des FOREIGN KEY (id_usuario_destinatario) 
+    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_des FOREIGN KEY (id_usuario_destinatario)
         REFERENCES rrhh_empleado(id_usuario),
-    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_jefe FOREIGN KEY (id_jefe_aprobador) 
+    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_jefe FOREIGN KEY (id_jefe_aprobador)
         REFERENCES rrhh_empleado(id_usuario),
-    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_tes FOREIGN KEY (id_tesorero_aprobador) 
+    CONSTRAINT fk_ope_solicitud_gasto_rrhh_empleado_tes FOREIGN KEY (id_tesorero_aprobador)
         REFERENCES rrhh_empleado(id_usuario),
-    CONSTRAINT fk_ope_solicitud_gasto_ope_ciclo_caja FOREIGN KEY (id_ciclo_caja) 
-        REFERENCES ope_ciclo_caja(id_ciclo_caja)
+    CONSTRAINT fk_ope_solicitud_gasto_ope_ciclo_caja FOREIGN KEY (id_ciclo_caja)
+        REFERENCES ope_ciclo_caja(id_ciclo_caja),
+    CONSTRAINT fk_ope_solicitud_gasto_ope_transaccion FOREIGN KEY (id_transaccion)
+        REFERENCES ope_transaccion(id_transaccion)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS ope_comprobante_pago (
@@ -370,6 +372,7 @@ CREATE TABLE IF NOT EXISTS ope_transaccion (
     id_cuenta_destino INT NULL,
     id_moneda INT NOT NULL,
     id_beneficiario INT NULL,
+    id_solicitud_gasto INT NULL,
 
     -- Auditoría
     creado_at DATETIME,
@@ -387,7 +390,9 @@ CREATE TABLE IF NOT EXISTS ope_transaccion (
     CONSTRAINT fk_ope_transaccion_tes_moneda FOREIGN KEY (id_moneda)
         REFERENCES tes_moneda(id_moneda),
     CONSTRAINT fk_ope_transaccion_rrhh_empleado_ben FOREIGN KEY (id_beneficiario)
-        REFERENCES rrhh_empleado(id_usuario)
+        REFERENCES rrhh_empleado(id_usuario),
+    CONSTRAINT fk_ope_transaccion_ope_solicitud_gasto FOREIGN KEY (id_solicitud_gasto)
+        REFERENCES ope_solicitud_gasto(id_solicitud_gasto)
 ) ENGINE=InnoDB;
 
 SET FOREIGN_KEY_CHECKS = 1;
@@ -1154,7 +1159,7 @@ BEGIN
         sg.monto_convertido AS sg_monto_convertido,
         sg.motivo_solicitud AS sg_motivo_solicitud,
         sg.estado_solicitud AS sg_estado_solicitud,
-        sg.medio_desembolso AS sg_medio_desembolso,
+        sg.id_transaccion AS sg_id_transaccion,
         sg.id_usuario_solicitante AS sg_id_usuario_solicitante,
         sg.id_usuario_destinatario AS sg_id_usuario_destinatario,
         sg.id_jefe_aprobador AS sg_id_jefe_aprobador,
@@ -1201,7 +1206,7 @@ BEGIN
         sg.monto_convertido AS sg_monto_convertido,
         sg.motivo_solicitud AS sg_motivo_solicitud,
         sg.estado_solicitud AS sg_estado_solicitud,
-        sg.medio_desembolso AS sg_medio_desembolso,
+        sg.id_transaccion AS sg_id_transaccion,
         sg.id_usuario_solicitante AS sg_id_usuario_solicitante,
         sg.id_usuario_destinatario AS sg_id_usuario_destinatario,
         sg.id_jefe_aprobador AS sg_id_jefe_aprobador,
@@ -1247,7 +1252,7 @@ BEGIN
         sg.monto_convertido AS sg_monto_convertido,
         sg.motivo_solicitud AS sg_motivo_solicitud,
         sg.estado_solicitud AS sg_estado_solicitud,
-        sg.medio_desembolso AS sg_medio_desembolso,
+        sg.id_transaccion AS sg_id_transaccion,
         sg.id_usuario_solicitante AS sg_id_usuario_solicitante,
         sg.id_usuario_destinatario AS sg_id_usuario_destinatario,
         sg.id_jefe_aprobador AS sg_id_jefe_aprobador,
@@ -1295,7 +1300,7 @@ BEGIN
         sg.monto_convertido AS sg_monto_convertido,
         sg.motivo_solicitud AS sg_motivo_solicitud,
         sg.estado_solicitud AS sg_estado_solicitud,
-        sg.medio_desembolso AS sg_medio_desembolso,
+        sg.id_transaccion AS sg_id_transaccion,
         sg.id_usuario_solicitante AS sg_id_usuario_solicitante,
         sg.id_usuario_destinatario AS sg_id_usuario_destinatario,
         sg.id_jefe_aprobador AS sg_id_jefe_aprobador,
@@ -1342,7 +1347,7 @@ BEGIN
         sg.monto_convertido AS sg_monto_convertido,
         sg.motivo_solicitud AS sg_motivo_solicitud,
         sg.estado_solicitud AS sg_estado_solicitud,
-        sg.medio_desembolso AS sg_medio_desembolso,
+        sg.id_transaccion AS sg_id_transaccion,
         sg.id_usuario_solicitante AS sg_id_usuario_solicitante,
         sg.id_usuario_destinatario AS sg_id_usuario_destinatario,
         sg.id_jefe_aprobador AS sg_id_jefe_aprobador,
@@ -2357,13 +2362,13 @@ CREATE PROCEDURE pa_insertar_solicitud_gasto(
     IN p_monto_convertido DECIMAL(12,2),
     IN p_motivo_solicitud VARCHAR(200),
     IN p_estado_solicitud ENUM('PENDIENTE','APROBADO','PAGADO','RENDIDO','RECHAZADO','ANULADO'),
-    IN p_medio_desembolso ENUM('YAPE','PLIN','TRANSFERENCIA','EFECTIVO'),
     IN p_comentario_decision VARCHAR(500),
     IN p_id_usuario_solicitante INT,
     IN p_id_usuario_destinatario INT,
     IN p_id_jefe_aprobador INT,
     IN p_id_tesorero_aprobador INT,
     IN p_id_ciclo_caja INT,
+    IN p_id_transaccion INT,
     OUT p_id_generado INT
 )
 BEGIN
@@ -2375,13 +2380,13 @@ BEGIN
         monto_convertido,
         motivo_solicitud,
         estado_solicitud,
-        medio_desembolso,
         comentario_decision,
         id_usuario_solicitante,
         id_usuario_destinatario,
         id_jefe_aprobador,
         id_tesorero_aprobador,
         id_ciclo_caja,
+        id_transaccion,
         id_usuario_creacion,
         id_usuario_modificacion
     )
@@ -2393,13 +2398,13 @@ BEGIN
         p_monto_convertido,
         p_motivo_solicitud,
         p_estado_solicitud,
-        p_medio_desembolso,
         p_comentario_decision,
         p_id_usuario_solicitante,
         p_id_usuario_destinatario,
         p_id_jefe_aprobador,
         p_id_tesorero_aprobador,
         p_id_ciclo_caja,
+        p_id_transaccion,
         p_id_usuario_accion,
         p_id_usuario_accion
     );
@@ -2418,13 +2423,13 @@ CREATE PROCEDURE pa_modificar_solicitud_gasto(
     IN p_monto_convertido DECIMAL(12,2),
     IN p_motivo_solicitud VARCHAR(200),
     IN p_estado_solicitud ENUM('PENDIENTE','APROBADO','PAGADO','RENDIDO','RECHAZADO','ANULADO'),
-    IN p_medio_desembolso ENUM('YAPE','PLIN','TRANSFERENCIA','EFECTIVO'),
     IN p_comentario_decision VARCHAR(500),
     IN p_id_usuario_solicitante INT,
     IN p_id_usuario_destinatario INT,
     IN p_id_jefe_aprobador INT,
     IN p_id_tesorero_aprobador INT,
-    IN p_id_ciclo_caja INT
+    IN p_id_ciclo_caja INT,
+    IN p_id_transaccion INT
 )
 BEGIN
     IF p_id_solicitud_gasto IS NULL OR p_id_solicitud_gasto <= 0 THEN
@@ -2439,13 +2444,13 @@ BEGIN
         monto_convertido = p_monto_convertido,
         motivo_solicitud = p_motivo_solicitud,
         estado_solicitud = p_estado_solicitud,
-        medio_desembolso = p_medio_desembolso,
         comentario_decision = p_comentario_decision,
         id_usuario_solicitante = p_id_usuario_solicitante,
         id_usuario_destinatario = p_id_usuario_destinatario,
         id_jefe_aprobador = p_id_jefe_aprobador,
         id_tesorero_aprobador = p_id_tesorero_aprobador,
         id_ciclo_caja = p_id_ciclo_caja,
+        id_transaccion = p_id_transaccion,
         id_usuario_modificacion = p_id_usuario_accion
     WHERE id_solicitud_gasto = p_id_solicitud_gasto;
 END$$
@@ -2484,12 +2489,12 @@ BEGIN
         sg.monto_convertido,
         sg.motivo_solicitud,
         sg.estado_solicitud,
-        sg.medio_desembolso,
         sg.id_usuario_solicitante,
         sg.id_usuario_destinatario,
         sg.id_jefe_aprobador,
         sg.id_tesorero_aprobador,
         sg.id_ciclo_caja,
+        sg.id_transaccion,
         sg.comentario_decision,
         mon.id_moneda AS mon_id_moneda,
         mon.codigo_iso AS mon_codigo_iso,
@@ -2561,12 +2566,12 @@ BEGIN
         sg.monto_convertido,
         sg.motivo_solicitud,
         sg.estado_solicitud,
-        sg.medio_desembolso,
         sg.id_usuario_solicitante,
         sg.id_usuario_destinatario,
         sg.id_jefe_aprobador,
         sg.id_tesorero_aprobador,
         sg.id_ciclo_caja,
+        sg.id_transaccion,
         sg.comentario_decision,
         mon.id_moneda AS mon_id_moneda,
         mon.codigo_iso AS mon_codigo_iso,
@@ -2637,12 +2642,12 @@ BEGIN
         sg.monto_convertido,
         sg.motivo_solicitud,
         sg.estado_solicitud,
-        sg.medio_desembolso,
         sg.id_usuario_solicitante,
         sg.id_usuario_destinatario,
         sg.id_jefe_aprobador,
         sg.id_tesorero_aprobador,
         sg.id_ciclo_caja,
+        sg.id_transaccion,
         sg.comentario_decision,
         mon.id_moneda AS mon_id_moneda,
         mon.codigo_iso AS mon_codigo_iso,
@@ -2719,12 +2724,12 @@ BEGIN
         sg.monto_convertido,
         sg.motivo_solicitud,
         sg.estado_solicitud,
-        sg.medio_desembolso,
         sg.id_usuario_solicitante,
         sg.id_usuario_destinatario,
         sg.id_jefe_aprobador,
         sg.id_tesorero_aprobador,
         sg.id_ciclo_caja,
+        sg.id_transaccion,
         sg.comentario_decision,
         mon.id_moneda AS mon_id_moneda,
         mon.codigo_iso AS mon_codigo_iso,
@@ -2803,12 +2808,12 @@ BEGIN
         sg.monto_convertido,
         sg.motivo_solicitud,
         sg.estado_solicitud,
-        sg.medio_desembolso,
         sg.id_usuario_solicitante,
         sg.id_usuario_destinatario,
         sg.id_jefe_aprobador,
         sg.id_tesorero_aprobador,
         sg.id_ciclo_caja,
+        sg.id_transaccion,
         sg.comentario_decision,
         mon.id_moneda AS mon_id_moneda,
         mon.codigo_iso AS mon_codigo_iso,
@@ -2865,8 +2870,8 @@ BEGIN
     LEFT JOIN rrhh_usuario utes ON tes.id_usuario = utes.id_usuario
     LEFT JOIN ope_ciclo_caja cc ON sg.id_ciclo_caja = cc.id_ciclo_caja
     WHERE sg.id_usuario_destinatario = p_id_usuario_destinatario
-      AND sg.estado_solicitud = 'PENDIENTE'
-    ORDER BY sg.fecha_solicitud ASC;
+      AND (sg.estado_solicitud IS NULL OR sg.estado_solicitud != 'ANULADO')
+    ORDER BY cc.id_ciclo_caja DESC, sg.estado_solicitud ASC, sg.fecha_solicitud ASC;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_listar_solicitudes_por_ciclo $$
@@ -2883,12 +2888,12 @@ BEGIN
         sg.monto_convertido,
         sg.motivo_solicitud,
         sg.estado_solicitud,
-        sg.medio_desembolso,
         sg.id_usuario_solicitante,
         sg.id_usuario_destinatario,
         sg.id_jefe_aprobador,
         sg.id_tesorero_aprobador,
         sg.id_ciclo_caja,
+        sg.id_transaccion,
         sg.comentario_decision,
         mon.id_moneda AS mon_id_moneda,
         mon.codigo_iso AS mon_codigo_iso,
@@ -2961,12 +2966,12 @@ BEGIN
         sg.monto_convertido,
         sg.motivo_solicitud,
         sg.estado_solicitud,
-        sg.medio_desembolso,
         sg.id_usuario_solicitante,
         sg.id_usuario_destinatario,
         sg.id_jefe_aprobador,
         sg.id_tesorero_aprobador,
         sg.id_ciclo_caja,
+        sg.id_transaccion,
         sg.comentario_decision,
         mon.id_moneda AS mon_id_moneda,
         mon.codigo_iso AS mon_codigo_iso,
@@ -3070,7 +3075,7 @@ BEGIN
             'tipo_cambio', NEW.tipo_cambio,
             'monto_convertido', NEW.monto_convertido,
             'motivo_solicitud', NEW.motivo_solicitud,
-            'medio_desembolso', NEW.medio_desembolso,
+            'id_transaccion', NEW.id_transaccion,
             'estado_solicitud', NEW.estado_solicitud,
             'id_usuario_solicitante', NEW.id_usuario_solicitante,
             'id_usuario_destinatario', NEW.id_usuario_destinatario,
@@ -3099,7 +3104,7 @@ BEGIN
             'tipo_cambio', OLD.tipo_cambio,
             'monto_convertido', OLD.monto_convertido,
             'motivo_solicitud', OLD.motivo_solicitud,
-            'medio_desembolso', OLD.medio_desembolso,
+            'id_transaccion', OLD.id_transaccion,
             'estado_solicitud', OLD.estado_solicitud,
             'id_usuario_solicitante', OLD.id_usuario_solicitante,
             'id_usuario_destinatario', OLD.id_usuario_destinatario,
@@ -3115,7 +3120,7 @@ BEGIN
             'tipo_cambio', NEW.tipo_cambio,
             'monto_convertido', NEW.monto_convertido,
             'motivo_solicitud', NEW.motivo_solicitud,
-            'medio_desembolso', NEW.medio_desembolso,
+            'id_transaccion', NEW.id_transaccion,
             'estado_solicitud', NEW.estado_solicitud,
             'id_usuario_solicitante', NEW.id_usuario_solicitante,
             'id_usuario_destinatario', NEW.id_usuario_destinatario,
@@ -3144,7 +3149,7 @@ BEGIN
             'tipo_cambio', OLD.tipo_cambio,
             'monto_convertido', OLD.monto_convertido,
             'motivo_solicitud', OLD.motivo_solicitud,
-            'medio_desembolso', OLD.medio_desembolso,
+            'id_transaccion', OLD.id_transaccion,
             'estado_solicitud', OLD.estado_solicitud,
             'id_usuario_solicitante', OLD.id_usuario_solicitante,
             'id_usuario_destinatario', OLD.id_usuario_destinatario,
@@ -3173,6 +3178,7 @@ CREATE PROCEDURE pa_insertar_transaccion(
     IN p_id_cuenta_destino INT,
     IN p_id_moneda INT,
     IN p_id_beneficiario INT,
+    IN p_id_solicitud_gasto INT,
     IN p_estado_transaccion ENUM('REGISTRADA','COMPLETADA','ANULADA'),
     OUT p_id_generado INT
 )
@@ -3188,6 +3194,7 @@ BEGIN
         id_cuenta_destino,
         id_moneda,
         id_beneficiario,
+        id_solicitud_gasto,
         estado_transaccion,
         id_usuario_creacion,
         id_usuario_modificacion
@@ -3202,6 +3209,7 @@ BEGIN
         p_id_cuenta_destino,
         p_id_moneda,
         p_id_beneficiario,
+        p_id_solicitud_gasto,
         p_estado_transaccion,
         p_id_usuario_accion,
         p_id_usuario_accion
@@ -3223,6 +3231,7 @@ CREATE PROCEDURE pa_modificar_transaccion(
     IN p_id_cuenta_destino INT,
     IN p_id_moneda INT,
     IN p_id_beneficiario INT,
+    IN p_id_solicitud_gasto INT,
     IN p_estado_transaccion ENUM('REGISTRADA','COMPLETADA','ANULADA')
 )
 BEGIN
@@ -3242,6 +3251,7 @@ BEGIN
         id_cuenta_destino = p_id_cuenta_destino,
         id_moneda = p_id_moneda,
         id_beneficiario = p_id_beneficiario,
+        id_solicitud_gasto = p_id_solicitud_gasto,
         estado_transaccion = p_estado_transaccion,
         id_usuario_modificacion = p_id_usuario_accion
     WHERE id_transaccion = p_id_transaccion;
@@ -3297,6 +3307,7 @@ BEGIN
         t.id_cuenta_destino,
         t.id_moneda,
         t.id_beneficiario,
+        t.id_solicitud_gasto,
         co.id_cuenta_bancaria AS co_id_cuenta,
         co.numero_cuenta AS co_numero_cuenta,
         co.nombre_banco AS co_nombre_banco,
@@ -3371,6 +3382,7 @@ BEGIN
         t.id_cuenta_destino,
         t.id_moneda,
         t.id_beneficiario,
+        t.id_solicitud_gasto,
         co.id_cuenta_bancaria AS co_id_cuenta,
         co.numero_cuenta AS co_numero_cuenta,
         co.nombre_banco AS co_nombre_banco,
@@ -3444,6 +3456,7 @@ BEGIN
         t.id_cuenta_destino,
         t.id_moneda,
         t.id_beneficiario,
+        t.id_solicitud_gasto,
         co.id_cuenta_bancaria AS co_id_cuenta,
         co.numero_cuenta AS co_numero_cuenta,
         co.nombre_banco AS co_nombre_banco,
@@ -3517,6 +3530,7 @@ BEGIN
         t.id_cuenta_destino,
         t.id_moneda,
         t.id_beneficiario,
+        t.id_solicitud_gasto,
         co.id_cuenta_bancaria AS co_id_cuenta,
         co.numero_cuenta AS co_numero_cuenta,
         co.nombre_banco AS co_nombre_banco,

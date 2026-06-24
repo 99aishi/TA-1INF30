@@ -31,8 +31,8 @@ public class SolicitudGasto
     [JsonPropertyName("estado")]
     public string Estado { get; set; } = "PENDIENTE";
 
-    [JsonPropertyName("medioDesembolso")]
-    public string MedioDesembolso { get; set; } = "TRANSFERENCIA";
+    [JsonPropertyName("idTransaccion")]
+    public int IdTransaccion { get; set; }
 
     [JsonPropertyName("solicitante")]
     public Empleado? Solicitante { get; set; }

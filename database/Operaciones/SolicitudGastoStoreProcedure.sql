@@ -11,13 +11,13 @@ CREATE PROCEDURE pa_insertar_solicitud_gasto(
     IN p_monto_convertido DECIMAL(12,2),
     IN p_motivo_solicitud VARCHAR(200),
     IN p_estado_solicitud ENUM('PENDIENTE','APROBADO','PAGADO','RENDIDO','RECHAZADO','ANULADO'),
-    IN p_medio_desembolso ENUM('YAPE','PLIN','TRANSFERENCIA','EFECTIVO'),
     IN p_comentario_decision VARCHAR(500),
     IN p_id_usuario_solicitante INT,
     IN p_id_usuario_destinatario INT,
     IN p_id_jefe_aprobador INT,
     IN p_id_tesorero_aprobador INT,
     IN p_id_ciclo_caja INT,
+    IN p_id_transaccion INT,
     OUT p_id_generado INT
 )
 BEGIN
@@ -29,13 +29,13 @@ BEGIN
         monto_convertido,
         motivo_solicitud,
         estado_solicitud,
-        medio_desembolso,
         comentario_decision,
         id_usuario_solicitante,
         id_usuario_destinatario,
         id_jefe_aprobador,
         id_tesorero_aprobador,
         id_ciclo_caja,
+        id_transaccion,
         id_usuario_creacion,
         id_usuario_modificacion
     )
@@ -47,13 +47,13 @@ BEGIN
         p_monto_convertido,
         p_motivo_solicitud,
         p_estado_solicitud,
-        p_medio_desembolso,
         p_comentario_decision,
         p_id_usuario_solicitante,
         p_id_usuario_destinatario,
         p_id_jefe_aprobador,
         p_id_tesorero_aprobador,
         p_id_ciclo_caja,
+        p_id_transaccion,
         p_id_usuario_accion,
         p_id_usuario_accion
     );
@@ -72,13 +72,13 @@ CREATE PROCEDURE pa_modificar_solicitud_gasto(
     IN p_monto_convertido DECIMAL(12,2),
     IN p_motivo_solicitud VARCHAR(200),
     IN p_estado_solicitud ENUM('PENDIENTE','APROBADO','PAGADO','RENDIDO','RECHAZADO','ANULADO'),
-    IN p_medio_desembolso ENUM('YAPE','PLIN','TRANSFERENCIA','EFECTIVO'),
     IN p_comentario_decision VARCHAR(500),
     IN p_id_usuario_solicitante INT,
     IN p_id_usuario_destinatario INT,
     IN p_id_jefe_aprobador INT,
     IN p_id_tesorero_aprobador INT,
-    IN p_id_ciclo_caja INT
+    IN p_id_ciclo_caja INT,
+    IN p_id_transaccion INT
 )
 BEGIN
     IF p_id_solicitud_gasto IS NULL OR p_id_solicitud_gasto <= 0 THEN
@@ -93,13 +93,13 @@ BEGIN
         monto_convertido = p_monto_convertido,
         motivo_solicitud = p_motivo_solicitud,
         estado_solicitud = p_estado_solicitud,
-        medio_desembolso = p_medio_desembolso,
         comentario_decision = p_comentario_decision,
         id_usuario_solicitante = p_id_usuario_solicitante,
         id_usuario_destinatario = p_id_usuario_destinatario,
         id_jefe_aprobador = p_id_jefe_aprobador,
         id_tesorero_aprobador = p_id_tesorero_aprobador,
         id_ciclo_caja = p_id_ciclo_caja,
+        id_transaccion = p_id_transaccion,
         id_usuario_modificacion = p_id_usuario_accion
     WHERE id_solicitud_gasto = p_id_solicitud_gasto;
 END$$
@@ -138,12 +138,12 @@ BEGIN
         sg.monto_convertido,
         sg.motivo_solicitud,
         sg.estado_solicitud,
-        sg.medio_desembolso,
         sg.id_usuario_solicitante,
         sg.id_usuario_destinatario,
         sg.id_jefe_aprobador,
         sg.id_tesorero_aprobador,
         sg.id_ciclo_caja,
+        sg.id_transaccion,
         sg.comentario_decision,
         mon.id_moneda AS mon_id_moneda,
         mon.codigo_iso AS mon_codigo_iso,
@@ -215,12 +215,12 @@ BEGIN
         sg.monto_convertido,
         sg.motivo_solicitud,
         sg.estado_solicitud,
-        sg.medio_desembolso,
         sg.id_usuario_solicitante,
         sg.id_usuario_destinatario,
         sg.id_jefe_aprobador,
         sg.id_tesorero_aprobador,
         sg.id_ciclo_caja,
+        sg.id_transaccion,
         sg.comentario_decision,
         mon.id_moneda AS mon_id_moneda,
         mon.codigo_iso AS mon_codigo_iso,
@@ -291,12 +291,12 @@ BEGIN
         sg.monto_convertido,
         sg.motivo_solicitud,
         sg.estado_solicitud,
-        sg.medio_desembolso,
         sg.id_usuario_solicitante,
         sg.id_usuario_destinatario,
         sg.id_jefe_aprobador,
         sg.id_tesorero_aprobador,
         sg.id_ciclo_caja,
+        sg.id_transaccion,
         sg.comentario_decision,
         mon.id_moneda AS mon_id_moneda,
         mon.codigo_iso AS mon_codigo_iso,
@@ -373,12 +373,12 @@ BEGIN
         sg.monto_convertido,
         sg.motivo_solicitud,
         sg.estado_solicitud,
-        sg.medio_desembolso,
         sg.id_usuario_solicitante,
         sg.id_usuario_destinatario,
         sg.id_jefe_aprobador,
         sg.id_tesorero_aprobador,
         sg.id_ciclo_caja,
+        sg.id_transaccion,
         sg.comentario_decision,
         mon.id_moneda AS mon_id_moneda,
         mon.codigo_iso AS mon_codigo_iso,
@@ -457,12 +457,12 @@ BEGIN
         sg.monto_convertido,
         sg.motivo_solicitud,
         sg.estado_solicitud,
-        sg.medio_desembolso,
         sg.id_usuario_solicitante,
         sg.id_usuario_destinatario,
         sg.id_jefe_aprobador,
         sg.id_tesorero_aprobador,
         sg.id_ciclo_caja,
+        sg.id_transaccion,
         sg.comentario_decision,
         mon.id_moneda AS mon_id_moneda,
         mon.codigo_iso AS mon_codigo_iso,
@@ -519,8 +519,8 @@ BEGIN
     LEFT JOIN rrhh_usuario utes ON tes.id_usuario = utes.id_usuario
     LEFT JOIN ope_ciclo_caja cc ON sg.id_ciclo_caja = cc.id_ciclo_caja
     WHERE sg.id_usuario_destinatario = p_id_usuario_destinatario
-      AND sg.estado_solicitud = 'PENDIENTE'
-    ORDER BY sg.fecha_solicitud ASC;
+      AND (sg.estado_solicitud IS NULL OR sg.estado_solicitud != 'ANULADO')
+    ORDER BY cc.id_ciclo_caja DESC, sg.estado_solicitud ASC, sg.fecha_solicitud ASC;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_listar_solicitudes_por_ciclo $$
@@ -537,12 +537,12 @@ BEGIN
         sg.monto_convertido,
         sg.motivo_solicitud,
         sg.estado_solicitud,
-        sg.medio_desembolso,
         sg.id_usuario_solicitante,
         sg.id_usuario_destinatario,
         sg.id_jefe_aprobador,
         sg.id_tesorero_aprobador,
         sg.id_ciclo_caja,
+        sg.id_transaccion,
         sg.comentario_decision,
         mon.id_moneda AS mon_id_moneda,
         mon.codigo_iso AS mon_codigo_iso,
@@ -615,12 +615,12 @@ BEGIN
         sg.monto_convertido,
         sg.motivo_solicitud,
         sg.estado_solicitud,
-        sg.medio_desembolso,
         sg.id_usuario_solicitante,
         sg.id_usuario_destinatario,
         sg.id_jefe_aprobador,
         sg.id_tesorero_aprobador,
         sg.id_ciclo_caja,
+        sg.id_transaccion,
         sg.comentario_decision,
         mon.id_moneda AS mon_id_moneda,
         mon.codigo_iso AS mon_codigo_iso,

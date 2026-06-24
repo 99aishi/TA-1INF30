@@ -16,7 +16,6 @@ import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoComprobante;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
-import pe.edu.pucp.economix.operaciones.model.enums.MedioPago;
 import pe.edu.pucp.economix.operaciones.model.enums.TipoComprobante;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
@@ -180,10 +179,10 @@ public class ComprobantePagoDAOImpl implements IComprobantePagoDAO {
         String sgEstado = rs.getString(prefijo + "estado_solicitud");
         if(sgEstado != null)
             sg.setEstado(EstadoSolicitudGasto.valueOf(sgEstado));
-        String sgMedio = rs.getString(prefijo + "medio_desembolso");
-        if(sgMedio != null)
-            sg.setMedioDesembolso(MedioPago.valueOf(sgMedio));
         sg.setComentarioDecision(rs.getString(prefijo + "comentario_decision"));
+        int sgIdTransaccion = rs.getInt(prefijo + "id_transaccion");
+        if(!rs.wasNull())
+            sg.setIdTransaccion(sgIdTransaccion);
 
         Empleado solicitante = crearEmpleadoStub(rs, prefijo + "id_usuario_solicitante", cache);
         sg.setSolicitante(solicitante);

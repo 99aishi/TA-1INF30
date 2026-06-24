@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject ISolicitudGastoWS SolicitudGastoWS
+@inject ITransaccionWS TransaccionWS
 @inject IUsuarioWS UsuarioWS
 @inject IMonedaWS MonedaWS
 @inject ICicloCajaWS CicloCajaWS
@@ -69,7 +70,11 @@
                             <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SolicitudEdicion.MontoConvertido.ToString("N2"))" disabled="true">
                         </div>
                     }
-                    <div class="col-12 mt-3">
+                    <div class="col-6 mt-3">
+                        <label class="form-label">Caja Chica</label>
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SolicitudEdicion.Ciclo?.CajaChica?.Nombre ?? "-")" disabled="true">
+                    </div>
+                    <div class="col-6 mt-3">
                         <label class="form-label">Ciclo de Caja Chica</label>
                         <select class="form-select form-select-lg rounded-4 bg-light" @bind="CicloSeleccionadoId" disabled="@(!EsCreacion)">
                             <option value="0">Seleccione...</option>
@@ -118,6 +123,39 @@
                     }
                 </div>
 
+                @if (!EsCreacion && SolicitudEdicion?.IdTransaccion > 0)
+                {
+                    <div class="card rounded-4 p-3 mt-4">
+                        <p class="h5">Transacción de desembolso</p>
+                        <div class="row">
+                            <div class="col-6 mt-2">
+                                <label class="form-label">Nro. Transacción</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="TR-@SolicitudEdicion.IdTransaccion" disabled="true">
+                            </div>
+                            <div class="col-6 mt-2">
+                                <label class="form-label">Estado</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TransaccionDesembolso?.EstadoTransaccion ?? "-")" disabled="true">
+                            </div>
+                            <div class="col-6 mt-2">
+                                <label class="form-label">Monto</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TransaccionDesembolso?.Moneda?.Simbolo ?? "S/") @(TransaccionDesembolso?.Monto.ToString("N2") ?? "-")" disabled="true">
+                            </div>
+                            <div class="col-6 mt-2">
+                                <label class="form-label">Moneda</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TransaccionDesembolso?.Moneda?.Nombre ?? "-")" disabled="true">
+                            </div>
+                            <div class="col-6 mt-2">
+                                <label class="form-label">Medio de pago</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TransaccionDesembolso?.MedioPago ?? "-")" disabled="true">
+                            </div>
+                            <div class="col-6 mt-2">
+                                <label class="form-label">Nro. operación</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TransaccionDesembolso?.NumeroOperacionBancaria ?? "-")" disabled="true">
+                            </div>
+                        </div>
+                    </div>
+                }
+
                 @if (!EsCreacion)
                 {
                     <div class="d-flex flex-fill flex-column mt-4 gap-3 overflow-scroll">
@@ -165,6 +203,7 @@
     private string ErrorMessage { get; set; } = string.Empty;
 
     private SolicitudGasto SolicitudEdicion { get; set; } = new();
+    private Transaccion? TransaccionDesembolso { get; set; }
     private List<Moneda> Monedas { get; set; } = new();
     private List<CicloCajaChica> CiclosActivos { get; set; } = new();
     private Empleado? EmpleadoActual { get; set; }
@@ -230,6 +269,8 @@
     {
         "PENDIENTE" => "bg-warning-subtle text-warning-emphasis",
         "APROBADO" => "bg-success-subtle text-success",
+        "PAGADO" => "bg-primary-subtle text-primary",
+        "RENDIDO" => "bg-info-subtle text-info",
         "RECHAZADO" => "bg-danger-subtle text-danger",
         "OBSERVADO" => "bg-info-subtle text-info",
         _ => "bg-secondary-subtle text-secondary"
@@ -281,6 +322,7 @@
         if (Solicitud != null)
         {
             SolicitudEdicion = CopiarSolicitud(Solicitud);
+            await CargarTransaccionDesembolso();
         }
         else if (IdSolicitud.HasValue)
         {
@@ -321,7 +363,10 @@
         {
             var solicitud = await Task.Run(() => SolicitudGastoWS.obtenerPorId(id));
             if (solicitud != null)
+            {
                 SolicitudEdicion = CopiarSolicitud(solicitud);
+                await CargarTransaccionDesembolso();
+            }
             else
                 ErrorMessage = "No se encontró la solicitud.";
         }
@@ -331,13 +376,20 @@
         }
     }
 
+    private async Task CargarTransaccionDesembolso()
+    {
+        if (SolicitudEdicion?.IdTransaccion > 0)
+        {
+            TransaccionDesembolso = await Task.Run(() => TransaccionWS.obtenerPorId(SolicitudEdicion.IdTransaccion));
+        }
+    }
+
     private async Task InicializarNuevaSolicitud()
     {
         SolicitudEdicion = new SolicitudGasto
         {
             FechaSolicitud = DateTime.Today,
             Estado = "PENDIENTE",
-            MedioDesembolso = "TRANSFERENCIA",
             Solicitante = EmpleadoActual,
             Destinatario = EmpleadoActual?.JefeDirecto,
             MonedaOriginal = Monedas.FirstOrDefault(),
@@ -359,7 +411,7 @@
             MotivoSolicitud = origen.MotivoSolicitud,
             ComentarioDecision = origen.ComentarioDecision,
             Estado = origen.Estado,
-            MedioDesembolso = origen.MedioDesembolso,
+            IdTransaccion = origen.IdTransaccion,
             Solicitante = origen.Solicitante,
             Destinatario = origen.Destinatario,
             JefeAprobador = origen.JefeAprobador,

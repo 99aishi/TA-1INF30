@@ -16,7 +16,6 @@ import pe.edu.pucp.economix.operaciones.model.Rendicion;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoCicloCaja;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
-import pe.edu.pucp.economix.operaciones.model.enums.MedioPago;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.rrhh.model.RolFlujo;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
@@ -41,11 +40,11 @@ public class SolicitudGastoDAOImpl implements ISolicitudGastoDAO {
         parametrosEntrada.put("p_monto_convertido", solicitudGasto.getMontoConvertido());
         parametrosEntrada.put("p_motivo_solicitud", solicitudGasto.getMotivoSolicitud());
         parametrosEntrada.put("p_estado_solicitud", solicitudGasto.getEstado().toString());
-        if(solicitudGasto.getMedioDesembolso() != null)
-            parametrosEntrada.put("p_medio_desembolso", solicitudGasto.getMedioDesembolso().toString());
-        else
-            parametrosEntrada.put("p_medio_desembolso", null);
         parametrosEntrada.put("p_comentario_decision", solicitudGasto.getComentarioDecision());
+        if(solicitudGasto.getIdTransaccion() > 0)
+            parametrosEntrada.put("p_id_transaccion", solicitudGasto.getIdTransaccion());
+        else
+            parametrosEntrada.put("p_id_transaccion", null);
         if(solicitudGasto.getSolicitante() != null)
             parametrosEntrada.put("p_id_usuario_solicitante", solicitudGasto.getSolicitante().getUsuarioID());
         else
@@ -88,11 +87,11 @@ public class SolicitudGastoDAOImpl implements ISolicitudGastoDAO {
         parametrosEntrada.put("p_monto_convertido", solicitudGasto.getMontoConvertido());
         parametrosEntrada.put("p_motivo_solicitud", solicitudGasto.getMotivoSolicitud());
         parametrosEntrada.put("p_estado_solicitud", solicitudGasto.getEstado().toString());
-        if(solicitudGasto.getMedioDesembolso() != null)
-            parametrosEntrada.put("p_medio_desembolso", solicitudGasto.getMedioDesembolso().toString());
-        else
-            parametrosEntrada.put("p_medio_desembolso", null);
         parametrosEntrada.put("p_comentario_decision", solicitudGasto.getComentarioDecision());
+        if(solicitudGasto.getIdTransaccion() > 0)
+            parametrosEntrada.put("p_id_transaccion", solicitudGasto.getIdTransaccion());
+        else
+            parametrosEntrada.put("p_id_transaccion", null);
         if(solicitudGasto.getSolicitante() != null)
             parametrosEntrada.put("p_id_usuario_solicitante", solicitudGasto.getSolicitante().getUsuarioID());
         else
@@ -169,9 +168,10 @@ public class SolicitudGastoDAOImpl implements ISolicitudGastoDAO {
         solicitud.setMontoConvertido(rs.getDouble("monto_convertido"));
         solicitud.setMotivoSolicitud(rs.getString("motivo_solicitud"));
         solicitud.setEstado(EstadoSolicitudGasto.valueOf(rs.getString("estado_solicitud")));
-        if(rs.getString("medio_desembolso") != null)
-            solicitud.setMedioDesembolso(MedioPago.valueOf(rs.getString("medio_desembolso")));
         solicitud.setComentarioDecision(rs.getString("comentario_decision"));
+        int idTransaccion = rs.getInt("id_transaccion");
+        if(!rs.wasNull())
+            solicitud.setIdTransaccion(idTransaccion);
 
         solicitud.setSolicitante(mapearEmpleadoBasico(rs, "sol_id_usuario", "sol_", cache));
         solicitud.setDestinatario(mapearEmpleadoBasico(rs, "des_id_usuario", "des_", cache));

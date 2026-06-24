@@ -23,6 +23,7 @@ public class Transaccion{
     private Moneda moneda;
     private Empleado beneficiario;
     private EstadoTransaccion estadoTransaccion;
+    private int idSolicitudGasto;
 
     //COnstructores
     public Transaccion(){}
@@ -31,7 +32,7 @@ public class Transaccion{
                 tipoTransaccion, Date fecha, double monto, String numeroOperacionBancaria,
                MedioPago medioPago, TipoCambio tipoCambio, CuentaBancaria cuentaOrigen,
                CuentaBancaria cuentaDestino, Moneda moneda, Empleado beneficiario,
-               EstadoTransaccion estadoTransaccion) {
+               EstadoTransaccion estadoTransaccion, int idSolicitudGasto) {
         this.idTransaccion = idTransaccion;
         this.tipoTransaccion = tipoTransaccion;
         this.fecha = fecha;
@@ -44,11 +45,12 @@ public class Transaccion{
         this.moneda = moneda;
         this.beneficiario = beneficiario;
         this.estadoTransaccion = estadoTransaccion;
+        this.idSolicitudGasto = idSolicitudGasto;
     }
     public Transaccion(TipoTransaccion tipo, Date fecha, double monto,
                        String numeroOperacionBancaria, MedioPago medioPago, TipoCambio tipoCambio,
                        CuentaBancaria origen, CuentaBancaria destino, Moneda moneda,
-                       Empleado beneficiario, EstadoTransaccion estadoTransaccion){
+                       Empleado beneficiario, EstadoTransaccion estadoTransaccion, int idSolicitudGasto){
         this.tipoTransaccion = tipo;
         this.fecha=fecha;
         this.monto=monto;
@@ -60,6 +62,7 @@ public class Transaccion{
         this.moneda = moneda;
         this.beneficiario = beneficiario;
         this.estadoTransaccion = estadoTransaccion;
+        this.idSolicitudGasto = idSolicitudGasto;
     }
 
     // Selectores
@@ -135,6 +138,12 @@ public class Transaccion{
     public void setEstadoTransaccion(EstadoTransaccion estadoTransaccion) {
         this.estadoTransaccion = estadoTransaccion;
     }
+    public int getIdSolicitudGasto() {
+        return idSolicitudGasto;
+    }
+    public void setIdSolicitudGasto(int idSolicitudGasto) {
+        this.idSolicitudGasto = idSolicitudGasto;
+    }
 
     //Metodos
     @Override
@@ -152,6 +161,7 @@ public class Transaccion{
                 ", moneda=" + moneda +
                 ", estadoTransaccion=" + estadoTransaccion +
                 ", beneficiario=" + beneficiario +
+                ", idSolicitudGasto=" + idSolicitudGasto +
                 '}';
     }
 

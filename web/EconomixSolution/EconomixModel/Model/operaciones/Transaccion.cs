@@ -39,4 +39,7 @@ public class Transaccion
 
     [JsonPropertyName("beneficiario")]
     public Empleado? Beneficiario { get; set; }
+
+    [JsonPropertyName("idSolicitudGasto")]
+    public int IdSolicitudGasto { get; set; }
 }

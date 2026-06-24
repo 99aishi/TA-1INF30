@@ -65,7 +65,12 @@ Trigger 1: Aprobación de Solicitud (Egreso de la Empresa)
 
 Disparador: El Jefe de Área o el Tesorero aprueba una solicitud de gasto menor (Estado: APROBADO).
 
-Acción Automática: El sistema crea una transacción de tipo DESEMBOLSO en estado PENDIENTE_PAGO desde la cuenta corriente corporativa de la Caja Chica hacia el empleado. El tesorero debe realizar el pago real (Yape, Plin o Transferencia) y registrar el código de operación para completarla.
+Acción Automática: Dentro de una transacción atómica (DBManager), el sistema:
+1. Cambia la solicitud a estado APROBADO y registra al jefe aprobador.
+2. Crea una transacción de tipo DESEMBOLSO en estado REGISTRADA desde la cuenta corriente corporativa de la Caja Chica hacia el empleado.
+3. Vincula ambas filas mediante FKs: `ope_solicitud_gasto.id_transaccion` ↔ `ope_transaccion.id_solicitud_gasto`.
+
+El tesorero/jefe debe ejecutar el pago real (Yape, Plin o Transferencia), seleccionar/confirmar el medio y registrar el código de operación para pasar la transacción a COMPLETADA y la solicitud a PAGADO.
 
 Trigger 2: Expiración de Tiempo / Cierre de Rendición (Ingreso a la Empresa)
 

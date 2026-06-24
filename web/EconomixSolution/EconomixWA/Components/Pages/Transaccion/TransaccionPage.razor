@@ -50,14 +50,14 @@
                         {
                             @foreach (var t in TransaccionesFiltradas)
                             {
-                                <TransaccionItem Transaccion="t" OnMuestraDetalle="() => MostrarDetalleTransaccion()"/>
+                                <TransaccionItem Transaccion="t" OnMuestraDetalle="MostrarDetalleTransaccion"/>
                             }   
                         }
                     </div>
                 </div>
                 
                 <div class="col-6">
-                    <TransaccionDetalle OnCierraDetalle="CierraDetalleTransaccion"/>
+                    <TransaccionDetalle Transaccion="TransaccionSeleccionada" OnCierraDetalle="CierraDetalleTransaccion"/>
                 </div>
             }
             else
@@ -79,7 +79,7 @@
                         {
                             @foreach (var t in TransaccionesFiltradas)
                             {
-                                <TransaccionItem Transaccion="t" OnMuestraDetalle="() => MostrarDetalleTransaccion()"/>
+                                <TransaccionItem Transaccion="t" OnMuestraDetalle="MostrarDetalleTransaccion"/>
                             }   
                         }
                     </div>
@@ -101,6 +101,7 @@
     private DateTime? FiltroFechaInicio { get; set; }
     private DateTime? FiltroFechaFin { get; set; }
     private List<Transaccion> Transacciones { get; set; } = new();
+    private Transaccion? TransaccionSeleccionada { get; set; }
 
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(FiltroBeneficiario)
@@ -123,8 +124,9 @@
         .Where(t => !FiltroFechaInicio.HasValue || t.Fecha.Date >= FiltroFechaInicio.Value.Date)
         .Where(t => !FiltroFechaFin.HasValue || t.Fecha.Date <= FiltroFechaFin.Value.Date);
 
-    private void MostrarDetalleTransaccion()
+    private void MostrarDetalleTransaccion(Transaccion transaccion)
     {
+        TransaccionSeleccionada = transaccion;
         MuestraDetalle = true;
     }
 
@@ -132,6 +134,7 @@
     {
         await ListarTransacciones();
         MuestraDetalle = false;
+        TransaccionSeleccionada = null;
     }
 
     protected override async Task OnInitializedAsync()
