@@ -1,8 +1,11 @@
 package pe.edu.pucp.economix.main;
 
 import pe.edu.pucp.economix.operaciones.boi.CicloCajaBOImpl;
+import pe.edu.pucp.economix.operaciones.boi.SolicitudGastoBOImpl;
 import pe.edu.pucp.economix.operaciones.ibo.ICicloCajaBO;
+import pe.edu.pucp.economix.operaciones.ibo.ISolicitudGastoBO;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
+import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.rrhh.boi.*;
 import pe.edu.pucp.economix.rrhh.ibo.*;
 import pe.edu.pucp.economix.rrhh.model.Administrador;
@@ -25,8 +28,12 @@ public class Main {
 //        } else {
 //            System.out.println("Administrador ya existe: " + admin.getNombres());
 //        }
-
-        ICicloCajaBO cicloCajaBO = new CicloCajaBOImpl();
-        List<CicloCajaChica> ciclos = cicloCajaBO.listarTodas();
+        ISolicitudGastoBO solicitudGastoBO= new SolicitudGastoBOImpl();
+        List<SolicitudGasto> solis= solicitudGastoBO.listarTodas();
+        for(SolicitudGasto s : solis){
+            System.out.println(s.getIdSolicitudGasto());
+        }
+//        ICicloCajaBO cicloCajaBO = new CicloCajaBOImpl();
+//        List<CicloCajaChica> ciclos = cicloCajaBO.listarTodas();
     }
 }
