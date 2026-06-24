@@ -198,4 +198,45 @@ BEGIN
     WHERE cb.activa = 1;
 END$$
 
+DROP PROCEDURE IF EXISTS pa_listar_cuentas_bancarias_por_empleado $$
+CREATE PROCEDURE pa_listar_cuentas_bancarias_por_empleado(
+    IN p_id_usuario INT
+)
+BEGIN
+    SELECT
+        cb.id_cuenta_bancaria,
+        cb.numero_cuenta,
+        cb.nombre_banco,
+        cb.cci,
+        cb.id_moneda,
+        cb.id_usuario,
+        cb.id_area,
+        cb.activa,
+        m.id_moneda AS mon_id_moneda,
+        m.codigo_iso AS mon_codigo_iso,
+        m.simbolo AS mon_simbolo,
+        m.nombre_moneda AS mon_nombre,
+        m.descripcion AS mon_descripcion,
+        m.activa AS mon_activa,
+        a.id_area AS area_id_area,
+        a.nombre_area AS area_nombre,
+        a.descripcion_area AS area_descripcion,
+        a.id_jefe AS area_id_jefe,
+        a.esta_activo AS area_esta_activo,
+        e.id_usuario AS emp_id_usuario,
+        u.nombres AS emp_nombres,
+        u.apellido_paterno AS emp_apellido_paterno,
+        u.apellido_materno AS emp_apellido_materno,
+        u.correo AS emp_correo,
+        e.numero_celular AS emp_numero_celular,
+        e.rol_flujo AS emp_rol_flujo
+    FROM tes_cuenta_bancaria cb
+    LEFT JOIN tes_moneda m ON cb.id_moneda = m.id_moneda
+    LEFT JOIN rrhh_area a ON cb.id_area = a.id_area
+    LEFT JOIN rrhh_empleado e ON cb.id_usuario = e.id_usuario
+    LEFT JOIN rrhh_usuario u ON e.id_usuario = u.id_usuario
+    WHERE cb.id_usuario = p_id_usuario
+    ORDER BY cb.activa DESC, cb.id_cuenta_bancaria;
+END$$
+
 DELIMITER ;

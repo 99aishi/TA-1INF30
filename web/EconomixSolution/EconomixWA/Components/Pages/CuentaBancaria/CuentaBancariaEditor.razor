@@ -46,7 +46,9 @@
         </div>
         <div class="col-12 col-md-3">
             <label class="form-label mb-1">Estado</label>
-            <select class="form-select rounded-4" @bind="Cuenta.Activa">
+            <select class="form-select rounded-4"
+                    value="@Cuenta.Activa.ToString().ToLower()"
+                    @onchange="@((ChangeEventArgs e) => Cuenta.Activa = (e.Value?.ToString() == "true"))">
                 <option value="true">Activa</option>
                 <option value="false">Inactiva</option>
             </select>

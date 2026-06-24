@@ -79,6 +79,21 @@ public class CuentaBancariaWS {
     }
 
     @GET
+    @Path("ListarPorEmpleado")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listarPorEmpleado(@QueryParam("id") int id) {
+        try {
+            List<CuentaBancaria> cuentas = cuentaBO.listarPorEmpleado(id);
+            if (cuentas == null || cuentas.isEmpty())
+                return Response.status(Response.Status.NO_CONTENT).build();
+            return Response.ok(cuentas).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
+    @GET
     @Path("ListarCajasChicas")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listarCajasChicas(@QueryParam("id") int id) {

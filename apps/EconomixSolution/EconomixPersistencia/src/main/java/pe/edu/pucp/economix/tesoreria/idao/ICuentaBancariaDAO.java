@@ -11,4 +11,5 @@ public interface ICuentaBancariaDAO {
     CuentaBancaria buscarPorId(int id) throws SQLException;
     java.util.List<CuentaBancaria> listarActivas() throws SQLException;
     java.util.List<CuentaBancaria> listarTodas() throws SQLException;
+    java.util.List<CuentaBancaria> listarPorEmpleado(int idEmpleado) throws SQLException;
 }
