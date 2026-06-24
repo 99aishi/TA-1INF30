@@ -12,7 +12,6 @@ import net.sf.jasperreports.engine.JasperPrint;
 import pe.edu.pucp.economix.config.DBManager;
 
 public class ReporteService {
-
     public byte[] generarReporteGastosPorArea(Date fechaInicio, Date fechaFin) throws Exception {
         InputStream reporteStream = getClass().getClassLoader()
                 .getResourceAsStream("reportes/GastosPorArea.jasper");

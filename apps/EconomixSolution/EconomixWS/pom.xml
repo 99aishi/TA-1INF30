@@ -18,6 +18,14 @@
   </properties>
 
   <dependencies>
+
+      <!-- Source: https://mvnrepository.com/artifact/net.sf.jasperreports/jasperreports -->
+      <dependency>
+          <groupId>net.sf.jasperreports</groupId>
+          <artifactId>jasperreports</artifactId>
+          <version>7.0.6</version>
+          <scope>compile</scope>
+      </dependency>
       <!-- Source: https://mvnrepository.com/artifact/com.mysql/mysql-connector-j -->
       <dependency>
           <groupId>com.mysql</groupId>
@@ -25,6 +33,10 @@
           <version>9.6.0</version>
           <scope>compile</scope>
       </dependency>
+      <dependency>
+          <groupId>net.sf.jasperreports</groupId>
+          <artifactId>jasperreports</artifactId>
+          <version>6.21.3</version> </dependency>
 
       <dependency>
           <groupId>pe.edu.pucp.economix</groupId>
