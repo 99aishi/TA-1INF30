@@ -1,0 +1,311 @@
+@inject NavigationManager Navigation
+@inject IRendicionWS RendicionWS
+@inject ISolicitudGastoWS SolicitudGastoWS
+@inject IUsuarioWS UsuarioWS
+
+<div class="card rounded-4 h-100 p-3 d-flex flex-column overflow-hidden">
+    <div class="d-flex gap-3 align-items-center mb-2">
+        <p class="h3 mb-0">Rendicion REN-@(Rendicion?.IdRendicion > 0 ? Rendicion.IdRendicion : "-")</p>
+        <span class="badge @EstadoClase rounded-pill">@(Rendicion?.Estado ?? "-")</span>
+    </div>
+    <hr class="my-0" />
+
+    <div class="flex-fill overflow-auto p-3">
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @ErrorMessage
+                <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+            </div>
+        }
+
+        @if (Rendicion == null)
+        {
+            <p class="text-muted text-center mt-5">Seleccione una rendicion para ver el detalle</p>
+        }
+        else
+        {
+            <div class="row mb-3">
+                <div class="col-6">
+                    <label class="form-label">Fecha de presentacion</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Rendicion.FechaPresentacion?.ToString("dd/MM/yyyy") ?? "-")" disabled="true">
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Fecha de aprobacion</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Rendicion.FechaAprobacion?.ToString("dd/MM/yyyy") ?? "-")" disabled="true">
+                </div>
+                <div class="col-12 mt-2">
+                    <label class="form-label">Caja Chica / Ciclo</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Rendicion.CicloCajaChica?.CajaChica?.Nombre ?? "-") - Semana @(Rendicion.CicloCajaChica?.NumeroSemana ?? 0)" disabled="true">
+                </div>
+            </div>
+
+            <div class="card rounded-4 p-3 mb-3 bg-light">
+                <p class="h5 mb-3">Resumen Ejecutivo</p>
+                <div class="row">
+                    <div class="col-4 text-center">
+                        <p class="text-muted mb-0 small">Total Asignado</p>
+                        <p class="h5 mb-0 fw-bold">@(SimboloMoneda) @TotalAsignado.ToString("N2")</p>
+                    </div>
+                    <div class="col-4 text-center">
+                        <p class="text-muted mb-0 small">Total Solicitado</p>
+                        <p class="h5 mb-0 fw-bold">@(SimboloMoneda) @(Rendicion.TotalAprobado.ToString("N2"))</p>
+                    </div>
+                    <div class="col-4 text-center">
+                        <p class="text-muted mb-0 small">Total Rendido</p>
+                        <p class="h5 mb-0 fw-bold">@(SimboloMoneda) @(Rendicion.TotalDeclarado.ToString("N2"))</p>
+                    </div>
+                    <div class="col-6 text-center mt-3">
+                        <p class="text-muted mb-0 small">Diferencia</p>
+                        <p class="h4 mb-0 fw-bold @ClaseDiferencia">@DiferenciaTexto</p>
+                    </div>
+                    <div class="col-6 text-center mt-3">
+                        <p class="text-muted mb-0 small">Saldo Final</p>
+                        <p class="h4 mb-0 fw-bold">@(SimboloMoneda) @(Rendicion.SaldoFinal.ToString("N2"))</p>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Rendicion.Comentario))
+            {
+                <div class="card rounded-4 p-3 mb-3 border-info">
+                    <p class="text-muted mb-1 small">Comentario de Tesoreria</p>
+                    <p class="mb-0">@Rendicion.Comentario</p>
+                </div>
+            }
+
+            <div class="card rounded-4 p-3 mb-3">
+                <p class="h5 mb-3">Solicitudes del Ciclo</p>
+                @if (Solicitudes == null || !Solicitudes.Any())
+                {
+                    <p class="text-muted text-center">Cargando solicitudes...</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Solicitud</th>
+                                    <th>Solicitante</th>
+                                    <th>Monto</th>
+                                    <th>Estado</th>
+                                    <th>Comprobantes</th>
+                                    <th>Total Comp.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var s in Solicitudes)
+                                {
+                                    <tr class="cursor-pointer" @onclick="() => VerSolicitud(s.IdSolicitudGasto)">
+                                        <td>SG-@s.IdSolicitudGasto</td>
+                                        <td>@(s.Solicitante != null ? $"{s.Solicitante.Nombres} {s.Solicitante.ApellidoPaterno}" : "-")</td>
+                                        <td>@(s.MonedaOriginal?.Simbolo ?? "S/") @s.MontoSolicitado.ToString("N2")</td>
+                                        <td><span class="badge @EstadoSolicitudClase(s.Estado)">@s.Estado</span></td>
+                                        <td>@(s.Comprobantes?.Count ?? 0)</td>
+                                        <td>@(s.MonedaOriginal?.Simbolo ?? "S/") @((s.Comprobantes?.Sum(c => c.MontoTotal) ?? 0).ToString("N2"))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
+            @if (MostrarAccionesTesoreria)
+            {
+                <div class="card rounded-4 p-3 mb-3 border-warning">
+                    <p class="h5 mb-3">Acciones de Tesoreria</p>
+                    <div class="mb-2">
+                        <label class="form-label">Comentario (requerido para observar/denegar)</label>
+                        <textarea class="form-control" rows="2" @bind="ComentarioAccion"></textarea>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        @if (EsEnEspera)
+                        {
+                            <button type="button" class="btn btn-info" @onclick="Observar" disabled="@Procesando">Observar</button>
+                            <button type="button" class="btn btn-success" @onclick="Aceptar" disabled="@Procesando">Aceptar</button>
+                            <button type="button" class="btn btn-danger" @onclick="Denegar" disabled="@Procesando">Denegar</button>
+                        }
+                        else if (EsObservado)
+                        {
+                            <button type="button" class="btn btn-success" @onclick="Aceptar" disabled="@Procesando">Aceptar</button>
+                            <button type="button" class="btn btn-danger" @onclick="Denegar" disabled="@Procesando">Denegar</button>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <hr class="my-0" />
+    <div class="p-3 d-flex justify-content-end gap-3">
+        <button type="button" class="btn btn-outline-primary" @onclick="CerrarDetalle">Cerrar</button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Rendicion? Rendicion { get; set; }
+
+    [Parameter]
+    public EventCallback OnCerrarDetalle { get; set; }
+
+    private string ErrorMessage { get; set; } = string.Empty;
+    private string ComentarioAccion { get; set; } = string.Empty;
+    private bool Procesando { get; set; } = false;
+    private List<SolicitudGasto> Solicitudes { get; set; } = new();
+
+    private string? RolUsuario { get; set; }
+    private bool EsTesoreria => RolUsuario is "Tesorero" or "Tesoreria" or "Tesorero y Finanzas";
+    private bool EsEnEspera => Rendicion?.Estado?.Equals("EN_ESPERA", StringComparison.OrdinalIgnoreCase) == true;
+    private bool EsObservado => Rendicion?.Estado?.Equals("OBSERVADO", StringComparison.OrdinalIgnoreCase) == true;
+    private bool MostrarAccionesTesoreria => EsTesoreria && (EsEnEspera || EsObservado);
+
+    private string SimboloMoneda => Rendicion?.CicloCajaChica?.CajaChica?.Moneda?.Simbolo ?? "S/";
+    private double TotalAsignado => Rendicion?.CicloCajaChica?.CajaChica?.MontoTecho ?? 0;
+    private double Diferencia => (Rendicion?.TotalDeclarado ?? 0) - (Rendicion?.TotalAprobado ?? 0);
+
+    private string DiferenciaTexto => Diferencia >= 0
+        ? $"+{Diferencia.ToString("N2")}"
+        : Diferencia.ToString("N2");
+
+    private string ClaseDiferencia => Diferencia > 0
+        ? "text-success"
+        : Diferencia < 0
+            ? "text-danger"
+            : "text-muted";
+
+    private string EstadoClase => Rendicion?.Estado?.ToUpperInvariant() switch
+    {
+        "EN_ESPERA" => "bg-warning-subtle text-warning-emphasis",
+        "OBSERVADO" => "bg-info-subtle text-info-emphasis",
+        "ACEPTADO" => "bg-success-subtle text-success-emphasis",
+        "DENEGADO" => "bg-danger-subtle text-danger-emphasis",
+        "ANULADO" => "bg-secondary-subtle text-secondary-emphasis",
+        _ => "bg-light text-dark"
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Rendicion != null)
+        {
+            ComentarioAccion = string.Empty;
+            ErrorMessage = string.Empty;
+            await CargarSolicitudes();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        RolUsuario = UsuarioWS.GetCurrentUser()?.Rol?.Titulo;
+    }
+
+    private async Task CargarSolicitudes()
+    {
+        if (Rendicion?.CicloCajaChica?.IdCicloCaja > 0)
+        {
+            try
+            {
+                Solicitudes = await Task.Run(() => SolicitudGastoWS.listarPorCiclo(Rendicion.CicloCajaChica.IdCicloCaja));
+            }
+            catch
+            {
+                Solicitudes = new List<SolicitudGasto>();
+            }
+        }
+    }
+
+    private string EstadoSolicitudClase(string? estado) => estado?.ToUpperInvariant() switch
+    {
+        "PENDIENTE" => "bg-warning-subtle text-warning-emphasis",
+        "APROBADO" => "bg-success-subtle text-success-emphasis",
+        "PAGADO" => "bg-primary-subtle text-primary-emphasis",
+        "RENDIDO" => "bg-info-subtle text-info-emphasis",
+        "RECHAZADO" => "bg-danger-subtle text-danger-emphasis",
+        _ => "bg-light text-dark"
+    };
+
+    private void VerSolicitud(int idSolicitud)
+    {
+        Navigation.NavigateTo($"/Mis Solicitudes De Gasto/Detalle/{idSolicitud}");
+    }
+
+    private async Task CerrarDetalle()
+    {
+        await OnCerrarDetalle.InvokeAsync();
+    }
+
+    private async Task Observar()
+    {
+        if (Rendicion == null || Procesando) return;
+        if (string.IsNullOrWhiteSpace(ComentarioAccion))
+        {
+            ErrorMessage = "Debe ingresar un comentario para observar la rendicion.";
+            return;
+        }
+
+        Procesando = true;
+        try
+        {
+            var idUsuario = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => RendicionWS.observarRendicion(Rendicion.IdRendicion, ComentarioAccion, idUsuario));
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+
+    private async Task Aceptar()
+    {
+        if (Rendicion == null || Procesando) return;
+
+        Procesando = true;
+        try
+        {
+            var idUsuario = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => RendicionWS.aceptarRendicion(Rendicion.IdRendicion, idUsuario));
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+
+    private async Task Denegar()
+    {
+        if (Rendicion == null || Procesando) return;
+        if (string.IsNullOrWhiteSpace(ComentarioAccion))
+        {
+            ErrorMessage = "Debe ingresar un comentario para denegar la rendicion.";
+            return;
+        }
+
+        Procesando = true;
+        try
+        {
+            var idUsuario = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => RendicionWS.denegarRendicion(Rendicion.IdRendicion, ComentarioAccion, idUsuario));
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+}

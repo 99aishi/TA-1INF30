@@ -94,9 +94,9 @@ AuditoriaLogDto (standalone)
 | `RolFlujo` | `EMPLEADO, JEFE_AREA` |
 | `EstadoFondo` | `ACTIVO, INACTIVO` |
 | `EstadoSolicitudGasto` | `PENDIENTE, APROBADO, PAGADO, RENDIDO, RECHAZADO, ANULADO` |
-| `EstadoCicloCaja` | `ABIERTO, CERRADO, LIQUIDADO` |
+| `EstadoCicloCaja` | `ABIERTO, CERRADO, LIQUIDADO, EN_EXCEPCION` |
 | `EstadoComprobante` | `POR_REVISAR, ANULADO, APROBADO, OBSERVADO` |
-| `EstadoRendicion` | `ACEPTADO, EN_ESPERA, DENEGADO, ANULADO` |
+| `EstadoRendicion` | `ACEPTADO, EN_ESPERA, DENEGADO, OBSERVADO, ANULADO` |
 | `EstadoTransaccion` | `REGISTRADA, COMPLETADA, ANULADA` |
 | `TipoComprobante` | `FACTURA, BOLETA, DJ_EXCEPCIONAL` |
 | `TipoTransaccion` | `DESEMBOLSO, DEVOLUCION_SOBRANTE, REEMBOLSO_DEFICIT, REPOSICION_FONDO` |
@@ -132,7 +132,7 @@ IBaseBO<T>                          (interface)
 | `ICicloCajaBO` | `operaciones.ibo` | `IBaseBO<CicloCajaChica>` | `calcularTotalGastado(CicloCajaChica)` |
 | `ISolicitudGastoBO` | `operaciones.ibo` | `IBaseBO<SolicitudGasto>` | `listarPorSolicitante(int)`, `listarPendientesJefe(int)`, `listarPorCiclo(int)`, `evaluar(...)`, `ejecutarDesembolso(...)` |
 | `IComprobantePagoBO` | `operaciones.ibo` | `IBaseBO<ComprobantePago>` | `listarPorSolicitud(int)` |
-| `IRendicionBO` | `operaciones.ibo` | `IBaseBO<Rendicion>` | `calcularTotales(Rendicion)`, `generarRendicionDeCiclo(int)` |
+| `IRendicionBO` | `operaciones.ibo` | `IBaseBO<Rendicion>` | `calcularTotales(Rendicion)`, `generarRendicionDeCiclo(int)`, `observarRendicion(int,String,int)`, `aceptarRendicion(int,int)`, `denegarRendicion(int,String,int)`, `reEnviarRendicion(int,int)`, `listarPorArea(int)` |
 | `ITransaccionBO` | `operaciones.ibo` | `IBaseBO<Transaccion>` | — |
 | `IAuditoriaBO` | `auditoria.ibo` | **(none)** | `listarLog()`, `insertarLog(AuditoriaLogDto)` |
 
@@ -166,7 +166,7 @@ IDAO<T>                             (interface)
 | `ICicloCajaChicaDAO` | `operaciones.idao` | `IDAO<CicloCajaChica>` | — |
 | `ISolicitudGastoDAO` | `operaciones.idao` | `IDAO<SolicitudGasto>` | `listarPorSolicitante(int)`, `listarPendientesJefe(int)`, `listarPorCiclo(int)` |
 | `IComprobantePagoDAO` | `operaciones.idao` | `IDAO<ComprobantePago>` | `listarPorSolicitud(int)` |
-| `IRendicionDAO` | `operaciones.idao` | `IDAO<Rendicion>` | — |
+| `IRendicionDAO` | `operaciones.idao` | `IDAO<Rendicion>` | `cambiarEstadoRendicion(int,String,String,int)`, `listarPorArea(int)`, `generarRendicionDeCicloSP(int,int)` |
 | `ITransaccionDAO` | `operaciones.idao` | `IDAO<Transaccion>` | — |
 | `IAuditoriaDAO` | `auditoria.idao` | **(none)** | `listarLog()`, `insertarLog(AuditoriaLogDto)` |
 
@@ -188,7 +188,7 @@ All follow `@Path("XWS")` on base package `pe.edu.pucp.economix.economixws.{doma
 | `CicloCajaWS` | `CicloCajaWS` | `listarCiclos`, `buscarPorId`, `insertar`, `actualizar`, `eliminar` |
 | `SolicitudGastoWS` | `SolicitudGastoWS` | `listarSolicitudes`, `buscarPorId`, `insertar`, `actualizar`, `eliminar`, `Evaluar`, `EjecutarDesembolso` |
 | `ComprobantePagoWS` | `ComprobantePagoWS` | `listarComprobantes`, `buscarPorId`, `insertar`, `actualizar`, `eliminar` |
-| `RendicionWS` | `RendicionWS` | `listarRendiciones`, `buscarPorId`, `insertar`, `actualizar`, `eliminar` |
+| `RendicionWS` | `RendicionWS` | `Listar`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`, `GenerarRendicionDeCiclo`, `ObservarRendicion`, `AceptarRendicion`, `DenegarRendicion`, `ReEnviarRendicion`, `ListarPorArea` |
 | `TransaccionWS` | `TransaccionWS` | `listarTransacciones`, `buscarPorId`, `insertar`, `actualizar`, `eliminar` |
 | `AuditoriaWS` | `AuditoriaWS` | `listarLog`, `insertarLog` |
 
@@ -227,5 +227,6 @@ Proxies extend `IWS<T>` providing sync-over-async implementations calling JAX-RS
 - `ISolicitudGastoWS` / `SolicitudGastoWSImpl`
 - `IComprobantePagoWS` / `ComprobantePagoWSImpl`
 - `ICicloCajaWS` / `CicloCajaWSImpl`
+- `IRendicionWS` / `RendicionWSImpl`
 - `ITransaccionWS` / `TransaccionWSImpl`
 - `IAuditoriaWS` / `AuditoriaWSImpl`

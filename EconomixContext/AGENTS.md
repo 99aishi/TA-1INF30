@@ -50,7 +50,7 @@ Convention per endpoint class in `pe.edu.pucp.economix.economixws.{domain}.ws/`:
 - `CicloCajaWS` — `ListarCiclos`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`, `CerrarCiclo`
 - `SolicitudGastoWS` — `Listar`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`, `Evaluar`, `EjecutarDesembolso`
 - `ComprobantePagoWS` — `ListarComprobantes`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
-- `RendicionWS` — `ListarRendiciones`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
+- `RendicionWS` — `Listar`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`, `GenerarRendicionDeCiclo`, `ObservarRendicion`, `AceptarRendicion`, `DenegarRendicion`, `ReEnviarRendicion`, `ListarPorArea`
 - `TransaccionWS` — `ListarTransacciones`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
 - `AuditoriaWS` — `ListarLog`, `InsertarLog` (returns audit logs)
 
@@ -297,6 +297,51 @@ The administrator dashboard now uses reusable card components instead of inline 
 - `database/Operaciones/TransaccionStoreProcedure.sql`
 - `database/Operaciones/ComprobantePagoStoreProcedure.sql`
 - `database/Operaciones/SolicitudGastoTriggersAuditoria.sql`
+
+## Business Rules — Rendiciones & Friday Auto-Close
+
+### Rendición lifecycle
+- `EN_ESPERA` → `ACEPTADO` / `DENEGADO` / `OBSERVADO` / `ANULADO`
+- `OBSERVADO` → `EN_ESPERA` (employee re-submits) / `ACEPTADO` / `DENEGADO` / `ANULADO`
+- `ACEPTADO` and `ANULADO` are terminal; `pa_cambiar_estado_rendicion` rejects further changes.
+
+### Cycle state side-effects (`pa_cambiar_estado_rendicion`)
+- `OBSERVADO` → cycle becomes `EN_EXCEPCION`.
+- `ACEPTADO` → cycle becomes `LIQUIDADO`.
+- `EN_ESPERA` (via re-enviar from `OBSERVADO`) → cycle becomes `CERRADO`.
+
+### Employee exception window (OBSERVADO)
+When a cycle's rendición is `OBSERVADO`, the employee can only edit/delete the `ComprobantePago` rows of their solicitudes. The `SolicitudGasto` itself stays immutable. After correcting the vouchers, the employee clicks **Reenviar rendición**, which transitions the rendición back to `EN_ESPERA` and the cycle to `CERRADO` for treasury review.
+
+### Friday auto-close event
+MySQL event `ev_cierre_semanal_caja_chica` runs every Friday at 23:00:
+1. Finds every `ABIERTO` cycle whose `fecha_cierre <= CURDATE()`.
+2. Calls `pa_generar_rendicion_de_ciclo` (creates `EN_ESPERA` rendición and marks cycle `EN_EXCEPCION`).
+3. Creates the next week's cycle (Monday–Sunday) with `saldoInicial = cajaChica.montoTecho` and `estado = ABIERTO`.
+
+The event scheduler is enabled automatically by the script.
+
+### Role-based access
+- **Tesorería**: can `observar`, `aceptar`, `denegar`, and `generarRendicionDeCiclo`.
+- **Jefe de Área**: sees only rendiciones of their area (`ListarPorArea`).
+- **Administrador**: read-only view of all rendiciones.
+- **Empleado**: interacts only through the OBSERVADO exception window in `MiSolicitudDeGastoDetalle`.
+
+### File locations
+- `database/General/EventosCicloRendicion.sql`
+- `database/Operaciones/RendicionStoreProcedure.sql`
+- `database/General/Creacion.sql` — `ope_rendicion.estado_rendicion` now includes `OBSERVADO`.
+- `apps/.../operaciones/model/enums/EstadoRendicion.java`
+- `apps/.../operaciones/boi/RendicionBOImpl.java`
+- `apps/.../operaciones/daoi/RendicionDAOImpl.java`
+- `apps/.../economixws/operaciones/ws/RendicionWS.java`
+- `web/.../EconomixModel/Model/operaciones/Rendicion.cs`
+- `web/.../EconomixWS/operaciones/IWS/IRendicionWS.cs`, `WSImpl/RendicionWSImpl.cs`
+- `web/.../EconomixWA/Components/Pages/Rendicion/RendicionPage.razor`
+- `web/.../EconomixWA/Components/Pages/Rendicion/RendicionDetalle.razor`
+- `web/.../EconomixWA/Components/Pages/Rendicion/RendicionItem.razor`
+- `web/.../EconomixWA/Components/Pages/Rendicion/RendicionSearchBar.razor`
+- `web/.../EconomixWA/Components/Pages/SolicitudDeGasto/MiSolicitudesDeGasto/MiSolicitudDeGastoDetalle.razor`
 
 ## TO-DO / Pending Tasks
 

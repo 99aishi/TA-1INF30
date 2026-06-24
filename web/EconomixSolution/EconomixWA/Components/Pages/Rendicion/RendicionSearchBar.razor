@@ -1,0 +1,53 @@
+<div class="card rounded-4 p-3 mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-3">
+            <label class="form-label small">Estado</label>
+            <select class="form-select form-select-sm rounded-3" @bind="FiltroEstado">
+                <option value="Todas">Todas</option>
+                <option value="EN_ESPERA">En Espera</option>
+                <option value="OBSERVADO">Observado</option>
+                <option value="ACEPTADO">Aceptado</option>
+                <option value="DENEGADO">Denegado</option>
+                <option value="ANULADO">Anulado</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label small">Fecha desde</label>
+            <input type="date" class="form-control form-control-sm rounded-3" @bind="FiltroFechaInicio">
+        </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label small">Fecha hasta</label>
+            <input type="date" class="form-control form-control-sm rounded-3" @bind="FiltroFechaFin">
+        </div>
+        @if (MostrarFiltroArea)
+        {
+            <div class="col-12 col-md-3">
+                <label class="form-label small">Area</label>
+                <select class="form-select form-select-sm rounded-3" @bind="FiltroAreaId">
+                    <option value="0">Todas</option>
+                    @foreach (var area in Areas)
+                    {
+                        <option value="@area.AreaID">@area.Nombre</option>
+                    }
+                </select>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string FiltroEstado { get; set; } = "Todas";
+    [Parameter] public EventCallback<string> FiltroEstadoChanged { get; set; }
+
+    [Parameter] public DateTime? FiltroFechaInicio { get; set; }
+    [Parameter] public EventCallback<DateTime?> FiltroFechaInicioChanged { get; set; }
+
+    [Parameter] public DateTime? FiltroFechaFin { get; set; }
+    [Parameter] public EventCallback<DateTime?> FiltroFechaFinChanged { get; set; }
+
+    [Parameter] public int FiltroAreaId { get; set; }
+    [Parameter] public EventCallback<int> FiltroAreaIdChanged { get; set; }
+
+    [Parameter] public bool MostrarFiltroArea { get; set; } = true;
+    [Parameter] public List<Area> Areas { get; set; } = new();
+}

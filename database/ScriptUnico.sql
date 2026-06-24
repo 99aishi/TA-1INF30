@@ -1,11 +1,3 @@
-
-SET FOREIGN_KEY_CHECKS = 0;
-
--- ---------------------------------------------------------
--- MÓDULO 3: Operaciones (ope)
--- ---------------------------------------------------------
-
-SET FOREIGN_KEY_CHECKS = 1;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ===============================================================================
@@ -245,7 +237,7 @@ CREATE TABLE IF NOT EXISTS ope_rendicion (
     monto_total_declarado DECIMAL(12,2) DEFAULT 0.00,
     monto_total_aprobado DECIMAL(12,2) DEFAULT 0.00,
     monto_saldo_final DECIMAL(12,2) DEFAULT 0.00,
-    estado_rendicion ENUM('ACEPTADO', 'EN_ESPERA', 'DENEGADO', 'ANULADO') NOT NULL,
+    estado_rendicion ENUM('ACEPTADO', 'EN_ESPERA', 'DENEGADO', 'OBSERVADO', 'ANULADO') NOT NULL,
     comentario VARCHAR(500),
     id_ciclo_caja INT NULL,
     
@@ -1831,7 +1823,7 @@ CREATE PROCEDURE pa_insertar_rendicion(
     IN p_monto_total_declarado DECIMAL(12,2),
     IN p_monto_total_aprobado DECIMAL(12,2),
     IN p_monto_saldo_final DECIMAL(12,2),
-    IN p_estado_rendicion ENUM('ACEPTADO','EN_ESPERA','DENEGADO','ANULADO'),
+    IN p_estado_rendicion ENUM('ACEPTADO','EN_ESPERA','DENEGADO','OBSERVADO','ANULADO'),
     IN p_comentario VARCHAR(500),
     IN p_id_ciclo_caja INT,
     OUT p_id_generado INT
@@ -1919,7 +1911,7 @@ CREATE PROCEDURE pa_modificar_rendicion(
     IN p_monto_total_declarado DECIMAL(12,2),
     IN p_monto_total_aprobado DECIMAL(12,2),
     IN p_monto_saldo_final DECIMAL(12,2),
-    IN p_estado_rendicion ENUM('ACEPTADO','EN_ESPERA','DENEGADO','ANULADO'),
+    IN p_estado_rendicion ENUM('ACEPTADO','EN_ESPERA','DENEGADO','OBSERVADO','ANULADO'),
     IN p_comentario VARCHAR(500),
     IN p_id_ciclo_caja INT
 )
@@ -2236,6 +2228,184 @@ BEGIN
     ) vsf ON vsf.id_ciclo_caja = r.id_ciclo_caja
     WHERE r.estado_rendicion != 'ANULADO'
     ORDER BY r.estado_rendicion DESC, r.id_rendicion DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_listar_rendiciones_por_area $$
+CREATE PROCEDURE pa_listar_rendiciones_por_area(
+    IN p_id_area INT
+)
+BEGIN
+    SELECT
+        r.id_rendicion,
+        r.fecha_presentacion,
+        r.fecha_aprobacion,
+        COALESCE(vtd.total_declarado, r.monto_total_declarado) AS monto_total_declarado,
+        COALESCE(vta.total_aprobado, r.monto_total_aprobado) AS monto_total_aprobado,
+        COALESCE(vsf.saldo_final, r.monto_saldo_final) AS monto_saldo_final,
+        r.estado_rendicion,
+        r.comentario,
+        r.id_ciclo_caja,
+        cc.id_ciclo_caja AS cc_id_ciclo_caja,
+        cc.numero_semana AS cc_numero_semana,
+        cc.fecha_apertura AS cc_fecha_apertura,
+        cc.fecha_cierre AS cc_fecha_cierre,
+        cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
+        COALESCE(vtg.total_gastado, cc.monto_total_gastado) AS cc_monto_total_gastado,
+        cc.estado_ciclo AS cc_estado_ciclo,
+        cc.id_caja_chica AS cc_id_caja_chica,
+        cc.id_rendicion AS cc_id_rendicion
+    FROM ope_rendicion r
+    LEFT JOIN ope_ciclo_caja cc ON r.id_ciclo_caja = cc.id_ciclo_caja
+    LEFT JOIN tes_caja_chica cj ON cc.id_caja_chica = cj.id_fondo
+    LEFT JOIN tes_cuenta_bancaria cb ON cj.id_cuenta_bancaria = cb.id_cuenta
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtg ON vtg.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(cp.monto_total) AS total_declarado
+        FROM ope_solicitud_gasto sg
+        JOIN ope_comprobante_pago cp ON sg.id_solicitud_gasto = cp.id_solicitud_gasto
+        WHERE cp.estado_comprobante != 'ANULADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vtd ON vtd.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_aprobado
+        FROM ope_solicitud_gasto sg
+        WHERE sg.estado_solicitud = 'APROBADO'
+        GROUP BY sg.id_ciclo_caja
+    ) vta ON vta.id_ciclo_caja = r.id_ciclo_caja
+    LEFT JOIN (
+        SELECT occ.id_ciclo_caja, (occ.monto_saldo_inicial - COALESCE(vtg2.total_gastado, 0)) AS saldo_final
+        FROM ope_ciclo_caja occ
+        LEFT JOIN (
+            SELECT sg2.id_ciclo_caja, SUM(sg2.monto_solicitado) AS total_gastado
+            FROM ope_solicitud_gasto sg2
+            WHERE sg2.estado_solicitud = 'APROBADO'
+            GROUP BY sg2.id_ciclo_caja
+        ) vtg2 ON vtg2.id_ciclo_caja = occ.id_ciclo_caja
+    ) vsf ON vsf.id_ciclo_caja = r.id_ciclo_caja
+    WHERE r.estado_rendicion != 'ANULADO'
+      AND cb.id_area = p_id_area
+    ORDER BY r.estado_rendicion DESC, r.id_rendicion DESC;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_cambiar_estado_rendicion $$
+CREATE PROCEDURE pa_cambiar_estado_rendicion(
+    IN p_id_usuario_accion INT,
+    IN p_id_rendicion INT,
+    IN p_nuevo_estado ENUM('ACEPTADO','EN_ESPERA','DENEGADO','OBSERVADO','ANULADO'),
+    IN p_comentario VARCHAR(500)
+)
+BEGIN
+    DECLARE v_id_ciclo INT DEFAULT NULL;
+    DECLARE v_estado_actual VARCHAR(20);
+
+    SELECT estado_rendicion, id_ciclo_caja
+      INTO v_estado_actual, v_id_ciclo
+      FROM ope_rendicion
+     WHERE id_rendicion = p_id_rendicion;
+
+    IF v_estado_actual IN ('ACEPTADO', 'ANULADO') THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'No se puede cambiar el estado de una rendicion aceptada o anulada.';
+    END IF;
+
+    UPDATE ope_rendicion
+       SET estado_rendicion = p_nuevo_estado,
+           comentario = COALESCE(p_comentario, comentario),
+           fecha_aprobacion = CASE WHEN p_nuevo_estado = 'ACEPTADO' THEN CURDATE() ELSE fecha_aprobacion END,
+           id_usuario_modificacion = p_id_usuario_accion
+     WHERE id_rendicion = p_id_rendicion;
+
+    IF v_id_ciclo IS NOT NULL THEN
+        IF p_nuevo_estado = 'OBSERVADO' THEN
+            UPDATE ope_ciclo_caja
+               SET estado_ciclo = 'EN_EXCEPCION',
+                   id_usuario_modificacion = p_id_usuario_accion
+             WHERE id_ciclo_caja = v_id_ciclo;
+        ELSEIF p_nuevo_estado = 'ACEPTADO' THEN
+            UPDATE ope_ciclo_caja
+               SET estado_ciclo = 'LIQUIDADO',
+                   id_usuario_modificacion = p_id_usuario_accion
+             WHERE id_ciclo_caja = v_id_ciclo;
+        ELSEIF p_nuevo_estado = 'EN_ESPERA' THEN
+            UPDATE ope_ciclo_caja
+               SET estado_ciclo = 'CERRADO',
+                   id_usuario_modificacion = p_id_usuario_accion
+             WHERE id_ciclo_caja = v_id_ciclo;
+        END IF;
+    END IF;
+END$$
+
+DROP PROCEDURE IF EXISTS pa_generar_rendicion_de_ciclo $$
+CREATE PROCEDURE pa_generar_rendicion_de_ciclo(
+    IN p_id_usuario_accion INT,
+    IN p_id_ciclo_caja INT
+)
+BEGIN
+    DECLARE v_id_generado INT DEFAULT NULL;
+    DECLARE v_total_declarado DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_total_aprobado DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_saldo_inicial DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_saldo_final DECIMAL(12,2) DEFAULT 0;
+
+    SET v_total_declarado = COALESCE((
+        SELECT SUM(cp.monto_total)
+        FROM ope_solicitud_gasto sg
+        JOIN ope_comprobante_pago cp ON sg.id_solicitud_gasto = cp.id_solicitud_gasto
+        WHERE sg.id_ciclo_caja = p_id_ciclo_caja
+          AND cp.estado_comprobante != 'ANULADO'
+    ), 0);
+
+    SET v_total_aprobado = COALESCE((
+        SELECT SUM(sg.monto_solicitado)
+        FROM ope_solicitud_gasto sg
+        WHERE sg.id_ciclo_caja = p_id_ciclo_caja
+          AND sg.estado_solicitud = 'APROBADO'
+    ), 0);
+
+    SELECT monto_saldo_inicial INTO v_saldo_inicial
+      FROM ope_ciclo_caja
+     WHERE id_ciclo_caja = p_id_ciclo_caja;
+
+    SET v_saldo_final = v_saldo_inicial - v_total_aprobado;
+
+    INSERT INTO ope_rendicion(
+        fecha_presentacion,
+        fecha_aprobacion,
+        monto_total_declarado,
+        monto_total_aprobado,
+        monto_saldo_final,
+        estado_rendicion,
+        comentario,
+        id_ciclo_caja,
+        id_usuario_creacion,
+        id_usuario_modificacion
+    ) VALUES(
+        CURDATE(),
+        NULL,
+        v_total_declarado,
+        v_total_aprobado,
+        v_saldo_final,
+        'EN_ESPERA',
+        NULL,
+        p_id_ciclo_caja,
+        p_id_usuario_accion,
+        p_id_usuario_accion
+    );
+
+    SET v_id_generado = LAST_INSERT_ID();
+
+    UPDATE ope_ciclo_caja
+       SET id_rendicion = v_id_generado,
+           estado_ciclo = 'EN_EXCEPCION',
+           id_usuario_modificacion = p_id_usuario_accion
+     WHERE id_ciclo_caja = p_id_ciclo_caja;
+
+    SELECT v_id_generado AS id_generado;
 END$$
 
 DELIMITER ;
@@ -6352,6 +6522,58 @@ CREATE PROCEDURE pa_resetear_intentos(
 BEGIN
     DELETE FROM rrhh_intentos_login
     WHERE correo = p_correo;
+END$$
+
+-- ===============================================================================
+-- EVENTOS AUTOMÁTICOS
+-- ===============================================================================
+-- Activa el planificador de eventos de MySQL
+SET GLOBAL event_scheduler = ON;
+
+DROP EVENT IF EXISTS ev_cierre_semanal_caja_chica $$
+CREATE EVENT ev_cierre_semanal_caja_chica
+ON SCHEDULE EVERY 1 WEEK
+STARTS TIMESTAMP(CURRENT_DATE) + INTERVAL (4 - WEEKDAY(CURRENT_DATE)) DAY + INTERVAL 23 HOUR
+COMMENT 'Cada viernes a las 23:00 cierra los ciclos abiertos, genera su rendición y crea el ciclo de la siguiente semana.'
+DO
+BEGIN
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE v_id_ciclo INT DEFAULT NULL;
+    DECLARE v_id_caja INT DEFAULT NULL;
+    DECLARE v_monto_techo DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_fecha_apertura_sig DATE;
+    DECLARE v_fecha_cierre_sig DATE;
+    DECLARE v_numero_semana_sig INT;
+
+    REPEAT
+        SET v_id_ciclo = NULL;
+
+        SELECT occ.id_ciclo_caja,
+               occ.id_caja_chica,
+               cc.monto_techo
+          INTO v_id_ciclo, v_id_caja, v_monto_techo
+          FROM ope_ciclo_caja occ
+          JOIN tes_caja_chica cc ON occ.id_caja_chica = cc.id_fondo
+         WHERE occ.estado_ciclo = 'ABIERTO'
+           AND (occ.fecha_cierre IS NULL OR occ.fecha_cierre <= CURDATE())
+         LIMIT 1;
+
+        IF v_id_ciclo IS NOT NULL THEN
+            -- Generar la rendición del ciclo; este SP también cambia el ciclo a EN_EXCEPCION
+            CALL pa_generar_rendicion_de_ciclo(1, v_id_ciclo);
+
+            -- Crear el ciclo de la siguiente semana (lunes a domingo)
+            SET v_fecha_apertura_sig = DATE_ADD(CURDATE(), INTERVAL (7 - WEEKDAY(CURDATE())) DAY);
+            SET v_fecha_cierre_sig   = DATE_ADD(v_fecha_apertura_sig, INTERVAL 6 DAY);
+            SET v_numero_semana_sig  = WEEK(v_fecha_apertura_sig, 1);
+
+            CALL pa_insertar_ciclo_caja(1, v_numero_semana_sig, v_fecha_apertura_sig,
+                                        v_fecha_cierre_sig, v_monto_techo, 0,
+                                        'ABIERTO', v_id_caja, NULL, @nuevo_id_ciclo);
+        ELSE
+            SET done = TRUE;
+        END IF;
+    UNTIL done END REPEAT;
 END$$
 
 DELIMITER ;

@@ -35,33 +35,18 @@ public class RendicionBOImpl implements IRendicionBO {
     public Rendicion generarRendicionDeCiclo(int idCiclo, int idUsuarioAccion) throws Exception {
         validarIdUsuarioAccion(idUsuarioAccion);
         CicloCajaChica ciclo = cicloCajaChicaDAO.buscarPorId(idCiclo);
-        calcularTotalGastado(ciclo, idUsuarioAccion);
-        if(ciclo == null){
+        if (ciclo == null) {
             throw new Exception("El ciclo no existe.");
         }
+        if (ciclo.getRendicion() != null && ciclo.getRendicion().getIdRendicion() > 0) {
+            throw new Exception("El ciclo ya tiene una rendicion generada.");
+        }
 
-        // 1. Instanciar la nueva rendición
-        Rendicion rendicionCierre = new Rendicion();
-        rendicionCierre.setCicloCajaChica(ciclo);
-        rendicionCierre.setFechaPresentacion(new Date());
-        rendicionCierre.setEstado(EstadoRendicion.EN_ESPERA);
-
-        // 2. Ejecutar la matemática
-        double totalDeclarado = calcularTotalDeclaradoValidado(ciclo);
-        double totalAprobado = ciclo.getTotalGastado();
-        double saldoFinal = ciclo.getSaldoInicial() - totalAprobado;
-
-        rendicionCierre.setTotalDeclarado(totalDeclarado);
-        rendicionCierre.setTotalAprobado(totalAprobado);
-        rendicionCierre.setSaldoFinal(saldoFinal);
-
-        validarMontos(rendicionCierre);
-
-        // 4. Insertar en la base de datos
-        int idGenerado = rendicionDAO.insertar(rendicionCierre, idUsuarioAccion);
-        rendicionCierre.setIdRendicion(idGenerado);
-
-        return rendicionCierre;
+        int idGenerado = rendicionDAO.generarRendicionDeCicloSP(idCiclo, idUsuarioAccion);
+        if (idGenerado <= 0) {
+            throw new Exception("No se pudo generar la rendicion del ciclo.");
+        }
+        return rendicionDAO.buscarPorId(idGenerado);
     }
     private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
         if (idUsuarioAccion <= 0) {
@@ -198,5 +183,65 @@ public class RendicionBOImpl implements IRendicionBO {
         }
 
 
+    }
+
+    @Override
+    public void observarRendicion(int idRendicion, String comentario, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
+        if (idRendicion <= 0) throw new Exception("El id de la rendicion debe ser mayor que cero.");
+        if (comentario == null || comentario.trim().isEmpty()) {
+            throw new Exception("Debe ingresar un comentario para observar la rendicion.");
+        }
+        Rendicion rendicion = rendicionDAO.buscarPorId(idRendicion);
+        if (rendicion == null) throw new Exception("La rendicion no existe.");
+        if (rendicion.getEstado() != EstadoRendicion.EN_ESPERA) {
+            throw new Exception("Solo se puede observar una rendicion en estado EN_ESPERA.");
+        }
+        rendicionDAO.cambiarEstadoRendicion(idRendicion, "OBSERVADO", comentario, idUsuarioAccion);
+    }
+
+    @Override
+    public void aceptarRendicion(int idRendicion, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
+        if (idRendicion <= 0) throw new Exception("El id de la rendicion debe ser mayor que cero.");
+        Rendicion rendicion = rendicionDAO.buscarPorId(idRendicion);
+        if (rendicion == null) throw new Exception("La rendicion no existe.");
+        if (rendicion.getEstado() != EstadoRendicion.EN_ESPERA && rendicion.getEstado() != EstadoRendicion.OBSERVADO) {
+            throw new Exception("Solo se puede aceptar una rendicion en estado EN_ESPERA u OBSERVADO.");
+        }
+        rendicionDAO.cambiarEstadoRendicion(idRendicion, "ACEPTADO", null, idUsuarioAccion);
+    }
+
+    @Override
+    public void denegarRendicion(int idRendicion, String comentario, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
+        if (idRendicion <= 0) throw new Exception("El id de la rendicion debe ser mayor que cero.");
+        if (comentario == null || comentario.trim().isEmpty()) {
+            throw new Exception("Debe ingresar un comentario para denegar la rendicion.");
+        }
+        Rendicion rendicion = rendicionDAO.buscarPorId(idRendicion);
+        if (rendicion == null) throw new Exception("La rendicion no existe.");
+        if (rendicion.getEstado() != EstadoRendicion.EN_ESPERA && rendicion.getEstado() != EstadoRendicion.OBSERVADO) {
+            throw new Exception("Solo se puede denegar una rendicion en estado EN_ESPERA u OBSERVADO.");
+        }
+        rendicionDAO.cambiarEstadoRendicion(idRendicion, "DENEGADO", comentario, idUsuarioAccion);
+    }
+
+    @Override
+    public void reEnviarRendicion(int idRendicion, int idUsuarioAccion) throws Exception {
+        validarIdUsuarioAccion(idUsuarioAccion);
+        if (idRendicion <= 0) throw new Exception("El id de la rendicion debe ser mayor que cero.");
+        Rendicion rendicion = rendicionDAO.buscarPorId(idRendicion);
+        if (rendicion == null) throw new Exception("La rendicion no existe.");
+        if (rendicion.getEstado() != EstadoRendicion.OBSERVADO) {
+            throw new Exception("Solo se puede re-enviar una rendicion en estado OBSERVADO.");
+        }
+        rendicionDAO.cambiarEstadoRendicion(idRendicion, "EN_ESPERA", null, idUsuarioAccion);
+    }
+
+    @Override
+    public List<Rendicion> listarPorArea(int idArea) throws Exception {
+        if (idArea <= 0) throw new Exception("El id del area debe ser mayor que cero.");
+        return rendicionDAO.listarPorArea(idArea);
     }
 }

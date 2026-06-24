@@ -11,4 +11,7 @@ public interface IRendicionDAO {
     Rendicion buscarPorId(int id) throws SQLException;
     java.util.List<Rendicion> listarActivas() throws SQLException;
     java.util.List<Rendicion> listarTodas() throws SQLException;
+    int cambiarEstadoRendicion(int idRendicion, String nuevoEstado, String comentario, int idUsuarioAccion) throws SQLException;
+    java.util.List<Rendicion> listarPorArea(int idArea) throws SQLException;
+    int generarRendicionDeCicloSP(int idCiclo, int idUsuarioAccion) throws SQLException;
 }
