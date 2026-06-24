@@ -1,8 +1,80 @@
 @page "/Reportes"
 
+@rendermode InteractiveServer
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
+
 <h3>Reportes</h3>
 <p>Panel de indicadores y consolidados financieros.</p>
-<p>Total solicitudes, gastos y transacciones se mostraran aqui.</p>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card rounded-4 p-4">
+            <p class="h5 mb-3">Reporte: Gastos por &Aacute;rea</p>
+            <p class="text-muted mb-3">Seleccione el rango de fechas para generar el reporte de gastos agrupados por &aacute;rea.</p>
+
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="fechaInicio" class="form-label">Fecha Inicio</label>
+                    <input type="date"
+                           class="form-control form-control-lg rounded-4 bg-light"
+                           id="fechaInicio"
+                           @bind="FechaInicio"
+                           @bind:format="yyyy-MM-dd" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="fechaFin" class="form-label">Fecha Fin</label>
+                    <input type="date"
+                           class="form-control form-control-lg rounded-4 bg-light"
+                           id="fechaFin"
+                           @bind="FechaFin"
+                           @bind:format="yyyy-MM-dd" />
+                </div>
+
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="button"
+                            class="btn btn-primary btn-lg rounded-4 w-100"
+                            @onclick="GenerarReporte">
+                        Generar Reporte
+                    </button>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(MensajeError))
+            {
+                <div class="alert alert-danger mt-3">
+                    @MensajeError
+                </div>
+            }
+        </div>
+    </div>
+</div>
 
 @code {
+    private DateOnly? FechaInicio { get; set; } = DateOnly.FromDateTime(DateTime.Now.AddMonths(-1));
+    private DateOnly? FechaFin { get; set; } = DateOnly.FromDateTime(DateTime.Now);
+    private string? MensajeError { get; set; }
+
+    private void GenerarReporte()
+    {
+        MensajeError = null;
+
+        if (FechaInicio == null || FechaFin == null)
+        {
+            MensajeError = "Debe seleccionar ambas fechas.";
+            return;
+        }
+
+        if (FechaInicio > FechaFin)
+        {
+            MensajeError = "La fecha de inicio no puede ser mayor que la fecha fin.";
+            return;
+        }
+
+        var baseUrl = Configuration["URLServices:BaseWSPath"];
+        var url = $"{baseUrl}reportes/gastos-por-area?fechaInicio={FechaInicio:yyyy-MM-dd}&fechaFin={FechaFin:yyyy-MM-dd}";
+
+        Navigation.NavigateTo(url, forceLoad: true);
+    }
 }
