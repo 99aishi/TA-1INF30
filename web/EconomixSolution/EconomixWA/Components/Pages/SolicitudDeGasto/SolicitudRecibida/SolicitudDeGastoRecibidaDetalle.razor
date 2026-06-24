@@ -329,7 +329,7 @@
             ComentarioDecision = string.Empty;
             NumeroOperacionBancaria = string.Empty;
             CuentaDestinoSeleccionadaId = 0;
-            CargarCuentasSolicitante();
+            await CargarCuentasSolicitante();
             await CargarTransaccionDesembolso();
         }
     }
@@ -351,13 +351,15 @@
         }
     }
 
-    private void CargarCuentasSolicitante()
+    private async Task CargarCuentasSolicitante()
     {
-        if (Solicitud?.Solicitante?.Cuentas != null)
+        if (Solicitud?.Solicitante == null) return;
+        try
         {
-            CuentasSolicitante = Solicitud.Solicitante.Cuentas.ToList();
+            CuentasSolicitante = await Task.Run(() =>
+                new List<CuentaBancaria>(CuentaBancariaWS.listarPorEmpleado(Solicitud.Solicitante.UsuarioID)));
         }
-        else
+        catch
         {
             CuentasSolicitante = new List<CuentaBancaria>();
         }

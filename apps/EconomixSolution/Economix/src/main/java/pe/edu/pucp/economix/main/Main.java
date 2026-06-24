@@ -28,11 +28,7 @@ public class Main {
 //        } else {
 //            System.out.println("Administrador ya existe: " + admin.getNombres());
 //        }
-        ISolicitudGastoBO solicitudGastoBO= new SolicitudGastoBOImpl();
-        List<SolicitudGasto> solis= solicitudGastoBO.listarTodas();
-        for(SolicitudGasto s : solis){
-            System.out.println(s.getIdSolicitudGasto());
-        }
+
 //        ICicloCajaBO cicloCajaBO = new CicloCajaBOImpl();
 //        List<CicloCajaChica> ciclos = cicloCajaBO.listarTodas();
     }
