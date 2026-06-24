@@ -97,6 +97,24 @@ public class CuentaBancariaWSImpl : ICuentaBancariaWS
         }
     }
 
+    public List<CuentaBancaria> listarPorEmpleado(int idEmpleado)
+    {
+        try
+        {
+            var response = _httpClient.GetAsync($"ListarPorEmpleado?id={idEmpleado}").GetAwaiter().GetResult();
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                return new List<CuentaBancaria>();
+            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            if (string.IsNullOrEmpty(json) || json == "null")
+                return new List<CuentaBancaria>();
+            return JsonSerializer.Deserialize<List<CuentaBancaria>>(json, _jsonOptions) ?? new List<CuentaBancaria>();
+        }
+        catch
+        {
+            return new List<CuentaBancaria>();
+        }
+    }
+
     public List<CajaChica> listarCajasChicas(int idCuentaBancaria)
     {
         try

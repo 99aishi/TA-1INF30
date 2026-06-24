@@ -116,8 +116,16 @@
         ErrorMessage = string.Empty;
         try
         {
-            var idJefe = UsuarioWS.GetCurrentUserId();
-            Solicitudes = await Task.Run(() => new List<SolicitudGasto>(SolicitudGastoWS.listarPendientesJefe(idJefe)));
+            var usuario = UsuarioWS.GetCurrentUser();
+            if (usuario is Administrador)
+            {
+                Solicitudes = await Task.Run(() => new List<SolicitudGasto>(SolicitudGastoWS.listar()));
+            }
+            else
+            {
+                var idJefe = usuario.UsuarioID;
+                Solicitudes = await Task.Run(() => new List<SolicitudGasto>(SolicitudGastoWS.listarPendientesJefe(idJefe)));
+            }
         }
         catch (Exception ex) { ErrorMessage = ex.Message; }
     }

@@ -146,6 +146,28 @@ public class CuentaBancariaDAOImpl implements ICuentaBancariaDAO{
                 .computeIfAbsent(id, k -> factory.get());
     }
 
+    @Override
+    public List<CuentaBancaria> listarPorEmpleado(int idEmpleado) throws SQLException {
+        List<CuentaBancaria> cuentas = null;
+        CuentaBancaria cuentaBancaria;
+        Map<Class<?>, Map<Integer, Object>> cache = new HashMap<>();
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario", idEmpleado);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_cuentas_bancarias_por_empleado", parametrosEntrada);
+        try {
+            while (rs.next()) {
+                if (cuentas == null) cuentas = new ArrayList<>();
+                cuentaBancaria = mapearCuentaBancaria(rs, cache);
+                cuentas.add(cuentaBancaria);
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error al listar cuentas bancarias por empleado: " + ex.getMessage());
+        } finally {
+            DBManager.getDBManager().cerrarConexion();
+        }
+        return cuentas;
+    }
+
     private CuentaBancaria mapearCuentaBancaria(ResultSet rs, Map<Class<?>, Map<Integer, Object>> cache) throws SQLException {
         int idCuenta = rs.getInt("id_cuenta_bancaria");
         if (rs.wasNull() || idCuenta <= 0) return null;

@@ -78,6 +78,14 @@ public class CuentaBancariaBOImpl implements ICuentaBancariaBO {
     }
 
     @Override
+    public List<CuentaBancaria> listarPorEmpleado(int idEmpleado) throws Exception {
+        if (idEmpleado <= 0) {
+            throw new Exception("El id del empleado debe ser mayor que cero.");
+        }
+        return cuentaDAO.listarPorEmpleado(idEmpleado);
+    }
+
+    @Override
     public List<CajaChica> listarCajasChicas(int idCuentaBancaria) throws Exception {
         if (idCuentaBancaria <= 0) {
             throw new Exception("El id de la cuenta bancaria debe ser mayor que cero.");

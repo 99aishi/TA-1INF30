@@ -13,7 +13,7 @@
 <div class="d-flex flex-column h-100 mb-3">
     <div class="row h-100 @(EsCreacion? "mb-3": " ")">
         <div class="col-12 h-100 mb-3">
-            <div class="card rounded-4 p-3 mb-3 h-100 d-flex justify-content-between">
+            <div class="card rounded-4 p-3 mb-3 h-100 d-flex flex-column overflow-auto">
                 <div class="d-flex flex-column">
                     <div class="d-flex gap-4">
                         @if (EsCreacion)
@@ -243,17 +243,33 @@
         else if (Usuario != null)
         {
             UsuarioEdicion = Usuario;
+            await CargarCuentasBancarias();
         }
 
         IdUsuarioAccion = UsuarioWS.GetCurrentUserId();
         await CargarCatalogos();
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (!EsCreacion && Usuario != null && UsuarioEdicion != Usuario)
         {
             UsuarioEdicion = Usuario;
+            await CargarCuentasBancarias();
+        }
+    }
+
+    private async Task CargarCuentasBancarias()
+    {
+        if (EmpleadoEdicion == null) return;
+        try
+        {
+            EmpleadoEdicion.Cuentas = await Task.Run(() =>
+                new List<CuentaBancaria>(CuentaBancariaWS.listarPorEmpleado(EmpleadoEdicion.UsuarioID)));
+        }
+        catch (Exception ex)
+        {
+            ErrorCuenta = ex.Message;
         }
     }
 
