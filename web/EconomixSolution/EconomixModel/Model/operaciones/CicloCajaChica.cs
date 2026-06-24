@@ -28,6 +28,12 @@ public class CicloCajaChica
     [JsonPropertyName("cajaChica")]
     public CajaChica? CajaChica { get; set; }
 
+    [JsonPropertyName("idRendicion")]
+    public int? IdRendicion { get; set; }
+
+    [JsonPropertyName("rendicion")]
+    public Rendicion? Rendicion { get; set; }
+
     [JsonPropertyName("solicitudesDeGasto")]
     public List<SolicitudGasto>? SolicitudesDeGasto { get; set; }
 }

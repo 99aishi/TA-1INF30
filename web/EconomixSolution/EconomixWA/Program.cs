@@ -99,6 +99,10 @@ builder.Services.AddHttpClient<ICicloCajaWS, CicloCajaWSImpl>(
     client => client.BaseAddress = new Uri(baseURL)
 );
 
+builder.Services.AddHttpClient<IRendicionWS, RendicionWSImpl>(
+    client => client.BaseAddress = new Uri(baseURL)
+);
+
 builder.Services.AddHttpClient<IPermisoEdicionWS, PermisoEdicionWSImpl>(
     client => client.BaseAddress = new Uri(baseURL)
 );

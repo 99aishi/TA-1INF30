@@ -5,6 +5,7 @@
 @inject NavigationManager Navigation
 @inject ICicloCajaWS CicloCajaWS
 @inject ICajaChicaWS CajaChicaWS
+@inject IRendicionWS RendicionWS
 @inject IUsuarioWS UsuarioWS
 @using Microsoft.AspNetCore.WebUtilities
 
@@ -158,6 +159,12 @@
                     <button type="button" class="btn btn-outline-warning" @onclick="GuardarCambios">
                         Guardar Cambios
                     </button>
+                    @if (MostrarGenerarRendicion)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="GenerarRendicion" disabled="@ProcesandoRendicion">
+                            @(ProcesandoRendicion ? "Generando..." : "Generar Rendicion")
+                        </button>
+                    }
                 }
                 <button type="button" class="btn btn-outline-info" @onclick="CerrarDetalle">
                     Cerrar
@@ -187,8 +194,15 @@
     private string ErrorMessage { get; set; } = string.Empty;
     private Dictionary<string, string> Errores { get; set; } = new();
     private string? RolUsuario { get; set; }
+    private bool ProcesandoRendicion { get; set; } = false;
 
     private bool PuedeEditar => RolUsuario is "Tesorero" or "Tesoreria" or "Tesorero y Finanzas";
+
+    private bool MostrarGenerarRendicion =>
+        PuedeEditar &&
+        Ciclo?.IdCicloCaja > 0 &&
+        (Ciclo?.Estado == "CERRADO" || Ciclo?.Estado == "LIQUIDADO" || Ciclo?.Estado == "EN_EXCEPCION") &&
+        (Ciclo?.IdRendicion == null || Ciclo.IdRendicion <= 0);
 
     private string EstadoClase => Ciclo?.Estado?.ToUpperInvariant() switch
     {
@@ -383,6 +397,28 @@
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task GenerarRendicion()
+    {
+        if (!PuedeEditar || Ciclo?.IdCicloCaja <= 0 || ProcesandoRendicion) return;
+
+        ErrorMessage = string.Empty;
+        ProcesandoRendicion = true;
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await Task.Run(() => RendicionWS.generarRendicionDeCiclo(Ciclo.IdCicloCaja, idUsuarioAccion));
+            await CerrarDetalle();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            ProcesandoRendicion = false;
         }
     }
 }

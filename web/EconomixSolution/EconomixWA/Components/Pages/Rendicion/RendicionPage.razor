@@ -1,0 +1,154 @@
+@page "/Rendiciones"
+@rendermode InteractiveServer
+@inject IRendicionWS RendicionWS
+@inject IAreaWS AreaWS
+@inject IEmpleadoWS EmpleadoWS
+@inject IUsuarioWS UsuarioWS
+
+<div class="h-100 d-flex flex-column">
+    <div class="d-flex flex-row align-items-center mb-4">
+        <div class="flex-grow-1">
+            <p class="h4 mb-1">Rendiciones</p>
+            <p class="text-muted mb-0">Revision y gestion de rendiciones de caja chica</p>
+        </div>
+        <LiveClock />
+        <div class="flex-grow-1 text-end"></div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+            @ErrorMessage
+            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+        </div>
+    }
+
+    <RendicionSearchBar @bind-FiltroEstado="FiltroEstado"
+                        @bind-FiltroFechaInicio="FiltroFechaInicio"
+                        @bind-FiltroFechaFin="FiltroFechaFin"
+                        @bind-FiltroAreaId="FiltroAreaId"
+                        MostrarFiltroArea="@MostrarFiltroArea"
+                        Areas="Areas" />
+
+    <div class="d-flex flex-column flex-fill overflow-hidden">
+        <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
+
+            <div class="@(MostrarDetalle ? "col-6" : "col-12") h-100 d-flex flex-column overflow-hidden">
+                <div class="card rounded-4 p-3 h-100 overflow-scroll">
+                    @if (Cargando)
+                    {
+                        <p class="text-muted text-center mt-5">Cargando rendiciones...</p>
+                    }
+                    else if (RendicionesFiltradas.Count() == 0)
+                    {
+                        <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ninguna rendicion coincide con los filtros" : "No hay rendiciones registradas")</p>
+                    }
+                    else
+                    {
+                        @foreach (var r in RendicionesFiltradas)
+                        {
+                            <RendicionItem Rendicion="r" OnMuestraDetalle="SeleccionarRendicion"/>
+                        }
+                    }
+                </div>
+            </div>
+
+            @if (MostrarDetalle && RendicionSeleccionada != null)
+            {
+                <div class="col-6 h-100">
+                    <RendicionDetalle Rendicion="RendicionSeleccionada" OnCerrarDetalle="CerrarDetalleRendicion"/>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool MostrarDetalle { get; set; } = false;
+    private bool Cargando { get; set; } = true;
+    private string ErrorMessage { get; set; } = string.Empty;
+    private string FiltroEstado { get; set; } = "Todas";
+    private DateTime? FiltroFechaInicio { get; set; }
+    private DateTime? FiltroFechaFin { get; set; }
+    private int FiltroAreaId { get; set; }
+
+    private List<Rendicion> Rendiciones { get; set; } = new();
+    private Rendicion? RendicionSeleccionada { get; set; }
+    private List<Area> Areas { get; set; } = new();
+
+    private string? RolUsuario { get; set; }
+    private bool EsTesoreria => RolUsuario is "Tesorero" or "Tesoreria" or "Tesorero y Finanzas";
+    private bool EsAdmin => RolUsuario == "Administrador";
+    private bool EsJefe => RolUsuario is "Jefe" or "Jefe de Área" or "Jefe de Area";
+    private bool MostrarFiltroArea => false;
+
+    private bool HayFiltrosActivos =>
+        FiltroEstado != "Todas"
+        || FiltroFechaInicio.HasValue
+        || FiltroFechaFin.HasValue
+        || FiltroAreaId > 0;
+
+    private IEnumerable<Rendicion> RendicionesFiltradas => Rendiciones
+        .Where(r => FiltroEstado == "Todas" || r.Estado.Equals(FiltroEstado, StringComparison.OrdinalIgnoreCase))
+        .Where(r => !FiltroFechaInicio.HasValue || (r.FechaPresentacion.HasValue && r.FechaPresentacion.Value.Date >= FiltroFechaInicio.Value.Date))
+        .Where(r => !FiltroFechaFin.HasValue || (r.FechaPresentacion.HasValue && r.FechaPresentacion.Value.Date <= FiltroFechaFin.Value.Date))
+        .OrderByDescending(r => r.IdRendicion);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Cargando = true;
+        RolUsuario = UsuarioWS.GetCurrentUser()?.Rol?.Titulo;
+
+        if (MostrarFiltroArea)
+        {
+            try { Areas = await Task.Run(() => new List<Area>(AreaWS.listar())); }
+            catch { Areas = new List<Area>(); }
+        }
+
+        await ListarRendiciones();
+        Cargando = false;
+    }
+
+    private async Task ListarRendiciones()
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            if (EsJefe && !EsTesoreria && !EsAdmin)
+            {
+                var idUsuario = UsuarioWS.GetCurrentUserId();
+                var empleado = await Task.Run(() => EmpleadoWS.obtenerPorId(idUsuario));
+                var idArea = empleado?.Area?.AreaID ?? 0;
+                if (idArea > 0)
+                {
+                    Rendiciones = await Task.Run(() => new List<Rendicion>(RendicionWS.listarPorArea(idArea)));
+                }
+                else
+                {
+                    Rendiciones = new List<Rendicion>();
+                }
+            }
+            else
+            {
+                Rendiciones = await Task.Run(() => new List<Rendicion>(RendicionWS.listar()));
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private void SeleccionarRendicion(Rendicion rendicion)
+    {
+        RendicionSeleccionada = rendicion;
+        MostrarDetalle = true;
+    }
+
+    private async Task CerrarDetalleRendicion()
+    {
+        await ListarRendiciones();
+        MostrarDetalle = false;
+        RendicionSeleccionada = null;
+    }
+}

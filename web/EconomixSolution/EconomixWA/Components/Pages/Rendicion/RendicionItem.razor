@@ -1,0 +1,78 @@
+<div class="card rounded-4 p-3 mb-3 bg-light hover-shadow cursor-pointer" @onclick="AbrirDetalle">
+    <div class="d-flex flex-row justify-content-between align-items-start">
+        <div class="d-flex flex-column">
+            <div class="d-flex justify-content-start align-items-center gap-3 mb-1">
+                <p class="h5 mb-0">REN-@Rendicion?.IdRendicion</p>
+                <span class="badge rounded-pill @ClaseBadge">@Rendicion?.Estado</span>
+            </div>
+            <div class="d-flex flex-column justify-content-start">
+                <p class="text-muted m-0">
+                    <i class="bi bi-calendar me-1"></i>@(Rendicion?.FechaPresentacion?.ToString("dd/MM/yyyy") ?? "-")
+                    <span class="mx-1">&middot;</span>
+                    <i class="bi bi-archive me-1"></i>@(Rendicion?.CicloCajaChica?.CajaChica?.Nombre ?? "-")
+                    <span class="mx-1">&middot;</span>
+                    Semana @(Rendicion?.CicloCajaChica?.NumeroSemana ?? 0)
+                </p>
+            </div>
+        </div>
+        <div class="d-flex flex-row justify-content-between align-items-center gap-3">
+            <div class="d-flex flex-column text-end">
+                <p class="mb-0 small text-muted">Techo</p>
+                <p class="mb-0 fw-bold">@(SimboloMoneda) @TotalAsignado.ToString("N2")</p>
+            </div>
+            <div class="d-flex flex-column text-end">
+                <p class="mb-0 small text-muted">Solicitado</p>
+                <p class="mb-0 fw-bold">@(SimboloMoneda) @(Rendicion?.TotalAprobado.ToString("N2") ?? "0.00")</p>
+            </div>
+            <div class="d-flex flex-column text-end">
+                <p class="mb-0 small text-muted">Rendido</p>
+                <p class="mb-0 fw-bold">@(SimboloMoneda) @(Rendicion?.TotalDeclarado.ToString("N2") ?? "0.00")</p>
+            </div>
+            <div class="d-flex flex-column text-end">
+                <p class="mb-0 small text-muted">Diferencia</p>
+                <p class="mb-0 fw-bold @ClaseDiferencia">@DiferenciaTexto</p>
+            </div>
+            <button class="btn btn-primary btn-sm" @onclick="AbrirDetalle" @onclick:stopPropagation>Ver</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback<Rendicion> OnMuestraDetalle { get; set; }
+
+    [Parameter]
+    public Rendicion? Rendicion { get; set; }
+
+    private string SimboloMoneda => Rendicion?.CicloCajaChica?.CajaChica?.Moneda?.Simbolo ?? "S/";
+
+    private double TotalAsignado => Rendicion?.CicloCajaChica?.CajaChica?.MontoTecho ?? 0;
+
+    private double Diferencia => (Rendicion?.TotalDeclarado ?? 0) - (Rendicion?.TotalAprobado ?? 0);
+
+    private string DiferenciaTexto => Diferencia >= 0
+        ? $"+{Diferencia.ToString("N2")}"
+        : Diferencia.ToString("N2");
+
+    private string ClaseDiferencia => Diferencia > 0
+        ? "text-success"
+        : Diferencia < 0
+            ? "text-danger"
+            : "text-muted";
+
+    private string ClaseBadge => Rendicion?.Estado?.ToUpperInvariant() switch
+    {
+        "EN_ESPERA" => "bg-warning-subtle text-warning-emphasis",
+        "OBSERVADO" => "bg-info-subtle text-info-emphasis",
+        "ACEPTADO" => "bg-success-subtle text-success-emphasis",
+        "DENEGADO" => "bg-danger-subtle text-danger-emphasis",
+        "ANULADO" => "bg-secondary-subtle text-secondary-emphasis",
+        _ => "bg-light text-dark"
+    };
+
+    public async Task AbrirDetalle()
+    {
+        if (Rendicion != null)
+            await OnMuestraDetalle.InvokeAsync(Rendicion);
+    }
+}

@@ -42,5 +42,12 @@ Los valores de `numero_semana` también se auto-calculan desde `fecha_apertura` 
 En caso de gastos en distintas monedas, la caja chica debe mantener una moneda base. Si la caja chica está en soles y el trabajador registra un gasto en dólares, el sistema guarda el monto original en dólares y también su equivalente en soles usando el tipo de cambio registrado. Lo mismo ocurre si la caja chica está en dólares y el gasto fue en soles. Así se mantiene trazabilidad del gasto original y del impacto real sobre el saldo de la caja chica.
 Al final, con el ciclo cerrado, el sistema genera reportes de solicitudes, comprobantes, rendiciones, transacciones, devoluciones, reembolsos, saldos y gastos por área. Estos reportes sirven para auditoría, control financiero y reposición del fondo fijo.
 
+### Cierre automático de fin de semana
+
+Cada viernes a las 23:00 el evento `ev_cierre_semanal_caja_chica` cierra automáticamente los ciclos cuya fecha de cierre ya venció, genera una rendición en estado `EN_ESPERA` para cada uno y crea el ciclo de la siguiente semana con saldo inicial igual al `montoTecho` de la caja chica. Esto garantiza que el lunes los empleados ya tengan un ciclo operativo sin intervención manual.
+
+### Rendición observada (ventana de excepción)
+
+Si tesorería marca la rendición como `OBSERVADO`, el ciclo pasa a `EN_EXCEPCION` y el empleado puede editar o eliminar únicamente los comprobantes de pago de sus solicitudes. La solicitud de gasto permanece inmutable. Una vez corregidos los sustentos, el empleado reenvía la rendición, que vuelve a `EN_ESPERA` y el ciclo a `CERRADO`, quedando a la espera de la decisión final de tesorería.
 
 

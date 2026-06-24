@@ -191,4 +191,54 @@ public class RendicionDAOImpl implements IRendicionDAO{
         return rendiciones;
     }
 
+    @Override
+    public int cambiarEstadoRendicion(int idRendicion, String nuevoEstado, String comentario, int idUsuarioAccion) throws SQLException {
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
+        parametrosEntrada.put("p_id_rendicion", idRendicion);
+        parametrosEntrada.put("p_nuevo_estado", nuevoEstado);
+        parametrosEntrada.put("p_comentario", comentario);
+        return DBManager.getDBManager().ejecutarProcedimiento("pa_cambiar_estado_rendicion", parametrosEntrada, null);
+    }
+
+    @Override
+    public List<Rendicion> listarPorArea(int idArea) throws SQLException {
+        List<Rendicion> rendiciones = null;
+        Rendicion rendicion;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_area", idArea);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_rendiciones_por_area", parametrosEntrada);
+        try {
+            while (rs.next()) {
+                if (rendiciones == null) rendiciones = new ArrayList<>();
+                rendicion = mapearRendicionPorId(rs, new HashMap<>());
+                rendiciones.add(rendicion);
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error al listar rendiciones por area: " + ex.getMessage());
+        } finally {
+            DBManager.getDBManager().cerrarConexion();
+        }
+        return rendiciones;
+    }
+
+    @Override
+    public int generarRendicionDeCicloSP(int idCiclo, int idUsuarioAccion) throws SQLException {
+        int idGenerado = 0;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
+        parametrosEntrada.put("p_id_ciclo_caja", idCiclo);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_generar_rendicion_de_ciclo", parametrosEntrada);
+        try {
+            if (rs.next()) {
+                idGenerado = rs.getInt("id_generado");
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error al generar rendicion de ciclo: " + ex.getMessage());
+        } finally {
+            DBManager.getDBManager().cerrarConexion();
+        }
+        return idGenerado;
+    }
+
 }

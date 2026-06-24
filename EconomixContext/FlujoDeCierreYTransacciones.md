@@ -100,6 +100,25 @@ Cuando el sistema cierra un ciclo de caja chica (estado `CERRADO` o `LIQUIDADO`)
 
 Todas las lecturas (`pa_buscar_ciclo_caja_por_id`, listados) devuelven valores calculados en vivo mediante subconsultas, no valores almacenados estáticos. Esto garantiza que la UI siempre muestre los totales correctos independientemente de modificaciones manuales en la BD.
 
+### Evento automático de cierre semanal (viernes 23:00)
+
+El evento `ev_cierre_semanal_caja_chica` ejecuta el cierre de forma desatendida:
+
+1. Selecciona los ciclos `ABIERTO` cuya `fecha_cierre <= CURDATE()`.
+2. Para cada uno llama `pa_generar_rendicion_de_ciclo`, que:
+   - Calcula `totalDeclarado` (comprobantes no anulados) y `totalAprobado` (solicitudes aprobadas).
+   - Inserta una rendición en estado `EN_ESPERA`.
+   - Marca el ciclo como `EN_EXCEPCION`.
+3. Crea el ciclo de la siguiente semana (lunes–domingo) con `saldoInicial = montoTecho` y `estado = ABIERTO`.
+
+Esto implementa literalmente el paso "[Viernes 5:00 PM]" del flujo: el ciclo vigente pasa a auditoría y el lunes ya existe un nuevo ciclo operativo.
+
+### Ventana de excepción y reenvío
+
+Si tesorería observa la rendición (`OBSERVADO`), el ciclo queda `EN_EXCEPCION` y el empleado puede:
+- Editar o eliminar los comprobantes de sus solicitudes (no la solicitud).
+- Presionar **Reenviar rendición** para devolver la rendición a `EN_ESPERA` y el ciclo a `CERRADO`, quedando lista para nueva revisión de tesorería.
+
 3. Nuevas Reglas de Negocio Incorporadas
 
 Límite de Solicitud del 40%: Un empleado solo puede solicitar como máximo el $40\%$ del saldo actual disponible de la caja chica en una única solicitud. Esto evita el desabastecimiento inmediato del fondo.

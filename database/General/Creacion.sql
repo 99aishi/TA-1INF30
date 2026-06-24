@@ -238,7 +238,7 @@ CREATE TABLE IF NOT EXISTS ope_rendicion (
     monto_total_declarado DECIMAL(12,2) DEFAULT 0.00,
     monto_total_aprobado DECIMAL(12,2) DEFAULT 0.00,
     monto_saldo_final DECIMAL(12,2) DEFAULT 0.00,
-    estado_rendicion ENUM('ACEPTADO', 'EN_ESPERA', 'DENEGADO', 'ANULADO') NOT NULL,
+    estado_rendicion ENUM('ACEPTADO', 'EN_ESPERA', 'DENEGADO', 'OBSERVADO', 'ANULADO') NOT NULL,
     comentario VARCHAR(500),
     id_ciclo_caja INT NULL,
     

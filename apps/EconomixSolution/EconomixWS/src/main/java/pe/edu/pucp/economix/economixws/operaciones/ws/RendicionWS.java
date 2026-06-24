@@ -103,4 +103,69 @@ public class RendicionWS {
                     .entity(Map.of("error", e.getMessage())).build();
         }
     }
+
+    @POST
+    @Path("ObservarRendicion")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response observarRendicion(@QueryParam("idRendicion") int idRendicion,
+                                      @QueryParam("comentario") String comentario,
+                                      @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
+        try {
+            rendicionBO.observarRendicion(idRendicion, comentario, idUsuarioAccion);
+            return Response.ok().build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
+    @POST
+    @Path("AceptarRendicion")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response aceptarRendicion(@QueryParam("idRendicion") int idRendicion,
+                                     @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
+        try {
+            rendicionBO.aceptarRendicion(idRendicion, idUsuarioAccion);
+            return Response.ok().build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
+    @POST
+    @Path("DenegarRendicion")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response denegarRendicion(@QueryParam("idRendicion") int idRendicion,
+                                     @QueryParam("comentario") String comentario,
+                                     @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
+        try {
+            rendicionBO.denegarRendicion(idRendicion, comentario, idUsuarioAccion);
+            return Response.ok().build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
+    @POST
+    @Path("ReEnviarRendicion")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response reEnviarRendicion(@QueryParam("idRendicion") int idRendicion,
+                                      @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
+        try {
+            rendicionBO.reEnviarRendicion(idRendicion, idUsuarioAccion);
+            return Response.ok().build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
+    @GET
+    @Path("ListarPorArea")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<Rendicion> listarPorArea(@QueryParam("idArea") int idArea) throws Exception {
+        return rendicionBO.listarPorArea(idArea);
+    }
 }
