@@ -18,6 +18,7 @@ public class DBManager {
     // 2. Para soportar transacciones por hilo de forma limpia, usamos ThreadLocal.
     // Esto asegura que cada hilo tenga su propia conexión transaccional sin mezclarse.
     private final ThreadLocal<Connection> conexionTransaccional = new ThreadLocal<>();
+    private final ThreadLocal<Connection> conexionLectura = new ThreadLocal<>();
 
     private DBManager(){
         ResourceBundle db = ResourceBundle.getBundle("datosBD");
@@ -53,8 +54,7 @@ public class DBManager {
         }
     }
     public void cerrarConexion() throws SQLException {
-        // En el nuevo modelo asíncrono/multi-hilo, cada método auto-cierra su conexión.
-        // Sin embargo, si estás en medio de una transacción, limpiamos el hilo.
+        // Cerrar conexión transaccional
         Connection con = conexionTransaccional.get();
         if (con != null) {
             try {
@@ -63,6 +63,17 @@ public class DBManager {
                 }
             } finally {
                 conexionTransaccional.remove();
+            }
+        }
+        // Cerrar conexión de lectura
+        Connection conL = conexionLectura.get();
+        if (conL != null) {
+            try {
+                if (!conL.isClosed()) {
+                    conL.close();
+                }
+            } finally {
+                conexionLectura.remove();
             }
         }
     }
@@ -147,7 +158,8 @@ public class DBManager {
     // Ojo: Quien consuma este ResultSet debe encargarse de cerrar la conexión asociada cuando termine de leerlo.
     public ResultSet ejecutarProcedimientoLectura(String nombreProcedimiento, Map<String,Object> parametrosEntrada) {
         try {
-            Connection con = getConnection(); // Conexión dedicada para esta lectura
+            Connection con = getConnection();
+            conexionLectura.set(con);
             CallableStatement cs = formarLlamadaProcedimiento(con, nombreProcedimiento, parametrosEntrada, null);
             if(parametrosEntrada != null) {
                 registrarParametrosEntrada(cs, parametrosEntrada);

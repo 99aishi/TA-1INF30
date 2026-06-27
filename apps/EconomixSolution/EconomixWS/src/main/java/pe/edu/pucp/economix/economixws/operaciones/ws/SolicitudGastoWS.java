@@ -102,12 +102,12 @@ public class SolicitudGastoWS {
     @Path("Evaluar")
     @Produces(MediaType.APPLICATION_JSON)
     public Response evaluar(@QueryParam("idSolicitudGasto") int idSolicitudGasto,
-                            @QueryParam("aprobado") boolean aprobado,
+                            @QueryParam("accion") String accion,
                             @QueryParam("comentario") String comentario,
                             @QueryParam("idJefeEvaluador") int idJefeEvaluador,
                             @QueryParam("idUsuarioAccion") int idUsuarioAccion) {
         try {
-            SolicitudGasto solicitud = solicitudBO.evaluar(idSolicitudGasto, aprobado, comentario, idJefeEvaluador, idUsuarioAccion);
+            SolicitudGasto solicitud = solicitudBO.evaluar(idSolicitudGasto, accion, comentario, idJefeEvaluador, idUsuarioAccion);
             return Response.ok(solicitud).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)

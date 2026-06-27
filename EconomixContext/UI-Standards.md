@@ -173,23 +173,34 @@ All cards use `rounded-4` (maps to `border-radius: 1rem` via `app.css` override)
 
 ## 5. Buttons
 
+### Core Rule
+
+**Only "Agregar"/"Crear" header buttons are SOLID.** All other buttons use outline variants.
+
+| Button Type | Style | Example |
+|-------------|-------|---------|
+| **"+ Agregar X" (page header)** | `btn btn-primary` (solid) | "+ Agregar Usuario", "+ Agregar Solicitud" |
+| **All other action buttons** | `btn btn-outline-*` (outline) | "Guardar Cambios", "Eliminar", "Ver", etc. |
+| **SearchBar Limpiar** | `btn btn-outline-secondary rounded-4` | "Limpiar" |
+| **Login submit** | `btn btn-primary` (solid) | "Iniciar Sesión" (main CTA only) |
+
 ### Color Semantics
 
 | Action | Variant | Example |
 |--------|---------|---------|
-| **Create / Primary CTA** | `btn-primary` | "+ Agregar", "Registrar Solicitud" |
+| **Create / Primary CTA** | `btn-primary` (solid) | "+ Agregar", "+ Agregar Usuario" |
 | **Register (in detail footer)** | `btn-outline-primary` | "Registrar" |
 | **Save changes** | `btn-outline-warning` | "Guardar Cambios" |
 | **Close / Dismiss** | `btn-outline-info` | "Cerrar" |
-| **Cancel** | `btn-outline-danger` or `btn-outline-secondary` | "Cancelar" |
+| **Cancel / Volver** | `btn-outline-secondary` | "Cancelar", "Volver" |
 | **Delete** | `btn-outline-danger` | "Eliminar" |
 | **Recover/Reactivate** | `btn-outline-success` | "Recuperar" |
-| **Approve** | `btn-success` | "Aprobar", "Aceptar" |
-| **Reject** | `btn-danger` | "Rechazar", "Denegar" |
-| **Observe** | `btn-warning` or `btn-info` | "Observar" |
+| **Approve** | `btn-outline-success` | "Aprobar", "Aceptar" |
+| **Reject** | `btn-outline-danger` | "Rechazar", "Denegar" |
+| **Observe** | `btn-outline-warning` or `btn-outline-info` | "Observar" |
 | **Edit (inline)** | `btn-sm btn-outline-warning` | "Editar" |
-| **View (inline)** | `btn-sm btn-outline-primary` or `btn-primary` | "Ver" |
-| **Limpiar (filters)** | `btn-secondary rounded-4` | "Limpiar" |
+| **View (inline)** | `btn-sm btn-outline-primary` | "Ver" |
+| **Limpiar (filters)** | `btn-outline-secondary rounded-4` | "Limpiar" |
 
 ### Sizes
 
@@ -203,7 +214,7 @@ All cards use `rounded-4` (maps to `border-radius: 1rem` via `app.css` override)
 
 **Creation mode:**
 ```
-[Registrar] btn-outline-primary  |  [Cerrar] btn-outline-info  |  [Cancelar] btn-outline-danger
+[Registrar] btn-outline-primary  |  [Cerrar] btn-outline-info  |  [Cancelar] btn-outline-secondary
 ```
 
 **Edit mode:**
@@ -238,12 +249,12 @@ Pattern: `private bool Procesando { get; set; } = false;` set to `true` at metho
 
 ### Approval Workflow Buttons
 
-Approval actions use **solid** variants (not outline):
+Approval actions use **outline** variants:
 
 ```html
-<button class="btn btn-success" disabled="@Procesando">Aprobar</button>
-<button class="btn btn-warning" disabled="@Procesando">Observar</button>
-<button class="btn btn-danger" disabled="@Procesando">Rechazar</button>
+<button class="btn btn-outline-success" disabled="@Procesando">Aprobar</button>
+<button class="btn btn-outline-warning" disabled="@Procesando">Observar</button>
+<button class="btn btn-outline-danger" disabled="@Procesando">Rechazar</button>
 ```
 
 ---
@@ -415,7 +426,7 @@ Almost all badges use `rounded-pill`. Detail page entity badges add `px-2`.
         </div>
         <div class="d-flex flex-row align-items-center gap-3">
             <p class="h4 mb-0">S/ 1,234.56</p>
-            <button class="btn btn-primary">Ver</button>
+            <button class="btn btn-outline-primary">Ver</button>
         </div>
     </div>
 </div>
@@ -504,7 +515,7 @@ All SearchBars render in a **single row** using `row g-2 align-items-end`. No mu
         <!-- More filters — all in the same row -->
         <div class="col-12 col-md-2 d-grid">
             <label class="form-label small text-muted">&nbsp;</label>
-            <button class="btn btn-secondary rounded-4" @onclick="Limpiar">Limpiar</button>
+            <button class="btn btn-outline-secondary rounded-4" @onclick="Limpiar">Limpiar</button>
         </div>
     </div>
 </div>
@@ -528,7 +539,7 @@ All SearchBars render in a **single row** using `row g-2 align-items-end`. No mu
 
 ### Limpiar Button
 
-Always: `btn btn-secondary rounded-4` with `@onclick="Limpiar"`.
+Always: `btn btn-outline-secondary rounded-4` with `@onclick="Limpiar"`.
 
 ---
 
@@ -566,7 +577,7 @@ Always: `btn btn-secondary rounded-4` with `@onclick="Limpiar"`.
 ```html
 <div class="alert alert-warning d-flex align-items-center justify-content-between">
     <span><i class="bi bi-exclamation-triangle me-2"></i> Warning text</span>
-    <button class="btn btn-sm btn-warning">Action</button>
+    <button class="btn btn-sm btn-outline-warning">Action</button>
 </div>
 ```
 
@@ -773,6 +784,7 @@ These rules summarize the **canonical standards** for the project. All component
 | **Search bar layout** | Single row, all filters inline | Every SearchBar must render all filters in one `row g-2 align-items-end` — no multi-row layouts. Use responsive `col-X col-md-Y` to stack on mobile. The "Limpiar" button is always the last column. |
 | **Item card consistency** | Same structure across all `*Item.razor` | All item cards must follow: `card rounded-4 p-3 mb-3 bg-light` with a `d-flex flex-row justify-content-between align-items-start` inner layout. Left column = title + metadata. Right column = amount + action button. Badge pill inline with title. |
 | **Detail page consistency** | Same structure across all `*Detalle.razor` | All detail pages must follow: card header with `h3 mb-0` + badge, `<hr class="my-0" />`, scrollable content area, `<hr class="my-0" />`, footer with `d-flex flex-wrap-nowrap justify-content-end gap-3`. |
+| **Button style** | Agregar/Crear = solid, all others = outline | Only page header "+ Agregar X" buttons use `btn btn-primary`. All other buttons (Guardar, Eliminar, Ver, Aprobar, Rechazar, Limpiar, etc.) use `btn btn-outline-*`. |
 | **Button text consistency** | Same action = same label | "Registrar" for create, "Guardar Cambios" for update, "Cerrar" for close, "Cancelar" for cancel, "Eliminar" for delete, "Recuperar" for restore. Never mix synonyms (e.g., "Crear" vs "Registrar"). |
 | **Currency display** | `S/ ` prefix with 2 decimals | All monetary amounts display as `S/ 1,234.56` using `.ToString("N2")`. |
 | **Date format** | `dd/MM/yyyy` | All dates displayed in day/month/year format. Times: `HH:mm`. |

@@ -435,7 +435,7 @@ DELIMITER //
 DROP PROCEDURE IF EXISTS pa_insertar_auditoria//
 CREATE PROCEDURE pa_insertar_auditoria (
     IN p_nombre_tabla VARCHAR(100),
-    IN p_tipo_evento VARCHAR(10),
+    IN p_tipo_evento VARCHAR(20),
     IN p_id_registro VARCHAR(50),
     IN p_valores_antiguos JSON,
     IN p_valores_nuevos JSON,
@@ -3176,6 +3176,8 @@ BEGIN
     ORDER BY t.estado_transaccion DESC;
 END$$
 
+delimiter $$
+
 DROP PROCEDURE IF EXISTS pa_listar_transacciones $$
 CREATE PROCEDURE pa_listar_transacciones()
 BEGIN
@@ -3246,7 +3248,7 @@ BEGIN
         cc.estado_ciclo AS cc_estado_ciclo,
         cc.monto_saldo_inicial AS cc_monto_saldo_inicial,
         cca.id_fondo AS cc_cca_id_fondo,
-        tf.nombre AS cc_cca_nombre
+        tf.nombre_fondo AS cc_cca_nombre
     FROM ope_transaccion t
     INNER JOIN ope_solicitud_gasto sg ON t.id_solicitud_gasto = sg.id_solicitud_gasto
     LEFT JOIN ope_ciclo_caja cc ON sg.id_ciclo_caja = cc.id_ciclo_caja
