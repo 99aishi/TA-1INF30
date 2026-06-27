@@ -3,7 +3,6 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject ISolicitudGastoWS SolicitudGastoWS
-@inject ITransaccionWS TransaccionWS
 @inject IUsuarioWS UsuarioWS
 @inject IMonedaWS MonedaWS
 @inject ICicloCajaWS CicloCajaWS
@@ -125,39 +124,6 @@
                     }
                 </div>
 
-                @if (!EsCreacion && SolicitudEdicion?.IdTransaccion > 0)
-                {
-                    <div class="card rounded-4 p-3 mt-4">
-                        <p class="h5">Transacción de desembolso</p>
-                        <div class="row">
-                            <div class="col-6 mt-2">
-                                <label class="form-label">Nro. Transacción</label>
-                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="TR-@SolicitudEdicion.IdTransaccion" disabled="true">
-                            </div>
-                            <div class="col-6 mt-2">
-                                <label class="form-label">Estado</label>
-                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TransaccionDesembolso?.EstadoTransaccion ?? "-")" disabled="true">
-                            </div>
-                            <div class="col-6 mt-2">
-                                <label class="form-label">Monto</label>
-                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TransaccionDesembolso?.Moneda?.Simbolo ?? "S/") @(TransaccionDesembolso?.Monto.ToString("N2") ?? "-")" disabled="true">
-                            </div>
-                            <div class="col-6 mt-2">
-                                <label class="form-label">Moneda</label>
-                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TransaccionDesembolso?.Moneda?.Nombre ?? "-")" disabled="true">
-                            </div>
-                            <div class="col-6 mt-2">
-                                <label class="form-label">Medio de pago</label>
-                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TransaccionDesembolso?.MedioPago ?? "-")" disabled="true">
-                            </div>
-                            <div class="col-6 mt-2">
-                                <label class="form-label">Nro. operación</label>
-                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TransaccionDesembolso?.NumeroOperacionBancaria ?? "-")" disabled="true">
-                            </div>
-                        </div>
-                    </div>
-                }
-
                 @if (!EsCreacion)
                 {
                     @if (EsRendicionObservada)
@@ -276,7 +242,6 @@
     private string ErrorMessage { get; set; } = string.Empty;
 
     private SolicitudGasto SolicitudEdicion { get; set; } = new();
-    private Transaccion? TransaccionDesembolso { get; set; }
     private List<Moneda> Monedas { get; set; } = new();
     private List<CicloCajaChica> CiclosActivos { get; set; } = new();
     private Empleado? EmpleadoActual { get; set; }
@@ -416,7 +381,6 @@
         if (Solicitud != null)
         {
             SolicitudEdicion = CopiarSolicitud(Solicitud);
-            await CargarTransaccionDesembolso();
             await CargarCicloCompleto();
             await CargarComprobantes();
         }
@@ -461,7 +425,6 @@
             if (solicitud != null)
             {
                 SolicitudEdicion = CopiarSolicitud(solicitud);
-                await CargarTransaccionDesembolso();
                 await CargarCicloCompleto();
                 await CargarComprobantes();
             }
@@ -471,14 +434,6 @@
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
-        }
-    }
-
-    private async Task CargarTransaccionDesembolso()
-    {
-        if (SolicitudEdicion?.IdTransaccion > 0)
-        {
-            TransaccionDesembolso = await TransaccionWS.obtenerPorIdAsync(SolicitudEdicion.IdTransaccion);
         }
     }
 

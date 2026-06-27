@@ -21,13 +21,13 @@
             <label for="TipoDocumento" class="form-label">Tipo de Documento</label>    
             @if (RequiereAutorizacion)
             {
-                <select class="form-control bg-light" disabled>
+                <select class="form-select rounded-4 bg-light" disabled>
                     <option selected value="@Comprobante?.TipoDocumento">@Comprobante?.TipoDocumento</option>
                 </select>
             }
             else
             {
-                <select class="form-control bg-light" @bind="Comprobante.TipoDocumento">
+                <select class="form-select rounded-4 bg-light" @bind="Comprobante.TipoDocumento">
                     <option value="">Seleccione...</option>
                     @if (EsEvaluacion)
                     {
@@ -196,8 +196,8 @@
             @if (EsCreacion || EsAsociacion)
             {
                 <button type="button" class="btn btn-outline-primary" disabled="@Procesando"
-                        @onclick="MostrarItemsComprobante">
-                    @(Procesando ? "Procesando..." : "Registrar Comprobante")
+                        @onclick="GuardarComprobante">
+                    @(Procesando ? "Guardando..." : "Registrar Comprobante")
                 </button>
                 <button type="button" class="btn btn-outline-info" disabled="@Procesando"
                         @onclick="MostrarItemsComprobante">
@@ -320,7 +320,9 @@
 
     private async Task GuardarComprobante()
     {
-        if (Comprobante == null) return;
+        if (Procesando) return;
+        Procesando = true;
+        if (Comprobante == null) { Procesando = false; return; }
         ErrorMessage = string.Empty;
 
         try
@@ -371,6 +373,10 @@
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 

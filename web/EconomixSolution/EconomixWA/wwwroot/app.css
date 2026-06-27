@@ -105,3 +105,47 @@ h1:focus {
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
     transform: translateY(-1px);
 }
+
+.actividad-card {
+    border-left: 4px solid transparent;
+}
+
+.actividad-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.actividad-icon-warning {
+    background-color: #fff3cd;
+    color: #ffc107;
+}
+
+.actividad-icon-primary {
+    background-color: #cfe2ff;
+    color: #0d6efd;
+}
+
+.actividad-icon-info {
+    background-color: #cff4fc;
+    color: #0dcaf0;
+}
+
+.actividad-icon-success {
+    background-color: #d1e7dd;
+    color: #198754;
+}
+
+.actividad-icon-secondary {
+    background-color: #e2e3e5;
+    color: #6c757d;
+}
+
+.actividad-icon-danger {
+    background-color: #f8d7da;
+    color: #dc3545;
+}

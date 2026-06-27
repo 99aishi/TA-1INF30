@@ -1,10 +1,10 @@
 @if (Cuenta == null) return;
 
-<div class="border rounded-4 p-3 mb-3 bg-light">
+<div class="border rounded-4 h-100 p-3 mb-3 bg-light">
     <div class="row g-3">
         <div class="col-12 col-md-4">
-            <label class="form-label mb-1">Banco</label>
-            <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("NombreBanco") ? "is-invalid" : "")"
+            <label class="form-label small text-muted">Banco</label>
+            <input type="text" class="form-control rounded-4 bg-light @(Errores.ContainsKey("NombreBanco") ? "is-invalid" : "")"
                    placeholder="Nombre del banco" @bind="Cuenta.NombreBanco">
             @if (Errores.ContainsKey("NombreBanco"))
             {
@@ -12,8 +12,8 @@
             }
         </div>
         <div class="col-12 col-md-4">
-            <label class="form-label mb-1">Número de cuenta</label>
-            <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("NumeroBancario") ? "is-invalid" : "")"
+            <label class="form-label small text-muted">Número de cuenta</label>
+            <input type="text" class="form-control rounded-4 bg-light @(Errores.ContainsKey("NumeroBancario") ? "is-invalid" : "")"
                    placeholder="Mínimo 10 dígitos" @bind="Cuenta.NumeroBancario">
             @if (Errores.ContainsKey("NumeroBancario"))
             {
@@ -21,8 +21,8 @@
             }
         </div>
         <div class="col-12 col-md-4">
-            <label class="form-label mb-1">CCI</label>
-            <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("Cci") ? "is-invalid" : "")"
+            <label class="form-label small text-muted">CCI</label>
+            <input type="text" class="form-control rounded-4 bg-light @(Errores.ContainsKey("Cci") ? "is-invalid" : "")"
                    placeholder="20 dígitos" @bind="Cuenta.Cci">
             @if (Errores.ContainsKey("Cci"))
             {
@@ -30,8 +30,8 @@
             }
         </div>
         <div class="col-12 col-md-6">
-            <label class="form-label mb-1">Moneda</label>
-            <select class="form-select rounded-4 @(Errores.ContainsKey("Moneda") ? "is-invalid" : "")"
+            <label class="form-label small text-muted">Moneda</label>
+            <select class="form-select rounded-4 bg-light @(Errores.ContainsKey("Moneda") ? "is-invalid" : "")"
                     @bind="MonedaSeleccionadaId">
                 <option value="0">Seleccione una moneda</option>
                 @foreach (var moneda in Monedas)
@@ -45,8 +45,8 @@
             }
         </div>
         <div class="col-12 col-md-3">
-            <label class="form-label mb-1">Estado</label>
-            <select class="form-select rounded-4"
+            <label class="form-label small text-muted">Estado</label>
+            <select class="form-select rounded-4 bg-light"
                     value="@Cuenta.Activa.ToString().ToLower()"
                     @onchange="@((ChangeEventArgs e) => Cuenta.Activa = (e.Value?.ToString() == "true"))">
                 <option value="true">Activa</option>

@@ -1,6 +1,7 @@
 @page "/Cuentas Bancarias"
 @rendermode InteractiveServer
 @using EconomixWA.Components.Pages.CajaChica
+@using Microsoft.AspNetCore.WebUtilities
 @inject NavigationManager Navigation
 @inject ICuentaBancariaWS CuentaBancariaWS
 @inject ICajaChicaWS CajaChicaWS
@@ -86,7 +87,7 @@
             else if (MostrarEditor && CuentaEnEdicion != null)
             {
                 <div class="col-6 h-100 d-flex flex-column gap-3">
-                    <div class="card rounded-4 d-flex flex-column overflow-hidden" style="flex: 0 0 auto; max-height: 55%;">
+                    <div class="card rounded-4 d-flex flex-column h-100 overflow-hidden">
                         <div class="p-3 pb-2">
                             <p class="h5 mb-0">@(CuentaEnEdicion.IdCuenta > 0 ? "Editar cuenta" : "Nueva cuenta")</p>
                         </div>
@@ -94,8 +95,8 @@
                         <div class="p-3 overflow-auto flex-fill">
                             <div class="row g-3">
                                 <div class="col-12">
-                                    <label class="form-label mb-1">Banco</label>
-                                    <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("NombreBanco") ? "is-invalid" : "")"
+                                    <label class="form-label small text-muted">Banco</label>
+                                    <input type="text" class="form-control rounded-4 bg-light @(Errores.ContainsKey("NombreBanco") ? "is-invalid" : "")"
                                            placeholder="Nombre del banco" @bind="CuentaEnEdicion.NombreBanco">
                                     @if (Errores.ContainsKey("NombreBanco"))
                                     {
@@ -103,8 +104,8 @@
                                     }
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label mb-1">Número de cuenta</label>
-                                    <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("NumeroBancario") ? "is-invalid" : "")"
+                                    <label class="form-label small text-muted">Número de cuenta</label>
+                                    <input type="text" class="form-control rounded-4 bg-light @(Errores.ContainsKey("NumeroBancario") ? "is-invalid" : "")"
                                            placeholder="Mínimo 10 dígitos" @bind="CuentaEnEdicion.NumeroBancario">
                                     @if (Errores.ContainsKey("NumeroBancario"))
                                     {
@@ -112,8 +113,8 @@
                                     }
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label mb-1">CCI</label>
-                                    <input type="text" class="form-control rounded-4 @(Errores.ContainsKey("Cci") ? "is-invalid" : "")"
+                                    <label class="form-label small text-muted">CCI</label>
+                                    <input type="text" class="form-control rounded-4 bg-light @(Errores.ContainsKey("Cci") ? "is-invalid" : "")"
                                            placeholder="20 dígitos" @bind="CuentaEnEdicion.Cci">
                                     @if (Errores.ContainsKey("Cci"))
                                     {
@@ -121,7 +122,7 @@
                                     }
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label mb-1">Moneda</label>
+                                    <label class="form-label small text-muted">Moneda</label>
                                     <select class="form-select rounded-4 @(Errores.ContainsKey("Moneda") ? "is-invalid" : "")"
                                             @bind="MonedaSeleccionadaId">
                                         <option value="0">Seleccione una moneda</option>
@@ -137,8 +138,8 @@
                                 </div>
 
                                 <div class="col-12">
-                                    <label class="form-label mb-1">Dueño</label>
-                                    <select class="form-select rounded-4 mb-2"
+                                    <label class="form-label small text-muted">Dueño</label>
+                                    <select class="form-select rounded-4 bg-light"
                                             @bind="TipoDuenoEdicion"
                                             disabled="@(CuentaEnEdicion.IdCuenta > 0)">
                                         <option value="">Seleccione tipo de dueño</option>
@@ -148,7 +149,7 @@
 
                                     @if (TipoDuenoEdicion == "Empleado")
                                     {
-                                        <select class="form-select rounded-4 @(Errores.ContainsKey("Dueno") ? "is-invalid" : "")"
+                                        <select class="form-select rounded-4 bg-light @(Errores.ContainsKey("Dueno") ? "is-invalid" : "")"
                                                 @bind="EmpleadoSeleccionadoId"
                                                 disabled="@(CuentaEnEdicion.IdCuenta > 0)">
                                             <option value="0">Seleccione un empleado</option>
@@ -160,7 +161,7 @@
                                     }
                                     else if (TipoDuenoEdicion == "Area")
                                     {
-                                        <select class="form-select rounded-4 @(Errores.ContainsKey("Dueno") ? "is-invalid" : "")"
+                                        <select class="form-select rounded-4 bg-light @(Errores.ContainsKey("Dueno") ? "is-invalid" : "")"
                                                 @bind="AreaSeleccionadaId"
                                                 disabled="@(CuentaEnEdicion.IdCuenta > 0)">
                                             <option value="0">Seleccione un área</option>
@@ -239,6 +240,12 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery]
+    public int? EmpleadoId { get; set; }
+
+    [SupplyParameterFromQuery]
+    public int? AreaId { get; set; }
+
     private bool Cargando { get; set; } = true;
     private bool CargandoCajasChicas { get; set; }
     private bool MostrarEditor { get; set; }
@@ -299,6 +306,19 @@
         await CargarCatalogos();
         await ListarCuentas();
         Cargando = false;
+
+        if (EmpleadoId.HasValue && EmpleadoId > 0)
+        {
+            PrepararNueva();
+            TipoDuenoEdicion = "Empleado";
+            EmpleadoSeleccionadoId = EmpleadoId.Value;
+        }
+        else if (AreaId.HasValue && AreaId > 0)
+        {
+            PrepararNueva();
+            TipoDuenoEdicion = "Area";
+            AreaSeleccionadaId = AreaId.Value;
+        }
     }
 
     private async Task CargarCatalogos()

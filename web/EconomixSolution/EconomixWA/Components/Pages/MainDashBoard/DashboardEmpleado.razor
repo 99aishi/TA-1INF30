@@ -54,10 +54,13 @@
             idEmpleado = 0;
         }
 
-        await Task.WhenAll(
+        var tareas = new List<Task>
+        {
             CargarMisSolicitudes(idEmpleado),
             CargarComprobantesPendientes(idEmpleado),
-            CargarGastosCiclo(idEmpleado));
+            CargarGastosCiclo(idEmpleado)
+        };
+        await Task.WhenAll(tareas);
     }
 
     private async Task CargarMisSolicitudes(int idEmpleado)

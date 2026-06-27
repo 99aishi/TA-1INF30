@@ -7,6 +7,7 @@
 @using EconomixWA.Components.Pages.MainDashBoard;
 @using EconomixWA.Components.Pages.SolicitudDeGasto.SolicitudRecibida;
 @using EconomixWA.Components.Pages.SolicitudDeGasto;
+@using EconomixWA.Components.Pages.SolicitudDeGasto.MiSolicitudesDeGasto;
 @using EconomixWA.Components.Pages.Actividad;
 
 <PageTitle>Dashboard</PageTitle>
@@ -15,7 +16,7 @@
     
     <div class="d-flex flex-row align-items-center mb-4">
         <div class="flex-grow-1">
-            <p class="h4 mb-0">@Saludo, @(UsuarioActual?.Nombres ?? "Usuario")</p>    
+            <p class="h4 mb-1">@Saludo, @(UsuarioActual?.Nombres ?? "Usuario")</p>    
             <p class="h6 text-muted mb-0">Área: @(AreaUsuario)</p>
         </div>
         <LiveClock />
@@ -93,6 +94,51 @@
                 break;
             case "Empleado":
                 <DashboardEmpleado/>
+                <div class="row g-3 flex-fill mt-3 mb-3 overflow-hidden">
+                    <div class="col-6 h-100">
+                        <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
+                            <div class="p-3 pb-2">
+                                <h5 class="mb-0">Mis solicitudes</h5>
+                            </div>
+                            <hr class="my-0" />
+                            <div class="overflow-auto flex-fill">
+                                @if (CargandoSolicitudesEmp)
+                                {
+                                    <div class="p-3 text-center text-muted">Cargando solicitudes...</div>
+                                }
+                                else if (SolicitudesEmpleado.Count == 0)
+                                {
+                                    <div class="p-3 text-center text-muted">No tiene solicitudes registradas</div>
+                                }
+                                else
+                                {
+                                    @foreach (var s in SolicitudesEmpleado)
+                                    {
+                                        <MiSolicitudDeGastoItem Solicitud="s" OnMuestraDetalle="() => SeleccionarSolicitudEmp(s)" />
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 h-100">
+                        @if (SolicitudSeleccionadaEmp != null)
+                        {
+                            <SolicitudDeGastoSeguimiento Solicitud="SolicitudSeleccionadaEmp" />
+                        }
+                        else
+                        {
+                            <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
+                                <div class="p-3 pb-2">
+                                    <h5 class="mb-0">Estado de solicitud</h5>
+                                </div>
+                                <hr class="my-0" />
+                                <div class="overflow-auto flex-fill d-flex align-items-center justify-content-center">
+                                    <p class="text-muted">Seleccione una solicitud para ver su estado</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
                 break;
             case "Tesoreria":
                 <DashboardTesoreria/>
@@ -122,6 +168,10 @@
     private List<SolicitudGasto> SolicitudesPendientesJefe { get; set; } = new();
     private List<ActividadDto> ActividadRecienteJefe { get; set; } = new();
 
+    private bool CargandoSolicitudesEmp { get; set; } = true;
+    private List<SolicitudGasto> SolicitudesEmpleado { get; set; } = new();
+    private SolicitudGasto? SolicitudSeleccionadaEmp { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -138,6 +188,10 @@
             await Task.WhenAll(
                 CargarSolicitudesPendientesJefe(),
                 CargarActividadRecienteJefe());
+        }
+        else if (Rol == "Empleado")
+        {
+            await CargarSolicitudesEmpleado();
         }
     }
 
@@ -184,6 +238,30 @@
             ActividadRecienteJefe = new List<ActividadDto>();
         }
         CargandoActividadJefe = false;
+    }
+
+    private async Task CargarSolicitudesEmpleado()
+    {
+        CargandoSolicitudesEmp = true;
+        try
+        {
+            var id = UsuarioWS.GetCurrentUserId();
+            var todas = await SolicitudGastoWS.listarPorSolicitanteAsync(id);
+            SolicitudesEmpleado = todas
+                .OrderByDescending(s => s.FechaSolicitud)
+                .Take(20)
+                .ToList();
+        }
+        catch
+        {
+            SolicitudesEmpleado = new();
+        }
+        CargandoSolicitudesEmp = false;
+    }
+
+    private void SeleccionarSolicitudEmp(SolicitudGasto s)
+    {
+        SolicitudSeleccionadaEmp = s;
     }
 
     private string ObtenerRol()
