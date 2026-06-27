@@ -1,11 +1,13 @@
-namespace EconomixWS.TesoreriaWS;
-
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using EconomixModel.Model;
 using EconomixWS.UsuarioWS;
 
+namespace EconomixWS.TesoreriaWS;
+
 public interface ICuentaBancariaWS : IWS<CuentaBancaria>
 {
-    CuentaBancaria? obtenerPorId(int id);
-    List<CuentaBancaria> listarPorEmpleado(int idEmpleado);
-    List<CajaChica> listarCajasChicas(int idCuentaBancaria);
+    Task<CuentaBancaria?> obtenerPorIdAsync(int id);
+    Task<List<CuentaBancaria>> listarPorEmpleadoAsync(int idEmpleado);
+    Task<List<CajaChica>> listarCajasChicasAsync(int idCuentaBancaria);
 }

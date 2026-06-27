@@ -119,12 +119,12 @@
             var usuario = UsuarioWS.GetCurrentUser();
             if (usuario is Administrador)
             {
-                Solicitudes = await Task.Run(() => new List<SolicitudGasto>(SolicitudGastoWS.listar()));
+                Solicitudes = await SolicitudGastoWS.listarAsync();
             }
             else
             {
                 var idJefe = usuario.UsuarioID;
-                Solicitudes = await Task.Run(() => new List<SolicitudGasto>(SolicitudGastoWS.listarPendientesJefe(idJefe)));
+                Solicitudes = await SolicitudGastoWS.listarPendientesJefeAsync(idJefe);
             }
         }
         catch (Exception ex) { ErrorMessage = ex.Message; }

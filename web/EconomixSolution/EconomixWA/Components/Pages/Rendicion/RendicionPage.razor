@@ -101,7 +101,7 @@
 
         if (MostrarFiltroArea)
         {
-            try { Areas = await Task.Run(() => new List<Area>(AreaWS.listar())); }
+            try { Areas = await AreaWS.listarAsync(); }
             catch { Areas = new List<Area>(); }
         }
 
@@ -117,11 +117,11 @@
             if (EsJefe && !EsTesoreria && !EsAdmin)
             {
                 var idUsuario = UsuarioWS.GetCurrentUserId();
-                var empleado = await Task.Run(() => EmpleadoWS.obtenerPorId(idUsuario));
+                var empleado = await EmpleadoWS.obtenerPorIdAsync(idUsuario);
                 var idArea = empleado?.Area?.AreaID ?? 0;
                 if (idArea > 0)
                 {
-                    Rendiciones = await Task.Run(() => new List<Rendicion>(RendicionWS.listarPorArea(idArea)));
+                    Rendiciones = await RendicionWS.listarPorAreaAsync(idArea);
                 }
                 else
                 {
@@ -130,7 +130,7 @@
             }
             else
             {
-                Rendiciones = await Task.Run(() => new List<Rendicion>(RendicionWS.listar()));
+                Rendiciones = await RendicionWS.listarAsync();
             }
         }
         catch (Exception ex)

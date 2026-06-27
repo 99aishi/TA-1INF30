@@ -147,7 +147,7 @@
         try
         {
             var idJefe = UsuarioWS.GetCurrentUserId();
-            var todas = await Task.Run(() => SolicitudGastoWS.listar());
+            var todas = await SolicitudGastoWS.listarAsync();
             SolicitudesPendientesJefe = todas
                 .Where(s => s.Estado.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(s => s.FechaSolicitud)
@@ -166,7 +166,7 @@
         CargandoActividadJefe = true;
         try
         {
-            var logs = await Task.Run(() => AuditoriaWS.listarRecientes(10));
+            var logs = await AuditoriaWS.listarRecientesAsync(100);
             ActividadRecienteJefe = logs.Select(l => new ActividadDto
             {
                 Titulo = l.Descripcion ?? "Sin descripción",

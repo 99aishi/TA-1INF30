@@ -31,44 +31,44 @@ public class CuentaBancariaWSImpl : ICuentaBancariaWS
         return int.Parse(nameClaim.Value);
     }
 
-    public void insertar(CuentaBancaria obj, int idUsuarioAccion)
+    public async Task insertarAsync(CuentaBancaria obj, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void actualizar(CuentaBancaria obj, int idUsuarioAccion)
+    public async Task actualizarAsync(CuentaBancaria obj, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void eliminar(int id, int idUsuarioAccion)
+    public async Task eliminarAsync(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
+        var response = await _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}");
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public List<CuentaBancaria> listar()
+    public async Task<List<CuentaBancaria>> listarAsync()
     {
         try
         {
-            var response = _httpClient.GetAsync("Listar").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync("Listar");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<CuentaBancaria>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<CuentaBancaria>();
             return JsonSerializer.Deserialize<List<CuentaBancaria>>(json, _jsonOptions) ?? new List<CuentaBancaria>();
@@ -79,14 +79,14 @@ public class CuentaBancariaWSImpl : ICuentaBancariaWS
         }
     }
 
-    public CuentaBancaria? obtenerPorId(int id)
+    public async Task<CuentaBancaria?> obtenerPorIdAsync(int id)
     {
         try
         {
-            var response = _httpClient.GetAsync($"BuscarPorId?id={id}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"BuscarPorId?id={id}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return null;
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
             return JsonSerializer.Deserialize<CuentaBancaria>(json, _jsonOptions);
@@ -97,14 +97,14 @@ public class CuentaBancariaWSImpl : ICuentaBancariaWS
         }
     }
 
-    public List<CuentaBancaria> listarPorEmpleado(int idEmpleado)
+    public async Task<List<CuentaBancaria>> listarPorEmpleadoAsync(int idEmpleado)
     {
         try
         {
-            var response = _httpClient.GetAsync($"ListarPorEmpleado?id={idEmpleado}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"ListarPorEmpleado?id={idEmpleado}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<CuentaBancaria>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<CuentaBancaria>();
             return JsonSerializer.Deserialize<List<CuentaBancaria>>(json, _jsonOptions) ?? new List<CuentaBancaria>();
@@ -115,14 +115,14 @@ public class CuentaBancariaWSImpl : ICuentaBancariaWS
         }
     }
 
-    public List<CajaChica> listarCajasChicas(int idCuentaBancaria)
+    public async Task<List<CajaChica>> listarCajasChicasAsync(int idCuentaBancaria)
     {
         try
         {
-            var response = _httpClient.GetAsync($"ListarCajasChicas?id={idCuentaBancaria}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"ListarCajasChicas?id={idCuentaBancaria}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<CajaChica>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<CajaChica>();
             return JsonSerializer.Deserialize<List<CajaChica>>(json, _jsonOptions) ?? new List<CajaChica>();

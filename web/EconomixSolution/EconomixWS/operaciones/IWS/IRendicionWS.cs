@@ -1,15 +1,17 @@
-namespace EconomixWS.OperacionesWS;
-
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using EconomixModel.Model;
 using EconomixWS.UsuarioWS;
 
+namespace EconomixWS.OperacionesWS;
+
 public interface IRendicionWS : IWS<Rendicion>
 {
-    Rendicion? obtenerPorId(int id);
-    Rendicion? generarRendicionDeCiclo(int idCiclo, int idUsuarioAccion);
-    List<Rendicion> listarPorArea(int idArea);
-    void observarRendicion(int idRendicion, string comentario, int idUsuarioAccion);
-    void aceptarRendicion(int idRendicion, int idUsuarioAccion);
-    void denegarRendicion(int idRendicion, string comentario, int idUsuarioAccion);
-    void reEnviarRendicion(int idRendicion, int idUsuarioAccion);
+    Task<Rendicion?> obtenerPorIdAsync(int id);
+    Task<Rendicion?> generarRendicionDeCicloAsync(int idCiclo, int idUsuarioAccion);
+    Task<List<Rendicion>> listarPorAreaAsync(int idArea);
+    Task observarRendicionAsync(int idRendicion, string comentario, int idUsuarioAccion);
+    Task aceptarRendicionAsync(int idRendicion, int idUsuarioAccion);
+    Task denegarRendicionAsync(int idRendicion, string comentario, int idUsuarioAccion);
+    Task reEnviarRendicionAsync(int idRendicion, int idUsuarioAccion);
 }

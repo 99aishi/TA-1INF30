@@ -11,5 +11,4 @@ public interface ISolicitudGastoBO extends IBaseBO<SolicitudGasto> {
     public List<SolicitudGasto> listarPorCiclo(int idCicloCaja) throws Exception;
     public List<SolicitudGasto> listarActivas() throws Exception;
     public SolicitudGasto evaluar(int idSolicitudGasto, boolean aprobado, String comentario, int idJefeEvaluador, int idUsuarioAccion) throws Exception;
-    public int ejecutarDesembolso(int idSolicitudGasto, String medioDesembolso, int idCuentaDestino, String numeroOperacionBancaria, int idUsuarioAccion) throws Exception;
 }

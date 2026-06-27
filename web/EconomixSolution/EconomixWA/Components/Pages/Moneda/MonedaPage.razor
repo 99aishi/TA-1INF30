@@ -95,8 +95,7 @@
 
     private async Task ListarMonedas()
     {
-        Monedas = await Task.Run(() =>
-            new List<Moneda>(MonedaWS.listar()));
+        Monedas = await MonedaWS.listarAsync();
     }
 
     private async Task CerrarDetalleMoneda()

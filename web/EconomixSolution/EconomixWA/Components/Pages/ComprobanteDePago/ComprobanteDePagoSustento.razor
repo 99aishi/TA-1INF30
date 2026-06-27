@@ -1,5 +1,38 @@
 <div class="card h-100 p-3 rounded-4 gap-3">
-    <p class="h5">Carga del documento</p>
+    <p class="h5">Solicitud Asociada</p>
+
+    @if ((EsCreacion || EsAsociacion) && !RequiereAutorizacion)
+    {
+        <div class="col-12 mt-3">
+            <label for="SolicitudAsociada" class="form-label fw-bold">Solicitud Asociada</label>    
+            <select id="SolicitudAsociada" class="form-select bg-light" @bind="IdSolicitudSeleccionada">
+                <option value="0">Seleccionar Solicitud de Gasto</option>
+                @if (SolicitudesDisponibles.Any())
+                {
+                    @foreach (var solicitud in SolicitudesDisponibles)
+                    {
+                        <option value="@solicitud.IdSolicitudGasto">@solicitud.IdSolicitudGasto - @solicitud.MontoSolicitado.ToString("N2") - @solicitud.FechaSolicitud.ToString("dd/MM/yyyy") (@solicitud.Estado)</option>
+                    }
+                }
+                else
+                {
+                    <option disabled>No hay solicitudes disponibles</option>
+                }
+            </select>
+        </div>
+        <div class="col-6 mt-3">
+            <label for="Total" class="form-label">Total</label>    
+            <input readonly type="text" class="form-control form-control-lg rounded-4 bg-light" id="Total" placeholder="Total" value="@TotalMontoSolicitud" disabled>
+        </div>
+        <div class="col-6 mt-3">
+            <label for="Moneda" class="form-label">Moneda</label>    
+            <input readonly type="text" class="form-control form-control-lg rounded-4 bg-light" id="Moneda" placeholder="Moneda" value="@SimboloMonedaSolicitud" disabled>
+        </div>
+    }
+    else
+    {
+        <p class="text-muted text-center mt-3">La solicitud es pre-seleccionada y no puede ser cambiada.</p>
+    }
 
     <div class="dropzone-container d-flex flex-column align-items-center justify-content-center p-4 text-center rounded-4 position-relative">
         <div class="dropzone-content">
@@ -10,29 +43,12 @@
         </div>
     </div>
 
-    <div class="row">
-        <p class="h5">Solicitud Asociada</p>
-        <div class="col-12 mt-3">
-            <label for="SolicitudAsociada" class="form-label fw-bold">Solicitud Asociada</label>    
-            
-            <!--Eliminar el diables cuando sea Creacion de solicitud-->
-            <select id="SolicitudAsociada" class="form-select bg-light" disabled="@(!EsCreacion || RequiereAutorizacion)">
-                <option selected value="">Solicitud de Gasto</option>
-                @for(int i = 0; i < 10; i++)
-                {   
-                    <option value="@i">@i</option>
-                }
-            </select>
+    @if (TieneSolicitudSeleccionada)
+    {
+        <div class="alert alert-info mt-3">
+            <strong>Solicitud:</strong> #@(SolicitudSeleccionada?.IdSolicitudGasto ?? 0) - @TotalMontoSolicitud @SimboloMonedaSolicitud
         </div>
-        <div class="col-6 mt-3">
-            <label for="Total" class="form-label">Total</label>    
-            <input readonly type="text" class="form-control form-control-lg rounded-4 bg-light" id="Total" placeholder="Total">
-        </div>
-        <div class="col-6 mt-3">
-            <label for="Moneda" class="form-label">Moneda</label>    
-            <input readonly type="text" class="form-control form-control-lg rounded-4 bg-light" id="Moneda" placeholder="Moneda">
-        </div>
-    </div>
+    }
 </div>
 
 @code {
@@ -44,4 +60,82 @@
     public bool EsAsociacion { get; set;} = false;
     [Parameter]
     public bool RequiereAutorizacion { get; set; } = false;
+
+    [Parameter]
+    public int IdSolicitudPasada { get; set; } = 0;
+
+    private List<SolicitudGasto> SolicitudesDisponibles { get; set; } = new();
+    private int IdSolicitudSeleccionada { get; set; } = 0;
+    private SolicitudGasto? SolicitudSeleccionada { get; set; }
+
+    private string TotalMontoSolicitud => SolicitudSeleccionada?.MontoSolicitado.ToString("N2") ?? "0.00";
+    private string SimboloMonedaSolicitud => SolicitudSeleccionada?.MonedaOriginal?.Simbolo ?? "S/";
+    private bool TieneSolicitudSeleccionada => SolicitudSeleccionada != null && SolicitudSeleccionada.IdSolicitudGasto > 0;
+
+    [Inject]
+    private ISolicitudGastoWS SolicitudGastoWS { get; set; }
+    [Inject]
+    private IUsuarioWS UsuarioWS { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (IdSolicitudPasada > 0)
+            {
+                IdSolicitudSeleccionada = IdSolicitudPasada;
+                await CargarSolicitudEspecifica(IdSolicitudPasada);
+            }
+            else
+            {
+                await CargarSolicitudesEmpleado();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log error silently for now
+        }
+    }
+
+    private async Task CargarSolicitudesEmpleado()
+    {
+        try
+        {
+            var usuario = UsuarioWS.GetCurrentUser();
+            if (usuario is Empleado empleado)
+            {
+                SolicitudesDisponibles = (await SolicitudGastoWS.listarPorSolicitanteAsync(empleado.UsuarioID))
+                    .Where(s => s.Estado == "APROBADO" || s.Estado == "PAGADO")
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            SolicitudesDisponibles = new List<SolicitudGasto>();
+        }
+    }
+
+    private async Task CargarSolicitudEspecifica(int idSolicitud)
+    {
+        try
+        {
+            SolicitudGasto solicitud = await SolicitudGastoWS.obtenerPorIdAsync(idSolicitud)
+                ?? new SolicitudGasto { IdSolicitudGasto = idSolicitud };
+            
+            SolicitudSeleccionada = solicitud;
+            IdSolicitudSeleccionada = solicitud.IdSolicitudGasto;
+        }
+        catch (Exception ex)
+        {
+            SolicitudSeleccionada = null;
+        }
+    }
+
+    private async Task IdSolicitudSeleccionadaChanged()
+    {
+        if (IdSolicitudSeleccionada > 0 && (EsCreacion || EsAsociacion))
+        {
+            await CargarSolicitudEspecifica(IdSolicitudSeleccionada);
+        }
+    }
 }

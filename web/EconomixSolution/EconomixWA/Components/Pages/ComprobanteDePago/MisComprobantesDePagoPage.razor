@@ -126,7 +126,7 @@
         ErrorMessage = string.Empty;
         try
         {
-            var todos = await Task.Run(() => new List<ComprobantePago>(ComprobantePagoWS.listar()));
+            var todos = await ComprobantePagoWS.listarAsync();
             var usuario = UsuarioWS.GetCurrentUser();
             if (usuario is Empleado emp)
             {

@@ -140,7 +140,7 @@
 
     <hr class="my-0" />
     <div class="p-3 d-flex justify-content-end gap-3">
-        <button type="button" class="btn btn-outline-primary" @onclick="CerrarDetalle">Cerrar</button>
+        <button type="button" class="btn btn-outline-primary" disabled="@Procesando" @onclick="CerrarDetalle">Cerrar</button>
     </div>
 </div>
 
@@ -207,7 +207,7 @@
         {
             try
             {
-                Solicitudes = await Task.Run(() => SolicitudGastoWS.listarPorCiclo(Rendicion.CicloCajaChica.IdCicloCaja));
+                Solicitudes = await SolicitudGastoWS.listarPorCicloAsync(Rendicion.CicloCajaChica.IdCicloCaja);
             }
             catch
             {
@@ -233,7 +233,16 @@
 
     private async Task CerrarDetalle()
     {
-        await OnCerrarDetalle.InvokeAsync();
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        finally
+        {
+            Procesando = false;
+        }
     }
 
     private async Task Observar()
@@ -249,7 +258,7 @@
         try
         {
             var idUsuario = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => RendicionWS.observarRendicion(Rendicion.IdRendicion, ComentarioAccion, idUsuario));
+            await RendicionWS.observarRendicionAsync(Rendicion.IdRendicion, ComentarioAccion, idUsuario);
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
@@ -270,7 +279,7 @@
         try
         {
             var idUsuario = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => RendicionWS.aceptarRendicion(Rendicion.IdRendicion, idUsuario));
+            await RendicionWS.aceptarRendicionAsync(Rendicion.IdRendicion, idUsuario);
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
@@ -296,7 +305,7 @@
         try
         {
             var idUsuario = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => RendicionWS.denegarRendicion(Rendicion.IdRendicion, ComentarioAccion, idUsuario));
+            await RendicionWS.denegarRendicionAsync(Rendicion.IdRendicion, ComentarioAccion, idUsuario);
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)

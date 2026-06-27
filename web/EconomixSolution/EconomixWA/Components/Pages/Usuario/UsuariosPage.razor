@@ -134,7 +134,7 @@
     {
         try
         {
-            Roles = await Task.Run(() => new List<Rol>(RolWS.listar()));
+            Roles = await RolWS.listarAsync();
         }
         catch (Exception ex)
         {
@@ -147,7 +147,7 @@
         ErrorMessage = string.Empty;
         try
         {
-            Usuarios = await Task.Run(() => new List<Usuario>(EmpleadoWS.listar()));
+            Usuarios = (await EmpleadoWS.listarAsync()).Cast<Usuario>().ToList();
         }
         catch (Exception ex)
         {

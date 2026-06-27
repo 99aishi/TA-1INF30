@@ -31,45 +31,45 @@ public class PermisoEdicionWSImpl : IPermisoEdicionWS
         return int.Parse(nameClaim.Value);
     }
 
-    public void Solicitar(PermisoEdicion permiso, int idUsuarioAccion)
+    public async Task SolicitarAsync(PermisoEdicion permiso, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Solicitar?idUsuarioAccion={idUsuarioAccion}", permiso, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Solicitar?idUsuarioAccion={idUsuarioAccion}", permiso, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void Otorgar(int idPermiso, int idAutorizador, string motivoAutorizacion, int idUsuarioAccion)
+    public async Task OtorgarAsync(int idPermiso, int idAutorizador, string motivoAutorizacion, int idUsuarioAccion)
     {
         var url = $"Otorgar?idPermiso={idPermiso}&idAutorizador={idAutorizador}&motivoAutorizacion={Uri.EscapeDataString(motivoAutorizacion ?? "")}&idUsuarioAccion={idUsuarioAccion}";
-        var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsync(url, null);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void Revocar(int idPermiso, int idUsuarioAccion)
+    public async Task RevocarAsync(int idPermiso, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsync($"Revocar?idPermiso={idPermiso}&idUsuarioAccion={idUsuarioAccion}", null).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsync($"Revocar?idPermiso={idPermiso}&idUsuarioAccion={idUsuarioAccion}", null);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public List<PermisoEdicion> ListarPendientes(int idAutorizador)
+    public async Task<List<PermisoEdicion>> ListarPendientesAsync(int idAutorizador)
     {
         try
         {
-            var response = _httpClient.GetAsync($"ListarPendientes?idAutorizador={idAutorizador}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"ListarPendientes?idAutorizador={idAutorizador}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<PermisoEdicion>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<PermisoEdicion>();
             return JsonSerializer.Deserialize<List<PermisoEdicion>>(json, _jsonOptions) ?? new List<PermisoEdicion>();
@@ -80,14 +80,14 @@ public class PermisoEdicionWSImpl : IPermisoEdicionWS
         }
     }
 
-    public List<PermisoEdicion> ListarEnExcepcion()
+    public async Task<List<PermisoEdicion>> ListarEnExcepcionAsync()
     {
         try
         {
-            var response = _httpClient.GetAsync("ListarEnExcepcion").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync("ListarEnExcepcion");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<PermisoEdicion>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<PermisoEdicion>();
             return JsonSerializer.Deserialize<List<PermisoEdicion>>(json, _jsonOptions) ?? new List<PermisoEdicion>();

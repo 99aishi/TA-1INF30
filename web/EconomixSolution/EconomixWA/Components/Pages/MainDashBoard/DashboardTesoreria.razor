@@ -102,15 +102,15 @@
 
     private async Task CargarCatalogos()
     {
-        try { Areas = await Task.Run(() => new List<Area>(AreaWS.listar())); } catch { Areas = new(); }
-        try { Empleados = await Task.Run(() => new List<Empleado>(EmpleadoWS.listar())); } catch { Empleados = new(); }
+        try { Areas = await AreaWS.listarAsync(); } catch { Areas = new(); }
+        try { Empleados = await EmpleadoWS.listarAsync(); } catch { Empleados = new(); }
     }
 
     private async Task CargarFondos()
     {
         try
         {
-            var cajas = await Task.Run(() => CajaChicaWS.listar());
+            var cajas = await CajaChicaWS.listarAsync();
             FondosTotales = cajas.Sum(c => c.MontoTecho);
         }
         catch
@@ -123,7 +123,7 @@
     {
         try
         {
-            var ciclos = await Task.Run(() => CicloCajaWS.listar());
+            var ciclos = await CicloCajaWS.listarAsync();
             FondosUtilizados = ciclos.Sum(c => c.TotalGastado);
             CiclosActivos = ciclos.Count(c => c.Estado.Equals("ABIERTO", StringComparison.OrdinalIgnoreCase));
             CiclosRevision = ciclos.Count(c => c.TotalGastado > c.SaldoInicial * 0.8);

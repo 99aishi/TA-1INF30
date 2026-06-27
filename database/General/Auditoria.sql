@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS log_auditoria (
     id_auditoria INT NOT NULL AUTO_INCREMENT,
     nombre_tabla VARCHAR(100) NOT NULL,
-    tipo_evento VARCHAR(10) NOT NULL, -- Valores: 'INSERT', 'UPDATE', 'DELETE'
+    tipo_evento VARCHAR(20) NOT NULL, -- Valores: 'INSERT', 'UPDATE', 'DELETE', 'LOGIN_SUCCESS', 'LOGIN_FAILED'
     id_registro_afectado VARCHAR(50) NOT NULL,
     valores_antiguos JSON, -- Estado previo
     valores_nuevos JSON,   -- Estado final

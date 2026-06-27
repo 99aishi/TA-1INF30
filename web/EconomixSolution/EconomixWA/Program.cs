@@ -141,7 +141,7 @@ app.MapPost("/auth/login", async (HttpContext context, IUsuarioWS usuarioWS) =>
     Usuario? usuarioEncontrado;
     try
     {
-        usuarioEncontrado = usuarioWS.ValidarCredenciales(request);
+        usuarioEncontrado = await usuarioWS.ValidarCredencialesAsync(request);
     }
     catch (LoginException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
     {
@@ -157,14 +157,15 @@ app.MapPost("/auth/login", async (HttpContext context, IUsuarioWS usuarioWS) =>
         return Results.Redirect("/?error=1" + (string.IsNullOrEmpty(returnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(returnUrl)}"));
     }
 
-    var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.NameIdentifier, usuarioEncontrado.UsuarioID.ToString()),
-        new Claim(ClaimTypes.Email, usuarioEncontrado.Correo),
-        new Claim("Nombre", usuarioEncontrado.Nombres),
-        new Claim("ApellidoPaterno", usuarioEncontrado.ApellidoPaterno),
-        new Claim("ApellidoMaterno", usuarioEncontrado.ApellidoMaterno)
-    };
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, usuarioEncontrado.UsuarioID.ToString()),
+                    new Claim(ClaimTypes.Email, usuarioEncontrado.Correo),
+                    new Claim("Nombre", usuarioEncontrado.Nombres),
+                    new Claim("ApellidoPaterno", usuarioEncontrado.ApellidoPaterno),
+                    new Claim("ApellidoMaterno", usuarioEncontrado.ApellidoMaterno),
+                    new Claim("RolFlujo", ((Empleado)usuarioEncontrado).RolFlujo.ToString())
+                };
 
     if (usuarioEncontrado is Administrador)
     {
@@ -174,6 +175,7 @@ app.MapPost("/auth/login", async (HttpContext context, IUsuarioWS usuarioWS) =>
     {
         string rol = DeterminarRolEmpleado(emp);
         claims.Add(new Claim(ClaimTypes.Role, rol));
+        claims.Add(new Claim("RolFlujo", emp.RolFlujo.ToString()));
     }
 
     var identidad = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

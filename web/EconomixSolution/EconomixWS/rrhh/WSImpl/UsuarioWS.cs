@@ -1,15 +1,14 @@
+using System.Security.Claims;
+
 namespace EconomixWS.UsuarioWS;
 
 using System.Net;
 using System.Net.Http.Json;
-using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using EconomixModel.Model;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http;
 
 public class LoginException : Exception
@@ -36,11 +35,11 @@ public class UsuarioWS : IUsuarioWS
         _jsonOptions = jsonOptions;
     }
 
-    public Usuario? ValidarCredenciales(LoginRequest request)
+    public async Task<Usuario?> ValidarCredencialesAsync(LoginRequest request)
     {
         try
         {
-            var response = _httpClient.PostAsJsonAsync("login", request, _jsonOptions).GetAwaiter().GetResult();
+            var response = await _httpClient.PostAsJsonAsync("login", request, _jsonOptions);
 
             if (response.StatusCode == HttpStatusCode.NoContent)
             {
@@ -49,19 +48,19 @@ public class UsuarioWS : IUsuarioWS
 
             if (response.StatusCode == HttpStatusCode.Forbidden)
             {
-                var error = response.Content.ReadFromJsonAsync<ErrorResponse>(_jsonOptions).GetAwaiter().GetResult();
+                var error = await response.Content.ReadFromJsonAsync<ErrorResponse>(_jsonOptions);
                 throw new LoginException(error?.Mensaje ?? "Cuenta bloqueada.", HttpStatusCode.Forbidden);
             }
 
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                var error = response.Content.ReadFromJsonAsync<ErrorResponse>(_jsonOptions).GetAwaiter().GetResult();
+                var error = await response.Content.ReadFromJsonAsync<ErrorResponse>(_jsonOptions);
                 throw new LoginException(error?.Mensaje ?? "Usuario o contraseña incorrectos.", HttpStatusCode.Unauthorized);
             }
 
             if (response.IsSuccessStatusCode)
             {
-                var jsonString = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                var jsonString = await response.Content.ReadAsStringAsync();
                 if (string.IsNullOrEmpty(jsonString))
                     return null;
 
@@ -69,9 +68,9 @@ public class UsuarioWS : IUsuarioWS
                 var root = jsonDoc.RootElement;
 
                 bool isEmpleado = root.TryGetProperty("numeroCelular", out _) ||
-                                  root.TryGetProperty("rol", out _) ||
-                                  root.TryGetProperty("area", out _) ||
-                                  root.TryGetProperty("jefeDirecto", out _);
+                                   root.TryGetProperty("rol", out _) ||
+                                   root.TryGetProperty("area", out _) ||
+                                   root.TryGetProperty("jefeDirecto", out _);
 
                 if (isEmpleado)
                 {
@@ -118,6 +117,7 @@ public class UsuarioWS : IUsuarioWS
         var paternoClaim = user.FindFirst("ApellidoPaterno");
         var maternoClaim = user.FindFirst("ApellidoMaterno");
         var emailClaim = user.FindFirst(ClaimTypes.Email);
+        var rolFlujoClaim = user.FindFirst("RolFlujo");
 
         if (nameClaim == null)
             return null;
@@ -138,6 +138,16 @@ public class UsuarioWS : IUsuarioWS
         }
         else
         {
+            RolFlujo rolFlujo = RolFlujo.EMPLEADO;
+            if (rolFlujoClaim != null && Enum.TryParse<RolFlujo>(rolFlujoClaim.Value, out var parsedRolFlujo))
+            {
+                rolFlujo = parsedRolFlujo;
+            }
+            else if (rol == "Jefe")
+            {
+                rolFlujo = RolFlujo.JEFE_AREA;
+            }
+
             return new Empleado
             {
                 UsuarioID = int.Parse(nameClaim.Value),
@@ -145,7 +155,8 @@ public class UsuarioWS : IUsuarioWS
                 ApellidoPaterno = paternoClaim?.Value ?? "",
                 ApellidoMaterno = maternoClaim?.Value ?? "",
                 Correo = emailClaim?.Value ?? "",
-                Rol = new Rol { Titulo = rol }
+                Rol = new Rol { Titulo = rol },
+                RolFlujo = rolFlujo
             };
         }
     }

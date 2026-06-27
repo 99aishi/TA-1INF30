@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface ITransaccionBO extends IBaseBO<Transaccion> {
     List<Transaccion> listarActivas() throws Exception;
+    List<Transaccion> listarPorJefe(int idJefe) throws Exception;
 }

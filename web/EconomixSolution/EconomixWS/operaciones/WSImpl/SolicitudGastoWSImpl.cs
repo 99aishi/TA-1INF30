@@ -31,45 +31,44 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
 
         return int.Parse(nameClaim.Value);
     }
-
-    public void insertar(SolicitudGasto obj, int idUsuarioAccion)
+    public async Task insertarAsync(SolicitudGasto obj, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void actualizar(SolicitudGasto obj, int idUsuarioAccion)
+    public async Task actualizarAsync(SolicitudGasto obj, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void eliminar(int id, int idUsuarioAccion)
+    public async Task eliminarAsync(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
+        var response = await _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}");
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public List<SolicitudGasto> listar()
+    public async Task<List<SolicitudGasto>> listarAsync()
     {
         try
         {
-            var response = _httpClient.GetAsync("Listar").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync("Listar");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<SolicitudGasto>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<SolicitudGasto>();
             return JsonSerializer.Deserialize<List<SolicitudGasto>>(json, _jsonOptions) ?? new List<SolicitudGasto>();
@@ -80,14 +79,14 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
         }
     }
 
-    public SolicitudGasto? obtenerPorId(int id)
+    public async Task<SolicitudGasto?> obtenerPorIdAsync(int id)
     {
         try
         {
-            var response = _httpClient.GetAsync($"BuscarPorId?id={id}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"BuscarPorId?id={id}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return null;
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
             return JsonSerializer.Deserialize<SolicitudGasto>(json, _jsonOptions);
@@ -97,14 +96,15 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
             return null;
         }
     }
-    public List<SolicitudGasto> listarPorSolicitante(int idSolicitante)
+
+    public async Task<List<SolicitudGasto>> listarPorSolicitanteAsync(int idSolicitante)
     {
         try
         {
-            var response = _httpClient.GetAsync($"ListarPorSolicitante?idSolicitante={idSolicitante}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"ListarPorSolicitante?idSolicitante={idSolicitante}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<SolicitudGasto>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<SolicitudGasto>();
             return JsonSerializer.Deserialize<List<SolicitudGasto>>(json, _jsonOptions) ?? new List<SolicitudGasto>();
@@ -115,14 +115,14 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
         }
     }
 
-    public List<SolicitudGasto> listarPendientesJefe(int idJefe)
+    public async Task<List<SolicitudGasto>> listarPendientesJefeAsync(int idJefe)
     {
         try
         {
-            var response = _httpClient.GetAsync($"ListarPendientesJefe?idJefe={idJefe}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"ListarPendientesJefe?idJefe={idJefe}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<SolicitudGasto>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<SolicitudGasto>();
             return JsonSerializer.Deserialize<List<SolicitudGasto>>(json, _jsonOptions) ?? new List<SolicitudGasto>();
@@ -133,14 +133,14 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
         }
     }
 
-    public List<SolicitudGasto> listarPorCiclo(int idCiclo)
+    public async Task<List<SolicitudGasto>> listarPorCicloAsync(int idCiclo)
     {
         try
         {
-            var response = _httpClient.GetAsync($"ListarPorCiclo?idCiclo={idCiclo}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"ListarPorCiclo?idCiclo={idCiclo}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<SolicitudGasto>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<SolicitudGasto>();
             return JsonSerializer.Deserialize<List<SolicitudGasto>>(json, _jsonOptions) ?? new List<SolicitudGasto>();
@@ -151,30 +151,19 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
         }
     }
 
-    public SolicitudGasto? evaluar(int idSolicitudGasto, bool aprobado, string comentario, int idJefeEvaluador, int idUsuarioAccion)
+    public async Task<SolicitudGasto?> evaluarAsync(int idSolicitudGasto, bool aprobado, string comentario, int idJefeEvaluador, int idUsuarioAccion)
     {
         var url = $"Evaluar?idSolicitudGasto={idSolicitudGasto}&aprobado={aprobado.ToString().ToLowerInvariant()}&comentario={Uri.EscapeDataString(comentario ?? "")}&idJefeEvaluador={idJefeEvaluador}&idUsuarioAccion={idUsuarioAccion}";
-        var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsync(url, null);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
 
-        var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+        var json = await response.Content.ReadAsStringAsync();
         if (string.IsNullOrEmpty(json) || json == "null")
             return null;
         return JsonSerializer.Deserialize<SolicitudGasto>(json, _jsonOptions);
-    }
-
-    public void ejecutarDesembolso(int idSolicitudGasto, string medioDesembolso, int idCuentaDestino, string numeroOperacionBancaria, int idUsuarioAccion)
-    {
-        var url = $"EjecutarDesembolso?idSolicitudGasto={idSolicitudGasto}&medioDesembolso={Uri.EscapeDataString(medioDesembolso ?? "")}&idCuentaDestino={idCuentaDestino}&numeroOperacionBancaria={Uri.EscapeDataString(numeroOperacionBancaria ?? "")}&idUsuarioAccion={idUsuarioAccion}";
-        var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
-        if (!response.IsSuccessStatusCode)
-        {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            throw new Exception(error);
-        }
     }
 }

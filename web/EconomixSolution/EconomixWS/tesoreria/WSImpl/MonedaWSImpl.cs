@@ -31,46 +31,46 @@ public class MonedaWSImpl : IMonedaWS
         return int.Parse(nameClaim.Value);
     }
 
-    public void insertar(Moneda moneda, int idUsuarioAccion)
+    public async Task insertarAsync(Moneda moneda, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", moneda, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", moneda, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void actualizar(Moneda moneda, int idUsuarioAccion)
+    public async Task actualizarAsync(Moneda moneda, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", moneda, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", moneda, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void eliminar(int id, int idUsuarioAccion)
+    public async Task eliminarAsync(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
+        var response = await _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}");
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public List<Moneda> listar()
+    public async Task<List<Moneda>> listarAsync()
     {
         try
         {
-            var response = _httpClient.GetAsync("ListarMonedas").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync("ListarMonedas");
 
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<Moneda>();
 
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<Moneda>();
 
@@ -82,16 +82,16 @@ public class MonedaWSImpl : IMonedaWS
         }
     }
 
-    public Moneda? obtenerPorId(int id)
+    public async Task<Moneda?> obtenerPorIdAsync(int id)
     {
         try
         {
-            var response = _httpClient.GetAsync($"BuscarPorId?id={id}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"BuscarPorId?id={id}");
 
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return null;
 
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
 
@@ -103,16 +103,16 @@ public class MonedaWSImpl : IMonedaWS
         }
     }
 
-    public List<Moneda> listarActivas()
+    public async Task<List<Moneda>> listarActivasAsync()
     {
         try
         {
-            var response = _httpClient.GetAsync("ListarActivas").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync("ListarActivas");
 
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<Moneda>();
 
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<Moneda>();
 
@@ -124,28 +124,28 @@ public class MonedaWSImpl : IMonedaWS
         }
     }
 
-    public int recuperar(int id, int idUsuarioAccion)
+    public async Task<int> recuperarAsync(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Recuperar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
+        var response = await _httpClient.GetAsync($"Recuperar?id={id}&idUsuarioAccion={idUsuarioAccion}");
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
-        var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+        var json = await response.Content.ReadAsStringAsync();
         return System.Text.Json.JsonSerializer.Deserialize<int>(json, _jsonOptions);
     }
 
-    public List<Moneda> buscarMonedas(string q)
+    public async Task<List<Moneda>> buscarMonedasAsync(string q)
     {
         try
         {
-            var response = _httpClient.GetAsync($"BuscarMonedas?q={q}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"BuscarMonedas?q={q}");
 
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<Moneda>();
 
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<Moneda>();
 
@@ -157,16 +157,16 @@ public class MonedaWSImpl : IMonedaWS
         }
     }
 
-    public List<Moneda> listarPorEstado(bool activa)
+    public async Task<List<Moneda>> listarPorEstadoAsync(bool activa)
     {
         try
         {
-            var response = _httpClient.GetAsync($"ListarPorEstado?activa={activa}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"ListarPorEstado?activa={activa}");
 
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<Moneda>();
 
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<Moneda>();
 

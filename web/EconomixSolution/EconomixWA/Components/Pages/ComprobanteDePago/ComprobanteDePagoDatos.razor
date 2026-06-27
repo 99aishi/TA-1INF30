@@ -2,6 +2,8 @@
 @inject IComprobantePagoWS ComprobantePagoWS
 @inject IPermisoEdicionWS PermisoEdicionWS
 @inject IUsuarioWS UsuarioWS
+@inject ITransaccionWS TransaccionWS
+@inject ISolicitudGastoWS SolicitudGastoWS
 
 <div class="card p-3 h-100 rounded-4 d-flex justify-content-between flex-column">
     
@@ -17,47 +19,136 @@
         </div>
         <div class="col-4 mt-3">
             <label for="TipoDocumento" class="form-label">Tipo de Documento</label>    
-            <select class="form-control bg-light" disabled="@RequiereAutorizacion">
-                <option selected>Tipo de Documento</option>
-                <option>Boleta</option>
-                <option>Factura</option>
-            </select>
+            @if (RequiereAutorizacion)
+            {
+                <select class="form-control bg-light" disabled>
+                    <option selected value="@Comprobante?.TipoDocumento">@Comprobante?.TipoDocumento</option>
+                </select>
+            }
+            else
+            {
+                <select class="form-control bg-light" @bind="Comprobante.TipoDocumento">
+                    <option value="">Seleccione...</option>
+                    @if (EsEvaluacion)
+                    {
+                        <option value="@Comprobante?.TipoDocumento">@Comprobante?.TipoDocumento</option>
+                    }
+                    else
+                    {
+                        <option value="FACTURA">Factura</option>
+                        <option value="BOLETA">Boleta</option>
+                        <option value="DJ_EXCEPCIONAL">DJ Excepcional</option>
+                    }
+                </select>
+            }
         </div>
         <div class="col-4 mt-3">
             <label for="RUC" class="form-label">RUC</label>    
-            <input type="text" id="RUC" placeholder="RUC" disabled="@(!EsEvaluacion || RequiereAutorizacion)" 
-                    class="form-control form-control-lg rounded-4 bg-light" >
+            @if (RequiereAutorizacion)
+            {
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.RucProveedor" disabled>
+            }
+            else
+            {
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RucProveedor" placeholder="RUC" disabled="@(!EsEvaluacion || RequiereAutorizacion)">
+            }
         </div>
         <div class="col-4 mt-3">
             <label for="RazonSocial" class="form-label">Razón Social</label>    
-            <input type="text" id="RazonSocial" placeholder="Razón Social" disabled="@(!EsEvaluacion || RequiereAutorizacion)" 
-                    class="form-control form-control-lg rounded-4 bg-light" >
+            @if (RequiereAutorizacion)
+            {
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.RazonSocial" disabled>
+            }
+            else
+            {
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RazonSocial" placeholder="Razón Social" disabled="@(!EsEvaluacion || RequiereAutorizacion)">
+            }
         </div>
         <div class="col-4 mt-3">
             <label for="NumeroSerial" class="form-label">Número Serial</label>    
-            <input type="text" id="NumeroSerial" placeholder="Número Serial" disabled="@(!EsEvaluacion || RequiereAutorizacion)"
-                    class="form-control form-control-lg rounded-4 bg-light" >
+            @if (RequiereAutorizacion)
+            {
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.NumeroSerial" disabled>
+            }
+            else
+            {
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.NumeroSerial" placeholder="Número Serial" disabled="@(!EsEvaluacion || RequiereAutorizacion)">
+            }
         </div>
         <div class="col-4 mt-3">
             <label for="FechaDeEmision" class="form-label">Fecha de Emisión</label>    
-            <input type="date" id="FechaDeEmision" placeholder="Fecha de Emisión" disabled="@(!EsEvaluacion || RequiereAutorizacion)"
-                    class="form-control form-control-lg rounded-4 bg-light" >
+            @if (RequiereAutorizacion)
+            {
+                <input type="date" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.FechaEmision?.ToString("yyyy-MM-dd")" disabled>
+            }
+            else
+            {
+                <input type="date" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.FechaEmision" disabled="@(!EsEvaluacion || RequiereAutorizacion)">
+            }
         </div>
         <div class="col-4 mt-3">
-            <label for="Total" class="form-label">Total*</label>    
-            <input type="text" id="Total" placeholder=" @SimboloMoneda 0.00" disabled="@(!EsEvaluacion || RequiereAutorizacion)"
-                    class="form-control form-control-lg rounded-4 bg-light" >
+            <label for="Total" class="form-label">Total</label>
+            @if (RequiereAutorizacion)
+            {
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SimboloMoneda) @Comprobante?.MontoTotal.ToString("N2")" disabled>
+            }
+            else
+            {
+                if (EsEvaluacion)
+                {
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SimboloMoneda) @Comprobante?.MontoTotal.ToString("N2")" disabled>
+                }
+                else
+                {
+                    <input type="number" step="0.01" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.MontoTotal" placeholder="0.00">
+                }
+            }
         </div>
-        <div class="col-2 mt-3 d-flex flex-column align-items-start">
-            <label for="Estado" class="form-label">Estado</label>    
-            <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill" style="font-size: 1rem;">
-                Pendiente
-            </span>
+        <div class="col-4 mt-3">
+            <label for="Moneda" class="form-label">Moneda</label>
+            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@SimboloMoneda" disabled>
         </div>
-        <div class="col-10 mt-3">
+        @if (!RequiereAutorizacion && (EsCreacion || EsAsociacion) && Comprobante?.IdComprobante > 0)
+        {
+            <div class="col-4 mt-3">
+                <label class="form-label">Nro. Comprobante</label>
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="CP-@Comprobante.IdComprobante" disabled>
+            </div>
+        }
+        <div class="col-4 mt-3" style="margin-top: 30px;">
+            <label class="form-label">Estado</label>
+            @if (RequiereAutorizacion)
+            {
+                <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill" style="font-size: 1rem;">
+                    <i class="bi bi-lock-fill me-1"></i> @Comprobante?.Estado
+                </span>
+            }
+            else
+            {
+                if (EsEvaluacion)
+                {
+                    <span class="badge bg-success-subtle text-success rounded-pill" style="font-size: 1rem;">
+                        Validado
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill" style="font-size: 1rem;">
+                        En edición
+                    </span>
+                }
+            }
+        </div>
+        <div class="col-12 mt-3">
             <label for="Comentario" class="form-label">Comentario</label>    
-            <input readonly type="text" id="Comentario" placeholder="Por Evaluar" disabled="@(EsEvaluacion || RequiereAutorizacion)"
-                    class="form-control form-control-lg rounded-4 bg-light">
+            @if (RequiereAutorizacion)
+            {
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.Comentario" disabled>
+            }
+            else
+            {
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.Comentario" placeholder="Por Evaluar" disabled="@(EsEvaluacion || RequiereAutorizacion)">
+            }
         </div>
     </div>
 
@@ -101,62 +192,61 @@
     }
 
     <div class="d-flex justify-content-end gap-3 mt-3">
-        <div class="d-flex justify-content-end gap-3 mt-4">
+        <div class="d-flex flex-wrap-nowrap justify-content-end gap-3 mt-4">
             @if (EsCreacion || EsAsociacion)
             {
-                <button type="button" class="btn btn-outline-primary align-self-start mt-3"
+                <button type="button" class="btn btn-outline-primary" disabled="@Procesando"
                         @onclick="MostrarItemsComprobante">
-                    Registrar Comprobante
-
+                    @(Procesando ? "Procesando..." : "Registrar Comprobante")
                 </button>
-                <button type="button" class="btn btn-outline-info align-self-start mt-3"
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando"
                         @onclick="MostrarItemsComprobante">
-                    Cerrar
+                    @(Procesando ? "Procesando..." : "Cerrar")
                 </button>
-                <button type="button" class="btn btn-outline-danger align-self-start mt-3"
+                <button type="button" class="btn btn-outline-danger" disabled="@Procesando"
                         @onclick="MostrarItemsComprobante">
-                    Cancelar
+                    @(Procesando ? "Procesando..." : "Cancelar")
                 </button>
             }
             else if (EsEvaluacion)
             {
-                <button type="button" class="btn btn-outline-success align-self-start mt-3"
+                <button type="button" class="btn btn-outline-success" disabled="@Procesando"
                         @onclick="Aprobar">
-                    Aprobar
+                    @(Procesando ? "Procesando..." : "Aprobar")
                 </button>
-                <button type="button" class="btn btn-outline-warning align-self-start mt-3"
+                <button type="button" class="btn btn-outline-warning" disabled="@Procesando"
                         @onclick="Observar">
-                    Observar
+                    @(Procesando ? "Procesando..." : "Observar")
                 </button>
-                <button type="button" class="btn btn-outline-info align-self-start mt-3"
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando"
                         @onclick="MostrarItemsComprobante">
-                    Cerrar
+                    @(Procesando ? "Procesando..." : "Cerrar")
                 </button>
-                <button type="button" class="btn btn-outline-danger align-self-start mt-3"
+                <button type="button" class="btn btn-outline-danger" disabled="@Procesando"
                         @onclick="Rechazar">
-                    Rechazar
+                    @(Procesando ? "Procesando..." : "Rechazar")
                 </button>
             }
             else if (RequiereAutorizacion)
             {
-                <button type="button" class="btn btn-primary align-self-start mt-3"
+                <button type="button" class="btn btn-primary" disabled="@Procesando"
                         @onclick="AbrirModalSolicitud">
-                    <i class="bi bi-key-fill me-1"></i> Solicitar autorización
+                    <i class="bi bi-key-fill me-1"></i> @(Procesando ? "Procesando..." : "Solicitar autorización")
                 </button>
-                <button type="button" class="btn btn-outline-info align-self-start mt-3"
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando"
                         @onclick="MostrarItemsComprobante">
-                    Volver
+                    @(Procesando ? "Procesando..." : "Volver")
                 </button>
             }
             else
             {
-                <button type="button" class="btn btn-outline-info align-self-start mt-3"
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando"
                         @onclick="MostrarItemsComprobante">
-                    Volver
+                    @(Procesando ? "Procesando..." : "Volver")
                 </button>
-                <button type="button" class="btn btn-outline-danger align-self-start mt-3"
+                <button type="button" class="btn btn-outline-danger" disabled="@Procesando"
                         @onclick="MostrarItemsComprobante">
-                    Eliminar
+                    @(Procesando ? "Procesando..." : "Eliminar")
                 </button>
             }
         </div>
@@ -187,21 +277,149 @@
     private bool MostrarModalSolicitud { get; set; }
     private string MotivoSolicitud { get; set; } = string.Empty;
     private bool Solicitando { get; set; }
+    private bool Procesando { get; set; } = false;
 
-    public void MostrarItemsComprobante()
+    public void Volver()
     {
         Navigation.NavigateTo("/Comprobantes de Pago");
     }
 
-    private void AbrirModalSolicitud()
+    private async Task MostrarItemsComprobante()
     {
-        MotivoSolicitud = string.Empty;
-        MostrarModalSolicitud = true;
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            Navigation.NavigateTo("/Comprobantes de Pago");
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+
+    private async Task AbrirModalSolicitud()
+    {
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            MotivoSolicitud = string.Empty;
+            MostrarModalSolicitud = true;
+        }
+        finally
+        {
+            Procesando = false;
+        }
     }
 
     private void CerrarModalSolicitud()
     {
         MostrarModalSolicitud = false;
+    }
+
+    private async Task GuardarComprobante()
+    {
+        if (Comprobante == null) return;
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            
+            if (EsCreacion || EsAsociacion)
+            {
+                if (string.IsNullOrWhiteSpace(Comprobante.TipoDocumento))
+                {
+                    ErrorMessage = "Debe seleccionar el tipo de documento.";
+                    return;
+                }
+                if (Comprobante.MontoTotal <= 0)
+                {
+                    ErrorMessage = "El monto total debe ser mayor que 0.";
+                    return;
+                }
+                if (Comprobante.Solicitud?.IdSolicitudGasto <= 0)
+                {
+                    ErrorMessage = "Debe seleccionar una solicitud para asociar.";
+                    return;
+                }
+
+                Comprobante.Estado = "EN_EDICION";
+                Comprobante.FechaCreacion = DateTime.Today;
+                Comprobante.FechaCreacionString = DateTime.Today.ToString("yyyy-MM-dd");
+
+                if (Comprobante.IdComprobante > 0)
+                {
+                    await ComprobantePagoWS.actualizarAsync(Comprobante, idUsuarioAccion);
+                }
+                else
+                {
+                    await ComprobantePagoWS.insertarAsync(Comprobante, idUsuarioAccion);
+                }
+
+                await OnEvaluado.InvokeAsync();
+                Volver();
+            }
+            else if (EsEvaluacion)
+            {
+                await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, true, string.Empty, idUsuarioAccion);
+                await OnEvaluado.InvokeAsync();
+                Volver();
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private async Task Rechazar()
+    {
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            if (Comprobante == null) return;
+            ErrorMessage = string.Empty;
+
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, false, "Rechazado", idUsuarioAccion);
+            await OnEvaluado.InvokeAsync();
+            Volver();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+
+    private async Task Observar()
+    {
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            if (Comprobante == null) return;
+            ErrorMessage = string.Empty;
+
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, false, "Observado", idUsuarioAccion);
+            await OnEvaluado.InvokeAsync();
+            Volver();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
     }
 
     private async Task SolicitarAutorizacion()
@@ -219,7 +437,7 @@
                 Comprobante = Comprobante,
                 MotivoSolicitud = MotivoSolicitud
             };
-            await Task.Run(() => PermisoEdicionWS.Solicitar(permiso, idUsuarioAccion));
+            await PermisoEdicionWS.SolicitarAsync(permiso, idUsuarioAccion);
             MostrarModalSolicitud = false;
         }
         catch (Exception ex)
@@ -234,52 +452,25 @@
 
     private async Task Aprobar()
     {
-        ErrorMessage = string.Empty;
-        if (Comprobante == null) return;
-
+        if (Procesando) return;
+        Procesando = true;
         try
         {
+            if (Comprobante == null) return;
+            ErrorMessage = string.Empty;
+
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => ComprobantePagoWS.evaluar(Comprobante.IdComprobante, true, string.Empty, idUsuarioAccion));
+            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, true, string.Empty, idUsuarioAccion);
             await OnEvaluado.InvokeAsync();
+            Volver();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
         }
-    }
-
-    private async Task Observar()
-    {
-        ErrorMessage = string.Empty;
-        if (Comprobante == null) return;
-
-        try
+        finally
         {
-            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => ComprobantePagoWS.evaluar(Comprobante.IdComprobante, false, "Observado", idUsuarioAccion));
-            await OnEvaluado.InvokeAsync();
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
-    }
-
-    private async Task Rechazar()
-    {
-        ErrorMessage = string.Empty;
-        if (Comprobante == null) return;
-
-        try
-        {
-            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => ComprobantePagoWS.evaluar(Comprobante.IdComprobante, false, "Rechazado", idUsuarioAccion));
-            await OnEvaluado.InvokeAsync();
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
+            Procesando = false;
         }
     }
 }

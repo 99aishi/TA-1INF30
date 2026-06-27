@@ -64,7 +64,7 @@
     {
         try
         {
-            var solicitudes = await Task.Run(() => SolicitudGastoWS.listarPorSolicitante(idEmpleado));
+            var solicitudes = await SolicitudGastoWS.listarPorSolicitanteAsync(idEmpleado);
             MisSolicitudesPendientes = solicitudes.Count(s => s.Estado.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase));
             Urgentes = solicitudes.Count(s => s.Estado.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase) && s.FechaSolicitud < DateTime.Now.AddDays(-2));
         }
@@ -79,7 +79,7 @@
     {
         try
         {
-            var solicitudes = await Task.Run(() => SolicitudGastoWS.listarPorSolicitante(idEmpleado));
+            var solicitudes = await SolicitudGastoWS.listarPorSolicitanteAsync(idEmpleado);
             ComprobantesPendientes = solicitudes
                 .Where(s => s.Estado.Equals("APROBADA", StringComparison.OrdinalIgnoreCase))
                 .Count(s => s.Comprobantes == null || s.Comprobantes.Count == 0);
@@ -94,7 +94,7 @@
     {
         try
         {
-            var ciclos = await Task.Run(() => CicloCajaWS.listar());
+            var ciclos = await CicloCajaWS.listarAsync();
             var misCiclos = ciclos
                 .Where(c => c.SolicitudesDeGasto?.Any(s => s.Solicitante?.UsuarioID == idEmpleado) == true)
                 .ToList();

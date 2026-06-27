@@ -1,9 +1,11 @@
-namespace EconomixWS.UsuarioWS;
-
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using EconomixModel.Model;
+
+namespace EconomixWS.UsuarioWS;
 
 public interface IEmpleadoWS : IWS<Empleado>
 {
-    Empleado? obtenerPorId(int id);
-    List<Empleado> listarPorNombreApellido(string q);
+    Task<Empleado?> obtenerPorIdAsync(int id);
+    Task<List<Empleado>> listarPorNombreApellidoAsync(string q);
 }

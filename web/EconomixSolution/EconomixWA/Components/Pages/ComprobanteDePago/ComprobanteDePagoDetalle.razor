@@ -40,12 +40,18 @@
         EsEvaluacion = Navigation.Uri.Contains("/Evaluar");
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (!EsCreacion && !EsAsociacion && IdComprobante > 0)
         {
-            Comprobante = ComprobantePagoWS.obtenerPorId(IdComprobante);
+            Comprobante = await ComprobantePagoWS.obtenerPorIdAsync(IdComprobante);
             RequiereAutorizacion = DeterminarSiRequiereAutorizacion();
+        }
+        else if (IdSolicitud > 0 && (EsCreacion || EsAsociacion))
+        {
+            Comprobante = new ComprobantePago { 
+                Solicitud = new SolicitudGasto { IdSolicitudGasto = IdSolicitud }
+            };
         }
     }
 

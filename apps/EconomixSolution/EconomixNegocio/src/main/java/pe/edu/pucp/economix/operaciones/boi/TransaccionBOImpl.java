@@ -74,6 +74,11 @@ public class TransaccionBOImpl implements ITransaccionBO {
         return transaccionDAO.listarActivas();
     }
 
+    @Override
+    public List<Transaccion> listarPorJefe(int idJefe) throws Exception {
+        return transaccionDAO.listarPorJefe(idJefe);
+    }
+
     public void validar(Transaccion transaccion, boolean esModificacion) throws Exception{
         if(transaccion==null){
             throw new Exception("La transaccion no puede ser nula.");
@@ -82,13 +87,18 @@ public class TransaccionBOImpl implements ITransaccionBO {
             throw new Exception("El id de la transaccion es obligatorio para la modificación.");
         }
 
-        validarTipo(transaccion.getTipoTransaccion()); // que no sea nulo
-        validarMontoTransaccion(transaccion.getMonto()); // que no sea null
-        validarCuentaOrigen(transaccion.getCuentaOrigen());
-        validarCuentaDestino(transaccion.getCuentaDestino());
-        validarMedioPagoYOperacion(transaccion);
-        validarMoneda(transaccion.getMoneda());
-        validarFecha(transaccion.getFecha());
+        // Siempre validar: tipo y monto
+        validarTipo(transaccion.getTipoTransaccion());
+        validarMontoTransaccion(transaccion.getMonto());
+
+        // Solo en MODIFICACIÓN validar campos obligatorios completos
+        if(esModificacion){
+            validarCuentaOrigen(transaccion.getCuentaOrigen());
+            validarCuentaDestino(transaccion.getCuentaDestino());
+            validarMedioPagoYOperacion(transaccion);
+            validarMoneda(transaccion.getMoneda());
+            validarFecha(transaccion.getFecha());
+        }
     }
     public void validarFecha(Date fecha) throws Exception{
         if(fecha==null){

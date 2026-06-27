@@ -31,60 +31,60 @@ public class EmpleadoWSImpl : IEmpleadoWS
         return int.Parse(nameClaim.Value);
     }
 
-    public void insertar(Empleado obj, int idUsuarioAccion)
+    public async Task insertarAsync(Empleado obj, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void actualizar(Empleado obj, int idUsuarioAccion)
+    public async Task actualizarAsync(Empleado obj, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void eliminar(int id, int idUsuarioAccion)
+    public async Task eliminarAsync(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
+        var response = await _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}");
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public List<Empleado> listar()
+    public async Task<List<Empleado>> listarAsync()
     {
-        var response = _httpClient.GetAsync("ListarEmpleados").GetAwaiter().GetResult();
+        var response = await _httpClient.GetAsync("ListarEmpleados");
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception($"Error al listar empleados: {error}");
         }
         if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
             return new List<Empleado>();
-        var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+        var json = await response.Content.ReadAsStringAsync();
         if (string.IsNullOrEmpty(json) || json == "null")
             return new List<Empleado>();
         return JsonSerializer.Deserialize<List<Empleado>>(json, _jsonOptions) ?? new List<Empleado>();
     }
 
-    public Empleado? obtenerPorId(int id)
+    public async Task<Empleado?> obtenerPorIdAsync(int id)
     {
         try
         {
-            var response = _httpClient.GetAsync($"BuscarPorId?id={id}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"BuscarPorId?id={id}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return null;
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
             return JsonSerializer.Deserialize<Empleado>(json, _jsonOptions);
@@ -94,14 +94,32 @@ public class EmpleadoWSImpl : IEmpleadoWS
             return null;
         }
     }
-    public List<Empleado> listarPorNombreApellido(string q)
+    public async Task<List<Empleado>> listarPorNombreApellidoAsync(string q)
     {
         try
         {
-            var response = _httpClient.GetAsync($"ListarPorNombreApellido?q={q}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"ListarPorNombreApellido?q={q}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<Empleado>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(json) || json == "null")
+                return new List<Empleado>();
+            return JsonSerializer.Deserialize<List<Empleado>>(json, _jsonOptions) ?? new List<Empleado>();
+        }
+        catch
+        {
+            return new List<Empleado>();
+        }
+    }
+
+    public async Task<List<Empleado>> listarPorAreaAsync(int idArea)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"ListarPorArea?idArea={idArea}");
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                return new List<Empleado>();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<Empleado>();
             return JsonSerializer.Deserialize<List<Empleado>>(json, _jsonOptions) ?? new List<Empleado>();

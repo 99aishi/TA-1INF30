@@ -143,7 +143,7 @@
     {
         try
         {
-            var usuarios = await Task.Run(() => EmpleadoWS.listar());
+            var usuarios = await EmpleadoWS.listarAsync();
             UsuariosActivos = usuarios.Count(u => u.Estado == EstadoUsuario.ACTIVO);
             UsuariosNuevos = usuarios.Count(u => u.UsuarioID > 0);
         }
@@ -158,7 +158,7 @@
     {
         try
         {
-            var areas = await Task.Run(() => AreaWS.listar());
+            var areas = await AreaWS.listarAsync();
             AreasActivas = areas.Count(a => a.EstaActivo);
             AreasRevision = areas.Count(a => !a.EstaActivo);
         }
@@ -173,7 +173,7 @@
     {
         try
         {
-            var solicitudes = await Task.Run(() => SolicitudGastoWS.listar());
+            var solicitudes = await SolicitudGastoWS.listarAsync();
             var hoy = DateTime.Now;
             SolicitudesMes = solicitudes.Count(s => s.FechaSolicitud.Month == hoy.Month && s.FechaSolicitud.Year == hoy.Year);
             SolicitudesPendientes = solicitudes.Count(s => s.Estado.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase));
@@ -189,7 +189,7 @@
     {
         try
         {
-            var cajas = await Task.Run(() => CajaChicaWS.listar());
+            var cajas = await CajaChicaWS.listarAsync();
             FondosAdministrados = cajas.Sum(c => c.MontoTecho);
         }
         catch
@@ -203,7 +203,7 @@
         CargandoSolicitudes = true;
         try
         {
-            var todas = await Task.Run(() => SolicitudGastoWS.listar());
+            var todas = await SolicitudGastoWS.listarAsync();
             SolicitudesRecientes = todas
                 .OrderByDescending(s => s.FechaSolicitud)
                 .Take(10)
@@ -221,7 +221,7 @@
         CargandoActividad = true;
         try
         {
-            ActividadReciente = await Task.Run(() => AuditoriaWS.listarRecientes(15));
+            ActividadReciente = await AuditoriaWS.listarRecientesAsync(15);
         }
         catch
         {

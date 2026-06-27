@@ -31,105 +31,108 @@ public class AreaWSImpl : IAreaWS
         return int.Parse(nameClaim.Value);
     }
     
-    public void insertar(Area area, int idUsuarioAccion)
+    public async Task insertarAsync(Area area, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", area, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", area, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void actualizar(Area area, int idUsuarioAccion)
+    public async Task actualizarAsync(Area area, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", area, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", area, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void eliminar(int id, int idUsuarioAccion)
+    public async Task eliminarAsync(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
+        var response = await _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}");
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public List<Area> listar()
+    public async Task<List<Area>> listarAsync()
     {
-        var response = _httpClient.GetAsync("ListarAreas").GetAwaiter().GetResult();
-        
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            throw new Exception(error);
+            var response = await _httpClient.GetAsync("ListarAreas");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                return new List<Area>();
+
+            var json = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(json) || json == "null")
+                return new List<Area>();
+
+            return System.Text.Json.JsonSerializer.Deserialize<List<Area>>(json, _jsonOptions) ?? new List<Area>();
         }
-        
-        if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+        catch
+        {
             return new List<Area>();
-        
-        var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-        if (string.IsNullOrEmpty(json) || json == "null")
-            return new List<Area>();
-        
-        return System.Text.Json.JsonSerializer.Deserialize<List<Area>>(json, _jsonOptions) ?? new List<Area>();
+        }
     }
 
-    public List<Area> listarActivas()
+    public async Task<List<Area>> listarActivasAsync()
     {
-        var response = _httpClient.GetAsync("ListarActivas").GetAwaiter().GetResult();
-
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            throw new Exception(error);
+            var response = await _httpClient.GetAsync("ListarActivas");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                return new List<Area>();
+
+            var json = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(json) || json == "null")
+                return new List<Area>();
+
+            return System.Text.Json.JsonSerializer.Deserialize<List<Area>>(json, _jsonOptions) ?? new List<Area>();
         }
-
-        if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+        catch
+        {
             return new List<Area>();
-
-        var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-        if (string.IsNullOrEmpty(json) || json == "null")
-            return new List<Area>();
-
-        return System.Text.Json.JsonSerializer.Deserialize<List<Area>>(json, _jsonOptions) ?? new List<Area>();
+        }
     }
 
-    public int recuperar(int id, int idUsuarioAccion)
+    public async Task<int> recuperarAsync(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Recuperar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
+        var response = await _httpClient.GetAsync($"Recuperar?id={id}&idUsuarioAccion={idUsuarioAccion}");
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
-        var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+        var json = await response.Content.ReadAsStringAsync();
         return System.Text.Json.JsonSerializer.Deserialize<int>(json, _jsonOptions);
     }
 
-    public Area? obtenerPorId(int id)
+    public async Task<Area?> obtenerPorIdAsync(int id)
     {
-        var response = _httpClient.GetAsync($"BuscarPorId?id={id}").GetAwaiter().GetResult();
-
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            throw new Exception(error);
+            var response = await _httpClient.GetAsync($"BuscarPorId?id={id}");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                return null;
+
+            var json = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(json) || json == "null")
+                return null;
+
+            return System.Text.Json.JsonSerializer.Deserialize<Area>(json, _jsonOptions);
         }
-
-        if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+        catch
+        {
             return null;
-
-        var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-        if (string.IsNullOrEmpty(json) || json == "null")
-            return null;
-
-        return System.Text.Json.JsonSerializer.Deserialize<Area>(json, _jsonOptions);
+        }
     }
 }

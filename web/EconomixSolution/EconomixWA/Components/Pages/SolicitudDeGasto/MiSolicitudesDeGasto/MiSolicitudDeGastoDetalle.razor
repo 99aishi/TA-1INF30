@@ -101,24 +101,24 @@
                     }
                 </div>
 
-                <div class="d-flex justify-content-end gap-3 mt-3">
+                <div class="d-flex flex-wrap-nowrap justify-content-end gap-3 mt-3">
                     @if (EsCreacion)
                     {
-                        <button type="button" class="btn btn-primary align-self-start mt-3" @onclick="RegistrarSolicitud">
-                            Registrar Solicitud
+                        <button type="button" class="btn btn-primary" disabled="@Procesando" @onclick="RegistrarSolicitud">
+                            @(Procesando ? "Procesando..." : "Registrar Solicitud")
                         </button>
-                        <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="CerrarDetalle">
+                        <button type="button" class="btn btn-outline-danger" @onclick="CerrarDetalle">
                             Cancelar
                         </button>
                     }
                     else
                     {
-                        <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="CerrarDetalle">
+                        <button type="button" class="btn btn-outline-primary" @onclick="CerrarDetalle">
                             Cerrar
                         </button>
                         @if (PuedeEliminar)
                         {
-                            <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="EliminarSolicitud">
+                            <button type="button" class="btn btn-outline-danger" @onclick="EliminarSolicitud">
                                 Eliminar
                             </button>
                         }
@@ -249,7 +249,7 @@
                     @if (PuedeAgregarComprobante)
                     {
                         <div class="mt-3 d-flex justify-content-end">
-                            <button class="btn btn-primary" @onclick="IrAgregarComprobante">Agregar Comprobante</button>
+                            <button class="btn btn-primary" disabled="@Procesando" @onclick="IrAgregarComprobante">@(Procesando ? "Procesando..." : "Agregar Comprobante")</button>
                         </div>
                     }
                 }
@@ -282,6 +282,7 @@
     private Empleado? EmpleadoActual { get; set; }
 
     private ComprobantePago? ComprobanteEnEdicion { get; set; }
+    private bool Procesando { get; set; }
     private bool ProcesandoRendicion { get; set; }
     private bool ProcesandoComprobante { get; set; }
 
@@ -389,8 +390,8 @@
             return;
         }
 
-        var tipoCambio = await Task.Run(() => TipoCambioWS.buscarPorMonedasYFecha(
-            monedaSolicitud.IdMoneda, monedaCiclo.IdMoneda, SolicitudEdicion.FechaSolicitud));
+        var tipoCambio = await TipoCambioWS.buscarPorMonedasYFechaAsync(
+            monedaSolicitud.IdMoneda, monedaCiclo.IdMoneda, SolicitudEdicion.FechaSolicitud);
 
         if (tipoCambio != null)
         {
@@ -433,10 +434,10 @@
 
     private async Task CargarCatalogos()
     {
-        try { Monedas = await Task.Run(() => new List<Moneda>(MonedaWS.listarActivas())); }
+        try { Monedas = await MonedaWS.listarActivasAsync(); }
         catch { Monedas = new List<Moneda>(); }
 
-        try { CiclosActivos = (await Task.Run(() => new List<CicloCajaChica>(CicloCajaWS.listar())))
+        try { CiclosActivos = (await CicloCajaWS.listarAsync())
             .Where(c => c.Estado?.Equals("ABIERTO", StringComparison.OrdinalIgnoreCase) == true)
             .ToList(); }
         catch { CiclosActivos = new List<CicloCajaChica>(); }
@@ -447,7 +448,7 @@
         try
         {
             var id = UsuarioWS.GetCurrentUserId();
-            EmpleadoActual = await Task.Run(() => EmpleadoWS.obtenerPorId(id));
+            EmpleadoActual = await EmpleadoWS.obtenerPorIdAsync(id);
         }
         catch { EmpleadoActual = null; }
     }
@@ -456,7 +457,7 @@
     {
         try
         {
-            var solicitud = await Task.Run(() => SolicitudGastoWS.obtenerPorId(id));
+            var solicitud = await SolicitudGastoWS.obtenerPorIdAsync(id);
             if (solicitud != null)
             {
                 SolicitudEdicion = CopiarSolicitud(solicitud);
@@ -477,7 +478,7 @@
     {
         if (SolicitudEdicion?.IdTransaccion > 0)
         {
-            TransaccionDesembolso = await Task.Run(() => TransaccionWS.obtenerPorId(SolicitudEdicion.IdTransaccion));
+            TransaccionDesembolso = await TransaccionWS.obtenerPorIdAsync(SolicitudEdicion.IdTransaccion);
         }
     }
 
@@ -487,7 +488,7 @@
         {
             try
             {
-                var cicloCompleto = await Task.Run(() => CicloCajaWS.obtenerPorId(SolicitudEdicion.Ciclo!.IdCicloCaja));
+                var cicloCompleto = await CicloCajaWS.obtenerPorIdAsync(SolicitudEdicion.Ciclo!.IdCicloCaja);
                 if (cicloCompleto != null)
                     SolicitudEdicion.Ciclo = cicloCompleto;
             }
@@ -504,7 +505,7 @@
         {
             try
             {
-                SolicitudEdicion.Comprobantes = await Task.Run(() => ComprobantePagoWS.listarPorSolicitud(SolicitudEdicion.IdSolicitudGasto));
+                SolicitudEdicion.Comprobantes = await ComprobantePagoWS.listarPorSolicitudAsync(SolicitudEdicion.IdSolicitudGasto);
             }
             catch
             {
@@ -522,7 +523,7 @@
         try
         {
             var idUsuario = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => RendicionWS.reEnviarRendicion(SolicitudEdicion.Ciclo!.Rendicion!.IdRendicion, idUsuario));
+            await RendicionWS.reEnviarRendicionAsync(SolicitudEdicion.Ciclo!.Rendicion!.IdRendicion, idUsuario);
             await CargarCicloCompleto();
         }
         catch (Exception ex)
@@ -566,7 +567,7 @@
         try
         {
             var idUsuario = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => ComprobantePagoWS.actualizar(ComprobanteEnEdicion, idUsuario));
+            await ComprobantePagoWS.actualizarAsync(ComprobanteEnEdicion, idUsuario);
             ComprobanteEnEdicion = null;
             await CargarComprobantes();
         }
@@ -588,7 +589,7 @@
         try
         {
             var idUsuario = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => ComprobantePagoWS.eliminar(comprobante.IdComprobante, idUsuario));
+            await ComprobantePagoWS.eliminarAsync(comprobante.IdComprobante, idUsuario);
             await CargarComprobantes();
         }
         catch (Exception ex)
@@ -655,6 +656,7 @@
 
     private async Task RegistrarSolicitud()
     {
+        if (Procesando) return;
         if (!Validar(out var error))
         {
             ErrorMessage = error;
@@ -662,15 +664,20 @@
         }
 
         ErrorMessage = string.Empty;
+        Procesando = true;
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => SolicitudGastoWS.insertar(SolicitudEdicion, idUsuarioAccion));
+            await SolicitudGastoWS.insertarAsync(SolicitudEdicion, idUsuarioAccion);
             await CerrarDetalle();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
@@ -682,7 +689,7 @@
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => SolicitudGastoWS.eliminar(SolicitudEdicion!.IdSolicitudGasto, idUsuarioAccion));
+            await SolicitudGastoWS.eliminarAsync(SolicitudEdicion!.IdSolicitudGasto, idUsuarioAccion);
             await CerrarDetalle();
         }
         catch (Exception ex)
@@ -693,6 +700,7 @@
 
     private void IrAgregarComprobante()
     {
+        if (Procesando) return;
         if (SolicitudEdicion?.IdSolicitudGasto > 0)
             Navigation.NavigateTo($"/Comprobantes de Pago/Asociar/{SolicitudEdicion.IdSolicitudGasto}");
     }

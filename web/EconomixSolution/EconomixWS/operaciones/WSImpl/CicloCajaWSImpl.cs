@@ -35,44 +35,44 @@ public class CicloCajaWSImpl : ICicloCajaWS
         return int.Parse(nameClaim.Value);
     }
 
-    public void insertar(CicloCajaChica obj, int idUsuarioAccion)
+    public async Task insertarAsync(CicloCajaChica obj, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void actualizar(CicloCajaChica obj, int idUsuarioAccion)
+    public async Task actualizarAsync(CicloCajaChica obj, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void eliminar(int id, int idUsuarioAccion)
+    public async Task eliminarAsync(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
+        var response = await _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}");
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public List<CicloCajaChica> listar()
+    public async Task<List<CicloCajaChica>> listarAsync()
     {
         try
         {
-            var response = _httpClient.GetAsync("Listar").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync("Listar");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<CicloCajaChica>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<CicloCajaChica>();
             return JsonSerializer.Deserialize<List<CicloCajaChica>>(json, _jsonOptions) ?? new List<CicloCajaChica>();
@@ -84,14 +84,14 @@ public class CicloCajaWSImpl : ICicloCajaWS
         }
     }
 
-    public CicloCajaChica? obtenerPorId(int id)
+    public async Task<CicloCajaChica?> obtenerPorIdAsync(int id)
     {
         try
         {
-            var response = _httpClient.GetAsync($"BuscarPorId?id={id}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"BuscarPorId?id={id}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return null;
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
             return JsonSerializer.Deserialize<CicloCajaChica>(json, _jsonOptions);
@@ -103,12 +103,12 @@ public class CicloCajaWSImpl : ICicloCajaWS
         }
     }
 
-    public void cerrarCiclo(int id, int idUsuarioAccion)
+    public async Task cerrarCicloAsync(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsync($"CerrarCiclo?id={id}&idUsuarioAccion={idUsuarioAccion}", null).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsync($"CerrarCiclo?id={id}&idUsuarioAccion={idUsuarioAccion}", null);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }

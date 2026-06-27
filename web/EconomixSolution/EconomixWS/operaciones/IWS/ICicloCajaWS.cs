@@ -1,10 +1,11 @@
-namespace EconomixWS.OperacionesWS;
-
+using System.Threading.Tasks;
 using EconomixModel.Model;
 using EconomixWS.UsuarioWS;
 
+namespace EconomixWS.OperacionesWS;
+
 public interface ICicloCajaWS : IWS<CicloCajaChica>
 {
-    CicloCajaChica? obtenerPorId(int id);
-    void cerrarCiclo(int id, int idUsuarioAccion);
+    Task<CicloCajaChica?> obtenerPorIdAsync(int id);
+    Task cerrarCicloAsync(int id, int idUsuarioAccion);
 }

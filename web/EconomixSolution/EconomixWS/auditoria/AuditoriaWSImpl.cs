@@ -34,4 +34,25 @@ public class AuditoriaWSImpl : IAuditoriaWS
 
         return System.Text.Json.JsonSerializer.Deserialize<List<AuditLogEntry>>(json, _jsonOptions) ?? new List<AuditLogEntry>();
     }
+
+    public async Task<List<AuditLogEntry>> listarRecientesAsync(int limite)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"ListarRecientes?limite={limite}");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                return new List<AuditLogEntry>();
+
+            var json = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(json) || json == "null")
+                return new List<AuditLogEntry>();
+
+            return System.Text.Json.JsonSerializer.Deserialize<List<AuditLogEntry>>(json, _jsonOptions) ?? new List<AuditLogEntry>();
+        }
+        catch
+        {
+            return new List<AuditLogEntry>();
+        }
+    }
 }
