@@ -332,7 +332,13 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
             try {
                 solicitudGastoDAO.modificar(solicitud, idUsuarioAccion);
 
-                Transaccion transaccion = generarTransaccionDesembolsoPendiente(solicitud, idUsuarioAccion);
+                Transaccion transaccion = new Transaccion();
+                transaccion.setTipoTransaccion(TipoTransaccion.DESEMBOLSO);
+                transaccion.setMonto(solicitud.getMontoSolicitado());
+                transaccion.setBeneficiario(solicitud.getSolicitante());
+                transaccion.setEstadoTransaccion(EstadoTransaccion.REGISTRADA);
+                transaccion.setIdSolicitudGasto(solicitud.getIdSolicitudGasto());
+                transaccionDAO.insertar(transaccion, idUsuarioAccion);
 
                 solicitud.setIdTransaccion(transaccion.getIdTransaccion());
                 solicitudGastoDAO.modificar(solicitud, idUsuarioAccion);
@@ -356,123 +362,6 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
             solicitudGastoDAO.modificar(solicitud, idUsuarioAccion);
         }
         return solicitud;
-    }
-
-    private Transaccion generarTransaccionDesembolsoPendiente(SolicitudGasto solicitud, int idUsuarioAccion) throws Exception {
-        if (solicitud.getCiclo() == null) {
-            throw new Exception("La solicitud no tiene un ciclo asignado.");
-        }
-        CicloCajaChica ciclo = cicloCajaChicaDAO.buscarPorId(solicitud.getCiclo().getIdCicloCaja());
-        if (ciclo == null || ciclo.getCajaChica() == null) {
-            throw new Exception("La solicitud no tiene un ciclo/caja chica asignado.");
-        }
-
-        CajaChica cajaChica = ciclo.getCajaChica();
-        CuentaBancaria cuentaOrigen = cajaChica.getCuentaBancaria();
-        if (cuentaOrigen == null || cuentaOrigen.getIdCuenta() <= 0) {
-            throw new Exception("La caja chica no tiene una cuenta bancaria configurada.");
-        }
-
-        Empleado solicitante = solicitud.getSolicitante();
-        if (solicitante == null) throw new Exception("La solicitud no tiene solicitante.");
-
-        Transaccion transaccion = new Transaccion();
-        transaccion.setTipoTransaccion(TipoTransaccion.DESEMBOLSO);
-        transaccion.setFecha(new Date());
-        transaccion.setMonto(solicitud.getMontoSolicitado());
-        transaccion.setNumeroOperacionBancaria(null);
-        transaccion.setMedioPago(MedioPago.TRANSFERENCIA); // placeholder, se actualiza al ejecutar
-        transaccion.setCuentaOrigen(cuentaOrigen);
-        transaccion.setCuentaDestino(null); // se define al ejecutar
-        transaccion.setMoneda(solicitud.getMonedaOriginal() != null ? solicitud.getMonedaOriginal() : cajaChica.getMoneda());
-        transaccion.setBeneficiario(solicitante);
-        transaccion.setEstadoTransaccion(EstadoTransaccion.REGISTRADA);
-        transaccion.setIdSolicitudGasto(solicitud.getIdSolicitudGasto());
-
-        transaccionDAO.insertar(transaccion, idUsuarioAccion);
-        return transaccion;
-    }
-
-    @Override
-    public int ejecutarDesembolso(int idSolicitudGasto, String medioDesembolso, int idCuentaDestino, String numeroOperacionBancaria, int idUsuarioAccion) throws Exception {
-        validarIdUsuarioAccion(idUsuarioAccion);
-        if (idSolicitudGasto <= 0) throw new Exception("El id de la solicitud debe ser mayor que cero.");
-
-        SolicitudGasto solicitud = solicitudGastoDAO.buscarPorId(idSolicitudGasto);
-        if (solicitud == null) throw new Exception("La solicitud de gasto no existe.");
-        if (solicitud.getEstado() != EstadoSolicitudGasto.APROBADO) {
-            throw new Exception("Solo se puede ejecutar el desembolso de una solicitud APROBADA.");
-        }
-
-        Empleado solicitante = solicitud.getSolicitante();
-        if (solicitante == null) throw new Exception("La solicitud no tiene solicitante.");
-
-        MedioPago medioPago;
-        try {
-            medioPago = MedioPago.valueOf(medioDesembolso != null ? medioDesembolso.toUpperCase() : "TRANSFERENCIA");
-        } catch (IllegalArgumentException e) {
-            throw new Exception("Medio de pago no válido.");
-        }
-
-        CuentaBancaria cuentaDestino = null;
-        if (medioPago == MedioPago.TRANSFERENCIA) {
-            if (idCuentaDestino <= 0) {
-                throw new Exception("Debe seleccionar una cuenta bancaria destino para transferencias.");
-            }
-            cuentaDestino = cuentaBancariaDAO.buscarPorId(idCuentaDestino);
-            if (cuentaDestino == null || cuentaDestino.getEmpleadoAdministrador() == null
-                    || cuentaDestino.getEmpleadoAdministrador().getUsuarioID() != solicitante.getUsuarioID()) {
-                throw new Exception("La cuenta destino seleccionada no pertenece al solicitante.");
-            }
-        } else if (medioPago == MedioPago.YAPE || medioPago == MedioPago.PLIN) {
-            if (solicitante.getNumeroCelular() == null || solicitante.getNumeroCelular().trim().isEmpty()) {
-                throw new Exception("El solicitante no tiene número de celular registrado para billeteras digitales.");
-            }
-        }
-
-        if (medioPago != MedioPago.EFECTIVO) {
-            if (numeroOperacionBancaria == null || numeroOperacionBancaria.trim().isEmpty()) {
-                throw new Exception("Debe ingresar el número de operación bancaria.");
-            }
-        }
-
-        // Buscar transacción de desembolso pendiente asociada por FK directa
-        if (solicitud.getIdTransaccion() <= 0) {
-            throw new Exception("La solicitud no tiene una transacción de desembolso registrada.");
-        }
-        Transaccion transaccion = transaccionDAO.buscarPorId(solicitud.getIdTransaccion());
-        if (transaccion == null
-                || transaccion.getTipoTransaccion() != TipoTransaccion.DESEMBOLSO
-                || transaccion.getEstadoTransaccion() != EstadoTransaccion.REGISTRADA) {
-            throw new Exception("No se encontró una transacción de desembolso pendiente para esta solicitud.");
-        }
-
-        DBManager.getDBManager().iniciarTransaccion();
-        try {
-            transaccion.setEstadoTransaccion(EstadoTransaccion.COMPLETADA);
-            transaccion.setMedioPago(medioPago);
-            transaccion.setCuentaDestino(cuentaDestino);
-            transaccion.setNumeroOperacionBancaria(numeroOperacionBancaria);
-            int r = transaccionDAO.modificar(transaccion, idUsuarioAccion);
-
-            solicitud.setEstado(EstadoSolicitudGasto.PAGADO);
-            solicitudGastoDAO.modificar(solicitud, idUsuarioAccion);
-
-            // Actualizar total gastado del ciclo
-            if (solicitud.getCiclo() != null) {
-                calcularTotalGastado(solicitud.getCiclo(), idUsuarioAccion);
-            }
-
-            DBManager.getDBManager().confirmarTransaccion();
-            return r;
-        } catch (Exception ex) {
-            try {
-                DBManager.getDBManager().cancelarTransaccion();
-            } catch (SQLException rollbackEx) {
-                System.err.println("Error al hacer rollback: " + rollbackEx.getMessage());
-            }
-            throw ex;
-        }
     }
 
     private void calcularTotalGastado(CicloCajaChica ciclo, int idUsuarioAccion) throws Exception {

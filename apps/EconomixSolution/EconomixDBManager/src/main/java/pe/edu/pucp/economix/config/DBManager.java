@@ -188,10 +188,10 @@ public class DBManager {
 
             if(parametrosSalida != null)
                 obtenerValoresSalida(cst, parametrosSalida);
-        }catch(SQLException ex){
-            System.out.println("Error ejecutando procedimiento almacenado - " + nombreProcedimiento +": "+ ex.getMessage());
+        } catch(SQLException ex){
+            throw ex;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new SQLException(e);
         } finally{
             if (con != null && con.getAutoCommit()) {
                 cerrarConexion();

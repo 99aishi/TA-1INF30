@@ -69,11 +69,11 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
         if (!rs.wasNull()) {
             Area area = new Area();
             area.setIdArea(idArea);
-            area.setNombre(rs.getString("ar.nombre_area"));
-            area.setDescripcion(rs.getString("ar.area_descripcion"));
-            area.setEstaActivo(rs.getBoolean("ar.area_esta_activo"));
+            area.setNombre(rs.getString("nombre_area"));
+            area.setDescripcion(rs.getString("area_descripcion"));
+            area.setEstaActivo(rs.getBoolean("area_esta_activo"));
 
-            int idAreaJefe = rs.getInt("ar.area_id_jefe");
+            int idAreaJefe = rs.getInt("area_id_jefe");
             if (!rs.wasNull()) {
                 Empleado areaJefe = new Empleado();
                 areaJefe.setUsuarioID(idAreaJefe);

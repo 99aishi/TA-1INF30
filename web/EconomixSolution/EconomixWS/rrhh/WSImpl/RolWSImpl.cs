@@ -31,46 +31,46 @@ public class RolWSImpl : IRolWS
         return int.Parse(nameClaim.Value);
     }
 
-    public void insertar(Rol rol, int idUsuarioAccion)
+    public async Task insertarAsync(Rol rol, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", rol, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", rol, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void actualizar(Rol rol, int idUsuarioAccion)
+    public async Task actualizarAsync(Rol rol, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", rol, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", rol, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void eliminar(int id, int idUsuarioAccion)
+    public async Task eliminarAsync(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
+        var response = await _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}");
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public List<Rol> listar()
+    public async Task<List<Rol>> listarAsync()
     {
         try
         {
-            var response = _httpClient.GetAsync("ListarRoles").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync("ListarRoles");
 
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<Rol>();
 
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<Rol>();
 
@@ -82,16 +82,16 @@ public class RolWSImpl : IRolWS
         }
     }
 
-    public Rol? obtenerPorId(int id)
+    public async Task<Rol?> obtenerPorIdAsync(int id)
     {
         try
         {
-            var response = _httpClient.GetAsync($"BuscarPorId?id={id}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"BuscarPorId?id={id}");
 
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return null;
 
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
 
@@ -103,19 +103,19 @@ public class RolWSImpl : IRolWS
         }
     }
 
-    public List<Rol> listarPorArea(int idArea)
+    public async Task<List<Rol>> listarPorAreaAsync(int idArea)
     {
-        var response = _httpClient.GetAsync($"ListarPorArea?idArea={idArea}").GetAwaiter().GetResult();
+        var response = await _httpClient.GetAsync($"ListarPorArea?idArea={idArea}");
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
 
         if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
             return new List<Rol>();
 
-        var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+        var json = await response.Content.ReadAsStringAsync();
         if (string.IsNullOrEmpty(json) || json == "null")
             return new List<Rol>();
 

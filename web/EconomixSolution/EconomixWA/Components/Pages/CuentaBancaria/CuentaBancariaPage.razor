@@ -303,33 +303,33 @@
 
     private async Task CargarCatalogos()
     {
-        try { Monedas = await Task.Run(() => new List<Moneda>(MonedaWS.listar())); }
+        try { Monedas = await MonedaWS.listarAsync(); }
         catch (Exception ex) { ErrorMessage = $"Error al cargar monedas: {ex.Message}"; }
 
-        try { Empleados = await Task.Run(() => new List<Empleado>(EmpleadoWS.listar())); }
+        try { Empleados = await EmpleadoWS.listarAsync(); }
         catch (Exception ex) { ErrorMessage = $"Error al cargar empleados: {ex.Message}"; }
 
-        try { Areas = await Task.Run(() => new List<Area>(AreaWS.listar())); }
+        try { Areas = await AreaWS.listarAsync(); }
         catch (Exception ex) { ErrorMessage = $"Error al cargar áreas: {ex.Message}"; }
     }
 
     private async Task ListarCuentas()
     {
         ErrorMessage = string.Empty;
-        try { Cuentas = await Task.Run(() => new List<CuentaBancaria>(CuentaBancariaWS.listar())); }
+        try { Cuentas = await CuentaBancariaWS.listarAsync(); }
         catch (Exception ex) { ErrorMessage = ex.Message; }
     }
 
     private async Task ListarCajasChicas()
     {
         ErrorMessage = string.Empty;
-        try { CajasChicas = await Task.Run(() => new List<CajaChica>(CajaChicaWS.listar())); }
+        try { CajasChicas = await CajaChicaWS.listarAsync(); }
         catch (Exception ex) { ErrorMessage = ex.Message; }
     }
 
     private void Filtrar()
     {
-        // El binding actualiza las propiedades y la UI se refresca automáticamente.
+        StateHasChanged();
     }
 
     private async void Seleccionar(CuentaBancaria cuenta)
@@ -375,10 +375,14 @@
     private async Task CargarCajasChicasDeCuenta(int idCuenta)
     {
         CargandoCajasChicas = true;
-        await ListarCajasChicas();
-        CajasChicasDeCuenta = CajasChicas
-            .Where(c => c.CuentaBancaria?.IdCuenta == idCuenta)
-            .ToList();
+        try
+        {
+            CajasChicasDeCuenta = await CajaChicaWS.listarPorCuentaBancariaAsync(idCuenta);
+        }
+        catch
+        {
+            CajasChicasDeCuenta = new List<CajaChica>();
+        }
         CargandoCajasChicas = false;
         await InvokeAsync(StateHasChanged);
     }
@@ -449,7 +453,7 @@
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => CajaChicaWS.eliminar(cc.IdFondo, idUsuarioAccion));
+            await CajaChicaWS.eliminarAsync(cc.IdFondo, idUsuarioAccion);
             if (CuentaSeleccionada != null)
                 await CargarCajasChicasDeCuenta(CuentaSeleccionada.IdCuenta);
             await ListarCuentas();
@@ -469,7 +473,7 @@
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
             cc.Estado = "ACTIVO";
-            await Task.Run(() => CajaChicaWS.actualizar(cc, idUsuarioAccion));
+            await CajaChicaWS.actualizarAsync(cc, idUsuarioAccion);
             if (CuentaSeleccionada != null)
                 await CargarCajasChicasDeCuenta(CuentaSeleccionada.IdCuenta);
             await ListarCuentas();
@@ -531,9 +535,9 @@
 
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
             if (CuentaEnEdicion.IdCuenta > 0)
-                await Task.Run(() => CuentaBancariaWS.actualizar(CuentaEnEdicion, idUsuarioAccion));
+                await CuentaBancariaWS.actualizarAsync(CuentaEnEdicion, idUsuarioAccion);
             else
-                await Task.Run(() => CuentaBancariaWS.insertar(CuentaEnEdicion, idUsuarioAccion));
+                await CuentaBancariaWS.insertarAsync(CuentaEnEdicion, idUsuarioAccion);
 
             await ListarCuentas();
             CerrarEditor();
@@ -552,7 +556,7 @@
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => CuentaBancariaWS.eliminar(CuentaEnEdicion.IdCuenta, idUsuarioAccion));
+            await CuentaBancariaWS.eliminarAsync(CuentaEnEdicion.IdCuenta, idUsuarioAccion);
             await ListarCuentas();
             CerrarEditor();
         }

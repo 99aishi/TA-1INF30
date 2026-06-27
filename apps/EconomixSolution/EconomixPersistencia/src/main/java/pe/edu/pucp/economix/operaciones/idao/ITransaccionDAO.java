@@ -11,4 +11,5 @@ public interface ITransaccionDAO {
     Transaccion buscarPorId(int id) throws SQLException;
     java.util.List<Transaccion> listarTodas() throws SQLException;
     java.util.List<Transaccion> listarActivas() throws SQLException;
+    java.util.List<Transaccion> listarPorJefe(int idJefe) throws SQLException;
 }

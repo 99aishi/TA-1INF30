@@ -32,44 +32,44 @@ public class ComprobantePagoWSImpl : IComprobantePagoWS
         return int.Parse(nameClaim.Value);
     }
 
-    public void insertar(ComprobantePago obj, int idUsuarioAccion)
+    public async Task insertarAsync(ComprobantePago obj, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void actualizar(ComprobantePago obj, int idUsuarioAccion)
+    public async Task actualizarAsync(ComprobantePago obj, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void eliminar(int id, int idUsuarioAccion)
+    public async Task eliminarAsync(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
+        var response = await _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}");
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public List<ComprobantePago> listar()
+    public async Task<List<ComprobantePago>> listarAsync()
     {
         try
         {
-            var response = _httpClient.GetAsync("Listar").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync("Listar");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<ComprobantePago>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<ComprobantePago>();
             return JsonSerializer.Deserialize<List<ComprobantePago>>(json, _jsonOptions) ?? new List<ComprobantePago>();
@@ -80,14 +80,14 @@ public class ComprobantePagoWSImpl : IComprobantePagoWS
         }
     }
 
-    public ComprobantePago? obtenerPorId(int id)
+    public async Task<ComprobantePago?> obtenerPorIdAsync(int id)
     {
         try
         {
-            var response = _httpClient.GetAsync($"BuscarPorId?id={id}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"BuscarPorId?id={id}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return null;
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
             return JsonSerializer.Deserialize<ComprobantePago>(json, _jsonOptions);
@@ -97,14 +97,14 @@ public class ComprobantePagoWSImpl : IComprobantePagoWS
             return null;
         }
     }
-    public List<ComprobantePago> listarPorSolicitud(int idSolicitud)
+    public async Task<List<ComprobantePago>> listarPorSolicitudAsync(int idSolicitud)
     {
         try
         {
-            var response = _httpClient.GetAsync($"ListarPorSolicitud?idSolicitud={idSolicitud}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"ListarPorSolicitud?idSolicitud={idSolicitud}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<ComprobantePago>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<ComprobantePago>();
             return JsonSerializer.Deserialize<List<ComprobantePago>>(json, _jsonOptions) ?? new List<ComprobantePago>();
@@ -115,13 +115,13 @@ public class ComprobantePagoWSImpl : IComprobantePagoWS
         }
     }
 
-    public void evaluar(int idComprobante, bool aprobar, string observacion, int idUsuarioAccion)
+    public async Task evaluarAsync(int idComprobante, bool aprobar, string observacion, int idUsuarioAccion)
     {
         var url = $"Evaluar?idComprobante={idComprobante}&aprobar={aprobar.ToString().ToLowerInvariant()}&observacion={Uri.EscapeDataString(observacion ?? "")}&idUsuarioAccion={idUsuarioAccion}";
-        var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsync(url, null);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }

@@ -42,4 +42,7 @@ public class Transaccion
 
     [JsonPropertyName("idSolicitudGasto")]
     public int IdSolicitudGasto { get; set; }
+
+    [JsonPropertyName("ciclo")]
+    public CicloCajaChica? Ciclo { get; set; }
 }

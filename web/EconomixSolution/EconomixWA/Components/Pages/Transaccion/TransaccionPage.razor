@@ -1,6 +1,7 @@
 @page "/Transacciones"
 @rendermode InteractiveServer
 @inject ITransaccionWS TransaccionWS
+@inject IUsuarioWS UsuarioWS
 
 <div class="h-100 d-flex flex-column">
     <div class="d-flex flex-row align-items-center mb-4">
@@ -149,7 +150,15 @@
         ErrorMessage = string.Empty;
         try
         {
-            Transacciones = await Task.Run(() => new List<Transaccion>(TransaccionWS.listar()));
+            var usuario = UsuarioWS.GetCurrentUser();
+            if (usuario is Empleado emp && emp.RolFlujo == RolFlujo.JEFE_AREA)
+            {
+                Transacciones = await TransaccionWS.listarPorJefeAsync(usuario.UsuarioID);
+            }
+            else
+            {
+                Transacciones = await TransaccionWS.listarAsync();
+            }
         }
         catch (Exception ex)
         {

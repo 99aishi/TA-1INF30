@@ -1,10 +1,12 @@
-namespace EconomixWS.UsuarioWS;
-
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using EconomixModel.Model;
+
+namespace EconomixWS.UsuarioWS;
 
 public interface IAreaWS : IWS<Area>
 {
-    Area? obtenerPorId(int id);
-    List<Area> listarActivas();
-    int recuperar(int id, int idUsuarioAccion);
+    Task<Area?> obtenerPorIdAsync(int id);
+    Task<List<Area>> listarActivasAsync();
+    Task<int> recuperarAsync(int id, int idUsuarioAccion);
 }

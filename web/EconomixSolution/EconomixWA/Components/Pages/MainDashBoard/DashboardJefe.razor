@@ -72,7 +72,7 @@
     {
         try
         {
-            var cajas = await Task.Run(() => CajaChicaWS.listar());
+            var cajas = await CajaChicaWS.listarAsync();
             SaldoCajaChica = cajas.Sum(c => c.MontoTecho);
         }
         catch
@@ -85,7 +85,7 @@
     {
         try
         {
-            var pendientes = await Task.Run(() => SolicitudGastoWS.listarPendientesJefe(idJefe));
+            var pendientes = await SolicitudGastoWS.listarPendientesJefeAsync(idJefe);
             PendientesAprobacion = pendientes.Count;
             Urgentes = pendientes.Count(s => s.FechaSolicitud < DateTime.Now.AddDays(-2));
         }
@@ -100,7 +100,7 @@
     {
         try
         {
-            var ciclos = await Task.Run(() => CicloCajaWS.listar());
+            var ciclos = await CicloCajaWS.listarAsync();
             GastosCiclo = ciclos.Sum(c => c.TotalGastado);
             TransaccionesCiclo = ciclos.Sum(c => c.SolicitudesDeGasto?.Count ?? 0);
         }
@@ -115,9 +115,9 @@
     {
         try
         {
-            var aprobadas = await Task.Run(() => SolicitudGastoWS.listarPendientesJefe(idJefe)
+            var aprobadas = (await SolicitudGastoWS.listarPendientesJefeAsync(idJefe))
                 .Where(s => s.Estado.Equals("APROBADA", StringComparison.OrdinalIgnoreCase))
-                .ToList());
+                .ToList();
             SolicitudesAprobadas = aprobadas.Count;
         }
         catch

@@ -130,34 +130,34 @@
             </div>
         </div>
         <hr class="my-0" />
-        <div class="p-3 d-flex justify-content-end gap-3">
+        <div class="p-3 d-flex flex-wrap-nowrap justify-content-end gap-3">
             @if (EsCreacion)
             {
-                <button type="button" class="btn btn-outline-primary" @onclick="InsertarCiclo">
-                    Registrar
+                <button type="button" class="btn btn-outline-primary" disabled="@Procesando" @onclick="InsertarCiclo">
+                    @(Procesando ? "Procesando..." : "Registrar")
                 </button>
-                <button type="button" class="btn btn-outline-info" @onclick="IrACiclos">
-                    Cerrar
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="IrACiclos">
+                    @(Procesando ? "Procesando..." : "Cerrar")
                 </button>
-                <button type="button" class="btn btn-outline-danger" @onclick="IrACiclos">
-                    Cancelar
+                <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="IrACiclos">
+                    @(Procesando ? "Procesando..." : "Cancelar")
                 </button>
             }
             else
             {
                 @if (PuedeEditar && Ciclo?.Estado == "ABIERTO")
                 {
-                    <button type="button" class="btn btn-outline-warning" @onclick="GuardarCambios">
-                        Guardar Cambios
+                    <button type="button" class="btn btn-outline-warning" disabled="@Procesando" @onclick="GuardarCambios">
+                        @(Procesando ? "Procesando..." : "Guardar Cambios")
                     </button>
-                    <button type="button" class="btn btn-outline-dark" @onclick="CerrarCiclo">
-                        Cerrar Ciclo
+                    <button type="button" class="btn btn-outline-dark" disabled="@Procesando" @onclick="CerrarCiclo">
+                        @(Procesando ? "Procesando..." : "Cerrar Ciclo")
                     </button>
                 }
                 else if (PuedeEditar)
                 {
-                    <button type="button" class="btn btn-outline-warning" @onclick="GuardarCambios">
-                        Guardar Cambios
+                    <button type="button" class="btn btn-outline-warning" disabled="@Procesando" @onclick="GuardarCambios">
+                        @(Procesando ? "Procesando..." : "Guardar Cambios")
                     </button>
                     @if (MostrarGenerarRendicion)
                     {
@@ -166,13 +166,13 @@
                         </button>
                     }
                 }
-                <button type="button" class="btn btn-outline-info" @onclick="CerrarDetalle">
-                    Cerrar
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="CerrarDetalle">
+                    @(Procesando ? "Procesando..." : "Cerrar")
                 </button>
                 @if (PuedeEditar)
                 {
-                    <button type="button" class="btn btn-outline-danger" @onclick="EliminarCiclo">
-                        Eliminar
+                    <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="EliminarCiclo">
+                        @(Procesando ? "Procesando..." : "Eliminar")
                     </button>
                 }
             }
@@ -195,6 +195,7 @@
     private Dictionary<string, string> Errores { get; set; } = new();
     private string? RolUsuario { get; set; }
     private bool ProcesandoRendicion { get; set; } = false;
+    private bool Procesando { get; set; } = false;
 
     private bool PuedeEditar => RolUsuario is "Tesorero" or "Tesoreria" or "Tesorero y Finanzas";
 
@@ -270,7 +271,7 @@
             && int.TryParse(cicloIdValue, out var cicloId)
             && cicloId > 0)
         {
-            Ciclo = await Task.Run(() => CicloCajaWS.obtenerPorId(cicloId)) ?? new CicloCajaChica();
+            Ciclo = await CicloCajaWS.obtenerPorIdAsync(cicloId) ?? new CicloCajaChica();
         }
         else if (Ciclo?.IdCicloCaja <= 0)
         {
@@ -282,7 +283,7 @@
             && cajaId > 0)
         {
             var caja = CajasChicas.FirstOrDefault(c => c.IdFondo == cajaId)
-                       ?? await Task.Run(() => CajaChicaWS.obtenerPorId(cajaId));
+                       ?? await CajaChicaWS.obtenerPorIdAsync(cajaId);
             if (caja != null)
             {
                 Ciclo.CajaChica = caja;
@@ -295,12 +296,30 @@
 
     private async Task CerrarDetalle()
     {
-        await OnCerrarDetalle.InvokeAsync();
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        finally
+        {
+            Procesando = false;
+        }
     }
 
-    private void IrACiclos()
+    private async Task IrACiclos()
     {
-        Navigation.NavigateTo("/Caja Chica");
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            Navigation.NavigateTo("/Caja Chica");
+        }
+        finally
+        {
+            Procesando = false;
+        }
     }
 
     private bool Validar()
@@ -318,60 +337,78 @@
 
     private async Task InsertarCiclo()
     {
-        if (!PuedeEditar)
-        {
-            ErrorMessage = "No tiene permisos para registrar ciclos.";
-            return;
-        }
-        if (!Validar()) return;
-
+        if (Procesando) return;
+        Procesando = true;
         try
         {
+            if (!PuedeEditar)
+            {
+                ErrorMessage = "No tiene permisos para registrar ciclos.";
+                return;
+            }
+            if (!Validar()) return;
+
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => CicloCajaWS.insertar(Ciclo, idUsuarioAccion));
+            await CicloCajaWS.insertarAsync(Ciclo, idUsuarioAccion);
             IrACiclos();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
         }
+        finally
+        {
+            Procesando = false;
+        }
     }
 
     private async Task GuardarCambios()
     {
-        if (!PuedeEditar)
-        {
-            ErrorMessage = "No tiene permisos para modificar ciclos.";
-            return;
-        }
-        if (!Validar()) return;
-
+        if (Procesando) return;
+        Procesando = true;
         try
         {
+            if (!PuedeEditar)
+            {
+                ErrorMessage = "No tiene permisos para modificar ciclos.";
+                return;
+            }
+            if (!Validar()) return;
+
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => CicloCajaWS.actualizar(Ciclo, idUsuarioAccion));
+            await CicloCajaWS.actualizarAsync(Ciclo, idUsuarioAccion);
             await CerrarDetalle();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
     private async Task CerrarCiclo()
     {
-        if (!PuedeEditar || Ciclo?.IdCicloCaja <= 0) return;
-
-        ErrorMessage = string.Empty;
+        if (Procesando) return;
+        Procesando = true;
         try
         {
+            if (!PuedeEditar || Ciclo?.IdCicloCaja <= 0) return;
+
+            ErrorMessage = string.Empty;
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => CicloCajaWS.cerrarCiclo(Ciclo.IdCicloCaja, idUsuarioAccion));
+            await CicloCajaWS.cerrarCicloAsync(Ciclo.IdCicloCaja, idUsuarioAccion);
             await CerrarDetalle();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
@@ -385,18 +422,24 @@
 
     private async Task EliminarCiclo()
     {
-        if (!PuedeEditar || Ciclo?.IdCicloCaja <= 0) return;
-
-        ErrorMessage = string.Empty;
+        if (Procesando) return;
+        Procesando = true;
         try
         {
+            if (!PuedeEditar || Ciclo?.IdCicloCaja <= 0) return;
+
+            ErrorMessage = string.Empty;
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => CicloCajaWS.eliminar(Ciclo.IdCicloCaja, idUsuarioAccion));
+            await CicloCajaWS.eliminarAsync(Ciclo.IdCicloCaja, idUsuarioAccion);
             await CerrarDetalle();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
@@ -409,7 +452,7 @@
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => RendicionWS.generarRendicionDeCiclo(Ciclo.IdCicloCaja, idUsuarioAccion));
+            await RendicionWS.generarRendicionDeCicloAsync(Ciclo.IdCicloCaja, idUsuarioAccion);
             await CerrarDetalle();
         }
         catch (Exception ex)

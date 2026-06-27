@@ -8,7 +8,7 @@ public class Empleado : Usuario
     public string NumeroCelular { get; set; } = string.Empty;
 
     [JsonPropertyName("rolFlujo")]
-    public RolFlujo RolFlujo { get; set; } = RolFlujo.EMPLEADO;
+    public RolFlujo RolFlujo { get; set; }
 
     [JsonPropertyName("rol")]
     public override Rol? Rol { get; set; }

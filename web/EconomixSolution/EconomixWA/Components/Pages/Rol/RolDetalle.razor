@@ -71,37 +71,37 @@
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-end gap-3 mt-4">
+                <div class="d-flex flex-wrap-nowrap justify-content-end gap-3 mt-4">
                     @if (EsCreacion)
                     {
-                        <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="InsertarRol">
-                            Registrar
+                        <button type="button" class="btn btn-outline-primary" disabled="@Procesando" @onclick="InsertarRol">
+                            @(Procesando ? "Procesando..." : "Registrar")
                         </button>
-                        <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="CerrarDetalle">
-                            Cerrar
+                        <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="CerrarDetalle">
+                            @(Procesando ? "Procesando..." : "Cerrar")
                         </button>
-                        <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="CerrarDetalle">
-                            Cancelar
+                        <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="CerrarDetalle">
+                            @(Procesando ? "Procesando..." : "Cancelar")
                         </button>
                     }
                     else
                     {
-                        <button type="button" class="btn btn-outline-warning align-self-start mt-3" @onclick="GuardarCambios">
-                            Guardar Cambios
+                        <button type="button" class="btn btn-outline-warning" disabled="@Procesando" @onclick="GuardarCambios">
+                            @(Procesando ? "Procesando..." : "Guardar Cambios")
                         </button>
-                        <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="CerrarDetalle">
-                            Cerrar
+                        <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="CerrarDetalle">
+                            @(Procesando ? "Procesando..." : "Cerrar")
                         </button>
                         @if (Rol.EstaActivo)
                         {
-                            <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="EliminarRol">
-                                Eliminar
+                            <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="EliminarRol">
+                                @(Procesando ? "Procesando..." : "Eliminar")
                             </button>
                         }
                         else
                         {
-                            <button type="button" class="btn btn-outline-success align-self-start mt-3" @onclick="RecuperarRol">
-                                Recuperar
+                            <button type="button" class="btn btn-outline-success" disabled="@Procesando" @onclick="RecuperarRol">
+                                @(Procesando ? "Procesando..." : "Recuperar")
                             </button>
                         }
                     }
@@ -118,6 +118,7 @@
     private string ErrorMessage { get; set; } = string.Empty;
     private Dictionary<string, string> Errores { get; set; } = new();
     private List<Area> Areas { get; set; } = new();
+    private bool Procesando { get; set; } = false;
 
     private int AreaSeleccionadaId
     {
@@ -129,7 +130,7 @@
     {
         try
         {
-            Areas = await Task.Run(() => new List<Area>(AreaWS.listarActivas()));
+            Areas = await AreaWS.listarActivasAsync();
         }
         catch { Areas = new List<Area>(); }
     }
@@ -162,65 +163,87 @@
 
     private async Task InsertarRol()
     {
-        ErrorMessage = string.Empty;
-        if (!ValidarFormulario()) return;
-
+        if (Procesando) return;
+        Procesando = true;
         try
         {
+            ErrorMessage = string.Empty;
+            if (!ValidarFormulario()) return;
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => RolWS.insertar(Rol, idUsuarioAccion));
+            await RolWS.insertarAsync(Rol, idUsuarioAccion);
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
     private async Task GuardarCambios()
     {
-        ErrorMessage = string.Empty;
-        if (!ValidarFormulario()) return;
-
+        if (Procesando) return;
+        Procesando = true;
         try
         {
+            ErrorMessage = string.Empty;
+            if (!ValidarFormulario()) return;
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => RolWS.actualizar(Rol, idUsuarioAccion));
+            await RolWS.actualizarAsync(Rol, idUsuarioAccion);
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
     private async Task EliminarRol()
     {
+        if (Procesando) return;
+        Procesando = true;
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => RolWS.eliminar(Rol.RolID, idUsuarioAccion));
+            await RolWS.eliminarAsync(Rol.RolID, idUsuarioAccion);
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
     private async Task RecuperarRol()
     {
-        ErrorMessage = string.Empty;
+        if (Procesando) return;
+        Procesando = true;
         try
         {
+            ErrorMessage = string.Empty;
             Rol.EstaActivo = true;
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => RolWS.actualizar(Rol, idUsuarioAccion));
+            await RolWS.actualizarAsync(Rol, idUsuarioAccion);
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 }

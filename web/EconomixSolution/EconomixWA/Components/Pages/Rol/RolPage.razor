@@ -122,7 +122,6 @@
 
     private async Task ListarRoles()
     {
-        Roles = await Task.Run(() =>
-            new List<Rol>(RolWS.listar()));
+        Roles = await RolWS.listarAsync();
     }
 }

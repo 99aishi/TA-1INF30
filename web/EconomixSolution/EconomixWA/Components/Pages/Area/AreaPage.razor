@@ -138,8 +138,7 @@
         ErrorMessage = string.Empty;
         try
         {
-            Areas = await Task.Run(() =>
-                new List<Area>(AreaWS.listar()));
+            Areas = await AreaWS.listarAsync();
         }
         catch (Exception ex)
         {

@@ -203,6 +203,8 @@ CREATE TABLE IF NOT EXISTS tes_caja_chica (
     CONSTRAINT fk_tes_caja_chica_tes_moneda FOREIGN KEY (id_moneda)
         REFERENCES tes_moneda(id_moneda)
 ) ENGINE=InnoDB;
+
+-- Trigger removed - caja chica naming handled by tes_fondo.nombre_fondo joined via OPEN JOIN
 -- ===============================================================================
 -- 3. MÓDULO: ope (Operaciones)
 -- ===============================================================================
@@ -363,7 +365,7 @@ CREATE TABLE IF NOT EXISTS ope_transaccion (
     estado_transaccion ENUM('REGISTRADA', 'COMPLETADA', 'ANULADA') DEFAULT 'REGISTRADA',
     id_cuenta_origen INT NULL,
     id_cuenta_destino INT NULL,
-    id_moneda INT NOT NULL,
+    id_moneda INT NULL,
     id_beneficiario INT NULL,
     id_solicitud_gasto INT NULL,
 

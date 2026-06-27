@@ -1,9 +1,11 @@
-namespace EconomixWS.UsuarioWS;
-
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using EconomixModel.Model;
+
+namespace EconomixWS.UsuarioWS;
 
 public interface IRolWS : IWS<Rol>
 {
-    Rol? obtenerPorId(int id);
-    List<Rol> listarPorArea(int idArea);
+    Task<Rol?> obtenerPorIdAsync(int id);
+    Task<List<Rol>> listarPorAreaAsync(int idArea);
 }

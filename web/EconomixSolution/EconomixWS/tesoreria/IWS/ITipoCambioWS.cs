@@ -1,10 +1,12 @@
-namespace EconomixWS.TesoreriaWS;
-
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using EconomixModel.Model;
+
+namespace EconomixWS.TesoreriaWS;
 
 public interface ITipoCambioWS
 {
-    TipoCambio? buscarPorMonedasYFecha(int idMonedaOrigen, int idMonedaDestino, DateTime? fecha = null);
-    TipoCambio? obtenerPorId(int id);
-    List<TipoCambio> listar();
+    Task<TipoCambio?> buscarPorMonedasYFechaAsync(int idMonedaOrigen, int idMonedaDestino, DateTime? fecha = null);
+    Task<TipoCambio?> obtenerPorIdAsync(int id);
+    Task<List<TipoCambio>> listarAsync();
 }

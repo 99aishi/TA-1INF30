@@ -85,37 +85,37 @@
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-end gap-3 mt-4">
+                <div class="d-flex flex-wrap-nowrap justify-content-end gap-3 mt-4">
                     @if (EsCreacion)
                     {
-                        <button type="button" class="btn btn-outline-primary align-self-start mt-3" @onclick="InsertarMoneda">
-                            Registrar
+                        <button type="button" class="btn btn-outline-primary" disabled="@Procesando" @onclick="InsertarMoneda">
+                            @(Procesando ? "Procesando..." : "Registrar")
                         </button>
-                        <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="Cerrar">
-                            Cerrar
+                        <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="Cerrar">
+                            @(Procesando ? "Procesando..." : "Cerrar")
                         </button>
-                        <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="Cerrar">
-                            Cancelar
+                        <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="Cerrar">
+                            @(Procesando ? "Procesando..." : "Cancelar")
                         </button>
                     }
                     else
                     {
-                        <button type="button" class="btn btn-outline-warning align-self-start mt-3" @onclick="ActualizarMoneda">
-                            Guardar Cambios
+                        <button type="button" class="btn btn-outline-warning" disabled="@Procesando" @onclick="ActualizarMoneda">
+                            @(Procesando ? "Procesando..." : "Guardar Cambios")
                         </button>
-                        <button type="button" class="btn btn-outline-info align-self-start mt-3" @onclick="Cerrar">
-                            Cerrar
+                        <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="Cerrar">
+                            @(Procesando ? "Procesando..." : "Cerrar")
                         </button>
                         @if (Moneda.Activa)
                         {
-                            <button type="button" class="btn btn-outline-danger align-self-start mt-3" @onclick="EliminarMoneda">
-                                Eliminar
+                            <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="EliminarMoneda">
+                                @(Procesando ? "Procesando..." : "Eliminar")
                             </button>
                         }
                         else
                         {
-                            <button type="button" class="btn btn-outline-success align-self-start mt-3" @onclick="RecuperarMoneda">
-                                Recuperar
+                            <button type="button" class="btn btn-outline-success" disabled="@Procesando" @onclick="RecuperarMoneda">
+                                @(Procesando ? "Procesando..." : "Recuperar")
                             </button>
                         }
                     }
@@ -135,6 +135,7 @@
     private bool EsCreacion { get; set; }
     private string ErrorMessage { get; set; } = string.Empty;
     private Dictionary<string, string> Errores { get; set; } = new();
+    private bool Procesando { get; set; } = false;
 
     protected override void OnInitialized()
     {
@@ -180,64 +181,86 @@
 
     private async Task InsertarMoneda()
     {
-        ErrorMessage = string.Empty;
-        if (!ValidarFormulario()) return;
-
+        if (Procesando) return;
+        Procesando = true;
         try
         {
+            ErrorMessage = string.Empty;
+            if (!ValidarFormulario()) return;
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => MonedaWS.insertar(Moneda, idUsuarioAccion));
+            await MonedaWS.insertarAsync(Moneda, idUsuarioAccion);
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
     private async Task ActualizarMoneda()
     {
-        ErrorMessage = string.Empty;
-        if (!ValidarFormulario()) return;
-
+        if (Procesando) return;
+        Procesando = true;
         try
         {
+            ErrorMessage = string.Empty;
+            if (!ValidarFormulario()) return;
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => MonedaWS.actualizar(Moneda, idUsuarioAccion));
+            await MonedaWS.actualizarAsync(Moneda, idUsuarioAccion);
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
     private async Task EliminarMoneda()
     {
+        if (Procesando) return;
+        Procesando = true;
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => MonedaWS.eliminar(Moneda.IdMoneda, idUsuarioAccion));
+            await MonedaWS.eliminarAsync(Moneda.IdMoneda, idUsuarioAccion);
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
     private async Task RecuperarMoneda()
     {
-        ErrorMessage = string.Empty;
+        if (Procesando) return;
+        Procesando = true;
         try
         {
+            ErrorMessage = string.Empty;
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => MonedaWS.recuperar(Moneda.IdMoneda, idUsuarioAccion));
+            await MonedaWS.recuperarAsync(Moneda.IdMoneda, idUsuarioAccion);
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 }

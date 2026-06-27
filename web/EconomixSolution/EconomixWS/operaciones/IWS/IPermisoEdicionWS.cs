@@ -1,12 +1,14 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using EconomixModel.Model;
 
 namespace EconomixWS.OperacionesWS;
 
 public interface IPermisoEdicionWS
 {
-    void Solicitar(PermisoEdicion permiso, int idUsuarioAccion);
-    void Otorgar(int idPermiso, int idAutorizador, string motivoAutorizacion, int idUsuarioAccion);
-    void Revocar(int idPermiso, int idUsuarioAccion);
-    List<PermisoEdicion> ListarPendientes(int idAutorizador);
-    List<PermisoEdicion> ListarEnExcepcion();
+    Task SolicitarAsync(PermisoEdicion permiso, int idUsuarioAccion);
+    Task OtorgarAsync(int idPermiso, int idAutorizador, string motivoAutorizacion, int idUsuarioAccion);
+    Task RevocarAsync(int idPermiso, int idUsuarioAccion);
+    Task<List<PermisoEdicion>> ListarPendientesAsync(int idAutorizador);
+    Task<List<PermisoEdicion>> ListarEnExcepcionAsync();
 }

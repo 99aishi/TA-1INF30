@@ -83,4 +83,19 @@ public class TransaccionWS {
                     .entity(Map.of("error", e.getMessage())).build();
         }
     }
+
+    @GET
+    @Path("ListarPorJefe")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listarPorJefe(@QueryParam("idJefe") int idJefe) {
+        try {
+            List<Transaccion> transacciones = transaccionBO.listarPorJefe(idJefe);
+            if (transacciones == null || transacciones.isEmpty())
+                return Response.status(Response.Status.NO_CONTENT).build();
+            return Response.ok(transacciones).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage())).build();
+        }
+    }
 }

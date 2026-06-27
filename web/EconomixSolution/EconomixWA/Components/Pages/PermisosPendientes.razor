@@ -183,19 +183,19 @@
     private string ErrorMessage { get; set; } = string.Empty;
     private bool Cargando { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        CargarDatos();
+        await CargarDatos();
     }
 
-    private void CargarDatos()
+    private async Task CargarDatos()
     {
         Cargando = true;
         try
         {
             var idAutorizador = UsuarioWS.GetCurrentUserId();
-            PermisosPendientesLista = PermisoEdicionWS.ListarPendientes(idAutorizador);
-            ComprobantesExcepcion = PermisoEdicionWS.ListarEnExcepcion();
+            PermisosPendientesLista = await PermisoEdicionWS.ListarPendientesAsync(idAutorizador);
+            ComprobantesExcepcion = await PermisoEdicionWS.ListarEnExcepcionAsync();
         }
         catch (Exception ex)
         {
@@ -228,14 +228,14 @@
         Navigation.NavigateTo($"/Comprobantes de Pago/Detalle/{idComprobante}");
     }
 
-    private void Otorgar(PermisoEdicion permiso)
+    private async Task Otorgar(PermisoEdicion permiso)
     {
         ErrorMessage = string.Empty;
         try
         {
             var idAutorizador = UsuarioWS.GetCurrentUserId();
-            PermisoEdicionWS.Otorgar(permiso.IdPermiso, idAutorizador, "Autorizado desde panel de permisos", idAutorizador);
-            CargarDatos();
+            await PermisoEdicionWS.OtorgarAsync(permiso.IdPermiso, idAutorizador, "Autorizado desde panel de permisos", idAutorizador);
+            await CargarDatos();
         }
         catch (Exception ex)
         {
@@ -243,7 +243,7 @@
         }
     }
 
-    private void AutorizarDesdeExcepcion(PermisoEdicion item)
+    private async Task AutorizarDesdeExcepcion(PermisoEdicion item)
     {
         ErrorMessage = string.Empty;
         try
@@ -259,19 +259,19 @@
                 Comprobante = comprobante,
                 MotivoSolicitud = "Autorización generada desde ventana de excepción"
             };
-            PermisoEdicionWS.Solicitar(permiso, idAutorizador);
+            await PermisoEdicionWS.SolicitarAsync(permiso, idAutorizador);
 
             // Recargar para obtener el id generado y otorgar
-            PermisosPendientesLista = PermisoEdicionWS.ListarPendientes(idAutorizador);
+            PermisosPendientesLista = await PermisoEdicionWS.ListarPendientesAsync(idAutorizador);
             var creado = PermisosPendientesLista
                 .FirstOrDefault(p => p.Comprobante?.IdComprobante == comprobante.IdComprobante
                                   && p.Autorizador == null
                                   && p.Estado == "ACTIVO");
             if (creado != null)
             {
-                PermisoEdicionWS.Otorgar(creado.IdPermiso, idAutorizador, "Autorizado desde ventana de excepción", idAutorizador);
+                await PermisoEdicionWS.OtorgarAsync(creado.IdPermiso, idAutorizador, "Autorizado desde ventana de excepción", idAutorizador);
             }
-            CargarDatos();
+            await CargarDatos();
         }
         catch (Exception ex)
         {
@@ -279,14 +279,14 @@
         }
     }
 
-    private void Revocar(int idPermiso)
+    private async Task Revocar(int idPermiso)
     {
         ErrorMessage = string.Empty;
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            PermisoEdicionWS.Revocar(idPermiso, idUsuarioAccion);
-            CargarDatos();
+            await PermisoEdicionWS.RevocarAsync(idPermiso, idUsuarioAccion);
+            await CargarDatos();
         }
         catch (Exception ex)
         {

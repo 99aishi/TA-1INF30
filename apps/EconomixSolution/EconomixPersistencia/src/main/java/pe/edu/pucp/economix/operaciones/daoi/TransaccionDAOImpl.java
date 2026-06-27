@@ -15,10 +15,13 @@ import pe.edu.pucp.economix.operaciones.model.enums.MedioPago;
 import pe.edu.pucp.economix.operaciones.model.enums.TipoTransaccion;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoTransaccion;
 import pe.edu.pucp.economix.operaciones.model.Transaccion;
+import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoCicloCaja;
 import pe.edu.pucp.economix.rrhh.model.Area;
 import pe.edu.pucp.economix.rrhh.model.Empleado;
 import pe.edu.pucp.economix.rrhh.model.RolFlujo;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
+import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 import pe.edu.pucp.economix.tesoreria.model.TipoCambio;
 
@@ -31,11 +34,11 @@ public class TransaccionDAOImpl implements ITransaccionDAO {
         Map<String, Object> parametrosEntrada = new HashMap<>();
         parametrosSalida.put("p_id_generado", Types.INTEGER);
         parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
-        parametrosEntrada.put("p_tipo_operacion", transaccion.getTipoTransaccion().toString());
+        parametrosEntrada.put("p_tipo_operacion", transaccion.getTipoTransaccion() != null ? transaccion.getTipoTransaccion().toString() : null);
         parametrosEntrada.put("p_momento_operacion", transaccion.getFecha());
         parametrosEntrada.put("p_monto_transaccion", transaccion.getMonto());
         parametrosEntrada.put("p_numero_operacion_bancaria", transaccion.getNumeroOperacionBancaria());
-        parametrosEntrada.put("p_medio_pago", transaccion.getMedioPago().toString());
+        parametrosEntrada.put("p_medio_pago", transaccion.getMedioPago() != null ? transaccion.getMedioPago().toString() : null);
         if (transaccion.getTipoCambio() != null && transaccion.getTipoCambio().getIdTipoCambio() > 0) {
             parametrosEntrada.put("p_id_tipo_cambio", transaccion.getTipoCambio().getIdTipoCambio());
         } else {
@@ -83,11 +86,11 @@ public class TransaccionDAOImpl implements ITransaccionDAO {
         Map<String, Object> parametrosEntrada = new HashMap<>();
         parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_id_transaccion", transaccion.getIdTransaccion());
-        parametrosEntrada.put("p_tipo_operacion", transaccion.getTipoTransaccion().toString());
+        parametrosEntrada.put("p_tipo_operacion", transaccion.getTipoTransaccion() != null ? transaccion.getTipoTransaccion().toString() : null);
         parametrosEntrada.put("p_momento_operacion", transaccion.getFecha());
         parametrosEntrada.put("p_monto_transaccion", transaccion.getMonto());
         parametrosEntrada.put("p_numero_operacion_bancaria", transaccion.getNumeroOperacionBancaria());
-        parametrosEntrada.put("p_medio_pago", transaccion.getMedioPago().toString());
+        parametrosEntrada.put("p_medio_pago", transaccion.getMedioPago() != null ? transaccion.getMedioPago().toString() : null);
         if (transaccion.getTipoCambio() != null && transaccion.getTipoCambio().getIdTipoCambio() > 0) {
             parametrosEntrada.put("p_id_tipo_cambio", transaccion.getTipoCambio().getIdTipoCambio());
         } else {
@@ -191,6 +194,28 @@ public class TransaccionDAOImpl implements ITransaccionDAO {
         return transacciones;
     }
 
+    @Override
+    public List<Transaccion> listarPorJefe(int idJefe) throws SQLException {
+        List<Transaccion> transacciones = null;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_jefe", idJefe);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_transacciones_por_jefe", parametrosEntrada);
+        try {
+            while (rs.next()) {
+                if (transacciones == null) {
+                    transacciones = new ArrayList<>();
+                }
+                transacciones.add(mapearTransaccion(rs, new HashMap<>()));
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error al listar transacciones por jefe: " + ex.getMessage());
+            throw ex;
+        } finally {
+            DBManager.getDBManager().cerrarConexion();
+        }
+        return transacciones;
+    }
+
     @SuppressWarnings("unchecked")
     private <T> T getOrCreate(Map<Class<?>, Map<Integer, Object>> cache, Class<T> type, int id, Supplier<T> factory) {
         if (id <= 0) return null;
@@ -206,7 +231,12 @@ public class TransaccionDAOImpl implements ITransaccionDAO {
         transaccion.setFecha(rs.getTimestamp("momento_operacion"));
         transaccion.setMonto(rs.getDouble("monto_transaccion"));
         transaccion.setNumeroOperacionBancaria(rs.getString("numero_operacion_bancaria"));
-        transaccion.setMedioPago(MedioPago.valueOf(rs.getString("medio_pago")));
+        String medioPago = rs.getString("medio_pago");
+        if (medioPago != null) {
+            transaccion.setMedioPago(MedioPago.valueOf(medioPago));
+        } else {
+            transaccion.setMedioPago(null);
+        }
 
         int idTipoCambio = rs.getInt("id_tipo_cambio");
         if (!rs.wasNull()) {
@@ -307,6 +337,38 @@ public class TransaccionDAOImpl implements ITransaccionDAO {
         int idSolicitudGasto = rs.getInt("id_solicitud_gasto");
         if (!rs.wasNull()) {
             transaccion.setIdSolicitudGasto(idSolicitudGasto);
+        }
+
+        int ccIdCiclo = rs.getInt("cc_id_ciclo");
+        if (!rs.wasNull() && ccIdCiclo > 0) {
+            CicloCajaChica ciclo = getOrCreate(cache, CicloCajaChica.class, ccIdCiclo, () -> new CicloCajaChica());
+            ciclo.setIdCicloCaja(ccIdCiclo);
+            ciclo.setNumeroSemana(rs.getInt("cc_numero_semana"));
+
+            java.sql.Timestamp ccFechaApertura = rs.getTimestamp("cc_fecha_apertura");
+            if (ccFechaApertura != null) ciclo.setFechaApertura(ccFechaApertura);
+
+            java.sql.Timestamp ccFechaCierre = rs.getTimestamp("cc_fecha_cierre");
+            if (ccFechaCierre != null) ciclo.setFechaCierre(ccFechaCierre);
+
+            String ccEstado = rs.getString("cc_estado_ciclo");
+            if (ccEstado != null) {
+                ciclo.setEstado(EstadoCicloCaja.valueOf(ccEstado));
+            }
+
+            ciclo.setSaldoInicial(rs.getDouble("cc_monto_saldo_inicial"));
+
+            int ccaId = rs.getInt("cc_cca_id_fondo");
+            if (!rs.wasNull() && ccaId > 0) {
+                CajaChica cajaChica = getOrCreate(cache, CajaChica.class, ccaId, () -> new CajaChica());
+                cajaChica.setIdFondo(ccaId);
+                cajaChica.setNombre(rs.getString("cc_cca_nombre"));
+                ciclo.setCajaChica(cajaChica);
+            }
+
+            transaccion.setCiclo(ciclo);
+        } else {
+            transaccion.setCiclo(null);
         }
 
         return transaccion;

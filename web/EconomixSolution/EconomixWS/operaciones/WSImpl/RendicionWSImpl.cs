@@ -19,44 +19,44 @@ public class RendicionWSImpl : IRendicionWS
         _jsonOptions = jsonOptions;
     }
 
-    public void insertar(Rendicion obj, int idUsuarioAccion)
+    public async Task insertarAsync(Rendicion obj, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Insertar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void actualizar(Rendicion obj, int idUsuarioAccion)
+    public async Task actualizarAsync(Rendicion obj, int idUsuarioAccion)
     {
-        var response = _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsJsonAsync($"Actualizar?idUsuarioAccion={idUsuarioAccion}", obj, _jsonOptions);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void eliminar(int id, int idUsuarioAccion)
+    public async Task eliminarAsync(int id, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
+        var response = await _httpClient.GetAsync($"Eliminar?id={id}&idUsuarioAccion={idUsuarioAccion}");
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public List<Rendicion> listar()
+    public async Task<List<Rendicion>> listarAsync()
     {
         try
         {
-            var response = _httpClient.GetAsync("Listar").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync("Listar");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<Rendicion>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<Rendicion>();
             return JsonSerializer.Deserialize<List<Rendicion>>(json, _jsonOptions) ?? new List<Rendicion>();
@@ -67,14 +67,14 @@ public class RendicionWSImpl : IRendicionWS
         }
     }
 
-    public Rendicion? obtenerPorId(int id)
+    public async Task<Rendicion?> obtenerPorIdAsync(int id)
     {
         try
         {
-            var response = _httpClient.GetAsync($"BuscarPorId?id={id}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"BuscarPorId?id={id}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return null;
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;
             return JsonSerializer.Deserialize<Rendicion>(json, _jsonOptions);
@@ -85,28 +85,28 @@ public class RendicionWSImpl : IRendicionWS
         }
     }
 
-    public Rendicion? generarRendicionDeCiclo(int idCiclo, int idUsuarioAccion)
+    public async Task<Rendicion?> generarRendicionDeCicloAsync(int idCiclo, int idUsuarioAccion)
     {
-        var response = _httpClient.GetAsync($"GenerarRendicionDeCiclo?idCiclo={idCiclo}&idUsuarioAccion={idUsuarioAccion}").GetAwaiter().GetResult();
+        var response = await _httpClient.GetAsync($"GenerarRendicionDeCiclo?idCiclo={idCiclo}&idUsuarioAccion={idUsuarioAccion}");
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
-        var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+        var json = await response.Content.ReadAsStringAsync();
         if (string.IsNullOrEmpty(json) || json == "null")
             return null;
         return JsonSerializer.Deserialize<Rendicion>(json, _jsonOptions);
     }
 
-    public List<Rendicion> listarPorArea(int idArea)
+    public async Task<List<Rendicion>> listarPorAreaAsync(int idArea)
     {
         try
         {
-            var response = _httpClient.GetAsync($"ListarPorArea?idArea={idArea}").GetAwaiter().GetResult();
+            var response = await _httpClient.GetAsync($"ListarPorArea?idArea={idArea}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<Rendicion>();
-            var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<Rendicion>();
             return JsonSerializer.Deserialize<List<Rendicion>>(json, _jsonOptions) ?? new List<Rendicion>();
@@ -117,46 +117,46 @@ public class RendicionWSImpl : IRendicionWS
         }
     }
 
-    public void observarRendicion(int idRendicion, string comentario, int idUsuarioAccion)
+    public async Task observarRendicionAsync(int idRendicion, string comentario, int idUsuarioAccion)
     {
         var url = $"ObservarRendicion?idRendicion={idRendicion}&comentario={Uri.EscapeDataString(comentario ?? "")}&idUsuarioAccion={idUsuarioAccion}";
-        var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsync(url, null);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void aceptarRendicion(int idRendicion, int idUsuarioAccion)
+    public async Task aceptarRendicionAsync(int idRendicion, int idUsuarioAccion)
     {
         var url = $"AceptarRendicion?idRendicion={idRendicion}&idUsuarioAccion={idUsuarioAccion}";
-        var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsync(url, null);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void denegarRendicion(int idRendicion, string comentario, int idUsuarioAccion)
+    public async Task denegarRendicionAsync(int idRendicion, string comentario, int idUsuarioAccion)
     {
         var url = $"DenegarRendicion?idRendicion={idRendicion}&comentario={Uri.EscapeDataString(comentario ?? "")}&idUsuarioAccion={idUsuarioAccion}";
-        var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsync(url, null);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }
 
-    public void reEnviarRendicion(int idRendicion, int idUsuarioAccion)
+    public async Task reEnviarRendicionAsync(int idRendicion, int idUsuarioAccion)
     {
         var url = $"ReEnviarRendicion?idRendicion={idRendicion}&idUsuarioAccion={idUsuarioAccion}";
-        var response = _httpClient.PostAsync(url, null).GetAwaiter().GetResult();
+        var response = await _httpClient.PostAsync(url, null);
         if (!response.IsSuccessStatusCode)
         {
-            var error = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var error = await response.Content.ReadAsStringAsync();
             throw new Exception(error);
         }
     }

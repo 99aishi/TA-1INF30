@@ -147,7 +147,7 @@
         {
             FiltroNombre = string.Empty;
             var caja = CajasChicas.FirstOrDefault(c => c.IdFondo == cajaId)
-                       ?? await Task.Run(() => CajaChicaWS.obtenerPorId(cajaId));
+                       ?? await CajaChicaWS.obtenerPorIdAsync(cajaId);
             if (caja != null)
             {
                 FiltroCuentaBancariaId = caja.CuentaBancaria?.IdCuenta ?? 0;
@@ -159,13 +159,13 @@
 
     private async Task CargarCatalogos()
     {
-        try { CajasChicas = await Task.Run(() => new List<CajaChica>(CajaChicaWS.listar())); }
+        try { CajasChicas = await CajaChicaWS.listarAsync(); }
         catch { CajasChicas = new List<CajaChica>(); }
 
-        try { CuentasBancarias = await Task.Run(() => new List<CuentaBancaria>(CuentaBancariaWS.listar())); }
+        try { CuentasBancarias = await CuentaBancariaWS.listarAsync(); }
         catch { CuentasBancarias = new List<CuentaBancaria>(); }
 
-        try { Areas = await Task.Run(() => new List<Area>(AreaWS.listar())); }
+        try { Areas = await AreaWS.listarAsync(); }
         catch { Areas = new List<Area>(); }
     }
 
@@ -174,7 +174,7 @@
         ErrorMessage = string.Empty;
         try
         {
-            Ciclos = await Task.Run(() => new List<CicloCajaChica>(CicloCajaWS.listar()));
+            Ciclos = await CicloCajaWS.listarAsync();
         }
         catch (Exception ex)
         {

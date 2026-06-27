@@ -15,7 +15,7 @@
         <div class="flex-grow-1 text-end">
             @if (!EsAdministrador)
             {
-                <button type="button" class="btn btn-primary" @onclick="CrearDetalleComprobante">
+                <button type="button" class="btn btn-primary" @onclick="IrAgregarComprobante">
                     + Agregar Comprobante
                 </button>
             }
@@ -116,7 +116,11 @@
         MostrarDetalle = false;
         ComprobanteSeleccionado = null;
     }
-    private void CrearDetalleComprobante() => Navigation.NavigateTo("/Comprobantes de Pago/Crear");
+    
+    private void IrAgregarComprobante()
+    {
+        Navigation.NavigateTo("/Comprobantes de Pago/Crear");
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -129,7 +133,7 @@
     private async Task ListarComprobantes()
     {
         ErrorMessage = string.Empty;
-        try { Comprobantes = await Task.Run(() => new List<ComprobantePago>(ComprobantePagoWS.listar())); }
+        try { Comprobantes = await ComprobantePagoWS.listarAsync(); }
         catch (Exception ex) { ErrorMessage = ex.Message; }
     }
 }

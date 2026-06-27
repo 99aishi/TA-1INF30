@@ -46,6 +46,15 @@ public class ComprobantePago
     [JsonPropertyName("estado")]
     public string Estado { get; set; } = "POR_REVISAR";
 
+    [JsonPropertyName("comentario")]
+    public string? Comentario { get; set; }
+
+    [JsonPropertyName("fechaCreacion")]
+    public DateTime? FechaCreacion { get; set; }
+
+    [JsonPropertyName("fechaCreacionString")]
+    public string? FechaCreacionString { get; set; }
+
     [JsonPropertyName("solicitud")]
     public SolicitudGasto? Solicitud { get; set; }
 

@@ -24,6 +24,7 @@ public class Transaccion{
     private Empleado beneficiario;
     private EstadoTransaccion estadoTransaccion;
     private int idSolicitudGasto;
+    private CicloCajaChica ciclo;
 
     //COnstructores
     public Transaccion(){}
@@ -143,6 +144,12 @@ public class Transaccion{
     }
     public void setIdSolicitudGasto(int idSolicitudGasto) {
         this.idSolicitudGasto = idSolicitudGasto;
+    }
+    public CicloCajaChica getCiclo() {
+        return ciclo;
+    }
+    public void setCiclo(CicloCajaChica ciclo) {
+        this.ciclo = ciclo;
     }
 
     //Metodos

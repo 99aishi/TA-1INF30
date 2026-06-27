@@ -71,29 +71,29 @@
             </div>
         </div>
         <hr class="my-0" />
-        <div class="p-3 d-flex justify-content-end gap-3">
+        <div class="p-3 d-flex flex-wrap-nowrap justify-content-end gap-3">
             @if (EsCreacion)
             {
-                <button type="button" class="btn btn-outline-primary" @onclick="InsertarCajaChica">
-                    Registrar
+                <button type="button" class="btn btn-outline-primary" disabled="@Procesando" @onclick="InsertarCajaChica">
+                    @(Procesando ? "Procesando..." : "Registrar")
                 </button>
-                <button type="button" class="btn btn-outline-info" @onclick="VolverAlPanel">
-                    Cerrar
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="VolverAlPanel">
+                    @(Procesando ? "Procesando..." : "Cerrar")
                 </button>
-                <button type="button" class="btn btn-outline-danger" @onclick="VolverAlPanel">
-                    Cancelar
+                <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="VolverAlPanel">
+                    @(Procesando ? "Procesando..." : "Cancelar")
                 </button>
             }
             else
             {
-                <button type="button" class="btn btn-outline-warning" @onclick="GuardarCambios">
-                    Guardar Cambios
+                <button type="button" class="btn btn-outline-warning" disabled="@Procesando" @onclick="GuardarCambios">
+                    @(Procesando ? "Procesando..." : "Guardar Cambios")
                 </button>
-                <button type="button" class="btn btn-outline-info" @onclick="CerrarDetalle">
-                    Cerrar
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="CerrarDetalle">
+                    @(Procesando ? "Procesando..." : "Cerrar")
                 </button>
-                <button type="button" class="btn btn-outline-danger" @onclick="EliminarCajaChica">
-                    Eliminar
+                <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="EliminarCajaChica">
+                    @(Procesando ? "Procesando..." : "Eliminar")
                 </button>
             }
         </div>
@@ -109,6 +109,7 @@
 
     private bool EsCreacion { get; set; }
     private string ErrorMessage { get; set; } = string.Empty;
+    private bool Procesando { get; set; } = false;
     private List<Moneda> Monedas { get; set; } = new();
     private List<CuentaBancaria> CuentasBancarias { get; set; } = new();
     private List<Area> Areas { get; set; } = new();
@@ -164,9 +165,9 @@
 
     private async Task CargarCatalogos()
     {
-        try { Monedas = await Task.Run(() => new List<Moneda>(MonedaWS.listar())); } catch { Monedas = new List<Moneda>(); }
-        try { CuentasBancarias = await Task.Run(() => new List<CuentaBancaria>(CuentaBancariaWS.listar())); } catch { CuentasBancarias = new List<CuentaBancaria>(); }
-        try { Areas = await Task.Run(() => new List<Area>(AreaWS.listar())); } catch { Areas = new List<Area>(); }
+        try { Monedas = await MonedaWS.listarAsync(); } catch { Monedas = new List<Moneda>(); }
+        try { CuentasBancarias = await CuentaBancariaWS.listarAsync(); } catch { CuentasBancarias = new List<CuentaBancaria>(); }
+        try { Areas = await AreaWS.listarAsync(); } catch { Areas = new List<Area>(); }
     }
 
     private void InicializarDesdeParametro()
@@ -219,45 +220,63 @@
 
     private async Task InsertarCajaChica()
     {
-        if (!Validar()) return;
+        if (Procesando) return;
+        Procesando = true;
         try
         {
+            if (!Validar()) return;
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => CajaChicaWS.insertar(CajaChica, idUsuarioAccion));
+            await CajaChicaWS.insertarAsync(CajaChica, idUsuarioAccion);
             await VolverAlPanel();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
         }
+        finally
+        {
+            Procesando = false;
+        }
     }
 
     private async Task GuardarCambios()
     {
-        if (!Validar()) return;
+        if (Procesando) return;
+        Procesando = true;
         try
         {
+            if (!Validar()) return;
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => CajaChicaWS.actualizar(CajaChica, idUsuarioAccion));
+            await CajaChicaWS.actualizarAsync(CajaChica, idUsuarioAccion);
             await CerrarDetalle();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
     private async Task EliminarCajaChica()
     {
+        if (Procesando) return;
+        Procesando = true;
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => CajaChicaWS.eliminar(CajaChica.IdFondo, idUsuarioAccion));
+            await CajaChicaWS.eliminarAsync(CajaChica.IdFondo, idUsuarioAccion);
             await CerrarDetalle();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 }

@@ -218,7 +218,7 @@
             ExpandedAccounts.Add(cuenta.IdCuenta);
             if (!CajasChicasCache.ContainsKey(cuenta.IdCuenta))
             {
-                CajasChicasCache[cuenta.IdCuenta] = await Task.Run(() => CajaChicaWS.listarPorCuentaBancaria(cuenta.IdCuenta));
+                CajasChicasCache[cuenta.IdCuenta] = await CajaChicaWS.listarPorCuentaBancariaAsync(cuenta.IdCuenta);
             }
         }
     }
@@ -240,8 +240,8 @@
 
         try
         {
-            await Task.Run(() => CajaChicaWS.eliminar(caja.IdFondo, IdUsuarioAccion));
-            CajasChicasCache[cuenta.IdCuenta] = await Task.Run(() => CajaChicaWS.listarPorCuentaBancaria(cuenta.IdCuenta));
+            await CajaChicaWS.eliminarAsync(caja.IdFondo, IdUsuarioAccion);
+            CajasChicasCache[cuenta.IdCuenta] = await CajaChicaWS.listarPorCuentaBancariaAsync(cuenta.IdCuenta);
         }
         catch (Exception ex)
         {
@@ -257,8 +257,8 @@
         try
         {
             caja.Estado = "ACTIVO";
-            await Task.Run(() => CajaChicaWS.actualizar(caja, IdUsuarioAccion));
-            CajasChicasCache[cuenta.IdCuenta] = await Task.Run(() => CajaChicaWS.listarPorCuentaBancaria(cuenta.IdCuenta));
+            await CajaChicaWS.actualizarAsync(caja, IdUsuarioAccion);
+            CajasChicasCache[cuenta.IdCuenta] = await CajaChicaWS.listarPorCuentaBancariaAsync(cuenta.IdCuenta);
         }
         catch (Exception ex)
         {

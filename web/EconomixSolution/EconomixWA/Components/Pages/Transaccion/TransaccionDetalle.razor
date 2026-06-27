@@ -1,66 +1,129 @@
 <div class="card rounded-4 h-100 p-3 d-flex flex-column justify-content-between">
     <div class="row">
-        <p class="h4">Detalle de Transacción</p>
-
+        <div class="d-flex gap-4 align-items-center">
+            <p class="h4 mb-0">Detalle de Transacción</p>
+            @if (Transaccion != null)
+            {
+                <span class="badge rounded-pill @GetTipoBadgeClass() align-self-center">@Transaccion.TipoTransaccion</span>
+                <span class="badge rounded-pill @GetEstadoBadgeClass() align-self-center">@Transaccion.EstadoTransaccion</span>
+            }
+        </div>
+        <hr class="my-0" />
         @if (Transaccion == null)
         {
             <p class="text-muted text-center mt-5">Seleccione una transacción para ver su detalle</p>
         }
         else
         {
-            <div class="col-6 p-3">
-                <label class="form-label">Nro. Transacción</label>
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="TR-@Transaccion.IdTransaccion" disabled="true">
-            </div>
-            <div class="col-6 p-3">
-                <label class="form-label">Fecha</label>
-                <input type="date" class="form-control form-control-lg rounded-4 bg-light" value="@Transaccion.Fecha.ToString("yyyy-MM-dd")" disabled="true">
-            </div>
-            <div class="col-6 p-3">
-                <label class="form-label">Tipo</label>
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Transaccion.TipoTransaccion" disabled="true">
-            </div>
-            <div class="col-6 p-3">
-                <label class="form-label">Estado</label>
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Transaccion.EstadoTransaccion" disabled="true">
-            </div>
-            <div class="col-6 p-3">
-                <label class="form-label">Monto</label>
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.Moneda?.Simbolo ?? "S/") @Transaccion.Monto.ToString("N2")" disabled="true">
-            </div>
-            <div class="col-6 p-3">
-                <label class="form-label">Moneda</label>
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.Moneda?.Nombre ?? "-")" disabled="true">
-            </div>
-            <div class="col-6 p-3">
-                <label class="form-label">Medio de Pago</label>
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Transaccion.MedioPago" disabled="true">
-            </div>
-            <div class="col-6 p-3">
-                <label class="form-label">Nro. Operación Bancaria</label>
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.NumeroOperacionBancaria ?? "-")" disabled="true">
-            </div>
-            <div class="col-12 p-3">
-                <label class="form-label">Beneficiario</label>
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.Beneficiario != null ? $"{Transaccion.Beneficiario.Nombres} {Transaccion.Beneficiario.ApellidoPaterno}" : "-")" disabled="true">
-            </div>
-            <div class="col-6 p-3">
-                <label class="form-label">Cuenta de Origen</label>
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaOrigen != null ? $"{Transaccion.CuentaOrigen.NombreBanco} - {Transaccion.CuentaOrigen.NumeroBancario}" : "-")" disabled="true">
-            </div>
-            <div class="col-6 p-3">
-                <label class="form-label">Cuenta de Destino</label>
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaDestino != null ? $"{Transaccion.CuentaDestino.NombreBanco} - {Transaccion.CuentaDestino.NumeroBancario}" : "-")" disabled="true">
-            </div>
+            @if (EsModoEdicion)
+            {
+                <div class="col-6 p-3">
+                    <label class="form-label">Nro. Transacción</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="TR-@Transaccion.IdTransaccion" disabled="true" />
+                </div>
+                <div class="col-6 p-3">
+                    <label class="form-label">Fecha</label>
+                    <input type="date" class="form-control form-control-lg rounded-4" value="@fechaInput" @onchange="e => fechaInput = e.Value?.ToString()" />
+                </div>
+                <div class="col-6 p-3">
+                    <label class="form-label">Monto</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.Moneda?.Simbolo ?? "S/") @Transaccion.Monto.ToString("N2")" disabled="true" />
+                </div>
+                <div class="col-6 p-3">
+                    <label class="form-label">Medio de Pago</label>
+                    <select class="form-select form-select-lg rounded-4" @bind="Transaccion.MedioPago">
+                        <option value="">Seleccione un medio de pago</option>
+                        <option value="YAPE">YAPE</option>
+                        <option value="PLIN">PLIN</option>
+                        <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+                        <option value="EFECTIVO">EFECTIVO</option>
+                    </select>
+                </div>
+                <div class="col-6 p-3">
+                    <label class="form-label">Nro. Operación Bancaria</label>
+                    <input type="text" class="form-control form-control-lg rounded-4" @bind="Transaccion.NumeroOperacionBancaria" placeholder="Ingrese el número de operación bancaria" />
+                </div>
+                <div class="col-12 p-3">
+                    <label class="form-label">Beneficiario</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.Beneficiario != null ? $"{Transaccion.Beneficiario.Nombres} {Transaccion.Beneficiario.ApellidoPaterno} (N° {Transaccion.Beneficiario.UsuarioID})" : "-")" disabled="true" />
+                </div>
+                <div class="col-6 p-3">
+                    <label class="form-label">Cuenta de Origen</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaOrigen != null ? $"{Transaccion.CuentaOrigen.NombreBanco} - {Transaccion.CuentaOrigen.NumeroBancario}" : "-")" disabled="true" />
+                </div>
+                <div class="col-6 p-3">
+                    <label class="form-label">Cuenta de Destino</label>
+                    <select class="form-select form-select-lg rounded-4" @bind="cuentaDestinoId">
+                        <option value="">Seleccione una cuenta</option>
+                        @foreach (var cuenta in CuentasBancarias)
+                        {
+                            <option value="@cuenta.IdCuenta">@cuenta.NombreBanco - @cuenta.NumeroBancario</option>
+                        }
+                    </select>
+                </div>
+            }
+            else
+            {
+                <div class="col-6 p-3">
+                    <label class="form-label">Nro. Transacción</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="TR-@Transaccion.IdTransaccion" disabled="true" />
+                </div>
+                <div class="col-6 p-3">
+                    <label class="form-label">Fecha</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Transaccion.Fecha.ToString("yyyy-MM-dd")" disabled="true" />
+                </div>
+                <div class="col-6 p-3">
+                    <label class="form-label">Monto</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.Moneda?.Simbolo ?? "S/") @Transaccion.Monto.ToString("N2")" disabled="true" />
+                </div>
+                <div class="col-6 p-3">
+                    <label class="form-label">Medio de Pago</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Transaccion.MedioPago" disabled="true" />
+                </div>
+                <div class="col-6 p-3">
+                    <label class="form-label">Nro. Operación Bancaria</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.NumeroOperacionBancaria ?? "-")" disabled="true" />
+                </div>
+                <div class="col-12 p-3">
+                    <label class="form-label">Beneficiario</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.Beneficiario != null ? $"{Transaccion.Beneficiario.Nombres} {Transaccion.Beneficiario.ApellidoPaterno} (N° {Transaccion.Beneficiario.UsuarioID})" : "-")" disabled="true" />
+                </div>
+                <div class="col-6 p-3">
+                    <label class="form-label">Cuenta de Origen</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaOrigen != null ? $"{Transaccion.CuentaOrigen.NombreBanco} - {Transaccion.CuentaOrigen.NumeroBancario}" : "-")" disabled="true" />
+                </div>
+                <div class="col-6 p-3">
+                    <label class="form-label">Cuenta de Destino</label>
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaDestino != null ? $"{Transaccion.CuentaDestino.NombreBanco} - {Transaccion.CuentaDestino.NumeroBancario}" : "-")" disabled="true" />
+                </div>
+            }
         }
     </div>
 
-    <div class="d-flex justify-content-end gap-3">
-        <button class="btn btn-primary align-self-start mt-3" @onclick="CerrarDetalleComprobante">
-            Cerrar
-        </button>
-    </div>
+    <hr class="my-0" />
+    @if (Transaccion != null && EsModoEdicion)
+    {
+        <div class="d-flex flex-wrap-nowrap justify-content-end gap-3 mt-3">
+            <button class="btn btn-outline-danger" disabled="@Procesando" @onclick="CancelarEdicion">
+                Cancelar
+            </button>
+            <button class="btn btn-outline-warning" disabled="@Procesando" @onclick="GuardarCambios">
+                @(Procesando ? "Guardando..." : "Guardar Cambios")
+            </button>
+        </div>
+    }
+    else if (Transaccion != null)
+    {
+        <div class="d-flex flex-wrap-nowrap justify-content-end gap-3 mt-3">
+            <button class="btn btn-outline-info" @onclick="CerrarDetalleComprobante">
+                Cerrar
+            </button>
+        </div>
+    }
 </div>
+
+@inject ITransaccionWS TransaccionWS
+@inject IUsuarioWS UsuarioWS
 
 @code {
     [Parameter]
@@ -68,6 +131,115 @@
 
     [Parameter]
     public EventCallback OnCierraDetalle { get; set; }
+
+    private bool EsModoEdicion { get; set; } = false;
+    private string fechaInput { get; set; } = "";
+    private int cuentaDestinoId { get; set; } = 0;
+    private List<CuentaBancaria> CuentasBancarias { get; set; } = new();
+    private bool EsJefe { get; set; } = false;
+    private bool Procesando { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var usuario = UsuarioWS.GetCurrentUser();
+        EsJefe = usuario is Empleado emp && (emp.RolFlujo == RolFlujo.JEFE_AREA || emp.Area?.Jefe?.UsuarioID == emp.UsuarioID);
+        if (usuario is Empleado emp2)
+        {
+            CuentasBancarias = emp2.Cuentas;
+        }
+        DeterminarModo();
+    }
+
+    protected override void OnParametersSet()
+    {
+        DeterminarModo();
+    }
+
+    private void DeterminarModo()
+    {
+        if (Transaccion == null || !EsJefe)
+        {
+            EsModoEdicion = false;
+            return;
+        }
+
+        bool yaEditado = !string.IsNullOrEmpty(Transaccion.MedioPago)
+            && Transaccion.Fecha != default;
+
+        EsModoEdicion = !yaEditado;
+
+        if (EsModoEdicion)
+        {
+            fechaInput = Transaccion.Fecha == default
+                ? DateTime.Now.ToString("yyyy-MM-dd")
+                : Transaccion.Fecha.ToString("yyyy-MM-dd");
+
+            cuentaDestinoId = Transaccion.CuentaDestino?.IdCuenta ?? 0;
+        }
+    }
+
+    private string GetTipoBadgeClass()
+    {
+        return Transaccion.TipoTransaccion switch
+        {
+            "DESEMBOLSO" => "bg-primary",
+            "DEVOLUCION_SOBRANTE" => "bg-success",
+            "REEMBOLSO_DEFICIT" => "bg-warning",
+            "REPOSICION_FONDO" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetEstadoBadgeClass()
+    {
+        return Transaccion.EstadoTransaccion switch
+        {
+            "REGISTRADA" => "bg-warning",
+            "COMPLETADA" => "bg-success",
+            "ANULADA" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private async Task GuardarCambios()
+    {
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            var usuario = UsuarioWS.GetCurrentUser();
+            if (usuario == null || Transaccion == null)
+                return;
+
+            if (string.IsNullOrEmpty(Transaccion.NumeroOperacionBancaria) && (Transaccion.MedioPago == "YAPE" || Transaccion.MedioPago == "PLIN" || Transaccion.MedioPago == "TRANSFERENCIA"))
+                return;
+
+            Transaccion.Fecha = DateTime.Parse(fechaInput);
+
+            if (cuentaDestinoId > 0)
+            {
+                Transaccion.CuentaDestino = CuentasBancarias.FirstOrDefault(c => c.IdCuenta == cuentaDestinoId);
+            }
+
+            await TransaccionWS.actualizarAsync(Transaccion, usuario.UsuarioID);
+
+            await OnCierraDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al guardar cambios: {ex.Message}");
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+
+    private async Task CancelarEdicion()
+    {
+        EsModoEdicion = false;
+        await OnCierraDetalle.InvokeAsync();
+    }
 
     public async Task CerrarDetalleComprobante()
     {

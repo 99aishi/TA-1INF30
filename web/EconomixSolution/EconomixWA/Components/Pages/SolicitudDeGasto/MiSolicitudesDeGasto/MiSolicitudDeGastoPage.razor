@@ -120,7 +120,7 @@
         try
         {
             var idEmpleado = UsuarioWS.GetCurrentUserId();
-            Solicitudes = await Task.Run(() => new List<SolicitudGasto>(SolicitudGastoWS.listarPorSolicitante(idEmpleado)));
+            Solicitudes = await SolicitudGastoWS.listarPorSolicitanteAsync(idEmpleado);
         }
         catch (Exception ex) { ErrorMessage = ex.Message; }
     }

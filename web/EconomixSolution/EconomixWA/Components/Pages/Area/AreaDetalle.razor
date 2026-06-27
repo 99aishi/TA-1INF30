@@ -204,37 +204,37 @@
             }
         </div>
         <hr class="my-0" />
-        <div class="p-3 d-flex justify-content-end gap-3">
+        <div class="p-3 d-flex flex-wrap-nowrap justify-content-end gap-3">
             @if (EsCreacion)
             {
-                <button type="button" class="btn btn-outline-primary" @onclick="InsertarArea">
-                    Registrar
+                <button type="button" class="btn btn-outline-primary" disabled="@Procesando" @onclick="InsertarArea">
+                    @(Procesando ? "Procesando..." : "Registrar")
                 </button>
-                <button type="button" class="btn btn-outline-info" @onclick="IrAAreas">
-                    Cerrar
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="IrAAreas">
+                    @(Procesando ? "Procesando..." : "Cerrar")
                 </button>
-                <button type="button" class="btn btn-outline-danger" @onclick="IrAAreas">
-                    Cancelar
+                <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="IrAAreas">
+                    @(Procesando ? "Procesando..." : "Cancelar")
                 </button>
             }
             else
             {
-                <button type="button" class="btn btn-outline-warning" @onclick="GuardarCambios">
-                    Guardar Cambios
+                <button type="button" class="btn btn-outline-warning" disabled="@Procesando" @onclick="GuardarCambios">
+                    @(Procesando ? "Procesando..." : "Guardar Cambios")
                 </button>
-                <button type="button" class="btn btn-outline-info" @onclick="CerrarDetalle">
-                    Cerrar
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="CerrarDetalle">
+                    @(Procesando ? "Procesando..." : "Cerrar")
                 </button>
                 @if (Area.EstaActivo)
                 {
-                    <button type="button" class="btn btn-outline-danger" @onclick="EliminarArea">
-                        Eliminar
+                    <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="EliminarArea">
+                        @(Procesando ? "Procesando..." : "Eliminar")
                     </button>
                 }
                 else
                 {
-                    <button type="button" class="btn btn-outline-success" @onclick="RecuperarArea">
-                        Recuperar
+                    <button type="button" class="btn btn-outline-success" disabled="@Procesando" @onclick="RecuperarArea">
+                        @(Procesando ? "Procesando..." : "Recuperar")
                     </button>
                 }
             }
@@ -249,6 +249,7 @@
     [Parameter]
     public Area Area { get; set; } = new Area();
 
+    private bool Procesando { get; set; } = false;
     private bool EsCreacion { get; set; }
     private string ErrorMessage { get; set; } = string.Empty;
     private string ErrorCuenta { get; set; } = string.Empty;
@@ -306,10 +307,10 @@
 
     private async Task CargarCatalogos()
     {
-        try { Monedas = await Task.Run(() => new List<Moneda>(MonedaWS.listar())); } catch { Monedas = new List<Moneda>(); }
+        try { Monedas = await MonedaWS.listarAsync(); } catch { Monedas = new List<Moneda>(); }
         try
         {
-            var empleados = await Task.Run(() => new List<Empleado>(EmpleadoWS.listar()));
+            var empleados = await EmpleadoWS.listarAsync();
             Jefes = empleados.Where(e => e.RolFlujo == RolFlujo.JEFE_AREA).ToList();
         }
         catch { Jefes = new List<Empleado>(); }
@@ -327,65 +328,87 @@
 
     private async Task InsertarArea()
     {
+        if (Procesando) return;
+        Procesando = true;
         ErrorMessage = string.Empty;
-        if (!ValidarFormulario()) return;
-
         try
         {
+            if (!ValidarFormulario()) return;
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => AreaWS.insertar(Area, idUsuarioAccion));
+            await AreaWS.insertarAsync(Area, idUsuarioAccion);
             await Task.Run(() => IrAAreas());
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
         }
+        finally
+        {
+            Procesando = false;
+        }
     }
 
     private async Task GuardarCambios()
     {
+        if (Procesando) return;
+        Procesando = true;
         ErrorMessage = string.Empty;
-        if (!ValidarFormulario()) return;
-
         try
         {
+            if (!ValidarFormulario()) return;
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => AreaWS.actualizar(Area, idUsuarioAccion));
+            await AreaWS.actualizarAsync(Area, idUsuarioAccion);
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
     private async Task EliminarArea()
     {
+        if (Procesando) return;
+        Procesando = true;
         ErrorMessage = string.Empty;
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => AreaWS.eliminar(Area.AreaID, idUsuarioAccion));
+            await AreaWS.eliminarAsync(Area.AreaID, idUsuarioAccion);
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
     private async Task RecuperarArea()
     {
+        if (Procesando) return;
+        Procesando = true;
         ErrorMessage = string.Empty;
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => AreaWS.recuperar(Area.AreaID, idUsuarioAccion));
+            await AreaWS.recuperarAsync(Area.AreaID, idUsuarioAccion);
             await OnCerrarDetalle.InvokeAsync();
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
         }
     }
 
@@ -413,16 +436,15 @@
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
             if (cuenta.IdCuenta > 0)
             {
-                await Task.Run(() => CuentaBancariaWS.actualizar(cuenta, idUsuarioAccion));
+                await CuentaBancariaWS.actualizarAsync(cuenta, idUsuarioAccion);
             }
             else
             {
-                await Task.Run(() => CuentaBancariaWS.insertar(cuenta, idUsuarioAccion));
+                await CuentaBancariaWS.insertarAsync(cuenta, idUsuarioAccion);
             }
 
-            var actualizadas = await Task.Run(() =>
-                new List<CuentaBancaria>(CuentaBancariaWS.listar()
-                    .Where(c => c.AreaAdministradora?.AreaID == Area.AreaID)));
+            var actualizadas = (await CuentaBancariaWS.listarAsync())
+                .Where(c => c.AreaAdministradora?.AreaID == Area.AreaID).ToList();
             Area.CuentasBancarias = actualizadas;
             MostrarEditorCuenta = false;
             CuentaEnEdicion = new CuentaBancaria();
@@ -448,7 +470,7 @@
         {
             try
             {
-                var cajas = await Task.Run(() => CajaChicaWS.listarPorCuentaBancaria(cuenta.IdCuenta));
+                var cajas = await CajaChicaWS.listarPorCuentaBancariaAsync(cuenta.IdCuenta);
                 CajasChicasCache[cuenta.IdCuenta] = cajas ?? new List<CajaChica>();
             }
             catch
@@ -487,9 +509,8 @@
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => CajaChicaWS.eliminar(caja.IdFondo, idUsuarioAccion));
-            CajasChicasCache[CuentaSeleccionada.IdCuenta] = await Task.Run(() =>
-                CajaChicaWS.listarPorCuentaBancaria(CuentaSeleccionada.IdCuenta) ?? new List<CajaChica>());
+            await CajaChicaWS.eliminarAsync(caja.IdFondo, idUsuarioAccion);
+            CajasChicasCache[CuentaSeleccionada.IdCuenta] = await CajaChicaWS.listarPorCuentaBancariaAsync(CuentaSeleccionada.IdCuenta) ?? new List<CajaChica>();
         }
         catch (Exception ex)
         {
@@ -506,9 +527,8 @@
         {
             caja.Estado = "ACTIVO";
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await Task.Run(() => CajaChicaWS.actualizar(caja, idUsuarioAccion));
-            CajasChicasCache[CuentaSeleccionada.IdCuenta] = await Task.Run(() =>
-                CajaChicaWS.listarPorCuentaBancaria(CuentaSeleccionada.IdCuenta) ?? new List<CajaChica>());
+            await CajaChicaWS.actualizarAsync(caja, idUsuarioAccion);
+            CajasChicasCache[CuentaSeleccionada.IdCuenta] = await CajaChicaWS.listarPorCuentaBancariaAsync(CuentaSeleccionada.IdCuenta) ?? new List<CajaChica>();
         }
         catch (Exception ex)
         {

@@ -1,11 +1,13 @@
-namespace EconomixWS.OperacionesWS;
-
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using EconomixModel.Model;
 using EconomixWS.UsuarioWS;
 
+namespace EconomixWS.OperacionesWS;
+
 public interface IComprobantePagoWS : IWS<ComprobantePago>
 {
-    ComprobantePago? obtenerPorId(int id);
-    List<ComprobantePago> listarPorSolicitud(int idSolicitud);
-    void evaluar(int idComprobante, bool aprobar, string observacion, int idUsuarioAccion);
+    Task<ComprobantePago?> obtenerPorIdAsync(int id);
+    Task<List<ComprobantePago>> listarPorSolicitudAsync(int idSolicitud);
+    Task evaluarAsync(int idComprobante, bool aprobar, string observacion, int idUsuarioAccion);
 }
