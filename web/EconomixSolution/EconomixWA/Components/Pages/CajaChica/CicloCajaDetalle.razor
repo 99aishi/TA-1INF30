@@ -23,7 +23,7 @@
             }
         </div>
         <hr class="my-0" />
-        <div class="flex-fill overflow-auto p-3">
+        <div class="flex-fill overflow-scroll p-3">
 
             @if (!string.IsNullOrEmpty(ErrorMessage))
             {
@@ -46,7 +46,7 @@
                     <label class="form-label">Caja Chica</label>
                     <select class="form-select form-select-lg rounded-4 bg-light @(Errores.ContainsKey("CajaChica") ? "is-invalid" : "")"
                             @bind="CajaChicaSeleccionadaId"
-                            disabled="@(!EsCreacion || !PuedeEditar)">
+                            disabled="@DeshabilitarCajaChica">
                         <option value="0">Seleccione una caja chica</option>
                         @foreach (var caja in CajasChicas)
                         {
@@ -105,7 +105,7 @@
                                 <i class="bi bi-exclamation-triangle me-2"></i>
                                 El ciclo está en excepción por fin de semana.
                             </span>
-                            <button type="button" class="btn btn-sm btn-warning" @onclick="MarcarRevisado">
+                            <button type="button" class="btn btn-sm btn-outline-warning" @onclick="MarcarRevisado">
                                 Marcar como revisado
                             </button>
                         </div>
@@ -161,7 +161,7 @@
                     </button>
                     @if (MostrarGenerarRendicion)
                     {
-                        <button type="button" class="btn btn-primary" @onclick="GenerarRendicion" disabled="@ProcesandoRendicion">
+                        <button type="button" class="btn btn-outline-primary" @onclick="GenerarRendicion" disabled="@ProcesandoRendicion">
                             @(ProcesandoRendicion ? "Generando..." : "Generar Rendicion")
                         </button>
                     }
@@ -198,6 +198,7 @@
     private bool Procesando { get; set; } = false;
 
     private bool PuedeEditar => RolUsuario is "Tesorero" or "Tesoreria" or "Tesorero y Finanzas";
+    private bool DeshabilitarCajaChica => !EsCreacion || !PuedeEditar;
 
     private bool MostrarGenerarRendicion =>
         PuedeEditar &&

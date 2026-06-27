@@ -1,4 +1,4 @@
-<div class="card h-100 p-3 overflow-auto">
+<div class="card h-100 p-3 overflow-scroll">
     @foreach (var paso in Pasos.Select((p, i) => new { p, i }))
     {
         <div class="timeline-item @(paso.i == Pasos.Count - 1 ? "mb-0" : "")">

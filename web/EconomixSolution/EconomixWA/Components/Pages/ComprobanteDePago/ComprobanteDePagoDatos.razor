@@ -18,7 +18,7 @@
             }
         </div>
         <div class="col-4 mt-3">
-            <label for="TipoDocumento" class="form-label">Tipo de Documento</label>    
+            <label for="TipoDocumento" class="form-label small text-muted">Tipo de Documento</label>    
             @if (RequiereAutorizacion)
             {
                 <select class="form-select rounded-4 bg-light" disabled>
@@ -43,51 +43,51 @@
             }
         </div>
         <div class="col-4 mt-3">
-            <label for="RUC" class="form-label">RUC</label>    
+            <label for="RUC" class="form-label small text-muted">RUC</label>    
             @if (RequiereAutorizacion)
             {
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.RucProveedor" disabled>
             }
             else
             {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RucProveedor" placeholder="RUC" disabled="@(!EsEvaluacion || RequiereAutorizacion)">
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RucProveedor" placeholder="RUC" disabled="@RequiereAutorizacion">
             }
         </div>
         <div class="col-4 mt-3">
-            <label for="RazonSocial" class="form-label">Razón Social</label>    
+            <label for="RazonSocial" class="form-label small text-muted">Razón Social</label>    
             @if (RequiereAutorizacion)
             {
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.RazonSocial" disabled>
             }
             else
             {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RazonSocial" placeholder="Razón Social" disabled="@(!EsEvaluacion || RequiereAutorizacion)">
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RazonSocial" placeholder="Razón Social" disabled="@RequiereAutorizacion">
             }
         </div>
         <div class="col-4 mt-3">
-            <label for="NumeroSerial" class="form-label">Número Serial</label>    
+            <label for="NumeroSerial" class="form-label small text-muted">Número Serial</label>    
             @if (RequiereAutorizacion)
             {
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.NumeroSerial" disabled>
             }
             else
             {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.NumeroSerial" placeholder="Número Serial" disabled="@(!EsEvaluacion || RequiereAutorizacion)">
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.NumeroSerial" placeholder="Número Serial" disabled="@RequiereAutorizacion">
             }
         </div>
         <div class="col-4 mt-3">
-            <label for="FechaDeEmision" class="form-label">Fecha de Emisión</label>    
+            <label for="FechaDeEmision" class="form-label small text-muted">Fecha de Emisión</label>    
             @if (RequiereAutorizacion)
             {
                 <input type="date" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.FechaEmision?.ToString("yyyy-MM-dd")" disabled>
             }
             else
             {
-                <input type="date" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.FechaEmision" disabled="@(!EsEvaluacion || RequiereAutorizacion)">
+                <input type="date" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.FechaEmision" disabled="@RequiereAutorizacion">
             }
         </div>
         <div class="col-4 mt-3">
-            <label for="Total" class="form-label">Total</label>
+            <label for="Total" class="form-label small text-muted">Total</label>
             @if (RequiereAutorizacion)
             {
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SimboloMoneda) @Comprobante?.MontoTotal.ToString("N2")" disabled>
@@ -105,18 +105,18 @@
             }
         </div>
         <div class="col-4 mt-3">
-            <label for="Moneda" class="form-label">Moneda</label>
+            <label for="Moneda" class="form-label small text-muted">Moneda</label>
             <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@SimboloMoneda" disabled>
         </div>
         @if (!RequiereAutorizacion && (EsCreacion || EsAsociacion) && Comprobante?.IdComprobante > 0)
         {
             <div class="col-4 mt-3">
-                <label class="form-label">Nro. Comprobante</label>
+                <label class="form-label small text-muted">Nro. Comprobante</label>
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="CP-@Comprobante.IdComprobante" disabled>
             </div>
         }
         <div class="col-4 mt-3" style="margin-top: 30px;">
-            <label class="form-label">Estado</label>
+            <label class="form-label small text-muted">Estado</label>
             @if (RequiereAutorizacion)
             {
                 <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill" style="font-size: 1rem;">
@@ -140,14 +140,14 @@
             }
         </div>
         <div class="col-12 mt-3">
-            <label for="Comentario" class="form-label">Comentario</label>    
+            <label for="Comentario" class="form-label small text-muted">Comentario</label>    
             @if (RequiereAutorizacion)
             {
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.Comentario" disabled>
             }
             else
             {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.Comentario" placeholder="Por Evaluar" disabled="@(EsEvaluacion || RequiereAutorizacion)">
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.Comentario" placeholder="Por Evaluar" disabled="@EsEvaluacion">
             }
         </div>
     </div>
@@ -172,13 +172,13 @@
                     <div class="modal-body">
                         <p>El ciclo se encuentra <strong>@Comprobante?.Solicitud?.Ciclo?.Estado</strong>. Para editar este comprobante necesitas autorización de un Jefe o Tesorero (válida por 48 horas).</p>
                         <div class="mb-3">
-                            <label for="MotivoSolicitud" class="form-label">Motivo de la solicitud</label>
-                            <textarea id="MotivoSolicitud" class="form-control" rows="3" @bind="MotivoSolicitud" placeholder="Explique por qué necesita editar el comprobante..."></textarea>
+                        <label for="MotivoSolicitud" class="form-label small text-muted">Motivo de la solicitud</label>
+                        <textarea id="MotivoSolicitud" class="form-control rounded-4 bg-light" rows="3" @bind="MotivoSolicitud" placeholder="Explique por qué necesita editar el comprobante..."></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @onclick="CerrarModalSolicitud">Cancelar</button>
-                        <button type="button" class="btn btn-primary" @onclick="SolicitarAutorizacion" disabled="@Solicitando">
+                        <button type="button" class="btn btn-outline-secondary" @onclick="CerrarModalSolicitud">Cancelar</button>
+                        <button type="button" class="btn btn-outline-primary" @onclick="SolicitarAutorizacion" disabled="@Solicitando">
                             @if (Solicitando)
                             {
                                 <span class="spinner-border spinner-border-sm me-1"></span>
@@ -229,7 +229,7 @@
             }
             else if (RequiereAutorizacion)
             {
-                <button type="button" class="btn btn-primary" disabled="@Procesando"
+                <button type="button" class="btn btn-outline-primary" disabled="@Procesando"
                         @onclick="AbrirModalSolicitud">
                     <i class="bi bi-key-fill me-1"></i> @(Procesando ? "Procesando..." : "Solicitar autorización")
                 </button>
