@@ -1,8 +1,9 @@
+namespace EconomixWS.UsuarioWS;
+
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using EconomixModel.Model;
 
-namespace EconomixWS.UsuarioWS;
 
 public interface IAuditoriaWS
 {

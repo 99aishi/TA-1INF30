@@ -247,6 +247,32 @@ Every action button uses `disabled="@Procesando"`:
 
 Pattern: `private bool Procesando { get; set; } = false;` set to `true` at method entry, `false` in `finally`.
 
+### Login Loading State
+
+The login form uses a JavaScript-based loading animation because the form POST causes a full page navigation (Blazor Server disconnects during POST). A Blazor `Procesando` pattern cannot be used here.
+
+```html
+<form action="/auth/login" method="post" onsubmit="showLoginLoading(event)">
+    <!-- ... form fields ... -->
+    <button id="login-btn" type="submit" class="btn btn-primary">
+        Iniciar sesion
+    </button>
+</form>
+
+<script>
+    function showLoginLoading(e) {
+        e.preventDefault();
+        var btn = document.getElementById('login-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Iniciando sesión...';
+        var form = e.target;
+        setTimeout(function () { form.submit(); }, 60);
+    }
+</script>
+```
+
+The `e.preventDefault()` stops the immediate submit, changes the button state, then `setTimeout` with 60ms delay forces a browser repaint before `form.submit()` actually sends the POST. Without this delay, the browser blocks UI updates during the navigation.
+
 ### Approval Workflow Buttons
 
 Approval actions use **outline** variants:
@@ -615,10 +641,10 @@ Displays: `"lunes, 26 jun 2026 · 14:30:15"` (Spanish locale, updates every seco
 
 | Role | Visible Pages |
 |------|---------------|
-| Administrador | Dashboard, Areas, Roles, Usuarios, Cuentas Bancarias, Caja Chica, Solicitudes, Transacciones, Comprobantes, Rendiciones, Monedas |
-| Jefe | Dashboard, Mis Solicitudes, Solicitudes, Comprobantes, Rendiciones, Transacciones |
-| Empleado | Dashboard, Mis Solicitudes, Mis Comprobantes, Comprobantes |
-| Tesoreria | Dashboard, Caja Chica, Transacciones, Solicitudes, Comprobantes, Rendiciones |
+| Administrador | Dashboard, Areas, Roles, Usuarios, Cuentas Bancarias, Caja Chica, Solicitudes de Gasto, Transacciones, Comprobantes de Pago, Rendiciones, Monedas |
+| Jefe | Dashboard, Solicitudes de Gasto, Comprobantes de Pago, Rendiciones, Transacciones |
+| Empleado | Dashboard, Mis Solicitudes de Gasto, Mis Comprobantes de Pago |
+| Tesoreria | Dashboard, Caja Chica, Transacciones, Solicitudes de Gasto, Comprobantes de Pago, Rendiciones |
 
 ### Routing Conventions
 

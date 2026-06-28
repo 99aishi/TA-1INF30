@@ -156,7 +156,7 @@ public class SolicitudGastoDAOImpl implements ISolicitudGastoDAO {
         int id = rs.getInt("id_solicitud_gasto");
         SolicitudGasto solicitud = getOrCreate(cache, SolicitudGasto.class, id, () -> new SolicitudGasto());
         solicitud.setIdSolicitudGasto(id);
-        solicitud.setFechaSolicitud(rs.getDate("fecha_solicitud"));
+        solicitud.setFechaSolicitud(rs.getTimestamp("fecha_solicitud"));
         solicitud.setMontoSolicitado(rs.getDouble("monto_solicitado"));
 
         Moneda moneda = mapearMoneda(rs, "mon_id_moneda", "mon_", cache);
@@ -243,8 +243,8 @@ public class SolicitudGastoDAOImpl implements ISolicitudGastoDAO {
         CicloCajaChica ciclo = getOrCreate(cache, CicloCajaChica.class, id, () -> new CicloCajaChica());
         ciclo.setIdCicloCaja(id);
         ciclo.setNumeroSemana(rs.getInt(prefijo + "numero_semana"));
-        ciclo.setFechaApertura(rs.getDate(prefijo + "fecha_apertura"));
-        ciclo.setFechaCierre(rs.getDate(prefijo + "fecha_cierre"));
+        ciclo.setFechaApertura(rs.getTimestamp(prefijo + "fecha_apertura"));
+        ciclo.setFechaCierre(rs.getTimestamp(prefijo + "fecha_cierre"));
         ciclo.setSaldoInicial(rs.getDouble(prefijo + "monto_saldo_inicial"));
         ciclo.setTotalGastado(rs.getDouble(prefijo + "monto_total_gastado"));
         String estadoCiclo = rs.getString(prefijo + "estado_ciclo");

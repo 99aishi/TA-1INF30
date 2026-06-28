@@ -1,8 +1,10 @@
+@inject EconomixWS.UsuarioWS.IAreaWS AreaWS
+
 <div class="card rounded-4 p-3 mb-3">
     <div class="row g-2 align-items-end">
-        <div class="col-12 col-md-3">
+        <div class="col-12 @(MostrarFiltroArea ? "col-md-2" : "col-md-3")">
             <label class="form-label small text-muted">Estado</label>
-            <select class="form-select rounded-4" @bind="FiltroEstado">
+            <select class="form-select rounded-4 bg-light" @bind="FiltroEstado">
                 <option value="Todas">Todas</option>
                 <option value="EN_ESPERA">En Espera</option>
                 <option value="OBSERVADO">Observado</option>
@@ -11,19 +13,19 @@
                 <option value="ANULADO">Anulado</option>
             </select>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 @(MostrarFiltroArea ? "col-md-3" : "col-md-4")">
             <label class="form-label small text-muted">Fecha desde</label>
-            <input type="date" class="form-control rounded-4" @bind="FiltroFechaInicio">
+            <input type="date" class="form-control rounded-4 bg-light" @bind="FiltroFechaInicio">
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 @(MostrarFiltroArea ? "col-md-3" : "col-md-4")">
             <label class="form-label small text-muted">Fecha hasta</label>
-            <input type="date" class="form-control rounded-4" @bind="FiltroFechaFin">
+            <input type="date" class="form-control rounded-4 bg-light" @bind="FiltroFechaFin">
         </div>
         @if (MostrarFiltroArea)
         {
             <div class="col-12 col-md-3">
                 <label class="form-label small text-muted">Area</label>
-                <select class="form-select rounded-4" @bind="FiltroAreaId">
+                <select class="form-select rounded-4 bg-light" @bind="FiltroAreaId">
                     <option value="0">Todas</option>
                     @foreach (var area in Areas)
                     {
@@ -32,6 +34,12 @@
                 </select>
             </div>
         }
+        <div class="col-12 col-md-1 d-grid">
+            <label class="form-label small text-muted">&nbsp;</label>
+            <button type="button" class="btn btn-outline-secondary rounded-4" @onclick="Limpiar">
+                Limpiar
+            </button>
+        </div>
     </div>
 </div>
 
@@ -50,4 +58,23 @@
 
     [Parameter] public bool MostrarFiltroArea { get; set; } = true;
     [Parameter] public List<Area> Areas { get; set; } = new();
+
+    [Parameter] public EventCallback OnLimpiar { get; set; }
+
+    private async Task Limpiar()
+    {
+        FiltroEstado = "Todas";
+        await FiltroEstadoChanged.InvokeAsync("Todas");
+
+        FiltroFechaInicio = null;
+        await FiltroFechaInicioChanged.InvokeAsync(null);
+
+        FiltroFechaFin = null;
+        await FiltroFechaFinChanged.InvokeAsync(null);
+
+        FiltroAreaId = 0;
+        await FiltroAreaIdChanged.InvokeAsync(0);
+
+        await OnLimpiar.InvokeAsync();
+    }
 }

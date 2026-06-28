@@ -211,6 +211,28 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         if(fecha.before(ciclo.getFechaApertura()) || (ciclo.getFechaCierre() != null && fecha.after(ciclo.getFechaCierre()))){
             throw new Exception("La fecha de la solicitud no esta dentro del Ciclo Caja Chica indicado");
         }
+
+        validarHorarioLaboral(fecha);
+    }
+
+    public void validarHorarioLaboral(Date fecha) throws Exception {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(fecha);
+        int hour = cal.get(Calendar.HOUR_OF_DAY);
+        int minute = cal.get(Calendar.MINUTE);
+        int dayOfWeek = cal.get(Calendar.DAY_OF_WEEK);
+
+        if (dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY) {
+            throw new Exception("No se pueden registrar solicitudes fuera de dias laborales (lunes a viernes).");
+        }
+
+        int timeInMinutes = hour * 60 + minute;
+        int startMinutes = 8 * 60;      // 08:00
+        int endMinutes = 18 * 60;       // 18:00
+
+        if (timeInMinutes < startMinutes || timeInMinutes >= endMinutes) {
+            throw new Exception("No se pueden registrar solicitudes fuera del horario laboral (8:00 AM - 6:00 PM).");
+        }
     }
 
     public void validarInvolucrados(SolicitudGasto solicitudGasto) throws Exception{

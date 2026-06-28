@@ -26,6 +26,14 @@
                     </div>
                 }
 
+                @if (EsCreacion && !HorarioHabilitado)
+                {
+                    <div class="alert alert-warning mt-3" role="alert">
+                        <i class="bi bi-clock-history me-2"></i>
+                        @MensajeHorario
+                    </div>
+                }
+
                 <div class="row">
                     <div class="col-6 mt-3">
                         <label class="form-label">Área</label>
@@ -283,7 +291,9 @@
     private bool ProcesandoComprobante { get; set; }
 
     private bool EsObservada => SolicitudEdicion?.Estado?.Equals("OBSERVADO", StringComparison.OrdinalIgnoreCase) == true;
-    private bool PuedeEditar => EsCreacion || EsObservada;
+    private bool PuedeEditar => (EsCreacion || EsObservada) && HorarioHabilitado;
+    private bool HorarioHabilitado { get; set; } = true;
+    private string MensajeHorario { get; set; } = string.Empty;
     private bool EsRendicionObservada => SolicitudEdicion?.Ciclo?.Rendicion?.Estado?.Equals("OBSERVADO", StringComparison.OrdinalIgnoreCase) == true;
 
     private bool PuedeAgregarComprobante => SolicitudEdicion?.Estado?.Equals("APROBADO", StringComparison.OrdinalIgnoreCase) == true
@@ -430,6 +440,10 @@
 
         if (EsCreacion && string.IsNullOrEmpty(ErrorMessage))
         {
+            var (habilitado, mensaje) = await SolicitudGastoWS.obtenerHorarioHabilitadoAsync();
+            HorarioHabilitado = habilitado;
+            MensajeHorario = mensaje;
+
             if (EmpleadoActual == null)
                 ErrorMessage = "No se pudo cargar la información del empleado. Verifique que el servidor backend esté activo.";
             else if (Monedas.Count == 0)

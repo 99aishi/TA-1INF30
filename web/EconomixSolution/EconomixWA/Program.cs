@@ -56,7 +56,7 @@ builder.Services.AddHttpClient<IUsuarioWS, UsuarioWS>(
 );
 
 builder.Services.AddHttpClient<IAreaWS, AreaWSImpl>(
-    client => client.BaseAddress = new Uri(baseURL)    
+    client => client.BaseAddress = new Uri(baseURL)
 );
 
 builder.Services.AddHttpClient<IRolWS, RolWSImpl>(
@@ -143,6 +143,11 @@ app.MapPost("/auth/login", async (HttpContext context, IUsuarioWS usuarioWS) =>
     {
         usuarioEncontrado = await usuarioWS.ValidarCredencialesAsync(request);
     }
+    catch (LoginException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden
+        && ex.Message.Contains("inactivo", StringComparison.OrdinalIgnoreCase))
+    {
+        return Results.Redirect("/?error=inactive" + (string.IsNullOrEmpty(returnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(returnUrl)}"));
+    }
     catch (LoginException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
     {
         return Results.Redirect("/?error=blocked" + (string.IsNullOrEmpty(returnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(returnUrl)}"));
@@ -157,14 +162,14 @@ app.MapPost("/auth/login", async (HttpContext context, IUsuarioWS usuarioWS) =>
         return Results.Redirect("/?error=1" + (string.IsNullOrEmpty(returnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(returnUrl)}"));
     }
 
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier, usuarioEncontrado.UsuarioID.ToString()),
-                    new Claim(ClaimTypes.Email, usuarioEncontrado.Correo),
-                    new Claim("Nombre", usuarioEncontrado.Nombres),
-                    new Claim("ApellidoPaterno", usuarioEncontrado.ApellidoPaterno),
-                    new Claim("ApellidoMaterno", usuarioEncontrado.ApellidoMaterno),
-                };
+    var claims = new List<Claim>
+    {
+        new (ClaimTypes.NameIdentifier, usuarioEncontrado.UsuarioID.ToString()),
+        new (ClaimTypes.Email, usuarioEncontrado.Correo),
+        new ("Nombre", usuarioEncontrado.Nombres),
+        new ("ApellidoPaterno", usuarioEncontrado.ApellidoPaterno),
+        new("ApellidoMaterno", usuarioEncontrado.ApellidoMaterno),
+    };
 
     if (usuarioEncontrado is Administrador)
     {

@@ -1,6 +1,6 @@
 <div class="card rounded-4 p-3 mb-3">
     <div class="row g-2 align-items-end">
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-2">
             <label class="form-label small text-muted">Nombre Caja Chica</label>
             <input type="text" class="form-control bg-light rounded-4"
                    placeholder="Buscar..."
@@ -16,7 +16,7 @@
                 }
             </select>
         </div>
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-2">
             <label class="form-label small text-muted">Cuenta bancaria</label>
             <select class="form-select bg-light rounded-4" @bind="FiltroCuentaBancariaId">
                 <option value="0">Todas</option>
@@ -26,7 +26,7 @@
                 }
             </select>
         </div>
-        <div class="col-6 col-md-2">
+        <div class="col-12 col-md-1">
             <label class="form-label small text-muted">Estado</label>
             <select class="form-select bg-light rounded-4" @bind="FiltroEstado">
                 <option value="Todos">Todos</option>
@@ -36,21 +36,19 @@
                 <option value="EN_EXCEPCION">En excepción</option>
             </select>
         </div>
-        <div class="col-6 col-md-1 d-grid">
+        <div class="col-12 col-md-2">
+            <label class="form-label small text-muted">Apertura desde</label>
+            <input type="date" class="form-control bg-light rounded-4" @bind="FiltroFechaDesde" />
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label small text-muted">Apertura hasta</label>
+            <input type="date" class="form-control bg-light rounded-4" @bind="FiltroFechaHasta" />
+        </div>
+        <div class="col-12 col-md-1 d-grid">
             <label class="form-label small text-muted">&nbsp;</label>
             <button type="button" class="btn btn-outline-secondary rounded-4" @onclick="Limpiar">
                 Limpiar
             </button>
-        </div>
-    </div>
-    <div class="row g-2 align-items-end mt-2">
-        <div class="col-6 col-md-3">
-            <label class="form-label small text-muted">Fecha apertura desde</label>
-            <input type="date" class="form-control bg-light rounded-4" @bind="FiltroFechaDesde" />
-        </div>
-        <div class="col-6 col-md-3">
-            <label class="form-label small text-muted">Fecha apertura hasta</label>
-            <input type="date" class="form-control bg-light rounded-4" @bind="FiltroFechaHasta" />
         </div>
     </div>
 </div>

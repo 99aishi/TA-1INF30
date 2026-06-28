@@ -166,4 +166,23 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
             return null;
         return JsonSerializer.Deserialize<SolicitudGasto>(json, _jsonOptions);
     }
+
+    public async Task<(bool habilitado, string mensaje)> obtenerHorarioHabilitadoAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("HorarioHabilitado");
+            var json = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(json) || json == "null")
+                return (false, "No se pudo verificar el horario.");
+            var doc = JsonDocument.Parse(json);
+            var habilitado = doc.RootElement.GetProperty("habilitado").GetBoolean();
+            var mensaje = doc.RootElement.GetProperty("mensaje").GetString() ?? "";
+            return (habilitado, mensaje);
+        }
+        catch
+        {
+            return (false, "No se pudo verificar el horario con el servidor.");
+        }
+    }
 }
