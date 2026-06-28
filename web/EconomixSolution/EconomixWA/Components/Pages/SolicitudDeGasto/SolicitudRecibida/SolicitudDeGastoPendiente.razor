@@ -25,9 +25,19 @@
         </div>
         
         <div class="col-5 d-flex justify-content-end gap-1 flex-wrap">
-            <button type="button" class="btn btn-outline-success btn-sm px-2 py-1 rounded-3" @onclick="OnAceptarClick">Aceptar</button>
-            <button type="button" class="btn btn-outline-warning btn-sm px-2 py-1 rounded-3" @onclick="OnObservarClick">Observar</button>
-            <button type="button" class="btn btn-outline-danger btn-sm px-2 py-1 rounded-3" @onclick="OnRechazarClick">Rechazar</button>
+            @if (Procesando)
+            {
+                <button type="button" class="btn btn-outline-secondary btn-sm px-3 py-1 rounded-3" disabled>
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Procesando...
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-outline-success btn-sm px-2 py-1 rounded-3" @onclick="OnAceptarClick">Aceptar</button>
+                <button type="button" class="btn btn-outline-warning btn-sm px-2 py-1 rounded-3" @onclick="OnObservarClick">Observar</button>
+                <button type="button" class="btn btn-outline-danger btn-sm px-2 py-1 rounded-3" @onclick="OnRechazarClick">Rechazar</button>
+            }
         </div>
         
     </div>
@@ -45,7 +55,47 @@
     [Parameter] public EventCallback OnObservar { get; set; }
     [Parameter] public EventCallback OnRechazar { get; set; }
 
-    private async Task OnAceptarClick() => await OnAceptar.InvokeAsync();
-    private async Task OnObservarClick() => await OnObservar.InvokeAsync();
-    private async Task OnRechazarClick() => await OnRechazar.InvokeAsync();
+    private bool Procesando { get; set; } = false;
+
+    private async Task OnAceptarClick()
+    {
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            await OnAceptar.InvokeAsync();
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+
+    private async Task OnObservarClick()
+    {
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            await OnObservar.InvokeAsync();
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+
+    private async Task OnRechazarClick()
+    {
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            await OnRechazar.InvokeAsync();
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
 }
