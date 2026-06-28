@@ -4,6 +4,7 @@ import pe.edu.pucp.economix.tesoreria.ibo.ITipoCambioBO;
 import pe.edu.pucp.economix.tesoreria.idao.ITipoCambioDAO;
 import pe.edu.pucp.economix.tesoreria.daoi.TipoCambioDAOImpl;
 import pe.edu.pucp.economix.tesoreria.model.TipoCambio;
+import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
 import java.sql.Date;
 import java.util.List;
@@ -90,6 +91,31 @@ public class TipoCambioBOImpl implements ITipoCambioBO {
         if (fecha == null) {
             throw new Exception("La fecha es obligatoria.");
         }
-        return tipoCambioDAO.buscarPorMonedasYFecha(idMonedaOrigen, idMonedaDestino, new Date(fecha.getTime()));
+        
+        // 1. Intentar buscar tipo de cambio directo
+        TipoCambio tc = tipoCambioDAO.buscarPorMonedasYFecha(idMonedaOrigen, idMonedaDestino, new Date(fecha.getTime()));
+        if (tc != null) {
+            return tc;
+        }
+        
+        // 2. Intentar buscar tipo de cambio inverso
+        TipoCambio tcInverse = tipoCambioDAO.buscarPorMonedasYFecha(idMonedaDestino, idMonedaOrigen, new Date(fecha.getTime()));
+        if (tcInverse != null && tcInverse.getValor() > 0) {
+            TipoCambio tcCalculado = new TipoCambio();
+            tcCalculado.setIdTipoCambio(tcInverse.getIdTipoCambio());
+            
+            Moneda mo = new Moneda();
+            mo.setIdMoneda(idMonedaOrigen);
+            Moneda md = new Moneda();
+            md.setIdMoneda(idMonedaDestino);
+            
+            tcCalculado.setMonedaOrigen(mo);
+            tcCalculado.setMonedaDestino(md);
+            tcCalculado.setValor(1.0 / tcInverse.getValor());
+            tcCalculado.setFecha(tcInverse.getFecha());
+            return tcCalculado;
+        }
+        
+        return null;
     }
 }

@@ -9,6 +9,7 @@ import pe.edu.pucp.economix.rrhh.daoi.UsuarioDAOImpl;
 import pe.edu.pucp.economix.rrhh.idao.IUsuarioDAO;
 import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
 import pe.edu.pucp.economix.rrhh.model.Usuario;
+import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
 
 public class UsuarioBOImpl implements IUsuarioBO {
     private final IUsuarioDAO usuarioDAO;

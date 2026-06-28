@@ -27,20 +27,20 @@
         </div>
     }
 
-    <div class="d-flex flex-column flex-fill overflow-hidden">
-        <ComprobantePagoSearchBar @bind-FiltroTexto="FiltroTexto"
-                                  @bind-FiltroTipo="FiltroTipo"
-                                  @bind-FiltroEstado="FiltroEstado"
-                                  @bind-FiltroMontoMin="FiltroMontoMin"
-                                  @bind-FiltroMontoMax="FiltroMontoMax"
-                                  @bind-FiltroFechaInicio="FiltroFechaInicio"
-                                  @bind-FiltroFechaFin="FiltroFechaFin" />
+    <ComprobantePagoSearchBar @bind-FiltroTexto="FiltroTexto"
+                              @bind-FiltroTipo="FiltroTipo"
+                              @bind-FiltroEstado="FiltroEstado"
+                              @bind-FiltroMontoMin="FiltroMontoMin"
+                              @bind-FiltroMontoMax="FiltroMontoMax"
+                              @bind-FiltroFechaInicio="FiltroFechaInicio"
+                              @bind-FiltroFechaFin="FiltroFechaFin" />
 
+    <div class="d-flex flex-column flex-fill overflow-hidden">
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
 
             @if (MostrarDetalle)
             {
-                <div class="col-6 h-100">
+                <div class="col-6 h-100 d-flex flex-column overflow-hidden">
                     <div class="card rounded-4 p-3 h-100 overflow-scroll">
                         @if (Cargando) { <p class="text-muted text-center mt-5">Cargando comprobantes...</p> }
                         else if (ComprobantesFiltrados.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ningún comprobante coincide con los filtros" : "No tienes comprobantes registrados")</p> }
@@ -53,7 +53,7 @@
             }
             else
             {
-                <div class="col-12 h-100">
+                <div class="col-12 h-100 d-flex flex-column overflow-hidden">
                     <div class="card rounded-4 p-3 h-100 overflow-scroll">
                         @if (Cargando) { <p class="text-muted text-center mt-5">Cargando comprobantes...</p> }
                         else if (ComprobantesFiltrados.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ningún comprobante coincide con los filtros" : "No tienes comprobantes registrados")</p> }

@@ -12,4 +12,5 @@ public interface ITransaccionDAO {
     java.util.List<Transaccion> listarTodas() throws SQLException;
     java.util.List<Transaccion> listarActivas() throws SQLException;
     java.util.List<Transaccion> listarPorJefe(int idJefe) throws SQLException;
+    java.util.List<Transaccion> listarPorEmpleado(int idEmpleado) throws SQLException;
 }

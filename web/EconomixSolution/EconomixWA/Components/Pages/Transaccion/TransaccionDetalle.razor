@@ -53,13 +53,20 @@
                 </div>
                 <div class="col-6 p-2">
                     <label class="form-label small">Cuenta Destino</label>
-                    <select class="form-select form-select-sm rounded-4" @bind="cuentaDestinoId">
-                        <option value="">Seleccione una cuenta</option>
-                        @foreach (var cuenta in CuentasBancarias)
-                        {
-                            <option value="@cuenta.IdCuenta">@cuenta.NombreBanco — @cuenta.NumeroBancario @((!string.IsNullOrEmpty(cuenta.Cci)) ? $"CCI {cuenta.Cci}" : "")</option>
-                        }
-                    </select>
+                    @if (Transaccion.TipoTransaccion == "DEVOLUCION_SOBRANTE")
+                    {
+                        <input type="text" class="form-control form-control-sm rounded-4 bg-light" value="@(Transaccion.CuentaDestino != null ? $"{Transaccion.CuentaDestino.NombreBanco} — N° {Transaccion.CuentaDestino.NumeroBancario}" : "-")" disabled="true" />
+                    }
+                    else
+                    {
+                        <select class="form-select form-select-sm rounded-4" @bind="cuentaDestinoId">
+                            <option value="">Seleccione una cuenta</option>
+                            @foreach (var cuenta in CuentasBancarias)
+                            {
+                                <option value="@cuenta.IdCuenta">@cuenta.NombreBanco — @cuenta.NumeroBancario @((!string.IsNullOrEmpty(cuenta.Cci)) ? $"CCI {cuenta.Cci}" : "")</option>
+                            }
+                        </select>
+                    }
                 </div>
                 <div class="col-12 p-2">
                     <label class="form-label small">Cuenta Origen (Caja Chica)</label>
@@ -171,7 +178,19 @@
 
     private void DeterminarModo()
     {
-        if (Transaccion == null || !EsJefe)
+        if (Transaccion == null)
+        {
+            EsModoEdicion = false;
+            return;
+        }
+
+        var usuario = UsuarioWS.GetCurrentUser();
+        bool esSuDevolucion = usuario != null 
+            && Transaccion.Beneficiario?.UsuarioID == usuario.UsuarioID 
+            && Transaccion.TipoTransaccion == "DEVOLUCION_SOBRANTE"
+            && Transaccion.EstadoTransaccion == "REGISTRADA";
+
+        if (!EsJefe && !esSuDevolucion)
         {
             EsModoEdicion = false;
             return;
@@ -230,9 +249,14 @@
 
             Transaccion.Fecha = DateTime.Parse(fechaInput);
 
-            if (cuentaDestinoId > 0)
+            if (cuentaDestinoId > 0 && Transaccion.TipoTransaccion != "DEVOLUCION_SOBRANTE")
             {
                 Transaccion.CuentaDestino = CuentasBancarias.FirstOrDefault(c => c.IdCuenta == cuentaDestinoId);
+            }
+
+            if (Transaccion.TipoTransaccion == "DEVOLUCION_SOBRANTE" && Transaccion.Beneficiario?.UsuarioID == usuario.UsuarioID)
+            {
+                Transaccion.EstadoTransaccion = "COMPLETADA";
             }
 
             await TransaccionWS.actualizarAsync(Transaccion, usuario.UsuarioID);

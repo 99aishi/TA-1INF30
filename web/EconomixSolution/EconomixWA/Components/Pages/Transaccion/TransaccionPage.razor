@@ -21,15 +21,15 @@
         </div>
     }
 
-    <div class="d-flex flex-column flex-fill overflow-hidden">
-        <TransaccionSearchBar @bind-FiltroBeneficiario="FiltroBeneficiario"
-                              @bind-FiltroMedio="FiltroMedio"
-                              @bind-FiltroTipo="FiltroTipo"
-                              @bind-FiltroMontoMin="FiltroMontoMin"
-                              @bind-FiltroMontoMax="FiltroMontoMax"
-                              @bind-FiltroFechaInicio="FiltroFechaInicio"
-                              @bind-FiltroFechaFin="FiltroFechaFin" />
+    <TransaccionSearchBar @bind-FiltroBeneficiario="FiltroBeneficiario"
+                          @bind-FiltroMedio="FiltroMedio"
+                          @bind-FiltroTipo="FiltroTipo"
+                          @bind-FiltroMontoMin="FiltroMontoMin"
+                          @bind-FiltroMontoMax="FiltroMontoMax"
+                          @bind-FiltroFechaInicio="FiltroFechaInicio"
+                          @bind-FiltroFechaFin="FiltroFechaFin" />
 
+    <div class="d-flex flex-column flex-fill overflow-hidden">
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
             
             @if (MuestraDetalle)
@@ -154,6 +154,10 @@
             if (usuario is Empleado emp && emp.RolFlujo == RolFlujo.JEFE_AREA)
             {
                 Transacciones = await TransaccionWS.listarPorJefeAsync(usuario.UsuarioID);
+            }
+            else if (usuario is Empleado)
+            {
+                Transacciones = await TransaccionWS.listarPorEmpleadoAsync(usuario.UsuarioID);
             }
             else
             {

@@ -1,4 +1,4 @@
-﻿@inject NavigationManager Navigation
+@inject NavigationManager Navigation
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-row">
@@ -25,27 +25,30 @@
     {
         Navigation.LocationChanged += (s, e) => StateHasChanged();
 
-        switch (UsuarioCategoria)
+        string categoria = UsuarioCategoria?.Trim() ?? "";
+        if (categoria.Equals("Administrador", StringComparison.OrdinalIgnoreCase))
         {
-            case "Administrador":
-                opcionesMenu = new List<String>() { "Dashboard", "Areas", "Roles", "Usuarios", "Cuentas Bancarias", "Caja Chica", "Solicitudes de Gasto", "Transacciones", "Comprobantes de Pago", "Rendiciones", "Monedas" };
-                break;
-            case "Jefe":
-            case "Jefe de Área":
-            case "Jefe de Area":
-                opcionesMenu = new List<String>() { "Dashboard", "Solicitudes de Gasto", "Comprobantes de Pago", "Rendiciones", "Transacciones"};
-                break;
-            case "Empleado":
-                opcionesMenu = new List<String>() { "Dashboard", "Mis Solicitudes de Gasto", "Mis Comprobantes de Pago" };
-                break;
-            case "Tesoreria":
-            case "Tesorero":
-            case "Tesorero y Finanzas":
-                opcionesMenu = new List<String>() { "Dashboard", "Caja Chica", "Transacciones", "Solicitudes de Gasto", "Comprobantes de Pago", "Rendiciones" };
-                break;
-            default:
-                opcionesMenu = new List<String> { "Dashboard" };
-                break;
+            opcionesMenu = new List<String>() { "Dashboard", "Areas", "Roles", "Usuarios", "Cuentas Bancarias", "Caja Chica", "Solicitudes de Gasto", "Transacciones", "Comprobantes de Pago", "Rendiciones", "Monedas" };
+        }
+        else if (categoria.Equals("Jefe", StringComparison.OrdinalIgnoreCase) || 
+                 categoria.Equals("Jefe de Área", StringComparison.OrdinalIgnoreCase) || 
+                 categoria.Equals("Jefe de Area", StringComparison.OrdinalIgnoreCase))
+        {
+            opcionesMenu = new List<String>() { "Dashboard", "Mis Solicitudes de Gasto", "Solicitudes de Gasto", "Comprobantes de Pago", "Rendiciones", "Transacciones" };
+        }
+        else if (categoria.Equals("Empleado", StringComparison.OrdinalIgnoreCase))
+        {
+            opcionesMenu = new List<String>() { "Dashboard", "Mis Solicitudes de Gasto", "Mis Comprobantes de Pago", "Comprobantes de Pago", "Transacciones" };
+        }
+        else if (categoria.Equals("Tesoreria", StringComparison.OrdinalIgnoreCase) || 
+                 categoria.Equals("Tesorero", StringComparison.OrdinalIgnoreCase) || 
+                 categoria.Equals("Tesorero y Finanzas", StringComparison.OrdinalIgnoreCase))
+        {
+            opcionesMenu = new List<String>() { "Dashboard", "Caja Chica", "Transacciones", "Solicitudes de Gasto", "Comprobantes de Pago", "Rendiciones" };
+        }
+        else
+        {
+            opcionesMenu = new List<String> { "Dashboard" };
         }
     }
 

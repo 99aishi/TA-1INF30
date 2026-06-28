@@ -18,6 +18,17 @@ import pe.edu.pucp.economix.tesoreria.model.Moneda;
 import java.util.Date;
 import java.util.List;
 
+import pe.edu.pucp.economix.config.DBManager;
+
+import pe.edu.pucp.economix.operaciones.idao.ITransaccionDAO;
+import pe.edu.pucp.economix.operaciones.daoi.TransaccionDAOImpl;
+import pe.edu.pucp.economix.operaciones.model.Transaccion;
+import pe.edu.pucp.economix.operaciones.model.enums.TipoTransaccion;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoTransaccion;
+import pe.edu.pucp.economix.tesoreria.idao.ICajaChicaDAO;
+import pe.edu.pucp.economix.tesoreria.daoi.CajaChicaDAOImpl;
+import pe.edu.pucp.economix.tesoreria.model.CajaChica;
+
 public class ComprobantePagoBOImpl implements IComprobantePagoBO {
     private final IComprobantePagoDAO comprobantePagoDAO;
     private final IMonedaDAO monedaDAO;
@@ -39,21 +50,62 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
     public int insertar(ComprobantePago comprobante, int idUsuarioAccion) throws Exception {
         validarIdUsuarioAccion(idUsuarioAccion);
         validar(comprobante,false);
-        return comprobantePagoDAO.insertar(comprobante, idUsuarioAccion);
+        DBManager.getDBManager().iniciarTransaccion();
+        try {
+            int id = comprobantePagoDAO.insertar(comprobante, idUsuarioAccion);
+            actualizarDevolucionSobrante(comprobante.getSolicitud().getIdSolicitudGasto(), idUsuarioAccion);
+            DBManager.getDBManager().confirmarTransaccion();
+            return id;
+        } catch (Exception ex) {
+            try {
+                DBManager.getDBManager().cancelarTransaccion();
+            } catch (Exception rollbackEx) {
+                System.err.println("Error al hacer rollback en insertar: " + rollbackEx.getMessage());
+            }
+            throw ex;
+        }
     }
 
     @Override
     public int modificar(ComprobantePago comprobante, int idUsuarioAccion) throws Exception {
         validarIdUsuarioAccion(idUsuarioAccion);
         validar(comprobante,true);
-
-        return comprobantePagoDAO.modificar(comprobante, idUsuarioAccion);
+        DBManager.getDBManager().iniciarTransaccion();
+        try {
+            int r = comprobantePagoDAO.modificar(comprobante, idUsuarioAccion);
+            actualizarDevolucionSobrante(comprobante.getSolicitud().getIdSolicitudGasto(), idUsuarioAccion);
+            DBManager.getDBManager().confirmarTransaccion();
+            return r;
+        } catch (Exception ex) {
+            try {
+                DBManager.getDBManager().cancelarTransaccion();
+            } catch (Exception rollbackEx) {
+                System.err.println("Error al hacer rollback en modificar: " + rollbackEx.getMessage());
+            }
+            throw ex;
+        }
     }
 
     @Override
     public int eliminar(int id, int idUsuarioAccion) throws Exception {
         validarIdUsuarioAccion(idUsuarioAccion);
-        return comprobantePagoDAO.eliminar(id, idUsuarioAccion);
+        DBManager.getDBManager().iniciarTransaccion();
+        try {
+            ComprobantePago comprobante = comprobantePagoDAO.buscarPorId(id);
+            int r = comprobantePagoDAO.eliminar(id, idUsuarioAccion);
+            if (comprobante != null && comprobante.getSolicitud() != null) {
+                actualizarDevolucionSobrante(comprobante.getSolicitud().getIdSolicitudGasto(), idUsuarioAccion);
+            }
+            DBManager.getDBManager().confirmarTransaccion();
+            return r;
+        } catch (Exception ex) {
+            try {
+                DBManager.getDBManager().cancelarTransaccion();
+            } catch (Exception rollbackEx) {
+                System.err.println("Error al hacer rollback en eliminar: " + rollbackEx.getMessage());
+            }
+            throw ex;
+        }
     }
 
     @Override
@@ -238,6 +290,68 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         // La observación se almacena en el nombre del archivo comprobante como comentario temporal
         // o se ignora si no hay campo. Se deja para extensión futura.
         return comprobantePagoDAO.modificar(comprobante, idUsuarioAccion);
+    }
+
+    private void actualizarDevolucionSobrante(int idSolicitudGasto, int idUsuarioAccion) throws Exception {
+        SolicitudGasto soli = solicitudGastoDAO.buscarPorId(idSolicitudGasto);
+        if (soli == null) return;
+
+        List<ComprobantePago> comprobantes = comprobantePagoDAO.listarPorSolicitud(idSolicitudGasto);
+        double sumaComprobantes = 0;
+        int countComprobantes = 0;
+        for (ComprobantePago cp : comprobantes) {
+            if (cp.getEstado() != EstadoComprobante.ANULADO) {
+                sumaComprobantes += cp.getTotal();
+                countComprobantes++;
+            }
+        }
+
+        ITransaccionDAO transaccionDAO = new TransaccionDAOImpl();
+        List<Transaccion> transacciones = transaccionDAO.listarTodas();
+        Transaccion devolucion = null;
+        for (Transaccion t : transacciones) {
+            if (t.getIdSolicitudGasto() == idSolicitudGasto 
+                && t.getTipoTransaccion() == TipoTransaccion.DEVOLUCION_SOBRANTE
+                && t.getEstadoTransaccion() != EstadoTransaccion.ANULADA) {
+                devolucion = t;
+                break;
+            }
+        }
+
+        double montoSolicitado = soli.getMontoSolicitado();
+        double sobrante = montoSolicitado - sumaComprobantes;
+
+        if (countComprobantes > 0 && sobrante > 0) {
+            if (devolucion == null) {
+                devolucion = new Transaccion();
+                devolucion.setTipoTransaccion(TipoTransaccion.DEVOLUCION_SOBRANTE);
+                devolucion.setMonto(sobrante);
+                devolucion.setBeneficiario(soli.getSolicitante());
+                devolucion.setEstadoTransaccion(EstadoTransaccion.REGISTRADA);
+                devolucion.setIdSolicitudGasto(idSolicitudGasto);
+                devolucion.setMoneda(soli.getMonedaOriginal());
+                devolucion.setFecha(new Date());
+                
+                if (soli.getCiclo() != null && soli.getCiclo().getCajaChica() != null) {
+                    int idCajaChica = soli.getCiclo().getCajaChica().getIdFondo();
+                    ICajaChicaDAO cajaChicaDAO = new CajaChicaDAOImpl();
+                    CajaChica ccCompleta = cajaChicaDAO.buscarPorId(idCajaChica);
+                    if (ccCompleta != null) {
+                        devolucion.setCuentaDestino(ccCompleta.getCuentaBancaria());
+                    }
+                }
+                
+                transaccionDAO.insertar(devolucion, idUsuarioAccion);
+            } else {
+                devolucion.setMonto(sobrante);
+                devolucion.setEstadoTransaccion(EstadoTransaccion.REGISTRADA);
+                transaccionDAO.modificar(devolucion, idUsuarioAccion);
+            }
+        } else {
+            if (devolucion != null) {
+                transaccionDAO.eliminar(devolucion.getIdTransaccion(), idUsuarioAccion);
+            }
+        }
     }
 
 }
