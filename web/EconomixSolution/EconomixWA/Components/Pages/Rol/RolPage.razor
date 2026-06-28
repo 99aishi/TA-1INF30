@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject IRolWS RolWS
+@inject IAreaWS AreaWS
 
 <div class="h-100 d-flex flex-column">
 
@@ -25,7 +26,9 @@
 
     <RolSearchBar @bind-FiltroTitulo="FiltroTitulo"
                   @bind-FiltroDescripcion="FiltroDescripcion"
-                  @bind-FiltroEstado="FiltroEstado" />
+                  @bind-FiltroAreaId="FiltroAreaId"
+                  @bind-FiltroEstado="FiltroEstado"
+                  Areas="AreasDisponibles" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
 
@@ -76,13 +79,16 @@
     private bool Cargando { get; set; } = true;
     private string FiltroTitulo { get; set; } = string.Empty;
     private string FiltroDescripcion { get; set; } = string.Empty;
+    private int FiltroAreaId { get; set; }
     private string FiltroEstado { get; set; } = "Todas";
     private List<Rol> Roles { get; set; } = new List<Rol>();
+    private List<Area> AreasDisponibles { get; set; } = new List<Area>();
     private Rol? RolSeleccionado { get; set; }
 
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(FiltroTitulo)
         || !string.IsNullOrWhiteSpace(FiltroDescripcion)
+        || FiltroAreaId > 0
         || FiltroEstado != "Todas";
 
     private IEnumerable<Rol> RolesFiltrados => Roles
@@ -90,6 +96,7 @@
             || r.Titulo.Contains(FiltroTitulo, StringComparison.OrdinalIgnoreCase))
         .Where(r => string.IsNullOrWhiteSpace(FiltroDescripcion)
             || r.Descripcion.Contains(FiltroDescripcion, StringComparison.OrdinalIgnoreCase))
+        .Where(r => FiltroAreaId <= 0 || r.Area?.AreaID == FiltroAreaId)
         .Where(r => FiltroEstado == "Todas"
             || (FiltroEstado == "Activo" && r.EstaActivo)
             || (FiltroEstado == "Inactivo" && !r.EstaActivo));
@@ -116,8 +123,14 @@
     protected override async Task OnInitializedAsync()
     {
         Cargando = true;
-        await ListarRoles();
+        await Task.WhenAll(ListarRoles(), CargarAreas());
         Cargando = false;
+    }
+
+    private async Task CargarAreas()
+    {
+        try { AreasDisponibles = await AreaWS.listarAsync(); }
+        catch { AreasDisponibles = new(); }
     }
 
     private async Task ListarRoles()

@@ -436,6 +436,26 @@ Almost all badges use `rounded-pill`. Detail page entity badges add `px-2`.
 
 ---
 
+## 7.1 Activity Action Badge Colors
+
+`ActividadRecienteItem.razor` and `ActividadDashboardItem.razor` use `ClaseEstado()` / `ClaseBadgeAccion()` to color-code audit action badges. The method receives `AccionNombre` from the Java backend (Spanish verb forms) and maps to colors:
+
+| Action keywords (UPPER) | Badge CSS | Meaning |
+|--------------------------|-----------|---------|
+| `CREÓ`, `CREAR`, `INSERT`, `NUEVO`, `REGISTRAR`, `LOGIN_SUCCESS`, `INICIO DE SESIÓN EXITOSO` | `bg-success text-white` | Creation / Login success |
+| `MODIFICÓ`, `MODIFICAR`, `ACTUALIZAR`, `UPDATE`, `CAMBIO` | `bg-warning text-dark` | Modification |
+| `ELIMINÓ`, `ELIMINAR`, `BORRAR`, `DELETE` | `bg-danger text-white` | Deletion |
+| `APROBÓ`, `APROBAR`, `APROBADA`, `ACEPTÓ`, `ACEPTAR` | `bg-info text-dark` | Approval |
+| `RECHAZÓ`, `RECHAZAR`, `RECHAZADA`, `DENEGÓ`, `DENEGAR`, `DENEGADA` | `bg-danger text-white` | Rejection |
+| `OBSERVÓ`, `OBSERVAR`, `OBSERVADA` | `bg-warning text-dark` | Observation |
+| `REVOCÓ`, `REVOCAR`, `REVOCADO` | `bg-danger text-white` | Revocation |
+| `LOGIN_FAILED`, `INTENTO DE LOGIN FALLIDO` | `bg-danger text-white` | Login failure |
+| Entity statuses: `Pendiente`, `Pagado`, `Aprobada`, etc. | `bg-*-subtle text-*-emphasis` | Entity state (subtle) |
+
+The back-end generates these values via `AuditoriaDAOImpl.generarDescripcionUsuario()` which maps `tipo_evento` to Spanish verbs: `INSERT` → `"Creó"`, `UPDATE` → `"Modificó"`, `DELETE` → `"Eliminó"`, `LOGIN_SUCCESS` → `"Inicio de sesión exitoso"`, `LOGIN_FAILED` → `"Intento de login fallido"`.
+
+---
+
 ## 8. List Items
 
 ### Item Card Pattern
@@ -555,6 +575,63 @@ All SearchBars render in a **single row** using `row g-2 align-items-end`. No mu
 - Inputs use `form-control bg-light rounded-4`
 - Selects use `form-select bg-light rounded-4`
 - Never use `form-control-sm` / `form-select-sm` in SearchBars (use default size)
+- **Area filter** is a standard `<select>` dropdown on pages that manage entities with area relationships. Uses `FiltroAreaId` (int, default `0` = Todas) + `Areas` (List\<Area\>) parameter. The page loads areas via `IAreaWS.listarAsync()` in `OnInitializedAsync` and passes them to the search bar.
+
+### Area Filter Pattern
+
+```razor
+<!-- In SearchBar -->
+<div class="col-6 col-md-2">
+    <label class="form-label small text-muted">Área</label>
+    <select class="form-select bg-light rounded-4"
+            value="@FiltroAreaId"
+            @onchange="OnAreaCambiada">
+        <option value="0">Todas</option>
+        @foreach (var area in Areas)
+        {
+            <option value="@area.AreaID">@area.Nombre</option>
+        }
+    </select>
+</div>
+
+@code {
+    [Parameter] public int FiltroAreaId { get; set; }
+    [Parameter] public EventCallback<int> FiltroAreaIdChanged { get; set; }
+    [Parameter] public List<Area> Areas { get; set; } = new();
+
+    private async Task OnAreaCambiada(ChangeEventArgs e)
+    {
+        FiltroAreaId = int.TryParse(e.Value?.ToString(), out var val) ? val : 0;
+        await FiltroAreaIdChanged.InvokeAsync(FiltroAreaId);
+    }
+}
+```
+
+```csharp
+// In Page code-behind
+@inject IAreaWS AreaWS
+
+private int FiltroAreaId { get; set; }
+private List<Area> AreasDisponibles { get; set; } = new();
+
+protected override async Task OnInitializedAsync()
+{
+    await Task.WhenList(..., CargarAreas());
+}
+
+private async Task CargarAreas()
+{
+    try { AreasDisponibles = await AreaWS.listarAsync(); }
+    catch { AreasDisponibles = new(); }
+}
+
+// Filter (varies by entity):
+.Where(r => FiltroAreaId <= 0 || r.Area?.AreaID == FiltroAreaId)              // Rol
+.Where(u => FiltroAreaId <= 0 || (u is Empleado emp && emp.Area?.AreaID == FiltroAreaId))  // Usuario
+.Where(c => FiltroAreaId <= 0 || c.AreaAdministradora?.AreaID == FiltroAreaId) // CuentaBancaria
+```
+
+Pages with Area filter: `RolPage`, `UsuariosPage`, `CuentaBancariaPage`, `CajaChicaPage` (CicloCaja).
 
 ### State Management
 
@@ -703,6 +780,38 @@ Bootstrap grid breakpoints used in components: `col-md-*`, `col-lg-*` (standard 
 
 ## 16. Dashboard Patterns
 
+### Dashboard Structure (Home.razor)
+
+The `/dashboard` route renders different content per role. Each role's dashboard is self-contained in its own component:
+
+| Role | Component | Extra sections in Home.razor |
+|------|-----------|------------------------------|
+| Administrador | `<DashboardAdministrador/>` | None |
+| Jefe | `<DashboardJefe/>` | None (all self-contained) |
+| Empleado | `<DashboardEmpleado/>` | "Mis solicitudes" + "Estado de solicitud" |
+| Tesoreria | `<DashboardTesoreria/>` | None |
+
+**Key rule:** Never render duplicate sections. If a component already handles a section (e.g., `DashboardJefe` renders "Solicitudes Pendientes de Aprobación" and "Actividad Reciente"), do NOT render the same section again in `Home.razor`.
+
+### Area Display in Dashboard Header
+
+The dashboard header shows the user's area. Since `IUsuarioWS.GetCurrentUser()` constructs an `Empleado` from claims without `Area`, the area must be fetched separately:
+
+```csharp
+if (UsuarioActual is Empleado emp && emp.Area == null)
+{
+    try
+    {
+        var empCompleto = await EmpleadoWS.obtenerPorIdAsync(emp.UsuarioID);
+        if (empCompleto?.Area != null)
+            emp.Area = empCompleto.Area;
+    }
+    catch { }
+}
+```
+
+This pattern is used in both `Home.razor` and `DashboardJefe.razor` (via `_empleadoJefe` field).
+
 ### KPI Stat Card
 
 ```html
@@ -808,6 +917,8 @@ These rules summarize the **canonical standards** for the project. All component
 | **Empty state** | Context-aware message | Show different text based on `HayFiltrosActivos`. |
 | **Font consistency** | Same component type = same font styling | All item cards (`*Item.razor`) must use the same heading level and text-muted pattern. All detail pages (`*Detalle.razor`) must use the same title size (`h3 mb-0`) and badge styling. All SearchBars must use identical label and input sizing. |
 | **Search bar layout** | Single row, all filters inline | Every SearchBar must render all filters in one `row g-2 align-items-end` — no multi-row layouts. Use responsive `col-X col-md-Y` to stack on mobile. The "Limpiar" button is always the last column. |
+| **Area filter** | `FiltroAreaId` (int) + `Areas` (List\<Area\>) | Pages managing area-related entities (Rol, Usuario, CuentaBancaria, CajaChica) must include an "Área" dropdown filter. Load areas via `IAreaWS.listarAsync()` in `OnInitializedAsync`. Default value `0` = "Todas". Filter with `FiltroAreaId <= 0 \|\| entity.Area?.AreaID == FiltroAreaId`. |
+| **Dashboard deduplication** | One section per component | Never render the same dashboard section twice. If `DashboardJefe` already renders "Solicitudes Pendientes" and "Actividad Reciente", do not duplicate them in `Home.razor`. Each role's dashboard component should be self-contained. |
 | **Item card consistency** | Same structure across all `*Item.razor` | All item cards must follow: `card rounded-4 p-3 mb-3 bg-light` with a `d-flex flex-row justify-content-between align-items-start` inner layout. Left column = title + metadata. Right column = amount + action button. Badge pill inline with title. |
 | **Detail page consistency** | Same structure across all `*Detalle.razor` | All detail pages must follow: card header with `h3 mb-0` + badge, `<hr class="my-0" />`, scrollable content area, `<hr class="my-0" />`, footer with `d-flex flex-wrap-nowrap justify-content-end gap-3`. |
 | **Button style** | Agregar/Crear = solid, all others = outline | Only page header "+ Agregar X" buttons use `btn btn-primary`. All other buttons (Guardar, Eliminar, Ver, Aprobar, Rechazar, Limpiar, etc.) use `btn btn-outline-*`. |
@@ -877,3 +988,30 @@ These rules summarize the **canonical standards** for the project. All component
 - **Lazy-load expandable content.** Only fetch nested data (e.g., CajasChicas of a CuentaBancaria) when the user expands the row — not on page load.
 - **Avoid unnecessary re-renders.** Don't call `StateHasChanged()` in tight loops. Let Blazor's diffing handle most updates.
 - **Paginate large lists** if a list exceeds ~50 items. (Not yet implemented — future consideration.)
+
+### Complex Navigation Property Filtering
+
+When filtering requires traversing deep navigation chains (e.g., `CicloCajaChica.CajaChica.CuentaBancaria.AreaAdministradora.AreaID`), the backend may not populate all nested objects. Use an in-memory lookup built from already-loaded data:
+
+```csharp
+private Dictionary<int, int> _areaIdByCajaChicaId = new();
+
+private void BuildAreaLookup()
+{
+    var cbByCuentaId = CuentasBancarias
+        .Where(cb => cb.AreaAdministradora != null)
+        .ToDictionary(cb => cb.IdCuenta, cb => cb.AreaAdministradora!.AreaID);
+
+    _areaIdByCajaChicaId = CajasChicas
+        .Where(cc => cc.CuentaBancaria != null && cbByCuentaId.ContainsKey(cc.CuentaBancaria.IdCuenta))
+        .ToDictionary(cc => cc.IdFondo, cc => cbByCuentaId[cc.CuentaBancaria!.IdCuenta]);
+}
+
+// In filter:
+.Where(c => FiltroAreaId <= 0
+    || (c.CajaChica != null
+        && _areaIdByCajaChicaId.TryGetValue(c.CajaChica.IdFondo, out var areaId)
+        && areaId == FiltroAreaId))
+```
+
+Call `BuildAreaLookup()` after loading all catalog data in `OnInitializedAsync`. This avoids relying on backend eager-loading of nested navigation properties.

@@ -2,14 +2,14 @@
 @rendermode InteractiveServer
 @inject IUsuarioWS UsuarioWS
 @inject ISolicitudGastoWS SolicitudGastoWS
-@inject IAuditoriaWS AuditoriaWS
+
 @inject IEmpleadoWS EmpleadoWS
 @using System.Collections.Generic;
 @using EconomixWA.Components.Pages.MainDashBoard;
 @using EconomixWA.Components.Pages.SolicitudDeGasto.SolicitudRecibida;
 @using EconomixWA.Components.Pages.SolicitudDeGasto;
 @using EconomixWA.Components.Pages.SolicitudDeGasto.MiSolicitudesDeGasto;
-@using EconomixWA.Components.Pages.Actividad;
+
 
 <PageTitle>Dashboard</PageTitle>
 
@@ -25,76 +25,17 @@
     </div>
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
+        @if (UsuarioActual == null)
+        {
+            <div class="d-flex justify-content-center align-items-center h-100">
+                <p class="text-muted">Cargando...</p>
+            </div>
+        }
+        else
+        {
         @switch(Rol){
             case "Jefe":
                 <DashboardJefe/>
-                <div class="row g-3 flex-fill mt-3 mb-3 overflow-hidden d-flex">
-                    <div class="col-6 h-100 d-flex flex-column overflow-hidden">
-                        <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
-                            <div class="p-3 pb-2">
-                                <h5 class="mb-0">Solicitudes de gasto pendientes</h5>
-                            </div>
-                            <hr class="my-0" />
-                            <div class="overflow-scroll flex-fill">
-                                @if (CargandoSolicitudesJefe)
-                                {
-                                    <div class="p-3 text-center text-muted">Cargando solicitudes...</div>
-                                }
-                                else if (SolicitudesPendientesJefe.Count == 0)
-                                {
-                                    <div class="p-3 text-center text-muted">No hay solicitudes pendientes</div>
-                                }
-                                else
-                                {
-                                    @foreach (var s in SolicitudesPendientesJefe)
-                                    {
-                                        <SolicitudDeGastoPendiente Nombre="@(s.Solicitante?.Nombres ?? "Sin nombre")"
-                                                                  Concepto="@(s.MotivoSolicitud ?? "Sin concepto")"
-                                                                  Fecha="s.FechaSolicitud"
-                                                                  Prioridad="@(s.FechaSolicitud < DateTime.Now.AddDays(-2) ? "Urgente" : "")"
-                                                                  IsoMoneda="@(s.MonedaOriginal?.Simbolo ?? "S/.")"
-                                                                  Monto="s.MontoSolicitado"
-                                                                  OnAceptar='() => ProcesarSolicitud(s, "APROBAR")'
-                                                                  OnObservar='() => ProcesarSolicitud(s, "OBSERVAR")'
-                                                                  OnRechazar='() => ProcesarSolicitud(s, "RECHAZAR")' />
-                                    }
-                                }
-                            </div>
-                        </div>    
-                    </div>
-                    <div class="col-6 h-100 d-flex flex-column overflow-hidden">
-                        <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">     
-                            <div class="p-3 pb-2">
-                                <h5 class="mb-0">Acciones Recientes</h5>
-                            </div>
-                            <hr class="my-0" />
-                            <div class="overflow-scroll flex-fill">
-                                @if (CargandoActividadJefe)
-                                {
-                                    <div class="p-3 text-center text-muted">Cargando actividad...</div>
-                                }
-                                else if (ActividadRecienteJefe.Count == 0)
-                                {
-                                    <div class="p-3 text-center text-muted">No hay actividad reciente</div>
-                                }
-                                else
-                                {
-                                    @foreach (var a in ActividadRecienteJefe)
-                                    {
-                                        <ActividadRecienteItem Titulo="@a.Titulo"
-                                                               Modulo="@a.Modulo"
-                                                               Usuario="@a.Usuario"
-                                                               Area="@a.Area"
-                                                               Descripcion="@a.Descripcion"
-                                                               Monto="@a.Monto"
-                                                               Estado="@a.Estado"
-                                                               Fecha="a.Fecha" />
-                                    }
-                                }
-                            </div>
-                        </div>    
-                    </div>
-                </div>
                 break;
             case "Empleado":
                 <DashboardEmpleado/>
@@ -153,6 +94,7 @@
             default:
                 break;
         }
+        }
     </div>
 </div>
 
@@ -166,11 +108,6 @@
         Administrador => "Administración",
         _ => "Sin área asignada"
     };
-
-    private bool CargandoSolicitudesJefe { get; set; } = true;
-    private bool CargandoActividadJefe { get; set; } = true;
-    private List<SolicitudGasto> SolicitudesPendientesJefe { get; set; } = new();
-    private List<ActividadDto> ActividadRecienteJefe { get; set; } = new();
 
     private bool CargandoSolicitudesEmp { get; set; } = true;
     private List<SolicitudGasto> SolicitudesEmpleado { get; set; } = new();
@@ -187,94 +124,21 @@
             UsuarioActual = null;
         }
 
-        if (Rol == "Jefe")
+        if (UsuarioActual is Empleado emp && emp.Area == null)
         {
-            await Task.WhenAll(
-                CargarSolicitudesPendientesJefe(),
-                CargarActividadRecienteJefe());
+            try
+            {
+                var empCompleto = await EmpleadoWS.obtenerPorIdAsync(emp.UsuarioID);
+                if (empCompleto?.Area != null)
+                    emp.Area = empCompleto.Area;
+            }
+            catch { }
         }
-        else if (Rol == "Empleado")
+
+        if (Rol == "Empleado")
         {
             await CargarSolicitudesEmpleado();
         }
-    }
-
-    private async Task CargarSolicitudesPendientesJefe()
-    {
-        CargandoSolicitudesJefe = true;
-        try
-        {
-            var idJefe = UsuarioWS.GetCurrentUserId();
-            var todas = await SolicitudGastoWS.listarAsync();
-            SolicitudesPendientesJefe = todas
-                .Where(s => s.Estado.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(s => s.FechaSolicitud)
-                .Take(10)
-                .ToList();
-        }
-        catch
-        {
-            SolicitudesPendientesJefe = new List<SolicitudGasto>();
-        }
-        CargandoSolicitudesJefe = false;
-    }
-
-    private async Task ProcesarSolicitud(SolicitudGasto solicitud, string accion)
-    {
-        try
-        {
-            var idUsuario = UsuarioWS.GetCurrentUserId();
-            string comentario = accion switch
-            {
-                "APROBAR" => "Aprobada desde Dashboard",
-                "OBSERVAR" => "Observada desde Dashboard",
-                _ => "Rechazada desde Dashboard"
-            };
-            await SolicitudGastoWS.evaluarAsync(solicitud.IdSolicitudGasto, accion, comentario, idUsuario, idUsuario);
-            await CargarSolicitudesPendientesJefe();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al evaluar solicitud: {ex.Message}");
-        }
-    }
-
-    private async Task CargarActividadRecienteJefe()
-    {
-        CargandoActividadJefe = true;
-        try
-        {
-            var idJefe = UsuarioWS.GetCurrentUserId();
-            var jefeEmp = await EmpleadoWS.obtenerPorIdAsync(idJefe);
-            var idAreaJefe = jefeEmp?.Area?.AreaID ?? 0;
-            var todosEmpleados = await EmpleadoWS.listarAsync();
-            var idsMiArea = todosEmpleados
-                .Where(e => e.Area?.AreaID == idAreaJefe)
-                .Select(e => e.UsuarioID)
-                .ToHashSet();
-
-            var logs = await AuditoriaWS.listarRecientesAsync(300);
-            var logsFiltrados = logs
-                .Where(l => idsMiArea.Contains(l.IdUsuarioAuditoria))
-                .ToList();
-
-            ActividadRecienteJefe = logsFiltrados.Select(l => new ActividadDto
-            {
-                Titulo = l.Descripcion ?? "Sin descripción",
-                Modulo = l.EntidadNombre ?? "Sistema",
-                Usuario = l.NombreCompletoUsuario ?? "Sistema",
-                Area = jefeEmp?.Area?.Nombre ?? l.EntidadNombre ?? "-",
-                Descripcion = l.Descripcion ?? "-",
-                Monto = "-",
-                Estado = l.AccionNombre ?? "-",
-                Fecha = l.CreadoAt
-            }).ToList();
-        }
-        catch
-        {
-            ActividadRecienteJefe = new List<ActividadDto>();
-        }
-        CargandoActividadJefe = false;
     }
 
     private async Task CargarSolicitudesEmpleado()
@@ -303,23 +167,21 @@
 
     private string ObtenerRol()
     {
-        return UsuarioActual switch
+        if (UsuarioActual == null) return "Empleado";
+        if (UsuarioActual is Administrador) return "Administrador";
+        if (UsuarioActual.Rol != null && !string.IsNullOrEmpty(UsuarioActual.Rol.Titulo))
         {
-            Administrador => "Administrador",
-            Empleado emp => DeterminarRolEmpleado(emp),
-            _ => "Empleado"
-        };
-    }
-
-    private string DeterminarRolEmpleado(Empleado emp)
-    {
-        if (emp.Area != null && !string.IsNullOrEmpty(emp.Area.Nombre) &&
-            emp.Area.Nombre.Contains("Tesorer", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Tesoreria";
+            if (UsuarioActual.Rol.Titulo.Equals("Tesoreria", StringComparison.OrdinalIgnoreCase) ||
+                UsuarioActual.Rol.Titulo.Equals("Tesorero", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Tesoreria";
+            }
         }
-
-        return emp.RolFlujo == RolFlujo.JEFE_AREA ? "Jefe" : "Empleado";
+        if (UsuarioActual is Empleado emp)
+        {
+            return emp.RolFlujo == RolFlujo.JEFE_AREA ? "Jefe" : "Empleado";
+        }
+        return "Empleado";
     }
 
     private string ObtenerSaludo()
@@ -331,17 +193,5 @@
             >= 12 and < 19 => "Buenas tardes",
             _ => "Buenas noches"
         };
-    }
-
-    private class ActividadDto
-    {
-        public string Titulo { get; set; } = string.Empty;
-        public string Modulo { get; set; } = string.Empty;
-        public string Usuario { get; set; } = string.Empty;
-        public string Area { get; set; } = string.Empty;
-        public string Descripcion { get; set; } = string.Empty;
-        public string Monto { get; set; } = "-";
-        public string Estado { get; set; } = string.Empty;
-        public DateTime Fecha { get; set; }
     }
 }

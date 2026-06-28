@@ -3,6 +3,7 @@
 @inject NavigationManager Navigation
 @inject IEmpleadoWS EmpleadoWS
 @inject IRolWS RolWS
+@inject IAreaWS AreaWS
 
 <div class="h-100 d-flex flex-column">
 
@@ -30,8 +31,10 @@
     <UsuarioSearchBar @bind-FiltroNombre="FiltroNombre"
                       @bind-FiltroCorreo="FiltroCorreo"
                       @bind-FiltroRol="FiltroRol"
+                      @bind-FiltroAreaId="FiltroAreaId"
                       @bind-FiltroEstado="FiltroEstado"
-                      Roles="Roles" />
+                      Roles="Roles"
+                      Areas="AreasDisponibles" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
 
@@ -81,15 +84,18 @@
     private string FiltroNombre { get; set; } = string.Empty;
     private string FiltroCorreo { get; set; } = string.Empty;
     private string FiltroRol { get; set; } = "Todos";
+    private int FiltroAreaId { get; set; }
     private string FiltroEstado { get; set; } = "Todas";
     private List<Usuario> Usuarios { get; set; } = new();
     private List<Rol> Roles { get; set; } = new();
+    private List<Area> AreasDisponibles { get; set; } = new();
     private Usuario? UsuarioSeleccionado { get; set; }
 
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(FiltroNombre)
         || !string.IsNullOrWhiteSpace(FiltroCorreo)
         || FiltroRol != "Todos"
+        || FiltroAreaId > 0
         || FiltroEstado != "Todas";
 
     private IEnumerable<Usuario> UsuariosFiltrados => Usuarios
@@ -100,6 +106,7 @@
         .Where(u => string.IsNullOrWhiteSpace(FiltroCorreo)
             || u.Correo.Contains(FiltroCorreo, StringComparison.OrdinalIgnoreCase))
         .Where(u => FiltroRol == "Todos" || u.Rol?.Titulo == FiltroRol)
+        .Where(u => FiltroAreaId <= 0 || (u is Empleado emp && emp.Area?.AreaID == FiltroAreaId))
         .Where(u => FiltroEstado == "Todas"
             || (FiltroEstado == "Activo" && u.Estado == EstadoUsuario.ACTIVO)
             || (FiltroEstado == "Inactivo" && u.Estado == EstadoUsuario.INACTIVO));
@@ -125,9 +132,14 @@
     protected override async Task OnInitializedAsync()
     {
         Cargando = true;
-        await CargarRoles();
-        await ListarUsuarios();
+        await Task.WhenAll(CargarRoles(), ListarUsuarios(), CargarAreas());
         Cargando = false;
+    }
+
+    private async Task CargarAreas()
+    {
+        try { AreasDisponibles = await AreaWS.listarAsync(); }
+        catch { AreasDisponibles = new(); }
     }
 
     private async Task CargarRoles()

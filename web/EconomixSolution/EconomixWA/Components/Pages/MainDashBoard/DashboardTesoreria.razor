@@ -5,7 +5,10 @@
 @inject ICicloCajaWS CicloCajaWS
 @inject IAreaWS AreaWS
 @inject IEmpleadoWS EmpleadoWS
+@inject ICuentaBancariaWS CuentaBancariaWS
 @using EconomixWA.Components.Pages.CajaChica
+
+<div class="d-flex flex-column h-100">
 
 <div class="row g-3 mb-3">
     <div class="col-6 col-lg-3">
@@ -48,37 +51,42 @@
     </div>
 </div>
 
-
-<div class="card rounded-4 mt-2 overflow-hidden">
-    <div class="card-body p-0 d-flex flex-column">
-
-        <div class="p-3">
-            <h4 class="fw-bold mb-1">Ciclos de caja chica por área</h4>
-            <p class="text-muted mb-0">
-                Visualización y seguimiento de cajas chicas por cada área de la empresa
-            </p>
-        </div>
-
-        <hr class="my-0" />
-
-        <div class="overflow-scroll overflow-x-hidden flex-fill" style="max-height: 330px;">
-            @foreach (var ciclo in CiclosCajaChica)
-            {
-                <CajaChicaItem Titulo="@ciclo.Area"
-                               Subtitulo="@ciclo.Responsable"
-                               PorcentajeUso="@ciclo.PorcentajeUso"
-                               MontoTotal="@ciclo.MontoTotal"
-                               Gastado="@ciclo.Gastado"
-                               Disponible="@ciclo.Disponible"
-                               ProximoCierre="@ciclo.ProximoCierre"
-                               CerrarPronto="@ciclo.CerrarPronto"
-                               OnMuestraDetalle="IrADashboard" />
-            }
-        </div>
-
-    </div>
+<div class="mb-2">
+    <p class="h5 mb-1">Ciclos de caja chica por área</p>
+    <p class="text-muted mb-0 small">Visualización y seguimiento de cajas chicas por cada área de la empresa</p>
 </div>
 
+<div class="card rounded-4 h-100 d-flex flex-column overflow-hidden flex-fill mb-3">
+        <div class="overflow-scroll overflow-x-hidden flex-fill">
+            @if (Cargando)
+            {
+                <div class="p-3 text-center text-muted">Cargando ciclos...</div>
+            }
+            else if (CiclosCajaChica.Count == 0)
+            {
+                <div class="p-3 text-center text-muted">No se encontraron ciclos de caja chica</div>
+            }
+            else
+            {
+                @foreach (var ciclo in CiclosCajaChica)
+                {
+                    var c = ciclo;
+                    <CajaChicaItem Titulo="@c.Area"
+                                   Subtitulo="@c.Responsable"
+                                   PorcentajeUso="@c.PorcentajeUso"
+                                   MontoTotal="@c.MontoTotal"
+                                   Gastado="@c.Gastado"
+                                   Disponible="@c.Disponible"
+                                   ProximoCierre="@c.ProximoCierre"
+                                   CerrarPronto="@c.CerrarPronto"
+                                   OnMuestraDetalle="() => VerDetalleCiclo(c)"
+                                   OnGestionarCiclos="() => VerCiclosCajaChica(c)" />
+                }
+            }
+        </div>
+</div>
+
+</div>
 
 @code {
     private double FondosTotales { get; set; }
@@ -91,19 +99,40 @@
     private List<CicloCajaChica> CiclosCajaChica { get; set; } = new();
     private List<Area> Areas { get; set; } = new();
     private List<Empleado> Empleados { get; set; } = new();
+    private List<CajaChica> CajasChicas { get; set; } = new();
+    private List<CuentaBancaria> CuentasBancarias { get; set; } = new();
+    private Dictionary<int, int> _areaIdByCajaChicaId = new();
+    private bool Cargando { get; set; } = true;
 
     protected override async Task OnInitializedAsync()
     {
+        Cargando = true;
         await Task.WhenAll(
             CargarFondos(),
-            CargarCiclos(),
             CargarCatalogos());
+
+        BuildAreaLookup();
+        await CargarCiclos();
+        Cargando = false;
     }
 
     private async Task CargarCatalogos()
     {
         try { Areas = await AreaWS.listarAsync(); } catch { Areas = new(); }
         try { Empleados = await EmpleadoWS.listarAsync(); } catch { Empleados = new(); }
+        try { CajasChicas = await CajaChicaWS.listarAsync(); } catch { CajasChicas = new(); }
+        try { CuentasBancarias = await CuentaBancariaWS.listarAsync(); } catch { CuentasBancarias = new(); }
+    }
+
+    private void BuildAreaLookup()
+    {
+        var cbByCuentaId = CuentasBancarias
+            .Where(cb => cb.AreaAdministradora != null)
+            .ToDictionary(cb => cb.IdCuenta, cb => cb.AreaAdministradora!.AreaID);
+
+        _areaIdByCajaChicaId = CajasChicas
+            .Where(cc => cc.CuentaBancaria != null && cbByCuentaId.ContainsKey(cc.CuentaBancaria.IdCuenta))
+            .ToDictionary(cc => cc.IdFondo, cc => cbByCuentaId[cc.CuentaBancaria!.IdCuenta]);
     }
 
     private async Task CargarFondos()
@@ -137,7 +166,8 @@
                 var fechaCierre = c.FechaCierre;
                 var cerrarPronto = fechaCierre.HasValue && fechaCierre.Value.Date <= DateTime.Now.AddDays(3).Date;
 
-                var areaId = c.CajaChica?.CuentaBancaria?.AreaAdministradora?.AreaID ?? 0;
+                var cajaChicaId = c.CajaChica?.IdFondo ?? 0;
+                var areaId = cajaChicaId > 0 && _areaIdByCajaChicaId.TryGetValue(cajaChicaId, out var mappedId) ? mappedId : 0;
                 var area = areaId > 0 ? Areas.FirstOrDefault(a => a.AreaID == areaId) : null;
                 var areaNombre = area?.Nombre ?? (areaId > 0 ? $"Área #{areaId}" : "Sin área");
                 var jefeId = area?.Jefe?.UsuarioID ?? 0;
@@ -148,6 +178,8 @@
 
                 return new CicloCajaChica
                 {
+                    IdCicloCaja = c.IdCicloCaja,
+                    CajaChicaId = c.CajaChica?.IdFondo ?? 0,
                     Area = areaNombre,
                     Responsable = responsableNombre,
                     PorcentajeUso = porcentaje,
@@ -168,9 +200,14 @@
         }
     }
 
-    private void IrADashboard()
+    private void VerDetalleCiclo(CicloCajaChica ciclo)
     {
-        Navigation.NavigateTo("/Dashboard");
+        Navigation.NavigateTo($"/Caja Chica/Detalle?cicloId={ciclo.IdCicloCaja}");
+    }
+
+    private void VerCiclosCajaChica(CicloCajaChica ciclo)
+    {
+        Navigation.NavigateTo($"/Caja Chica?cajaId={ciclo.CajaChicaId}");
     }
 
     private string FormatearSoles(double monto)
@@ -180,6 +217,8 @@
 
     public class CicloCajaChica
     {
+        public int IdCicloCaja { get; set; }
+        public int CajaChicaId { get; set; }
         public string Area { get; set; } = string.Empty;
         public string Responsable { get; set; } = string.Empty;
         public int PorcentajeUso { get; set; }

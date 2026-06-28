@@ -96,14 +96,41 @@
     {
         if (string.IsNullOrEmpty(accion)) return "bg-secondary-subtle text-secondary";
         var a = accion.ToUpperInvariant();
-        if (a.Contains("REGISTRAR") || a.Contains("CREAR") || a.Contains("INSERT") || a.Contains("NUEVO"))
+
+        // Acciones de login
+        if (a.Contains("INICIO DE SESIÓN EXITOSO") || a.Contains("LOGIN_SUCCESS"))
             return "bg-success text-white";
-        if (a.Contains("MODIFICAR") || a.Contains("ACTUALIZAR") || a.Contains("UPDATE") || a.Contains("CAMBIO"))
-            return "bg-warning text-dark";
-        if (a.Contains("ELIMINAR") || a.Contains("BORRAR") || a.Contains("DELETE"))
+        if (a.Contains("INTENTO DE LOGIN FALLIDO") || a.Contains("LOGIN_FAILED"))
             return "bg-danger text-white";
-        if (a.Contains("APROBAR") || a.Contains("APROBADA") || a.Contains("ACEPTAR"))
+
+        // Acciones de creación
+        if (a.Contains("CREÓ") || a.Contains("CREAR") || a.Contains("INSERT") || a.Contains("NUEVO") || a.Contains("REGISTRAR"))
+            return "bg-success text-white";
+
+        // Acciones de modificación
+        if (a.Contains("MODIFICÓ") || a.Contains("MODIFICAR") || a.Contains("ACTUALIZAR") || a.Contains("UPDATE") || a.Contains("CAMBIO"))
+            return "bg-warning text-dark";
+
+        // Acciones de eliminación
+        if (a.Contains("ELIMINÓ") || a.Contains("ELIMINAR") || a.Contains("BORRAR") || a.Contains("DELETE"))
+            return "bg-danger text-white";
+
+        // Acciones de aprobación
+        if (a.Contains("APROBÓ") || a.Contains("APROBAR") || a.Contains("APROBADA") || a.Contains("ACEPTÓ") || a.Contains("ACEPTAR"))
             return "bg-info text-dark";
+
+        // Acciones de rechazo
+        if (a.Contains("RECHAZÓ") || a.Contains("RECHAZAR") || a.Contains("RECHAZADA") || a.Contains("DENEGÓ") || a.Contains("DENEGAR") || a.Contains("DENEGADA"))
+            return "bg-danger text-white";
+
+        // Acciones de observación
+        if (a.Contains("OBSERVÓ") || a.Contains("OBSERVAR") || a.Contains("OBSERVADA"))
+            return "bg-warning text-dark";
+
+        // Acciones de revocación
+        if (a.Contains("REVOCÓ") || a.Contains("REVOCAR") || a.Contains("REVOCADO"))
+            return "bg-danger text-white";
+
         return "bg-secondary text-white";
     }
 }

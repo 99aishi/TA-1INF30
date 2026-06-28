@@ -10,7 +10,7 @@
                    value="@FiltroNombre"
                    @oninput="OnNombreCambiado" />
         </div>
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-2">
             <label class="form-label small text-muted">Correo</label>
             <input type="text"
                    class="form-control bg-light rounded-4"
@@ -31,6 +31,18 @@
             </select>
         </div>
         <div class="col-4 col-md-2">
+            <label class="form-label small text-muted">Área</label>
+            <select class="form-select bg-light rounded-4"
+                    value="@FiltroAreaId"
+                    @onchange="OnAreaCambiada">
+                <option value="0">Todas</option>
+                @foreach (var area in Areas)
+                {
+                    <option value="@area.AreaID">@area.Nombre</option>
+                }
+            </select>
+        </div>
+        <div class="col-4 col-md-2">
             <label class="form-label small text-muted">Estado</label>
             <select class="form-select bg-light rounded-4"
                     value="@FiltroEstado"
@@ -40,7 +52,7 @@
                 <option value="Inactivo">Inactivo</option>
             </select>
         </div>
-        <div class="col-4 col-md-2 d-grid">
+        <div class="col-4 col-md-1 d-grid">
             <label class="form-label small text-muted">&nbsp;</label>
             <button type="button" class="btn btn-outline-secondary rounded-4" @onclick="Limpiar">
                 Limpiar
@@ -69,6 +81,12 @@
     public EventCallback<string> FiltroRolChanged { get; set; }
 
     [Parameter]
+    public int FiltroAreaId { get; set; }
+
+    [Parameter]
+    public EventCallback<int> FiltroAreaIdChanged { get; set; }
+
+    [Parameter]
     public string FiltroEstado { get; set; } = "Todas";
 
     [Parameter]
@@ -76,6 +94,9 @@
 
     [Parameter]
     public List<Rol> Roles { get; set; } = new();
+
+    [Parameter]
+    public List<Area> Areas { get; set; } = new();
 
     [Parameter]
     public EventCallback OnLimpiar { get; set; }
@@ -98,6 +119,12 @@
         await FiltroRolChanged.InvokeAsync(FiltroRol);
     }
 
+    private async Task OnAreaCambiada(ChangeEventArgs e)
+    {
+        FiltroAreaId = int.TryParse(e.Value?.ToString(), out var val) ? val : 0;
+        await FiltroAreaIdChanged.InvokeAsync(FiltroAreaId);
+    }
+
     private async Task OnEstadoCambiado(ChangeEventArgs e)
     {
         FiltroEstado = e.Value?.ToString() ?? "Todas";
@@ -114,6 +141,9 @@
 
         FiltroRol = "Todos";
         await FiltroRolChanged.InvokeAsync("Todos");
+
+        FiltroAreaId = 0;
+        await FiltroAreaIdChanged.InvokeAsync(0);
 
         FiltroEstado = "Todas";
         await FiltroEstadoChanged.InvokeAsync("Todas");

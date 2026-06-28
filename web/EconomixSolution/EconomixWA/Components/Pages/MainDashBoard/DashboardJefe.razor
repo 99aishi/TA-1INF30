@@ -120,6 +120,7 @@
     private List<AuditLogEntry> ActividadReciente { get; set; } = new();
 
     private int _idJefe;
+    private Empleado? _empleadoJefe;
 
     protected override async Task OnInitializedAsync()
     {
@@ -131,6 +132,12 @@
         {
             _idJefe = 0;
         }
+
+        try
+        {
+            _empleadoJefe = await EmpleadoWS.obtenerPorIdAsync(_idJefe);
+        }
+        catch { }
 
         await Task.WhenAll(
             CargarCajaChica(),
@@ -159,10 +166,9 @@
         try
         {
             var todas = await SolicitudGastoWS.listarAsync();
-            var usuario = UsuarioWS.GetCurrentUser();
-            if (usuario is Empleado emp && emp.Area != null)
+            if (_empleadoJefe?.Area != null)
             {
-                var empleadosArea = await EmpleadoWS.listarPorAreaAsync(emp.Area.AreaID);
+                var empleadosArea = await EmpleadoWS.listarPorAreaAsync(_empleadoJefe.Area.AreaID);
                 var idsArea = new HashSet<int>(empleadosArea.Select(e => e.UsuarioID));
                 Pendientes = todas
                     .Where(s => s.Estado.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase)
@@ -227,10 +233,9 @@
             var todos = await AuditoriaWS.listarRecientesAsync(50);
             try
             {
-                var usuario = UsuarioWS.GetCurrentUser();
-                if (usuario is Empleado emp && emp.Area != null)
+                if (_empleadoJefe?.Area != null)
                 {
-                    var empleadosArea = await EmpleadoWS.listarPorAreaAsync(emp.Area.AreaID);
+                    var empleadosArea = await EmpleadoWS.listarPorAreaAsync(_empleadoJefe.Area.AreaID);
                     var idsArea = new HashSet<int>(empleadosArea.Select(e => e.UsuarioID));
                     ActividadReciente = todos
                         .Where(a => idsArea.Contains(a.IdUsuarioAuditoria))
