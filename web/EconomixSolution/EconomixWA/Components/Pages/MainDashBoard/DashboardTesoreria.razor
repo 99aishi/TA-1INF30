@@ -6,9 +6,16 @@
 @inject IAreaWS AreaWS
 @inject IEmpleadoWS EmpleadoWS
 @inject ICuentaBancariaWS CuentaBancariaWS
+@inject IConfiguration Configuration
 @using EconomixWA.Components.Pages.CajaChica
 
 <div class="d-flex flex-column h-100">
+
+<div class="d-flex justify-content-end mb-3">
+    <button class="btn btn-outline-primary rounded-4" @onclick="AbrirModalReporte">
+        <i class="bi bi-file-earmark-pdf me-1"></i> Generar Reporte
+    </button>
+</div>
 
 <div class="row g-3 mb-3">
     <div class="col-6 col-lg-3">
@@ -85,6 +92,75 @@
             }
         </div>
 </div>
+
+@if (mostrarModalReporte)
+{
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content rounded-4">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generar Reporte de Gastos por Área</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModalReporte"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Fecha inicio</label>
+                            <input type="date" class="form-control rounded-4 bg-light" @bind="fechaInicio" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Fecha fin</label>
+                            <input type="date" class="form-control rounded-4 bg-light" @bind="fechaFin" />
+                        </div>
+                    </div>
+                    <label class="form-label small text-muted">Áreas</label>
+                    <div class="d-flex gap-2 mb-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm rounded-4" @onclick="SeleccionarTodasLasAreas">Seleccionar todas</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-4" @onclick="LimpiarSeleccionAreas">Limpiar</button>
+                    </div>
+                    <div class="border rounded-4 p-3 bg-light" style="max-height: 200px; overflow-y: auto;">
+                        @if (Areas.Count == 0)
+                        {
+                            <p class="text-muted small mb-0">No se pudieron cargar las áreas</p>
+                        }
+                        @foreach (var area in Areas)
+                        {
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input"
+                                       checked="@idsAreasSeleccionadas.Contains(area.AreaID)"
+                                       @onchange="e => AlternarArea(area.AreaID, (bool)(e.Value ?? false))" />
+                                <label class="form-check-label small">@area.Nombre</label>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between align-items-center">
+                    <div>
+                        @if (!string.IsNullOrEmpty(errorDescarga))
+                        {
+                            <span class="text-danger small">@errorDescarga</span>
+                        }
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary rounded-4" @onclick="CerrarModalReporte">Cancelar</button>
+                        <button type="button" class="btn btn-outline-primary rounded-4" @onclick="DescargarReporte"
+                                disabled="@(!PuedeDescargar)">
+                            @if (descargandoReporte)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1"></span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-download me-1"></i>
+                            }
+                            Descargar Reporte
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 </div>
 
@@ -213,6 +289,77 @@
     private string FormatearSoles(double monto)
     {
         return $"S/ {monto:N2}";
+    }
+
+    private bool mostrarModalReporte;
+    private DateTime fechaInicio = DateTime.Today.AddMonths(-1);
+    private DateTime fechaFin = DateTime.Today;
+    private List<int> idsAreasSeleccionadas = new();
+    private bool descargandoReporte;
+    private string? errorDescarga;
+
+    private bool PuedeDescargar => !descargandoReporte
+        && fechaInicio != default
+        && fechaFin != default
+        && fechaInicio <= fechaFin
+        && idsAreasSeleccionadas.Count > 0;
+
+    private void AbrirModalReporte()
+    {
+        errorDescarga = null;
+        idsAreasSeleccionadas = new();
+        mostrarModalReporte = true;
+    }
+
+    private void CerrarModalReporte()
+    {
+        mostrarModalReporte = false;
+        descargandoReporte = false;
+        errorDescarga = null;
+    }
+
+    private void AlternarArea(int areaId, bool seleccionado)
+    {
+        if (seleccionado)
+            idsAreasSeleccionadas.Add(areaId);
+        else
+            idsAreasSeleccionadas.Remove(areaId);
+    }
+
+    private void SeleccionarTodasLasAreas()
+    {
+        idsAreasSeleccionadas = Areas.Select(a => a.AreaID).ToList();
+    }
+
+    private void LimpiarSeleccionAreas()
+    {
+        idsAreasSeleccionadas = new();
+    }
+
+    private void DescargarReporte()
+    {
+        if (!PuedeDescargar) return;
+
+        descargandoReporte = true;
+        errorDescarga = null;
+
+        try
+        {
+            var baseUrl = Configuration["URLServices:BaseWSPath"]?.TrimEnd('/');
+            var fechaInicioStr = fechaInicio.ToString("yyyy-MM-dd");
+            var fechaFinStr = fechaFin.ToString("yyyy-MM-dd");
+            var idsStr = string.Join(",", idsAreasSeleccionadas);
+            var url = $"{baseUrl}/reportes/gastos-por-area?fechaInicio={fechaInicioStr}&fechaFin={fechaFinStr}&idsAreas={idsStr}";
+            Navigation.NavigateTo(url, forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            errorDescarga = "Error al generar el reporte: " + ex.Message;
+        }
+        finally
+        {
+            descargandoReporte = false;
+        }
     }
 
     public class CicloCajaChica
