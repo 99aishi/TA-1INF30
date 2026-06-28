@@ -51,9 +51,9 @@ public class RendicionDAOImpl implements IRendicionDAO{
         parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_id_rendicion", rendicion.getIdRendicion());
         parametrosEntrada.put("p_fecha_presentacion", rendicion.getFechaPresentacion() != null
-            ? new java.sql.Date(rendicion.getFechaPresentacion().getTime()) : null);
+            ? new java.sql.Timestamp(rendicion.getFechaPresentacion().getTime()) : null);
         parametrosEntrada.put("p_fecha_aprobacion", rendicion.getFechaAprobacion() != null
-            ? new java.sql.Date(rendicion.getFechaAprobacion().getTime()) : null);
+            ? new java.sql.Timestamp(rendicion.getFechaAprobacion().getTime()) : null);
         parametrosEntrada.put("p_monto_total_declarado", rendicion.getTotalDeclarado());
         parametrosEntrada.put("p_monto_total_aprobado", rendicion.getTotalAprobado());
         parametrosEntrada.put("p_monto_saldo_final", rendicion.getSaldoFinal());
@@ -105,8 +105,8 @@ public class RendicionDAOImpl implements IRendicionDAO{
         int id = rs.getInt("id_rendicion");
         Rendicion rendicion = getOrCreate(cache, Rendicion.class, id, () -> new Rendicion());
         rendicion.setIdRendicion(id);
-        rendicion.setFechaPresentacion(rs.getDate("fecha_presentacion"));
-        rendicion.setFechaAprobacion(rs.getDate("fecha_aprobacion"));
+        rendicion.setFechaPresentacion(rs.getTimestamp("fecha_presentacion"));
+        rendicion.setFechaAprobacion(rs.getTimestamp("fecha_aprobacion"));
         rendicion.setTotalDeclarado(rs.getDouble("monto_total_declarado"));
         rendicion.setTotalAprobado(rs.getDouble("monto_total_aprobado"));
         rendicion.setSaldoFinal(rs.getDouble("monto_saldo_final"));
@@ -128,8 +128,8 @@ public class RendicionDAOImpl implements IRendicionDAO{
         CicloCajaChica ciclo = getOrCreate(cache, CicloCajaChica.class, id, () -> new CicloCajaChica());
         ciclo.setIdCicloCaja(id);
         ciclo.setNumeroSemana(rs.getInt(prefijo + "numero_semana"));
-        ciclo.setFechaApertura(rs.getDate(prefijo + "fecha_apertura"));
-        ciclo.setFechaCierre(rs.getDate(prefijo + "fecha_cierre"));
+        ciclo.setFechaApertura(rs.getTimestamp(prefijo + "fecha_apertura"));
+        ciclo.setFechaCierre(rs.getTimestamp(prefijo + "fecha_cierre"));
         ciclo.setSaldoInicial(rs.getDouble(prefijo + "monto_saldo_inicial"));
         ciclo.setTotalGastado(rs.getDouble(prefijo + "monto_total_gastado"));
         String estadoCiclo = rs.getString(prefijo + "estado_ciclo");

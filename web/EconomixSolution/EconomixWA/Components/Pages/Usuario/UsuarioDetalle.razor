@@ -162,9 +162,18 @@
                         <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="CerrarDetalle">
                             @(Procesando ? "Procesando..." : "Cerrar")
                         </button>
-                        <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="Eliminar">
-                            @(Procesando ? "Procesando..." : "Eliminar")
-                        </button>
+                        @if (EstadoActivo)
+                        {
+                            <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="Eliminar">
+                                @(Procesando ? "Procesando..." : "Eliminar")
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-outline-success" disabled="@Procesando" @onclick="Recuperar">
+                                @(Procesando ? "Procesando..." : "Recuperar")
+                            </button>
+                        }
 
                     }
                 </div>
@@ -332,6 +341,31 @@
             if (EmpleadoEdicion != null)
             {
                 await EmpleadoWS.eliminarAsync(EmpleadoEdicion.UsuarioID, idUsuarioAccion);
+            }
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+
+    private async Task Recuperar()
+    {
+        if (Procesando) return;
+        Procesando = true;
+        ErrorMessage = string.Empty;
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            UsuarioEdicion.Estado = EstadoUsuario.ACTIVO;
+            if (EmpleadoEdicion != null)
+            {
+                await EmpleadoWS.actualizarAsync(EmpleadoEdicion, idUsuarioAccion);
             }
             await OnCerrarDetalle.InvokeAsync();
         }

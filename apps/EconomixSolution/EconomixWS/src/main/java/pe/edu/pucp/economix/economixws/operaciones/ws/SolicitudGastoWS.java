@@ -7,12 +7,39 @@ import pe.edu.pucp.economix.operaciones.boi.SolicitudGastoBOImpl;
 import pe.edu.pucp.economix.operaciones.ibo.ISolicitudGastoBO;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
 @Path("SolicitudGastoWS")
 public class SolicitudGastoWS {
     private ISolicitudGastoBO solicitudBO = new SolicitudGastoBOImpl();
+
+    @GET
+    @Path("HorarioHabilitado")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response horarioHabilitado() {
+        Calendar cal = Calendar.getInstance();
+        int dayOfWeek = cal.get(Calendar.DAY_OF_WEEK);
+        int hour = cal.get(Calendar.HOUR_OF_DAY);
+        int minute = cal.get(Calendar.MINUTE);
+        int timeInMinutes = hour * 60 + minute;
+
+        boolean esLaboral = dayOfWeek != Calendar.SATURDAY && dayOfWeek != Calendar.SUNDAY;
+        boolean enHorario = timeInMinutes >= 8 * 60 && timeInMinutes < 18 * 60;
+        boolean habilitado = esLaboral && enHorario;
+
+        String mensaje;
+        if (!esLaboral) {
+            mensaje = "Las solicitudes solo pueden registrarse de lunes a viernes.";
+        } else if (!enHorario) {
+            mensaje = "Las solicitudes solo pueden registrarse de 8:00 AM a 6:00 PM.";
+        } else {
+            mensaje = "Horario habilitado para registro de solicitudes.";
+        }
+
+        return Response.ok(Map.of("habilitado", habilitado, "mensaje", mensaje)).build();
+    }
 
     @GET
     @Path("Listar")

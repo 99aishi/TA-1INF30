@@ -28,7 +28,15 @@
         </div>
     }
 
-    <form action="/auth/login" method="post" onsubmit="var btn = document.getElementById('login-btn'); btn.disabled = true; btn.innerHTML = '<span class=\'spinner-border spinner-border-sm me-2\' role=\'status\' aria-hidden=\'true\'></span>Iniciando sesión...';">
+    @if (MostrarInactivo)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            El usuario se encuentra inactivo o ha sido eliminado. Contacte con el administrador.
+            <button type="button" class="btn-close" @onclick="() => MostrarInactivo = false" aria-label="close"></button>
+        </div>
+    }
+
+    <form action="/auth/login" method="post" onsubmit="showLoginLoading(event)">
         <input type="hidden" name="returnUrl" value="@ReturnUrl" />
         
         <div class="mb-3">
@@ -77,6 +85,7 @@
 @code {
     private bool MostrarError { get; set; } = false;
     private bool MostrarBloqueo { get; set; } = false;
+    private bool MostrarInactivo { get; set; } = false;
     private string ReturnUrl { get; set; } = "";
 
     protected override void OnInitialized()
@@ -86,6 +95,7 @@
         {
             MostrarError = errorVal == "1";
             MostrarBloqueo = errorVal == "blocked";
+            MostrarInactivo = errorVal == "inactive";
         }
         if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query).TryGetValue("returnUrl", out var returnUrlVal))
         {
@@ -93,3 +103,14 @@
         }
     }
 }
+
+<script>
+    function showLoginLoading(e) {
+        e.preventDefault();
+        var btn = document.getElementById('login-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Iniciando sesión...';
+        var form = e.target;
+        setTimeout(function () { form.submit(); }, 60);
+    }
+</script>

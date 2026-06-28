@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -10,14 +11,19 @@ public class UnixDateTimeConverter : JsonConverter<DateTime>
         if (reader.TokenType == JsonTokenType.Number)
         {
             long milliseconds = reader.GetInt64();
-            return DateTimeOffset.FromUnixTimeMilliseconds(milliseconds).DateTime;
+            return DateTimeOffset.FromUnixTimeMilliseconds(milliseconds).LocalDateTime;
         }
 
         if (reader.TokenType == JsonTokenType.String)
         {
             string? value = reader.GetString();
-            if (DateTime.TryParse(value, out var date))
-                return date;
+            if (DateTime.TryParse(value, CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind, out var date))
+            {
+                if (date.Kind == DateTimeKind.Unspecified)
+                    return DateTime.SpecifyKind(date, DateTimeKind.Local);
+                return date.ToLocalTime();
+            }
         }
 
         return default;
@@ -25,6 +31,7 @@ public class UnixDateTimeConverter : JsonConverter<DateTime>
 
     public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
     {
-        writer.WriteStringValue(value.ToString("yyyy-MM-ddTHH:mm:ss"));
+        var utc = value.Kind == DateTimeKind.Utc ? value : value.ToUniversalTime();
+        writer.WriteStringValue(utc.ToString("yyyy-MM-ddTHH:mm:ssZ"));
     }
 }

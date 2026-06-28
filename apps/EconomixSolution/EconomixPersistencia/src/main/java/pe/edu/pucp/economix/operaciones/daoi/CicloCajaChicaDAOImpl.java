@@ -31,12 +31,12 @@ public class CicloCajaChicaDAOImpl implements ICicloCajaChicaDAO {
         parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_numero_semana", cicloCajaChica.getNumeroSemana());
         if(cicloCajaChica.getFechaApertura()!= null)
-            parametrosEntrada.put("p_fecha_apertura", new java.sql.Date(cicloCajaChica.getFechaApertura().getTime()));
+            parametrosEntrada.put("p_fecha_apertura", new java.sql.Timestamp(cicloCajaChica.getFechaApertura().getTime()));
         else
             parametrosEntrada.put("p_fecha_apertura", null);
 
         if(cicloCajaChica.getFechaCierre()!= null)
-            parametrosEntrada.put("p_fecha_cierre", new java.sql.Date(cicloCajaChica.getFechaCierre().getTime()));
+            parametrosEntrada.put("p_fecha_cierre", new java.sql.Timestamp(cicloCajaChica.getFechaCierre().getTime()));
         else
             parametrosEntrada.put("p_fecha_cierre", null);
         parametrosEntrada.put("p_monto_saldo_inicial", cicloCajaChica.getSaldoInicial());
@@ -65,12 +65,12 @@ public class CicloCajaChicaDAOImpl implements ICicloCajaChicaDAO {
         parametrosEntrada.put("p_id_usuario_accion", idUsuarioAccion);
         parametrosEntrada.put("p_numero_semana", cicloCajaChica.getNumeroSemana());
         if(cicloCajaChica.getFechaApertura()!= null)
-            parametrosEntrada.put("p_fecha_apertura", new java.sql.Date(cicloCajaChica.getFechaApertura().getTime()));
+            parametrosEntrada.put("p_fecha_apertura", new java.sql.Timestamp(cicloCajaChica.getFechaApertura().getTime()));
         else
             parametrosEntrada.put("p_fecha_apertura", null);
 
         if(cicloCajaChica.getFechaCierre()!= null)
-            parametrosEntrada.put("p_fecha_cierre", new java.sql.Date(cicloCajaChica.getFechaCierre().getTime()));
+            parametrosEntrada.put("p_fecha_cierre", new java.sql.Timestamp(cicloCajaChica.getFechaCierre().getTime()));
         else
             parametrosEntrada.put("p_fecha_cierre", null);
         parametrosEntrada.put("p_monto_saldo_inicial", cicloCajaChica.getSaldoInicial());
@@ -98,11 +98,11 @@ public class CicloCajaChicaDAOImpl implements ICicloCajaChicaDAO {
         parametrosEntrada.put("p_id_ciclo_caja", cicloCajaChica.getIdCicloCaja());
         parametrosEntrada.put("p_numero_semana", cicloCajaChica.getNumeroSemana());
         if(cicloCajaChica.getFechaApertura()!= null)
-            parametrosEntrada.put("p_fecha_apertura", new java.sql.Date(cicloCajaChica.getFechaApertura().getTime()));
+            parametrosEntrada.put("p_fecha_apertura", new java.sql.Timestamp(cicloCajaChica.getFechaApertura().getTime()));
         else
             parametrosEntrada.put("p_fecha_apertura", null);
         if(cicloCajaChica.getFechaCierre()!= null)
-            parametrosEntrada.put("p_fecha_cierre", new java.sql.Date(cicloCajaChica.getFechaCierre().getTime()));
+            parametrosEntrada.put("p_fecha_cierre", new java.sql.Timestamp(cicloCajaChica.getFechaCierre().getTime()));
         else
             parametrosEntrada.put("p_fecha_cierre", null);
         parametrosEntrada.put("p_monto_saldo_inicial", cicloCajaChica.getSaldoInicial());
@@ -160,8 +160,8 @@ public class CicloCajaChicaDAOImpl implements ICicloCajaChicaDAO {
         CicloCajaChica ciclo = getOrCreate(cache, CicloCajaChica.class, id, () -> new CicloCajaChica());
         ciclo.setIdCicloCaja(id);
         ciclo.setNumeroSemana(rs.getInt("numero_semana"));
-        ciclo.setFechaApertura(rs.getDate("fecha_apertura"));
-        ciclo.setFechaCierre(rs.getDate("fecha_cierre"));
+        ciclo.setFechaApertura(rs.getTimestamp("fecha_apertura"));
+        ciclo.setFechaCierre(rs.getTimestamp("fecha_cierre"));
         ciclo.setSaldoInicial(rs.getDouble("monto_saldo_inicial"));
         ciclo.setTotalGastado(rs.getDouble("monto_total_gastado"));
         ciclo.setEstado(EstadoCicloCaja.valueOf(rs.getString("estado_ciclo")));
@@ -213,8 +213,8 @@ public class CicloCajaChicaDAOImpl implements ICicloCajaChicaDAO {
         if (rs.wasNull() || id <= 0) return null;
         Rendicion ren = getOrCreate(cache, Rendicion.class, id, () -> new Rendicion());
         ren.setIdRendicion(id);
-        ren.setFechaPresentacion(rs.getDate(prefijo + "fecha_presentacion"));
-        ren.setFechaAprobacion(rs.getDate(prefijo + "fecha_aprobacion"));
+        ren.setFechaPresentacion(rs.getTimestamp(prefijo + "fecha_presentacion"));
+        ren.setFechaAprobacion(rs.getTimestamp(prefijo + "fecha_aprobacion"));
         ren.setTotalDeclarado(rs.getDouble(prefijo + "monto_total_declarado"));
         ren.setTotalAprobado(rs.getDouble(prefijo + "monto_total_aprobado"));
         ren.setSaldoFinal(rs.getDouble(prefijo + "monto_saldo_final"));

@@ -1,6 +1,5 @@
 package pe.edu.pucp.economix.economixws;
 
-
 import jakarta.ws.rs.ApplicationPath;
 import jakarta.ws.rs.core.Application;
 

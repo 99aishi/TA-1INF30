@@ -24,7 +24,7 @@ public class UsuarioWS {
             return Response.ok(usuario).build();
         } catch (Exception e) {
             String mensaje = e.getMessage();
-            if (mensaje != null && mensaje.toLowerCase().contains("bloqueada")) {
+            if (mensaje != null && (mensaje.toLowerCase().contains("bloqueada") || mensaje.toLowerCase().contains("inactivo"))) {
                 return Response.status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse(mensaje))
                     .build();

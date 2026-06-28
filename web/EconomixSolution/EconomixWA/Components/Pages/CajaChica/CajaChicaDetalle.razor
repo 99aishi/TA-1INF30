@@ -92,9 +92,18 @@
                 <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="CerrarDetalle">
                     @(Procesando ? "Procesando..." : "Cerrar")
                 </button>
-                <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="EliminarCajaChica">
-                    @(Procesando ? "Procesando..." : "Eliminar")
-                </button>
+                @if (CajaChica.Estado == "ACTIVO")
+                {
+                    <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="EliminarCajaChica">
+                        @(Procesando ? "Procesando..." : "Eliminar")
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-outline-success" disabled="@Procesando" @onclick="RecuperarCajaChica">
+                        @(Procesando ? "Procesando..." : "Recuperar")
+                    </button>
+                }
             }
         </div>
     </div>
@@ -268,6 +277,27 @@
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
             await CajaChicaWS.eliminarAsync(CajaChica.IdFondo, idUsuarioAccion);
+            await CerrarDetalle();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+
+    private async Task RecuperarCajaChica()
+    {
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            CajaChica.Estado = "ACTIVO";
+            await CajaChicaWS.actualizarAsync(CajaChica, idUsuarioAccion);
             await CerrarDetalle();
         }
         catch (Exception ex)
