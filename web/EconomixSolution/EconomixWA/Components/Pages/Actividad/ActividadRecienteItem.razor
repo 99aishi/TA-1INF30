@@ -76,17 +76,31 @@
         _ => "actividad-icon-secondary"
     };
 
-    private static string ClaseEstado(string estado) => estado switch
+    private static string ClaseEstado(string estado)
     {
-        "Pendiente" => "bg-warning-subtle text-warning-emphasis",
-        "Pagado" => "bg-success-subtle text-success",
-        "Confirmado" => "bg-success-subtle text-success",
-        "Activa" => "bg-success-subtle text-success",
-        "Correcto" => "bg-success-subtle text-success",
-        "Aprobada" => "bg-success-subtle text-success",
-        "Validada" => "bg-success-subtle text-success",
-        "Observado" => "bg-danger-subtle text-danger",
-        "Revisión" => "bg-warning-subtle text-warning-emphasis",
-        _ => "bg-secondary-subtle text-secondary"
-    };
+        if (string.IsNullOrEmpty(estado)) return "bg-secondary-subtle text-secondary-emphasis";
+        var e = estado.ToUpperInvariant();
+        if (e.Contains("REGISTRAR") || e.Contains("CREAR") || e.Contains("INSERT") || e.Contains("NUEVO"))
+            return "bg-success text-white";
+        if (e.Contains("MODIFICAR") || e.Contains("ACTUALIZAR") || e.Contains("UPDATE") || e.Contains("CAMBIO"))
+            return "bg-warning text-dark";
+        if (e.Contains("ELIMINAR") || e.Contains("BORRAR") || e.Contains("DELETE"))
+            return "bg-danger text-white";
+        if (e.Contains("APROBAR") || e.Contains("APROBADA") || e.Contains("ACEPTAR"))
+            return "bg-info text-dark";
+
+        return estado switch
+        {
+            "Pendiente" => "bg-warning-subtle text-warning-emphasis",
+            "Pagado" => "bg-success-subtle text-success",
+            "Confirmado" => "bg-success-subtle text-success",
+            "Activa" => "bg-success-subtle text-success",
+            "Correcto" => "bg-success-subtle text-success",
+            "Aprobada" => "bg-success-subtle text-success",
+            "Validada" => "bg-success-subtle text-success",
+            "Observado" => "bg-danger-subtle text-danger",
+            "Revisión" => "bg-warning-subtle text-warning-emphasis",
+            _ => "bg-secondary-subtle text-secondary"
+        };
+    }
 }

@@ -1,19 +1,27 @@
-<div class="card rounded-4 p-3 mb-3 bg-light hover-shadow">
+@using EconomixModel.Model
+
+<div class="card rounded-4 p-3 mb-3 bg-light hover-shadow border-0">
     <div class="d-flex flex-row justify-content-between align-items-start">
         <div class="d-flex align-items-start gap-3">
-            <div class="bg-primary bg-opacity-10 rounded-3 p-2">
-                <i class="bi bi-journal-text text-primary"></i>
+            <div class="rounded-3 p-2 @ClaseIconoBg(Actividad?.EntidadNombre)">
+                <i class="bi @IconoEntidad(Actividad?.EntidadNombre) @ClaseIconoColor(Actividad?.EntidadNombre)"></i>
             </div>
             <div class="d-flex flex-column">
-                <p class="mb-1">@Actividad?.Descripcion</p>
-                <small class="text-muted">
-                    <i class="bi bi-person-circle me-1"></i>@Actividad?.NombreCompletoUsuario
-                    <span class="mx-1">&middot;</span>
-                    <span class="badge bg-light text-dark border">@Actividad?.EntidadNombre</span>
+                <p class="mb-1 fw-semibold text-dark">@Actividad?.Descripcion</p>
+                <small class="text-muted d-flex align-items-center flex-wrap gap-2 mt-1">
+                    <span class="d-flex align-items-center">
+                        <i class="bi bi-person-circle me-1"></i>@Actividad?.NombreCompletoUsuario
+                    </span>
+                    <span>&middot;</span>
+                    <span class="badge @ClaseBadgeEntidad(Actividad?.EntidadNombre) rounded-pill border-0 px-2 py-1">@Actividad?.EntidadNombre</span>
+                    @if (!string.IsNullOrEmpty(Actividad?.AccionNombre))
+                    {
+                        <span class="badge @ClaseBadgeAccion(Actividad?.AccionNombre) rounded-pill border-0 px-2 py-1">@Actividad?.AccionNombre</span>
+                    }
                 </small>
             </div>
         </div>
-        <small class="text-muted text-nowrap ms-2">@FechaRelativa</small>
+        <small class="text-muted text-nowrap ms-2 fw-medium">@FechaRelativa</small>
     </div>
 </div>
 
@@ -34,5 +42,68 @@
             if (diff.TotalDays < 7) return $"hace {diff.Days}d";
             return fecha.ToString("dd/MM/yyyy");
         }
+    }
+
+    private static string IconoEntidad(string? entidad) => entidad switch
+    {
+        "Solicitud" => "bi-file-earmark-text",
+        "Comprobante" => "bi-receipt",
+        "Transacción" or "Transaccion" => "bi-cash-coin",
+        "Caja Chica" or "CajaChica" => "bi-safe",
+        "Usuario" => "bi-person-badge",
+        "Área" or "Area" => "bi-building",
+        "Moneda" => "bi-currency-exchange",
+        _ => "bi-activity"
+    };
+
+    private static string ClaseIconoBg(string? entidad) => entidad switch
+    {
+        "Solicitud" => "bg-warning bg-opacity-10",
+        "Comprobante" => "bg-primary bg-opacity-10",
+        "Transacción" or "Transaccion" => "bg-info bg-opacity-10",
+        "Caja Chica" or "CajaChica" => "bg-success bg-opacity-10",
+        "Usuario" => "bg-secondary bg-opacity-10",
+        "Área" or "Area" => "bg-danger bg-opacity-10",
+        "Moneda" => "bg-primary bg-opacity-10",
+        _ => "bg-secondary bg-opacity-10"
+    };
+
+    private static string ClaseIconoColor(string? entidad) => entidad switch
+    {
+        "Solicitud" => "text-warning",
+        "Comprobante" => "text-primary",
+        "Transacción" or "Transaccion" => "text-info",
+        "Caja Chica" or "CajaChica" => "text-success",
+        "Usuario" => "text-secondary",
+        "Área" or "Area" => "text-danger",
+        "Moneda" => "text-primary",
+        _ => "text-secondary"
+    };
+
+    private static string ClaseBadgeEntidad(string? entidad) => entidad switch
+    {
+        "Solicitud" => "bg-warning-subtle text-warning-emphasis",
+        "Comprobante" => "bg-primary-subtle text-primary",
+        "Transacción" or "Transaccion" => "bg-info-subtle text-info-emphasis",
+        "Caja Chica" or "CajaChica" => "bg-success-subtle text-success",
+        "Usuario" => "bg-secondary-subtle text-secondary",
+        "Área" or "Area" => "bg-danger-subtle text-danger",
+        "Moneda" => "bg-primary-subtle text-primary",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+
+    private static string ClaseBadgeAccion(string? accion)
+    {
+        if (string.IsNullOrEmpty(accion)) return "bg-secondary-subtle text-secondary";
+        var a = accion.ToUpperInvariant();
+        if (a.Contains("REGISTRAR") || a.Contains("CREAR") || a.Contains("INSERT") || a.Contains("NUEVO"))
+            return "bg-success text-white";
+        if (a.Contains("MODIFICAR") || a.Contains("ACTUALIZAR") || a.Contains("UPDATE") || a.Contains("CAMBIO"))
+            return "bg-warning text-dark";
+        if (a.Contains("ELIMINAR") || a.Contains("BORRAR") || a.Contains("DELETE"))
+            return "bg-danger text-white";
+        if (a.Contains("APROBAR") || a.Contains("APROBADA") || a.Contains("ACEPTAR"))
+            return "bg-info text-dark";
+        return "bg-secondary text-white";
     }
 }

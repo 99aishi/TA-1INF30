@@ -3,6 +3,7 @@
 @inject IUsuarioWS UsuarioWS
 @inject ISolicitudGastoWS SolicitudGastoWS
 @inject IAuditoriaWS AuditoriaWS
+@inject IEmpleadoWS EmpleadoWS
 @using System.Collections.Generic;
 @using EconomixWA.Components.Pages.MainDashBoard;
 @using EconomixWA.Components.Pages.SolicitudDeGasto.SolicitudRecibida;
@@ -220,13 +221,26 @@
         CargandoActividadJefe = true;
         try
         {
-            var logs = await AuditoriaWS.listarRecientesAsync(100);
-            ActividadRecienteJefe = logs.Select(l => new ActividadDto
+            var idJefe = UsuarioWS.GetCurrentUserId();
+            var jefeEmp = await EmpleadoWS.obtenerPorIdAsync(idJefe);
+            var idAreaJefe = jefeEmp?.Area?.AreaID ?? 0;
+            var todosEmpleados = await EmpleadoWS.listarAsync();
+            var idsMiArea = todosEmpleados
+                .Where(e => e.Area?.AreaID == idAreaJefe)
+                .Select(e => e.UsuarioID)
+                .ToHashSet();
+
+            var logs = await AuditoriaWS.listarRecientesAsync(300);
+            var logsFiltrados = logs
+                .Where(l => idsMiArea.Contains(l.IdUsuarioAuditoria))
+                .ToList();
+
+            ActividadRecienteJefe = logsFiltrados.Select(l => new ActividadDto
             {
                 Titulo = l.Descripcion ?? "Sin descripción",
                 Modulo = l.EntidadNombre ?? "Sistema",
                 Usuario = l.NombreCompletoUsuario ?? "Sistema",
-                Area = l.EntidadNombre ?? "-",
+                Area = jefeEmp?.Area?.Nombre ?? l.EntidadNombre ?? "-",
                 Descripcion = l.Descripcion ?? "-",
                 Monto = "-",
                 Estado = l.AccionNombre ?? "-",
