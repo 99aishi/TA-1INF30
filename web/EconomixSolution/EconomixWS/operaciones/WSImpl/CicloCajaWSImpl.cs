@@ -72,6 +72,11 @@ public class CicloCajaWSImpl : ICicloCajaWS
             var response = await _httpClient.GetAsync("Listar");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return new List<CicloCajaChica>();
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("CicloCajaWS/Listar returned {Status}", response.StatusCode);
+                return new List<CicloCajaChica>();
+            }
             var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return new List<CicloCajaChica>();
@@ -91,6 +96,11 @@ public class CicloCajaWSImpl : ICicloCajaWS
             var response = await _httpClient.GetAsync($"BuscarPorId?id={id}");
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 return null;
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("CicloCajaWS/BuscarPorId returned {Status}", response.StatusCode);
+                return null;
+            }
             var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
                 return null;

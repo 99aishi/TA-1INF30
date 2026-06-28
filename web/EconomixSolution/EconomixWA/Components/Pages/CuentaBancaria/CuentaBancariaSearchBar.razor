@@ -1,18 +1,26 @@
 <div class="card rounded-4 p-3 mb-3">
     <div class="row g-2 align-items-end">
         <div class="col-12 col-md-3">
-            <label class="form-label mb-1">Banco</label>
-            <input type="text" class="form-control rounded-4" placeholder="Nombre del banco..."
-                   @bind="BusquedaBanco" @bind:after="() => OnBuscar.InvokeAsync()">
+            <label class="form-label small text-muted">Banco</label>
+            <input type="text"
+                   class="form-control bg-light rounded-4"
+                   placeholder="Nombre del banco..."
+                   value="@BusquedaBanco"
+                   @oninput="OnBancoCambiado" />
         </div>
         <div class="col-12 col-md-3">
-            <label class="form-label mb-1">Cuenta / CCI</label>
-            <input type="text" class="form-control rounded-4" placeholder="Número o CCI..."
-                   @bind="BusquedaCuentaCCI" @bind:after="() => OnBuscar.InvokeAsync()">
+            <label class="form-label small text-muted">Cuenta / CCI</label>
+            <input type="text"
+                   class="form-control bg-light rounded-4"
+                   placeholder="Número o CCI..."
+                   value="@BusquedaCuentaCCI"
+                   @oninput="OnCuentaCCICambiado" />
         </div>
         <div class="col-12 col-md-2">
-            <label class="form-label mb-1">Moneda</label>
-            <select class="form-select rounded-4" @bind="MonedaSeleccionadaId" @bind:after="() => OnBuscar.InvokeAsync()">
+            <label class="form-label small text-muted">Moneda</label>
+            <select class="form-select bg-light rounded-4"
+                    value="@MonedaSeleccionadaId"
+                    @onchange="OnMonedaCambiada">
                 <option value="0">Todas</option>
                 @foreach (var moneda in Monedas)
                 {
@@ -21,16 +29,18 @@
             </select>
         </div>
         <div class="col-12 col-md-2">
-            <label class="form-label mb-1">Tipo de dueño</label>
-            <select class="form-select rounded-4" @bind="TipoDueno" @bind:after="() => OnBuscar.InvokeAsync()">
+            <label class="form-label small text-muted">Tipo de dueño</label>
+            <select class="form-select bg-light rounded-4"
+                    value="@TipoDueno"
+                    @onchange="OnTipoDuenoCambiado">
                 <option value="Todos">Todos</option>
                 <option value="Empleado">Empleado</option>
                 <option value="Area">Área</option>
             </select>
         </div>
         <div class="col-12 col-md-2 d-grid">
-            <label class="form-label mb-1">&nbsp;</label>
-            <button type="button" class="btn btn-secondary rounded-4" @onclick="Limpiar">
+            <label class="form-label small text-muted">&nbsp;</label>
+            <button type="button" class="btn btn-outline-secondary rounded-4" @onclick="Limpiar">
                 Limpiar
             </button>
         </div>
@@ -68,16 +78,48 @@
     [Parameter]
     public EventCallback OnBuscar { get; set; }
 
+    private async Task OnBancoCambiado(ChangeEventArgs e)
+    {
+        BusquedaBanco = e.Value?.ToString() ?? string.Empty;
+        await BusquedaBancoChanged.InvokeAsync(BusquedaBanco);
+        await OnBuscar.InvokeAsync();
+    }
+
+    private async Task OnCuentaCCICambiado(ChangeEventArgs e)
+    {
+        BusquedaCuentaCCI = e.Value?.ToString() ?? string.Empty;
+        await BusquedaCuentaCCIChanged.InvokeAsync(BusquedaCuentaCCI);
+        await OnBuscar.InvokeAsync();
+    }
+
+    private async Task OnMonedaCambiada(ChangeEventArgs e)
+    {
+        MonedaSeleccionadaId = int.TryParse(e.Value?.ToString(), out var val) ? val : 0;
+        await MonedaSeleccionadaIdChanged.InvokeAsync(MonedaSeleccionadaId);
+        await OnBuscar.InvokeAsync();
+    }
+
+    private async Task OnTipoDuenoCambiado(ChangeEventArgs e)
+    {
+        TipoDueno = e.Value?.ToString() ?? "Todos";
+        await TipoDuenoChanged.InvokeAsync(TipoDueno);
+        await OnBuscar.InvokeAsync();
+    }
+
     private async Task Limpiar()
     {
         BusquedaBanco = string.Empty;
-        BusquedaCuentaCCI = string.Empty;
-        MonedaSeleccionadaId = 0;
-        TipoDueno = "Todos";
         await BusquedaBancoChanged.InvokeAsync(BusquedaBanco);
+
+        BusquedaCuentaCCI = string.Empty;
         await BusquedaCuentaCCIChanged.InvokeAsync(BusquedaCuentaCCI);
+
+        MonedaSeleccionadaId = 0;
         await MonedaSeleccionadaIdChanged.InvokeAsync(MonedaSeleccionadaId);
+
+        TipoDueno = "Todos";
         await TipoDuenoChanged.InvokeAsync(TipoDueno);
+
         await OnBuscar.InvokeAsync();
     }
 }

@@ -91,7 +91,7 @@ public class ComprobantePago {
         return igv;
     }
     public double getTotal() {
-        return total;
+        return montoTotal;
     }
     public void setIdComprobante(int idComprobante) {
         this.idComprobante = idComprobante;

@@ -151,9 +151,9 @@ public class SolicitudGastoWSImpl : ISolicitudGastoWS
         }
     }
 
-    public async Task<SolicitudGasto?> evaluarAsync(int idSolicitudGasto, bool aprobado, string comentario, int idJefeEvaluador, int idUsuarioAccion)
+    public async Task<SolicitudGasto?> evaluarAsync(int idSolicitudGasto, string accion, string comentario, int idJefeEvaluador, int idUsuarioAccion)
     {
-        var url = $"Evaluar?idSolicitudGasto={idSolicitudGasto}&aprobado={aprobado.ToString().ToLowerInvariant()}&comentario={Uri.EscapeDataString(comentario ?? "")}&idJefeEvaluador={idJefeEvaluador}&idUsuarioAccion={idUsuarioAccion}";
+        var url = $"Evaluar?idSolicitudGasto={idSolicitudGasto}&accion={accion}&comentario={Uri.EscapeDataString(comentario ?? "")}&idJefeEvaluador={idJefeEvaluador}&idUsuarioAccion={idUsuarioAccion}";
         var response = await _httpClient.PostAsync(url, null);
         if (!response.IsSuccessStatusCode)
         {

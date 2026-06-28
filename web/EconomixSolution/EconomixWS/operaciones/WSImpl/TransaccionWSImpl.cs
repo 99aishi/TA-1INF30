@@ -116,4 +116,22 @@ public class TransaccionWSImpl : ITransaccionWS
         }
     }
 
+    public async Task<List<Transaccion>> listarPorEmpleadoAsync(int idEmpleado)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"ListarPorEmpleado?idEmpleado={idEmpleado}");
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                return new List<Transaccion>();
+            var json = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(json) || json == "null")
+                return new List<Transaccion>();
+            return JsonSerializer.Deserialize<List<Transaccion>>(json, _jsonOptions) ?? new List<Transaccion>();
+        }
+        catch
+        {
+            return new List<Transaccion>();
+        }
+    }
+
 }

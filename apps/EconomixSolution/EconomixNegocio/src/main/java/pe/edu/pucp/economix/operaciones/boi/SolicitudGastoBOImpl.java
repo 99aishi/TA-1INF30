@@ -87,11 +87,20 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         TipoCambio tipoCambio = tipoCambioDAO.buscarPorMonedasYFecha(
                 monedaSolicitud.getIdMoneda(), monedaCajaChica.getIdMoneda(), new java.sql.Date(fecha.getTime()));
 
-        if (tipoCambio == null) {
-            throw new Exception("No existe tipo de cambio registrado entre la moneda solicitada y la moneda de la caja chica para la fecha indicada.");
+        double factor = 0.0;
+        if (tipoCambio != null) {
+            factor = tipoCambio.getValor();
+        } else {
+            // Intentar buscar la tasa inversa
+            TipoCambio tipoCambioInverso = tipoCambioDAO.buscarPorMonedasYFecha(
+                    monedaCajaChica.getIdMoneda(), monedaSolicitud.getIdMoneda(), new java.sql.Date(fecha.getTime()));
+            if (tipoCambioInverso != null && tipoCambioInverso.getValor() > 0) {
+                factor = 1.0 / tipoCambioInverso.getValor();
+            } else {
+                throw new Exception("No existe tipo de cambio registrado entre la moneda solicitada y la moneda de la caja chica para la fecha indicada.");
+            }
         }
 
-        double factor = tipoCambio.getValor();
         solicitud.setTipoCambio(factor);
         solicitud.setMontoConvertido(solicitud.getMontoSolicitado() * factor);
     }
@@ -309,7 +318,7 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
     }
 
     @Override
-    public SolicitudGasto evaluar(int idSolicitudGasto, boolean aprobado, String comentario, int idJefeEvaluador, int idUsuarioAccion) throws Exception {
+    public SolicitudGasto evaluar(int idSolicitudGasto, String accion, String comentario, int idJefeEvaluador, int idUsuarioAccion) throws Exception {
         validarIdUsuarioAccion(idUsuarioAccion);
         if (idSolicitudGasto <= 0) throw new Exception("El id de la solicitud debe ser mayor que cero.");
         if (idJefeEvaluador <= 0) throw new Exception("El id del jefe evaluador debe ser mayor que cero.");
@@ -323,7 +332,7 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         Empleado jefe = empleadoDAO.buscarPorId(idJefeEvaluador);
         if (jefe == null) throw new Exception("El jefe evaluador no existe.");
 
-        if (aprobado) {
+        if ("APROBAR".equalsIgnoreCase(accion)) {
             solicitud.setEstado(EstadoSolicitudGasto.APROBADO);
             solicitud.setJefeAprobador(jefe);
             solicitud.setComentarioDecision(comentario);
@@ -352,7 +361,12 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
                 }
                 throw ex;
             }
-        } else {
+        } else if ("OBSERVAR".equalsIgnoreCase(accion)) {
+            solicitud.setEstado(EstadoSolicitudGasto.OBSERVADO);
+            solicitud.setJefeAprobador(jefe);
+            solicitud.setComentarioDecision(comentario);
+            solicitudGastoDAO.modificar(solicitud, idUsuarioAccion);
+        } else if ("RECHAZAR".equalsIgnoreCase(accion)) {
             if (comentario == null || comentario.trim().isEmpty()) {
                 throw new Exception("Debe ingresar un comentario justificando el rechazo.");
             }
@@ -360,6 +374,8 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
             solicitud.setJefeAprobador(jefe);
             solicitud.setComentarioDecision(comentario);
             solicitudGastoDAO.modificar(solicitud, idUsuarioAccion);
+        } else {
+            throw new Exception("Acción de evaluación no válida: " + accion);
         }
         return solicitud;
     }

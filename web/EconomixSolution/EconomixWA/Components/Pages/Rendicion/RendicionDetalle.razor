@@ -10,7 +10,7 @@
     </div>
     <hr class="my-0" />
 
-    <div class="flex-fill overflow-auto p-3">
+    <div class="flex-fill overflow-scroll p-3">
         @if (!string.IsNullOrEmpty(ErrorMessage))
         {
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -123,14 +123,14 @@
                     <div class="d-flex gap-2 flex-wrap">
                         @if (EsEnEspera)
                         {
-                            <button type="button" class="btn btn-info" @onclick="Observar" disabled="@Procesando">Observar</button>
-                            <button type="button" class="btn btn-success" @onclick="Aceptar" disabled="@Procesando">Aceptar</button>
-                            <button type="button" class="btn btn-danger" @onclick="Denegar" disabled="@Procesando">Denegar</button>
+                            <button type="button" class="btn btn-outline-info" @onclick="Observar" disabled="@Procesando">Observar</button>
+                            <button type="button" class="btn btn-outline-success" @onclick="Aceptar" disabled="@Procesando">Aceptar</button>
+                            <button type="button" class="btn btn-outline-danger" @onclick="Denegar" disabled="@Procesando">Denegar</button>
                         }
                         else if (EsObservado)
                         {
-                            <button type="button" class="btn btn-success" @onclick="Aceptar" disabled="@Procesando">Aceptar</button>
-                            <button type="button" class="btn btn-danger" @onclick="Denegar" disabled="@Procesando">Denegar</button>
+                            <button type="button" class="btn btn-outline-success" @onclick="Aceptar" disabled="@Procesando">Aceptar</button>
+                            <button type="button" class="btn btn-outline-danger" @onclick="Denegar" disabled="@Procesando">Denegar</button>
                         }
                     </div>
                 </div>
@@ -223,6 +223,7 @@
         "PAGADO" => "bg-primary-subtle text-primary-emphasis",
         "RENDIDO" => "bg-info-subtle text-info-emphasis",
         "RECHAZADO" => "bg-danger-subtle text-danger-emphasis",
+        "OBSERVADO" => "bg-info-subtle text-info-emphasis",
         _ => "bg-light text-dark"
     };
 

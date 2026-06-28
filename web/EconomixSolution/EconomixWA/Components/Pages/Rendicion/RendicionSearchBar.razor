@@ -1,8 +1,8 @@
 <div class="card rounded-4 p-3 mb-3">
     <div class="row g-2 align-items-end">
         <div class="col-12 col-md-3">
-            <label class="form-label small">Estado</label>
-            <select class="form-select form-select-sm rounded-3" @bind="FiltroEstado">
+            <label class="form-label small text-muted">Estado</label>
+            <select class="form-select rounded-4" @bind="FiltroEstado">
                 <option value="Todas">Todas</option>
                 <option value="EN_ESPERA">En Espera</option>
                 <option value="OBSERVADO">Observado</option>
@@ -12,18 +12,18 @@
             </select>
         </div>
         <div class="col-6 col-md-3">
-            <label class="form-label small">Fecha desde</label>
-            <input type="date" class="form-control form-control-sm rounded-3" @bind="FiltroFechaInicio">
+            <label class="form-label small text-muted">Fecha desde</label>
+            <input type="date" class="form-control rounded-4" @bind="FiltroFechaInicio">
         </div>
         <div class="col-6 col-md-3">
-            <label class="form-label small">Fecha hasta</label>
-            <input type="date" class="form-control form-control-sm rounded-3" @bind="FiltroFechaFin">
+            <label class="form-label small text-muted">Fecha hasta</label>
+            <input type="date" class="form-control rounded-4" @bind="FiltroFechaFin">
         </div>
         @if (MostrarFiltroArea)
         {
             <div class="col-12 col-md-3">
-                <label class="form-label small">Area</label>
-                <select class="form-select form-select-sm rounded-3" @bind="FiltroAreaId">
+                <label class="form-label small text-muted">Area</label>
+                <select class="form-select rounded-4" @bind="FiltroAreaId">
                     <option value="0">Todas</option>
                     @foreach (var area in Areas)
                     {

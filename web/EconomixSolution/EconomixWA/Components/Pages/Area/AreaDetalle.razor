@@ -5,10 +5,7 @@
 @inject NavigationManager Navigation
 @inject IAreaWS AreaWS
 @inject IUsuarioWS UsuarioWS
-@inject ICuentaBancariaWS CuentaBancariaWS
-@inject IMonedaWS MonedaWS
 @inject IEmpleadoWS EmpleadoWS
-@inject ICajaChicaWS CajaChicaWS
 
 <div class="d-flex flex-column h-100 mb-3">
     <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
@@ -26,7 +23,7 @@
             }
         </div>
         <hr class="my-0" />
-        <div class="flex-fill overflow-auto p-3">
+        <div class="flex-fill overflow-scroll p-3">
 
             @if (!string.IsNullOrEmpty(ErrorMessage))
             {
@@ -74,132 +71,10 @@
 
             @if (!EsCreacion)
             {
-                <hr class="my-4" />
-
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <p class="h5 mb-0">Cuentas bancarias</p>
-                    <button type="button" class="btn btn-sm btn-outline-primary" @onclick="IniciarNuevaCuenta">
-                        + Agregar cuenta
+                <div class="mt-3">
+                    <button type="button" class="btn btn-outline-primary" @onclick="IrACuentasBancarias">
+                        Gestionar Cuentas Bancarias
                     </button>
-                </div>
-
-                @if (!string.IsNullOrEmpty(ErrorCuenta))
-                {
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        @ErrorCuenta
-                        <button type="button" class="btn-close" @onclick="() => ErrorCuenta = string.Empty" aria-label="close"></button>
-                    </div>
-                }
-
-                @if (MostrarEditorCuenta)
-                {
-                    <CuentaBancariaEditor Cuenta="CuentaEnEdicion"
-                                          Monedas="Monedas"
-                                          EsEdicion="@(CuentaEnEdicion.IdCuenta > 0)"
-                                          OnGuardar="GuardarCuenta"
-                                          OnCancelar="CancelarEdicionCuenta" />
-                }
-
-                @if (CuentaSeleccionada != null)
-                {
-                    <div class="card rounded-4 p-3 mb-3 bg-light">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <p class="h6 mb-1">@CuentaSeleccionada.NombreBanco</p>
-                                <p class="text-muted small mb-0">@CuentaSeleccionada.NumeroBancario · CCI: @CuentaSeleccionada.Cci</p>
-                                <p class="text-muted small mb-0">Moneda: @(CuentaSeleccionada.Moneda?.Simbolo ?? "-")</p>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="CerrarDetalleCuenta">
-                                Cerrar
-                            </button>
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-semibold">Cajas chicas</span>
-                            <button type="button" class="btn btn-sm btn-outline-primary" @onclick="AgregarCajaChica">
-                                + Agregar caja chica
-                            </button>
-                        </div>
-                        @if (CajasChicasCache.ContainsKey(CuentaSeleccionada.IdCuenta))
-                        {
-                            var cajas = CajasChicasCache[CuentaSeleccionada.IdCuenta];
-                            @if (cajas.Count == 0)
-                            {
-                                <p class="text-muted small mb-0">No hay cajas chicas registradas.</p>
-                            }
-                            else
-                            {
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-borderless align-middle mb-0">
-                                        <thead>
-                                            <tr class="small text-muted">
-                                                <th>Nombre</th>
-                                                <th>Monto techo</th>
-                                                <th>Moneda</th>
-                                                <th>Estado</th>
-                                                <th class="text-end">Acciones</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (var caja in cajas)
-                                            {
-                                                <tr>
-                                                    <td>@caja.Nombre</td>
-                                                    <td>@caja.MontoTecho.ToString("N2")</td>
-                                                    <td>@(caja.Moneda?.Simbolo ?? "-")</td>
-                                                    <td>
-                                                        <span class="badge @(caja.Estado == "ACTIVO" ? "bg-success" : "bg-secondary")">
-                                                            @caja.Estado
-                                                        </span>
-                                                    </td>
-                                                    <td class="text-end">
-                                                        <button type="button" class="btn btn-sm btn-outline-warning me-1" @onclick="() => EditarCajaChica(caja)">
-                                                            Editar
-                                                        </button>
-                                                        @if (caja.Estado == "ACTIVO")
-                                                        {
-                                                            <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => EliminarCajaChica(caja)">
-                                                                Eliminar
-                                                            </button>
-                                                        }
-                                                        else
-                                                        {
-                                                            <button type="button" class="btn btn-sm btn-outline-success" @onclick="() => RecuperarCajaChica(caja)">
-                                                                Recuperar
-                                                            </button>
-                                                        }
-                                                    </td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            }
-                        }
-                        else
-                        {
-                            <p class="text-muted small mb-0">Cargando...</p>
-                        }
-                    </div>
-                }
-
-                <div class="flex-fill overflow-auto">
-                    @if (Area.CuentasBancarias.Count == 0 && !MostrarEditorCuenta)
-                    {
-                        <p class="text-muted">No hay cuentas bancarias registradas.</p>
-                    }
-                    else
-                    {
-                        @foreach (var cuenta in Area.CuentasBancarias)
-                        {
-                            <CuentaBancariaItem Cuenta="cuenta"
-                                                Empleados="new List<Empleado>()"
-                                                Areas="new List<Area> { Area }"
-                                                Seleccionada="@(CuentaSeleccionada?.IdCuenta == cuenta.IdCuenta)"
-                                                OnSeleccionar="() => SeleccionarCuenta(cuenta)"
-                                                OnVer="() => VerCuenta(cuenta)" />
-                        }
-                    }
                 </div>
             }
         </div>
@@ -252,9 +127,7 @@
     private bool Procesando { get; set; } = false;
     private bool EsCreacion { get; set; }
     private string ErrorMessage { get; set; } = string.Empty;
-    private string ErrorCuenta { get; set; } = string.Empty;
     private Dictionary<string, string> Errores { get; set; } = new();
-    private List<Moneda> Monedas { get; set; } = new();
     private List<Empleado> Jefes { get; set; } = new();
     private int IdUsuarioAccion { get; set; }
 
@@ -263,11 +136,6 @@
         get => Area.Jefe?.UsuarioID ?? 0;
         set => Area.Jefe = value == 0 ? null : Jefes.FirstOrDefault(j => j.UsuarioID == value);
     }
-
-    private bool MostrarEditorCuenta { get; set; }
-    private CuentaBancaria CuentaEnEdicion { get; set; } = new();
-    private CuentaBancaria? CuentaSeleccionada { get; set; }
-    private Dictionary<int, List<CajaChica>> CajasChicasCache { get; set; } = new();
 
     private bool ValidarFormulario()
     {
@@ -307,7 +175,6 @@
 
     private async Task CargarCatalogos()
     {
-        try { Monedas = await MonedaWS.listarAsync(); } catch { Monedas = new List<Moneda>(); }
         try
         {
             var empleados = await EmpleadoWS.listarAsync();
@@ -412,127 +279,8 @@
         }
     }
 
-    private void IniciarNuevaCuenta()
+    private void IrACuentasBancarias()
     {
-        CuentaEnEdicion = new CuentaBancaria
-        {
-            AreaAdministradora = Area,
-            EmpleadoAdministrador = null,
-            Activa = true
-        };
-        MostrarEditorCuenta = true;
-        CuentaSeleccionada = null;
-        ErrorCuenta = string.Empty;
-    }
-
-    private async Task GuardarCuenta(CuentaBancaria cuenta)
-    {
-        ErrorCuenta = string.Empty;
-        cuenta.AreaAdministradora = Area;
-        cuenta.EmpleadoAdministrador = null;
-
-        try
-        {
-            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            if (cuenta.IdCuenta > 0)
-            {
-                await CuentaBancariaWS.actualizarAsync(cuenta, idUsuarioAccion);
-            }
-            else
-            {
-                await CuentaBancariaWS.insertarAsync(cuenta, idUsuarioAccion);
-            }
-
-            var actualizadas = (await CuentaBancariaWS.listarAsync())
-                .Where(c => c.AreaAdministradora?.AreaID == Area.AreaID).ToList();
-            Area.CuentasBancarias = actualizadas;
-            MostrarEditorCuenta = false;
-            CuentaEnEdicion = new CuentaBancaria();
-        }
-        catch (Exception ex)
-        {
-            ErrorCuenta = ex.Message;
-        }
-    }
-
-    private void CancelarEdicionCuenta()
-    {
-        MostrarEditorCuenta = false;
-        CuentaEnEdicion = new CuentaBancaria();
-    }
-
-    private async Task SeleccionarCuenta(CuentaBancaria cuenta)
-    {
-        CuentaSeleccionada = cuenta;
-        MostrarEditorCuenta = false;
-
-        if (!CajasChicasCache.ContainsKey(cuenta.IdCuenta))
-        {
-            try
-            {
-                var cajas = await CajaChicaWS.listarPorCuentaBancariaAsync(cuenta.IdCuenta);
-                CajasChicasCache[cuenta.IdCuenta] = cajas ?? new List<CajaChica>();
-            }
-            catch
-            {
-                CajasChicasCache[cuenta.IdCuenta] = new List<CajaChica>();
-            }
-        }
-    }
-
-    private void CerrarDetalleCuenta()
-    {
-        CuentaSeleccionada = null;
-    }
-
-    private void VerCuenta(CuentaBancaria cuenta)
-    {
-        Navigation.NavigateTo("/Cuentas Bancarias");
-    }
-
-    private void AgregarCajaChica()
-    {
-        if (CuentaSeleccionada == null) return;
-        Navigation.NavigateTo($"/Caja Chica/Crear?cuentaId={CuentaSeleccionada.IdCuenta}");
-    }
-
-    private void EditarCajaChica(CajaChica caja)
-    {
-        Navigation.NavigateTo($"/Caja Chica/detalle?cajaId={caja.IdFondo}");
-    }
-
-    private async Task EliminarCajaChica(CajaChica caja)
-    {
-        if (CuentaSeleccionada == null) return;
-        ErrorCuenta = string.Empty;
-
-        try
-        {
-            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await CajaChicaWS.eliminarAsync(caja.IdFondo, idUsuarioAccion);
-            CajasChicasCache[CuentaSeleccionada.IdCuenta] = await CajaChicaWS.listarPorCuentaBancariaAsync(CuentaSeleccionada.IdCuenta) ?? new List<CajaChica>();
-        }
-        catch (Exception ex)
-        {
-            ErrorCuenta = ex.Message;
-        }
-    }
-
-    private async Task RecuperarCajaChica(CajaChica caja)
-    {
-        if (CuentaSeleccionada == null) return;
-        ErrorCuenta = string.Empty;
-
-        try
-        {
-            caja.Estado = "ACTIVO";
-            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await CajaChicaWS.actualizarAsync(caja, idUsuarioAccion);
-            CajasChicasCache[CuentaSeleccionada.IdCuenta] = await CajaChicaWS.listarPorCuentaBancariaAsync(CuentaSeleccionada.IdCuenta) ?? new List<CajaChica>();
-        }
-        catch (Exception ex)
-        {
-            ErrorCuenta = ex.Message;
-        }
+        Navigation.NavigateTo($"/Cuentas Bancarias?areaId={Area.AreaID}");
     }
 }

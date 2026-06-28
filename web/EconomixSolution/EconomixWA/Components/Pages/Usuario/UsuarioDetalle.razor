@@ -4,8 +4,6 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject IEmpleadoWS EmpleadoWS
-@inject ICuentaBancariaWS CuentaBancariaWS
-@inject IMonedaWS MonedaWS
 @inject IRolWS RolWS
 @inject IAreaWS AreaWS
 @inject IUsuarioWS UsuarioWS
@@ -13,7 +11,7 @@
 <div class="d-flex flex-column h-100 mb-3">
     <div class="row h-100 @(EsCreacion? "mb-3": " ")">
         <div class="col-12 h-100 mb-3">
-            <div class="card rounded-4 p-3 mb-3 h-100 d-flex flex-column overflow-auto">
+            <div class="card rounded-4 p-3 mb-3 h-100 d-flex flex-column overflow-scroll">
                 <div class="d-flex flex-column">
                     <div class="d-flex gap-4">
                         @if (EsCreacion)
@@ -41,20 +39,20 @@
 
                     <div class="row">
                         <div class="col-12 mt-3">
-                            <label for="Nombres" class="form-label mb-1">Nombres</label>
+                            <label for="Nombres" class="form-label small text-muted">Nombres</label>
                             <input type="text" id="Nombres" placeholder="Nombres"
                                    class="form-control form-control-lg rounded-4 bg-light"
                                    @bind="UsuarioEdicion.Nombres">
                         </div>
 
                         <div class="col-6 mt-3">
-                            <label for="ApellidoPaterno" class="form-label mb-1">Apellido Paterno</label>
+                            <label for="ApellidoPaterno" class="form-label small text-muted">Apellido Paterno</label>
                             <input type="text" id="ApellidoPaterno" placeholder="Apellido paterno"
                                    class="form-control form-control-lg rounded-4 bg-light"
                                    @bind="UsuarioEdicion.ApellidoPaterno">
                         </div>
                         <div class="col-6 mt-3">
-                            <label for="ApellidoMaterno" class="form-label mb-1">Apellido Materno</label>
+                            <label for="ApellidoMaterno" class="form-label small text-muted">Apellido Materno</label>
                             <input type="text"
                                    class="form-control form-control-lg rounded-4 bg-light"
                                    id="ApellidoMaterno"
@@ -63,7 +61,7 @@
                         </div>
 
                         <div class="col-6 mt-3">
-                            <label for="Correo" class="form-label mb-1">Correo electronico</label>
+                            <label for="Correo" class="form-label small text-muted">Correo electronico</label>
                             <input type="email"
                                    class="form-control form-control-lg rounded-4 bg-light"
                                    id="Correo"
@@ -71,7 +69,7 @@
                                    @bind="UsuarioEdicion.Correo">
                         </div>
                         <div class="col-6 mt-3">
-                            <label for="Contrasena" class="form-label mb-1">Contrasena</label>
+                            <label for="Contrasena" class="form-label small text-muted">Contrasena</label>
                             <input type="password"
                                    class="form-control form-control-lg rounded-4 bg-light"
                                    id="Contrasena"
@@ -82,14 +80,14 @@
                         @if (EmpleadoEdicion != null)
                         {
                             <div class="col-6 mt-3">
-                                <label for="NumeroCelular" class="form-label mb-1">Celular</label>
+                                <label for="NumeroCelular" class="form-label small text-muted">Celular</label>
                                 <input type="text" id="NumeroCelular" placeholder="999999999"
                                        class="form-control form-control-lg rounded-4 bg-light"
                                        @bind="EmpleadoEdicion.NumeroCelular">
                             </div>
 
                             <div class="col-6 mt-3">
-                                <label for="Area" class="form-label mb-1">Área</label>
+                                <label for="Area" class="form-label small text-muted">Área</label>
                                 <select id="Area" class="form-select form-select-lg rounded-4 bg-light"
                                         @bind="AreaSeleccionadaId">
                                     <option value="0">Seleccione un área</option>
@@ -101,7 +99,7 @@
                             </div>
 
                             <div class="col-6 mt-3">
-                                <label for="Rol" class="form-label mb-1">Rol</label>
+                                <label for="Rol" class="form-label small text-muted">Rol</label>
                                 <select id="Rol" class="form-select form-select-lg rounded-4 bg-light"
                                         @bind="RolSeleccionadoId">
                                     <option value="0">Seleccione un rol</option>
@@ -113,7 +111,7 @@
                             </div>
 
                             <div class="col-6 mt-3">
-                                <label class="form-label mb-1">Jefe directo (automático)</label>
+                                <label class="form-label small text-muted">Jefe directo (automático)</label>
                                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" disabled
                                        value="@(ObtenerNombreJefeDirecto())" />
                             </div>
@@ -122,7 +120,7 @@
                         @if (false)
                         {
                             <div class="col-6 mt-3">
-                                <label for="Estado" class="form-label mb-1">Estado</label>
+                                <label for="Estado" class="form-label small text-muted">Estado</label>
                                 <select id="Estado" class="form-select form-select-lg rounded-4 bg-light"
                                         @bind="UsuarioEdicion.Estado">
                                     <option value="@EstadoUsuario.ACTIVO">Activo</option>
@@ -135,20 +133,11 @@
 
                 @if (!EsCreacion && EmpleadoEdicion != null)
                 {
-                    @if (!string.IsNullOrEmpty(ErrorCuenta))
-                    {
-                        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                            @ErrorCuenta
-                            <button type="button" class="btn-close" @onclick="() => ErrorCuenta = string.Empty" aria-label="close"></button>
-                        </div>
-                    }
-
-                    <CuentaBancariaListado Titulo="Cuentas bancarias del empleado"
-                                           Cuentas="EmpleadoEdicion.Cuentas"
-                                           Monedas="Monedas"
-                                           IdUsuarioAccion="IdUsuarioAccion"
-                                           OnGuardar="GuardarCuentaEmpleado"
-                                           OnEliminar="EliminarCuentaEmpleado" />
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-outline-primary" @onclick="IrACuentasBancarias">
+                            Gestionar Cuentas Bancarias
+                        </button>
+                    </div>
                 }
 
                 <div class="d-flex flex-wrap-nowrap justify-content-end gap-3 mt-4">
@@ -197,9 +186,7 @@
     private Empleado? EmpleadoEdicion => UsuarioEdicion as Empleado;
     private bool EsCreacion { get; set; }
     private string ErrorMessage { get; set; } = string.Empty;
-    private string ErrorCuenta { get; set; } = string.Empty;
 
-    private List<Moneda> Monedas { get; set; } = new();
     private List<Rol> Roles { get; set; } = new();
     private List<Area> Areas { get; set; } = new();
     private int IdUsuarioAccion { get; set; }
@@ -244,7 +231,6 @@
         else if (Usuario != null)
         {
             UsuarioEdicion = Usuario;
-            await CargarCuentasBancarias();
         }
 
         IdUsuarioAccion = UsuarioWS.GetCurrentUserId();
@@ -256,26 +242,11 @@
         if (!EsCreacion && Usuario != null && UsuarioEdicion != Usuario)
         {
             UsuarioEdicion = Usuario;
-            await CargarCuentasBancarias();
-        }
-    }
-
-    private async Task CargarCuentasBancarias()
-    {
-        if (EmpleadoEdicion == null) return;
-        try
-        {
-            EmpleadoEdicion.Cuentas = await CuentaBancariaWS.listarPorEmpleadoAsync(EmpleadoEdicion.UsuarioID);
-        }
-        catch (Exception ex)
-        {
-            ErrorCuenta = ex.Message;
         }
     }
 
     private async Task CargarCatalogos()
     {
-        try { Monedas = await MonedaWS.listarAsync(); } catch { Monedas = new List<Moneda>(); }
         try { Roles = await RolWS.listarAsync(); } catch { Roles = new List<Rol>(); }
         try { Areas = await AreaWS.listarActivasAsync(); } catch { Areas = new List<Area>(); }
     }
@@ -374,50 +345,8 @@
         }
     }
 
-    private async Task GuardarCuentaEmpleado(CuentaBancaria cuenta)
+    private void IrACuentasBancarias()
     {
-        ErrorCuenta = string.Empty;
-        if (EmpleadoEdicion == null) return;
-
-        try
-        {
-            cuenta.EmpleadoAdministrador = EmpleadoEdicion;
-            cuenta.AreaAdministradora = null;
-
-            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            if (cuenta.IdCuenta > 0)
-            {
-                await CuentaBancariaWS.actualizarAsync(cuenta, idUsuarioAccion);
-            }
-            else
-            {
-                await CuentaBancariaWS.insertarAsync(cuenta, idUsuarioAccion);
-            }
-
-            var actualizadas = (await CuentaBancariaWS.listarAsync())
-                .Where(c => c.EmpleadoAdministrador?.UsuarioID == EmpleadoEdicion.UsuarioID).ToList();
-            EmpleadoEdicion.Cuentas = actualizadas;
-        }
-        catch (Exception ex)
-        {
-            ErrorCuenta = ex.Message;
-        }
-    }
-
-    private async Task EliminarCuentaEmpleado(CuentaBancaria cuenta)
-    {
-        ErrorCuenta = string.Empty;
-        if (EmpleadoEdicion == null || cuenta.IdCuenta <= 0) return;
-
-        try
-        {
-            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await CuentaBancariaWS.eliminarAsync(cuenta.IdCuenta, idUsuarioAccion);
-            EmpleadoEdicion.Cuentas.Remove(cuenta);
-        }
-        catch (Exception ex)
-        {
-            ErrorCuenta = ex.Message;
-        }
+        Navigation.NavigateTo($"/Cuentas Bancarias?empleadoId={EmpleadoEdicion?.UsuarioID}");
     }
 }

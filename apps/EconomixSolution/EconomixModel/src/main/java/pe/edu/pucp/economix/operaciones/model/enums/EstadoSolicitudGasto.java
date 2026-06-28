@@ -6,5 +6,6 @@ public enum EstadoSolicitudGasto {
     PAGADO,
     RENDIDO,
     RECHAZADO,
+    OBSERVADO,
     ANULADO
 }

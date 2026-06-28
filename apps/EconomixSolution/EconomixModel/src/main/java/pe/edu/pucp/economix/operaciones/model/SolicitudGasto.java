@@ -180,7 +180,7 @@ public class SolicitudGasto{
                 '}';
     }
 
-    public void evaluarSolicitud(Empleado jefe, boolean aprobado, String comentario) {
+    public void evaluarSolicitud(Empleado jefe, boolean aprobado, String comentario, String accion) {
         if (jefe == null) {
             throw new IllegalArgumentException("El jefe evaluador no puede ser nulo");
         }
@@ -188,6 +188,8 @@ public class SolicitudGasto{
         this.jefeAprobador = jefe;
         if (aprobado) {
             this.estado = EstadoSolicitudGasto.APROBADO;
+        } else if ("OBSERVAR".equalsIgnoreCase(accion)) {
+            this.estado = EstadoSolicitudGasto.OBSERVADO;
         } else {
             this.estado = EstadoSolicitudGasto.RECHAZADO;
         }

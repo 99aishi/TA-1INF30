@@ -8,6 +8,7 @@ import pe.edu.pucp.economix.rrhh.ibo.IUsuarioBO;
 import pe.edu.pucp.economix.rrhh.daoi.UsuarioDAOImpl;
 import pe.edu.pucp.economix.rrhh.idao.IUsuarioDAO;
 import pe.edu.pucp.economix.rrhh.model.Usuario;
+import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
 
 public class UsuarioBOImpl implements IUsuarioBO {
     private final IUsuarioDAO usuarioDAO;
@@ -54,6 +55,11 @@ public class UsuarioBOImpl implements IUsuarioBO {
                     + estadoDespues.get("minutosRestantes") + " minutos.");
             }
             throw new Exception("Usuario o contraseña incorrectos. Intentos restantes: " + intentosRestantes);
+        }
+
+        // Validar si el usuario está activo
+        if (usuario.getEstado() == EstadoUsuario.INACTIVO) {
+            throw new Exception("Usuario o contraseña incorrectos.");
         }
 
         if (!usuario.validarPassword(password)) {

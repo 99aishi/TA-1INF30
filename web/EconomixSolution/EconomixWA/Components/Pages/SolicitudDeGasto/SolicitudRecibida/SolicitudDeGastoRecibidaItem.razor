@@ -20,7 +20,7 @@
             <div class="d-flex align-items-center gap-3">
                 <p class="h4 mb-0">@(Solicitud?.MonedaOriginal?.Simbolo ?? "S/") @Solicitud?.MontoSolicitado.ToString("N2")</p>
             </div>
-            <button class="btn btn-primary" @onclick="AbrirDetalle" @onclick:stopPropagation>Ver</button>
+            <button class="btn btn-outline-primary" @onclick="AbrirDetalle" @onclick:stopPropagation>Ver</button>
         </div>
     </div>
 </div>
@@ -43,6 +43,7 @@
         "PAGADO" => "bg-primary-subtle text-primary-emphasis",
         "RENDIDO" => "bg-info-subtle text-info-emphasis",
         "RECHAZADO" => "bg-danger-subtle text-danger-emphasis",
+        "OBSERVADO" => "bg-info-subtle text-info-emphasis",
         "ANULADO" => "bg-secondary-subtle text-secondary-emphasis",
         _ => "bg-light text-dark"
     };

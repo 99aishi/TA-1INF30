@@ -1,4 +1,4 @@
-<div class="card h-100 p-3 overflow-auto">
+<div class="card h-100 p-3 overflow-scroll">
     @foreach (var paso in Pasos.Select((p, i) => new { p, i }))
     {
         <div class="timeline-item @(paso.i == Pasos.Count - 1 ? "mb-0" : "")">
@@ -39,43 +39,47 @@
         bool pagado = estado is "PAGADO" or "RENDIDO";
         bool rendida = estado is "RENDIDO";
         bool comprobantes = Solicitud?.Comprobantes?.Any() == true || rendida;
+        bool conTransaccion = Solicitud?.IdTransaccion > 0;
 
         // 1. Crear solicitud
         pasos.Add(new Paso(
-            "Crear solicitud",
-            "Solicitud registrada por el empleado",
+            "Solicitud registrada",
+            "El empleado registró la solicitud de gasto en el sistema",
             true,
-            Solicitud?.FechaSolicitud.ToString("dd/MM/yyyy")));
+            Solicitud?.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")));
 
         // 2. Evaluación del jefe
+        var jefeNombre = Solicitud?.JefeAprobador != null
+            ? $"{Solicitud.JefeAprobador.Nombres} {Solicitud.JefeAprobador.ApellidoPaterno}"
+            : "";
         pasos.Add(new Paso(
-            "Evaluación del Jefe",
+            "Revisión del jefe",
             evaluacionRechazada
-                ? $"Solicitud {Solicitud?.Estado} por {Solicitud?.JefeAprobador?.Nombres} {Solicitud?.JefeAprobador?.ApellidoPaterno}"
+                ? $"Solicitud {Solicitud?.Estado?.ToLower()}: {Solicitud?.ComentarioDecision ?? jefeNombre}"
                 : aprobado
-                    ? $"Aprobada por {Solicitud?.JefeAprobador?.Nombres} {Solicitud?.JefeAprobador?.ApellidoPaterno}"
-                    : "Pendiente de aprobación del jefe",
+                    ? $"Aprobada por {jefeNombre}"
+                    : "Esperando revisión del jefe de área",
             aprobado || evaluacionRechazada));
 
-        // 3. Desembolso pendiente
+        // 3. Desembolso
         pasos.Add(new Paso(
-            "Desembolso pendiente",
-            pagado
-                ? "Desembolso ejecutado"
+            "Desembolso",
+            conTransaccion
+                ? "Transacción creada para el desembolso"
                 : aprobado
-                    ? "Aprobado, pendiente de ejecutar desembolso"
+                    ? "Pendiente de crear transacción de desembolso"
                     : evaluacionRechazada
-                        ? "No aplica"
-                        : "Pendiente de aprobación previa",
-            aprobado || pagado));
+                        ? "No aplica (solicitud no aprobada)"
+                        : "Esperando aprobación previa",
+            conTransaccion || pagado));
 
-        // 4. Desembolso completado
+        // 4. Confirmar transacción
         pasos.Add(new Paso(
-            "Desembolso completado",
+            "Confirmar transacción",
             pagado
-                ? "Fondos entregados al solicitante"
-                : aprobado
-                    ? "Pendiente de seleccionar medio de pago y operación"
+                ? "Transacción confirmada — fondos entregados"
+                : conTransaccion
+                    ? "Transacción creada, pendiente de confirmación"
                     : evaluacionRechazada
                         ? "No aplica"
                         : "Pendiente de desembolso",
@@ -83,11 +87,11 @@
 
         // 5. Comprobantes
         pasos.Add(new Paso(
-            "Comprobantes",
+            "Comprobantes de gasto",
             comprobantes
-                ? $"{Solicitud?.Comprobantes?.Count ?? 0} comprobante(s) registrado(s)"
+                ? $"{Solicitud?.Comprobantes?.Count ?? 0} comprobante(s) subido(s)"
                 : pagado
-                    ? "Pendiente de comprobantes"
+                    ? "Pendiente de subir comprobantes"
                     : evaluacionRechazada
                         ? "No aplica"
                         : "Pendiente de desembolso",
@@ -95,11 +99,11 @@
 
         // 6. Rendición
         pasos.Add(new Paso(
-            "Rendición",
+            "Rendición final",
             rendida
-                ? "Solicitud rendida"
+                ? "Solicitud rendida exitosamente"
                 : comprobantes
-                    ? "Pendiente de rendición"
+                    ? "Comprobantes subidos, pendiente de rendición"
                     : evaluacionRechazada
                         ? "No aplica"
                         : "Pendiente de comprobantes",

@@ -24,7 +24,7 @@ DELIMITER //
 DROP PROCEDURE IF EXISTS pa_insertar_auditoria//
 CREATE PROCEDURE pa_insertar_auditoria (
     IN p_nombre_tabla VARCHAR(100),
-    IN p_tipo_evento VARCHAR(10),
+    IN p_tipo_evento VARCHAR(20),
     IN p_id_registro VARCHAR(50),
     IN p_valores_antiguos JSON,
     IN p_valores_nuevos JSON,

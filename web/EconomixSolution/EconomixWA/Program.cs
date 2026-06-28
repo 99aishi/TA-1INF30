@@ -164,7 +164,6 @@ app.MapPost("/auth/login", async (HttpContext context, IUsuarioWS usuarioWS) =>
                     new Claim("Nombre", usuarioEncontrado.Nombres),
                     new Claim("ApellidoPaterno", usuarioEncontrado.ApellidoPaterno),
                     new Claim("ApellidoMaterno", usuarioEncontrado.ApellidoMaterno),
-                    new Claim("RolFlujo", ((Empleado)usuarioEncontrado).RolFlujo.ToString())
                 };
 
     if (usuarioEncontrado is Administrador)

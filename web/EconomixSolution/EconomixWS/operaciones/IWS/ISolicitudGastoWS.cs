@@ -11,5 +11,5 @@ public interface ISolicitudGastoWS : IWS<SolicitudGasto>
     Task<List<SolicitudGasto>> listarPorSolicitanteAsync(int idSolicitante);
     Task<List<SolicitudGasto>> listarPendientesJefeAsync(int idJefe);
     Task<List<SolicitudGasto>> listarPorCicloAsync(int idCiclo);
-    Task<SolicitudGasto?> evaluarAsync(int idSolicitudGasto, bool aprobado, string comentario, int idJefeEvaluador, int idUsuarioAccion);
+    Task<SolicitudGasto?> evaluarAsync(int idSolicitudGasto, string accion, string comentario, int idJefeEvaluador, int idUsuarioAccion);
 }
