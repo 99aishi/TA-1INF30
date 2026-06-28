@@ -26,13 +26,13 @@ public class AuditoriaWSImpl : IAuditoriaWS
         }
 
         if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
-            return new List<AuditLogEntry>();
+            return [];
 
         var json = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
         if (string.IsNullOrEmpty(json) || json == "null")
-            return new List<AuditLogEntry>();
+            return [];
 
-        return System.Text.Json.JsonSerializer.Deserialize<List<AuditLogEntry>>(json, _jsonOptions) ?? new List<AuditLogEntry>();
+        return System.Text.Json.JsonSerializer.Deserialize<List<AuditLogEntry>>(json, _jsonOptions) ?? [];
     }
 
     public async Task<List<AuditLogEntry>> listarRecientesAsync(int limite)
@@ -42,17 +42,17 @@ public class AuditoriaWSImpl : IAuditoriaWS
             var response = await _httpClient.GetAsync($"ListarRecientes?limite={limite}");
 
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
-                return new List<AuditLogEntry>();
+                return [];
 
             var json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json) || json == "null")
-                return new List<AuditLogEntry>();
+                return [];
 
-            return System.Text.Json.JsonSerializer.Deserialize<List<AuditLogEntry>>(json, _jsonOptions) ?? new List<AuditLogEntry>();
+            return System.Text.Json.JsonSerializer.Deserialize<List<AuditLogEntry>>(json, _jsonOptions) ?? [];
         }
         catch
         {
-            return new List<AuditLogEntry>();
+            return [];
         }
     }
 }

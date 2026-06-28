@@ -56,7 +56,7 @@ builder.Services.AddHttpClient<IUsuarioWS, UsuarioWS>(
 );
 
 builder.Services.AddHttpClient<IAreaWS, AreaWSImpl>(
-    client => client.BaseAddress = new Uri(baseURL)    
+    client => client.BaseAddress = new Uri(baseURL)
 );
 
 builder.Services.AddHttpClient<IRolWS, RolWSImpl>(
@@ -162,14 +162,14 @@ app.MapPost("/auth/login", async (HttpContext context, IUsuarioWS usuarioWS) =>
         return Results.Redirect("/?error=1" + (string.IsNullOrEmpty(returnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(returnUrl)}"));
     }
 
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier, usuarioEncontrado.UsuarioID.ToString()),
-                    new Claim(ClaimTypes.Email, usuarioEncontrado.Correo),
-                    new Claim("Nombre", usuarioEncontrado.Nombres),
-                    new Claim("ApellidoPaterno", usuarioEncontrado.ApellidoPaterno),
-                    new Claim("ApellidoMaterno", usuarioEncontrado.ApellidoMaterno),
-                };
+    var claims = new List<Claim>
+    {
+        new (ClaimTypes.NameIdentifier, usuarioEncontrado.UsuarioID.ToString()),
+        new (ClaimTypes.Email, usuarioEncontrado.Correo),
+        new ("Nombre", usuarioEncontrado.Nombres),
+        new ("ApellidoPaterno", usuarioEncontrado.ApellidoPaterno),
+        new("ApellidoMaterno", usuarioEncontrado.ApellidoMaterno),
+    };
 
     if (usuarioEncontrado is Administrador)
     {

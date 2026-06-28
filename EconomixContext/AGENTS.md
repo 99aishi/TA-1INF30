@@ -48,7 +48,7 @@ Convention per endpoint class in `pe.edu.pucp.economix.economixws.{domain}.ws/`:
 - `CuentaBancariaWS` — `ListarCuentas`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
 - `MonedaWS` — `ListarMonedas`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`, `ListarActivas`, `Recuperar`
 - `CicloCajaWS` — `ListarCiclos`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`, `CerrarCiclo`
-- `SolicitudGastoWS` — `Listar`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`, `Evaluar`, `EjecutarDesembolso`
+- `SolicitudGastoWS` — `Listar`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`, `Evaluar`, `EjecutarDesembolso`, `HorarioHabilitado`
 - `ComprobantePagoWS` — `ListarComprobantes`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
 - `RendicionWS` — `Listar`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`, `GenerarRendicionDeCiclo`, `ObservarRendicion`, `AceptarRendicion`, `DenegarRendicion`, `ReEnviarRendicion`, `ListarPorArea`
 - `TransaccionWS` — `ListarTransacciones`, `BuscarPorId`, `Insertar`, `Actualizar`, `Eliminar`
@@ -346,3 +346,104 @@ The event scheduler is enabled automatically by the script.
 ## TO-DO / Pending Tasks
 
 - [ ] **Login Auditing**: When a login is attempted (either successful or failed), the attempt should be logged to the `log_auditoria` database table via `AuditoriaWS`.
+
+## Business Rules — Date/Time Handling & ISO 8601 Standard
+
+### Overview
+All date/time fields across the application now use full `DATETIME` precision (not `DATE`) and are serialized as **ISO 8601** strings (`2024-01-15T14:30:00Z`) across the entire stack. This ensures accurate relative time display ("hace 3h" instead of "ahora" for 3-hour-old events) and consistent time handling between Java and .NET.
+
+### Database Migration
+- `database/Alter_FechaTimestamp.sql` — one-time migration script that changes all `DATE` columns to `DATETIME` and updates stored procedure parameters.
+
+**Tables modified:**
+| Table | Columns | Before | After |
+|---|---|---|---|
+| `ope_solicitud_gasto` | `fecha_solicitud` | `DATE` | `DATETIME` |
+| `ope_comprobante_pago` | `fecha_emision` | `DATE` | `DATETIME` |
+| `ope_ciclo_caja` | `fecha_apertura`, `fecha_cierre` | `DATE` | `DATETIME` |
+| `ope_rendicion` | `fecha_presentacion`, `fecha_aprobacion` | `DATE` | `DATETIME` |
+| `tes_tipo_cambio` | `fecha_tipo_cambio` | `DATE` | `DATETIME` |
+
+**Not modified (already DATETIME):** `ope_transaccion.momento_operacion`, `ope_permiso_edicion` dates, `log_auditoria.creado_at`.
+
+### Java Backend — ISO 8601 Serialization (No DTOs)
+Jackson is configured globally via `JacksonConfig.java` (`@Provider` `ContextResolver<ObjectMapper>`) to serialize all date fields as ISO 8601 strings:
+- `WRITE_DATES_AS_TIMESTAMPS` disabled — outputs strings, not epoch arrays.
+- `JavaTimeModule` registered — handles both `java.util.Date` and `java.time.LocalDateTime`.
+
+This means:
+- `java.util.Date` fields → `"2024-01-15T14:30:00.000+0000"` (with timezone offset)
+- `LocalDateTime` fields → `"2024-01-15T14:30:00"` (ISO 8601)
+
+No `@JsonFormat` annotations are needed on any model class.
+
+### Java DAO Layer — Timestamp Precision
+All DAO `rs.getDate()` calls changed to `rs.getTimestamp()` to preserve time information:
+- `SolicitudGastoDAOImpl.java` — `fecha_solicitud`, `fecha_apertura`, `fecha_cierre`
+- `ComprobantePagoDAOImpl.java` — `fecha_emision`, `fecha_solicitud`
+- `RendicionDAOImpl.java` — `fecha_presentacion`, `fecha_aprobacion`, `fecha_apertura`, `fecha_cierre`
+- `CicloCajaChicaDAOImpl.java` — `fecha_apertura`, `fecha_cierre`, `fecha_presentacion`, `fecha_aprobacion`
+- `TipoCambioDAOImpl.java` — `fecha_tipo_cambio`
+
+All `new java.sql.Date()` calls changed to `new java.sql.Timestamp()` when passing dates to stored procedures.
+
+### .NET Frontend — Timezone-Aware Deserialization
+`UnixDateTimeConverter.cs` updated to:
+- **Read**: Parse ISO 8601 strings with `RoundtripKind`, default `Unspecified` to `Local`, convert UTC to local.
+- **Write**: Always serialize as UTC ISO 8601 (`yyyy-MM-ddTHH:mm:ssZ`).
+
+### Dashboard Relative Time Display
+`ActividadDashboardItem.razor` now correctly shows relative times because `creado_at` was already `TIMESTAMP` and `CreadoAt` is a full `DateTime`:
+- `< 1 min` → "ahora"
+- `< 60 min` → "hace Xm"
+- `< 24 h` → "hace Xh"
+- `< 7 days` → "hace Xd"
+- Otherwise → `dd/MM/yyyy`
+
+### File Locations
+- `database/Alter_FechaTimestamp.sql`
+- `apps/.../economixws/RestAplication.java`
+- `apps/.../economixws/JacksonConfig.java`
+- `apps/.../operaciones/daoi/SolicitudGastoDAOImpl.java`
+- `apps/.../operaciones/daoi/ComprobantePagoDAOImpl.java`
+- `apps/.../operaciones/daoi/RendicionDAOImpl.java`
+- `apps/.../operaciones/daoi/CicloCajaChicaDAOImpl.java`
+- `apps/.../tesoreria/daoi/TipoCambioDAOImpl.java`
+- `web/.../EconomixModel/Converters/UnixDateTimeConverter.cs`
+- `web/.../EconomixWA/Components/Pages/MainDashBoard/ActividadDashboardItem.razor`
+
+## Business Rules — SolicitudGasto Business-Hour Validation
+
+### Overview
+Employees can only register new `SolicitudGasto` requests during business hours:
+- **Days**: Monday to Friday (excludes weekends)
+- **Hours**: 8:00 AM to 6:00 PM
+
+### Java Backend — `SolicitudGastoBOImpl.validarHorarioLaboral()`
+Called from `validarFecha()` during both insert and update. Validates:
+1. Day is not Saturday or Sunday.
+2. Current time is between 08:00 and 18:00 (checked via `HOUR_OF_DAY` and `MINUTE`).
+
+Throws `Exception` with descriptive message if validation fails.
+
+### Java Backend — `GET /horario-habilitado` Endpoint
+`SolicitudGastoWS.HorarioHabilitado()` returns a JSON response:
+```json
+{
+  "habilitado": true|false,
+  "mensaje": "Horario habilitado..." | "Las solicitudes solo pueden registrarse..."
+}
+```
+The .NET frontend calls this endpoint on page load to proactively disable the form.
+
+### .NET Frontend — `MiSolicitudDeGastoDetalle.razor`
+- On `OnInitializedAsync()`, calls `SolicitudGastoWS.obtenerHorarioHabilitadoAsync()`.
+- `PuedeEditar` now includes `&& HorarioHabilitado` — disables all form fields outside business hours.
+- A yellow warning banner shows the reason when the horario is not enabled.
+
+### File Locations
+- `apps/.../operaciones/boi/SolicitudGastoBOImpl.java` — `validarHorarioLaboral()`, `validarFecha()`
+- `apps/.../economixws/operaciones/ws/SolicitudGastoWS.java` — `HorarioHabilitado()` endpoint
+- `web/.../EconomixWS/operaciones/IWS/ISolicitudGastoWS.cs` — `obtenerHorarioHabilitadoAsync()`
+- `web/.../EconomixWS/operaciones/WSImpl/SolicitudGastoWSImpl.cs` — implementation
+- `web/.../EconomixWA/Components/Pages/SolicitudDeGasto/MiSolicitudesDeGasto/MiSolicitudDeGastoDetalle.razor` — UI

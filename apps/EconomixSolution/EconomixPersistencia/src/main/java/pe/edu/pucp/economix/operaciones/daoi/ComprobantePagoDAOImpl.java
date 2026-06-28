@@ -34,7 +34,7 @@ public class ComprobantePagoDAOImpl implements IComprobantePagoDAO {
         parametrosEntrada.put("p_razon_social", comprobante.getRazonSocial());
         parametrosEntrada.put("p_numero_serie", comprobante.getNumeroSerial());
         if (comprobante.getFechaEmision() != null)
-            parametrosEntrada.put("p_fecha_emision", new java.sql.Date(comprobante.getFechaEmision().getTime()));
+            parametrosEntrada.put("p_fecha_emision", new java.sql.Timestamp(comprobante.getFechaEmision().getTime()));
         else
             parametrosEntrada.put("p_fecha_emision", null);
         parametrosEntrada.put("p_monto_subtotal", comprobante.getSubtotal());
@@ -69,7 +69,7 @@ public class ComprobantePagoDAOImpl implements IComprobantePagoDAO {
         parametrosEntrada.put("p_razon_social", comprobante.getRazonSocial());
         parametrosEntrada.put("p_numero_serie", comprobante.getNumeroSerial());
         if (comprobante.getFechaEmision() != null)
-            parametrosEntrada.put("p_fecha_emision", new java.sql.Date(comprobante.getFechaEmision().getTime()));
+            parametrosEntrada.put("p_fecha_emision", new java.sql.Timestamp(comprobante.getFechaEmision().getTime()));
         else
             parametrosEntrada.put("p_fecha_emision", null);
         parametrosEntrada.put("p_monto_subtotal", comprobante.getSubtotal());
@@ -134,7 +134,7 @@ public class ComprobantePagoDAOImpl implements IComprobantePagoDAO {
         comprobante.setRUCProveedor(rs.getString("ruc_proveedor"));
         comprobante.setRazonSocial(rs.getString("razon_social"));
         comprobante.setNumeroSerial(rs.getString("numero_serie"));
-        comprobante.setFechaEmision(rs.getDate("fecha_emision"));
+        comprobante.setFechaEmision(rs.getTimestamp("fecha_emision"));
         comprobante.setSubtotal(rs.getDouble("monto_subtotal"));
         comprobante.setIgv(rs.getDouble("monto_igv"));
         comprobante.setMontoTotal(rs.getDouble("monto_total"));
@@ -163,7 +163,7 @@ public class ComprobantePagoDAOImpl implements IComprobantePagoDAO {
         if (rs.wasNull() || id <= 0) return null;
         SolicitudGasto sg = getOrCreate(cache, SolicitudGasto.class, id, () -> new SolicitudGasto());
         sg.setIdSolicitudGasto(id);
-        sg.setFechaSolicitud(rs.getDate(prefijo + "fecha_solicitud"));
+        sg.setFechaSolicitud(rs.getTimestamp(prefijo + "fecha_solicitud"));
         sg.setMontoSolicitado(rs.getDouble(prefijo + "monto_solicitado"));
 
         int idMoneda = rs.getInt(prefijo + "id_moneda_original");
