@@ -215,10 +215,18 @@ This avoids the previous bug where creating a Caja Chica from the bank-account p
 
 ## UI — Caja Chica / Ciclos
 
-The `/Caja Chica` route now shows **all cycles** (not the list of cajas chicas):
+The `/Caja Chica` route now shows **list of cajas chicas** (funds management):
+- Filters: Caja Chica name, Área, Cuenta bancaria, Estado.
+- List item (`CajaChicaItemSimple`) shows fund info:
+  - Fund name, area name, monto techo.
+  - **Badge**: Only shows for non-ACTIVO states (INACTIVO shows gray badge). ACTIVO items have no badge (default state).
+  - Actions: "Ver ciclos" navigates to `/Caja Chica/Ciclos?cajaId={id}`, "Ver" opens detail.
+- Detail side-panel (`CajaChicaDetalle`) supports view/edit/create; only Tesoreria can modify.
+
+The `/Caja Chica/Ciclos` route (also accessible as `/Ciclos`) shows **all cycles**:
 - Filters: Caja Chica name, Área, Cuenta bancaria, Estado, Fecha apertura desde/hasta.
 - List item (`CicloCajaItem`) shows cycle info plus a summary of its expenses/requests:
-  - Caja Chica name, week number, estado badge, fechas.
+  - Caja Chica name, week number, estado badge (always shown), fechas.
   - Solicitudes count + approved count.
   - Comprobantes count.
   - Techo, disponible.
@@ -226,11 +234,13 @@ The `/Caja Chica` route now shows **all cycles** (not the list of cajas chicas):
 - State can be set to `ABIERTO`, `CERRADO`, `LIQUIDADO`, or `EN_EXCEPCION`.
 - When a cycle is `EN_EXCEPCION`, Tesoreria sees a "Marcar como revisado" button to switch it back to `ABIERTO`.
 - "Cerrar Ciclo" action calls `CicloCajaWS.cerrarCiclo()`.
+- Query params: `?cajaId=X` pre-filters cycles by caja chica.
 - Routes:
-  - `/Caja Chica` — all cycles.
+  - `/Caja Chica` — list of cajas chicas (funds).
+  - `/Caja Chica/Ciclos` or `/Ciclos` — all cycles.
   - `/Caja Chica/Detalle` — view/edit cycle.
   - `/Caja Chica/Crear` — create cycle.
-- NavMenu keeps only "Caja Chica" under Tesoreria; the separate "Ciclos Caja Chica" entry was removed.
+- NavMenu: Admin sees both "Caja Chica" (funds) and "Ciclos" (cycles); other roles see only "Caja Chica" (which shows cycles for them).
 
 ### File locations
 - `web/.../EconomixWA/Components/Pages/CajaChica/CajaChicaPage.razor`
@@ -421,8 +431,8 @@ All `new java.sql.Date()` calls changed to `new java.sql.Timestamp()` when passi
 
 ### .NET Frontend — Timezone-Aware Deserialization
 `UnixDateTimeConverter.cs` updated to:
-- **Read**: Parse ISO 8601 strings with `RoundtripKind`, default `Unspecified` to `Local`, convert UTC to local.
-- **Write**: Always serialize as UTC ISO 8601 (`yyyy-MM-ddTHH:mm:ssZ`).
+- **Read**: Parse ISO 8601 strings with `RoundtripKind`, default `Unspecified` to `Local`, convert UTC to local. Strips Java `ZonedDateTime.toString()` suffixes like `[UTC]`, `[America/Lima]` before parsing (Java serializes `ZonedDateTime` with zone ID in brackets).
+- **Write**: Always serialize as local ISO 8601 with milliseconds and timezone offset (`yyyy-MM-ddTHH:mm:ss.fffK`), matching Java's `SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")` pattern exactly.
 
 ### Dashboard Relative Time Display
 `ActividadDashboardItem.razor` now correctly shows relative times because `creado_at` was already `TIMESTAMP` and `CreadoAt` is a full `DateTime`:
