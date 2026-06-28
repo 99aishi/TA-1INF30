@@ -57,20 +57,22 @@
 </div>
 
 <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden flex-fill mb-3">
-    <div class="overflow-scroll overflow-x-hidden flex-fill">
-        @foreach (var ciclo in CiclosCajaChica)
-        {
-            <CajaChicaItem Titulo="@ciclo.Area"
-                           Subtitulo="@ciclo.Responsable"
-                           PorcentajeUso="@ciclo.PorcentajeUso"
-                           MontoTotal="@ciclo.MontoTotal"
-                           Gastado="@ciclo.Gastado"
-                           Disponible="@ciclo.Disponible"
-                           ProximoCierre="@ciclo.ProximoCierre"
-                           CerrarPronto="@ciclo.CerrarPronto"
-                           OnMuestraDetalle="IrADashboard" />
-        }
-    </div>
+        <div class="overflow-scroll overflow-x-hidden flex-fill">
+            @foreach (var ciclo in CiclosCajaChica)
+            {
+                var c = ciclo;
+                <CajaChicaItem Titulo="@c.Area"
+                               Subtitulo="@c.Responsable"
+                               PorcentajeUso="@c.PorcentajeUso"
+                               MontoTotal="@c.MontoTotal"
+                               Gastado="@c.Gastado"
+                               Disponible="@c.Disponible"
+                               ProximoCierre="@c.ProximoCierre"
+                               CerrarPronto="@c.CerrarPronto"
+                               OnMuestraDetalle="() => VerDetalleCiclo(c)"
+                               OnGestionarCiclos="() => VerCiclosCajaChica(c)" />
+            }
+        </div>
 </div>
 
 </div>
@@ -162,6 +164,8 @@
 
                 return new CicloCajaChica
                 {
+                    IdCicloCaja = c.IdCicloCaja,
+                    CajaChicaId = c.CajaChica?.IdFondo ?? 0,
                     Area = areaNombre,
                     Responsable = responsableNombre,
                     PorcentajeUso = porcentaje,
@@ -182,9 +186,14 @@
         }
     }
 
-    private void IrADashboard()
+    private void VerDetalleCiclo(CicloCajaChica ciclo)
     {
-        Navigation.NavigateTo("/Dashboard");
+        Navigation.NavigateTo($"/Caja Chica/Detalle?cicloId={ciclo.IdCicloCaja}");
+    }
+
+    private void VerCiclosCajaChica(CicloCajaChica ciclo)
+    {
+        Navigation.NavigateTo($"/Caja Chica?cajaId={ciclo.CajaChicaId}");
     }
 
     private string FormatearSoles(double monto)
@@ -194,6 +203,8 @@
 
     public class CicloCajaChica
     {
+        public int IdCicloCaja { get; set; }
+        public int CajaChicaId { get; set; }
         public string Area { get; set; } = string.Empty;
         public string Responsable { get; set; } = string.Empty;
         public int PorcentajeUso { get; set; }
