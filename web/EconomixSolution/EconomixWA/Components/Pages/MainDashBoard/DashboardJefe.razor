@@ -1,8 +1,10 @@
 @rendermode InteractiveServer
 @inject IUsuarioWS UsuarioWS
+@inject IEmpleadoWS EmpleadoWS
 @inject ISolicitudGastoWS SolicitudGastoWS
 @inject ICajaChicaWS CajaChicaWS
 @inject ICicloCajaWS CicloCajaWS
+@inject IAuditoriaWS AuditoriaWS
 
 <div class="row g-3 mb-3">
     <div class="col-6 col-lg-3">
@@ -41,6 +43,68 @@
     </div>
 </div>
 
+<div class="row g-3 flex-fill overflow-hidden mb-3">
+    <div class="col-12 col-lg-6 h-100 d-flex flex-column overflow-hidden">
+        <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden mb-3">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0">Solicitudes Pendientes de Aprobación</h6>
+            </div>
+            <hr class="my-0" />
+            <div class="card-body p-3 overflow-scroll flex-fill">
+                @if (CargandoPendientes)
+                {
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <p class="text-muted">Cargando solicitudes...</p>
+                    </div>
+                }
+                else if (Pendientes.Count == 0)
+                {
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <p class="text-muted">No hay solicitudes pendientes</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var s in Pendientes)
+                    {
+                        <SolicitudPendienteJefeItem Solicitud="s" OnEvaluar="() => OnSolicitudEvaluada(s)" />
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6 h-100 d-flex flex-column overflow-hidden mb-3">
+        <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden mb-3">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0">Actividad Reciente</h6>
+            </div>
+            <hr class="my-0" />
+            <div class="card-body p-3 overflow-scroll flex-fill">
+                @if (CargandoActividad)
+                {
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <p class="text-muted">Cargando actividad...</p>
+                    </div>
+                }
+                else if (ActividadReciente.Count == 0)
+                {
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <p class="text-muted">No hay registros</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var a in ActividadReciente)
+                    {
+                        <ActividadDashboardItem Actividad="a" />
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
 @code {
     private double SaldoCajaChica { get; set; }
     private int PendientesAprobacion { get; set; }
@@ -49,23 +113,31 @@
     private int TransaccionesCiclo { get; set; }
     private int SolicitudesAprobadas { get; set; }
 
+    private bool CargandoPendientes { get; set; } = true;
+    private List<SolicitudGasto> Pendientes { get; set; } = new();
+
+    private bool CargandoActividad { get; set; } = true;
+    private List<AuditLogEntry> ActividadReciente { get; set; } = new();
+
+    private int _idJefe;
+
     protected override async Task OnInitializedAsync()
     {
-        int idJefe;
         try
         {
-            idJefe = UsuarioWS.GetCurrentUserId();
+            _idJefe = UsuarioWS.GetCurrentUserId();
         }
         catch
         {
-            idJefe = 0;
+            _idJefe = 0;
         }
 
         await Task.WhenAll(
             CargarCajaChica(),
-            CargarPendientes(idJefe),
+            CargarPendientes(),
             CargarCiclos(),
-            CargarAprobadas(idJefe));
+            CargarAprobadas(),
+            CargarActividadReciente());
     }
 
     private async Task CargarCajaChica()
@@ -81,19 +153,40 @@
         }
     }
 
-    private async Task CargarPendientes(int idJefe)
+    private async Task CargarPendientes()
     {
+        CargandoPendientes = true;
         try
         {
-            var pendientes = await SolicitudGastoWS.listarPendientesJefeAsync(idJefe);
-            PendientesAprobacion = pendientes.Count;
-            Urgentes = pendientes.Count(s => s.FechaSolicitud < DateTime.Now.AddDays(-2));
+            var todas = await SolicitudGastoWS.listarAsync();
+            var usuario = UsuarioWS.GetCurrentUser();
+            if (usuario is Empleado emp && emp.Area != null)
+            {
+                var empleadosArea = await EmpleadoWS.listarPorAreaAsync(emp.Area.AreaID);
+                var idsArea = new HashSet<int>(empleadosArea.Select(e => e.UsuarioID));
+                Pendientes = todas
+                    .Where(s => s.Estado.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase)
+                             && idsArea.Contains(s.Solicitante?.UsuarioID ?? 0))
+                    .OrderByDescending(s => s.FechaSolicitud)
+                    .ToList();
+            }
+            else
+            {
+                Pendientes = todas
+                    .Where(s => s.Estado.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(s => s.FechaSolicitud)
+                    .ToList();
+            }
+            PendientesAprobacion = Pendientes.Count;
+            Urgentes = Pendientes.Count(s => s.FechaSolicitud < DateTime.Now.AddDays(-2));
         }
         catch
         {
+            Pendientes = new List<SolicitudGasto>();
             PendientesAprobacion = 0;
             Urgentes = 0;
         }
+        CargandoPendientes = false;
     }
 
     private async Task CargarCiclos()
@@ -111,12 +204,12 @@
         }
     }
 
-    private async Task CargarAprobadas(int idJefe)
+    private async Task CargarAprobadas()
     {
         try
         {
-            var aprobadas = (await SolicitudGastoWS.listarPendientesJefeAsync(idJefe))
-                .Where(s => s.Estado.Equals("APROBADA", StringComparison.OrdinalIgnoreCase))
+            var aprobadas = (await SolicitudGastoWS.listarPendientesJefeAsync(_idJefe))
+                .Where(s => s.Estado.Equals("APROBADO", StringComparison.OrdinalIgnoreCase))
                 .ToList();
             SolicitudesAprobadas = aprobadas.Count;
         }
@@ -124,6 +217,56 @@
         {
             SolicitudesAprobadas = 0;
         }
+    }
+
+    private async Task CargarActividadReciente()
+    {
+        CargandoActividad = true;
+        try
+        {
+            var todos = await AuditoriaWS.listarRecientesAsync(50);
+            try
+            {
+                var usuario = UsuarioWS.GetCurrentUser();
+                if (usuario is Empleado emp && emp.Area != null)
+                {
+                    var empleadosArea = await EmpleadoWS.listarPorAreaAsync(emp.Area.AreaID);
+                    var idsArea = new HashSet<int>(empleadosArea.Select(e => e.UsuarioID));
+                    ActividadReciente = todos
+                        .Where(a => idsArea.Contains(a.IdUsuarioAuditoria))
+                        .Where(a => a.TipoEvento != "LOGIN_SUCCESS")
+                        .Take(10)
+                        .ToList();
+                }
+                else
+                {
+                    ActividadReciente = todos
+                        .Where(a => a.TipoEvento != "LOGIN_SUCCESS")
+                        .Take(10)
+                        .ToList();
+                }
+            }
+            catch
+            {
+                ActividadReciente = todos
+                    .Where(a => a.TipoEvento != "LOGIN_SUCCESS")
+                    .Take(10)
+                    .ToList();
+            }
+        }
+        catch
+        {
+            ActividadReciente = new List<AuditLogEntry>();
+        }
+        CargandoActividad = false;
+    }
+
+    private async Task OnSolicitudEvaluada(SolicitudGasto solicitud)
+    {
+        Pendientes.Remove(solicitud);
+        PendientesAprobacion = Pendientes.Count;
+        Urgentes = Pendientes.Count(s => s.FechaSolicitud < DateTime.Now.AddDays(-2));
+        StateHasChanged();
     }
 
     private string FormatearSoles(double monto)

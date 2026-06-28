@@ -221,7 +221,11 @@
         CargandoActividad = true;
         try
         {
-            ActividadReciente = await AuditoriaWS.listarRecientesAsync(15);
+            var todos = await AuditoriaWS.listarRecientesAsync(50);
+            ActividadReciente = todos
+                .Where(a => a.TipoEvento != "LOGIN_SUCCESS")
+                .Take(15)
+                .ToList();
         }
         catch
         {

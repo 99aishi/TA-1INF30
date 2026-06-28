@@ -8,4 +8,5 @@ public interface IEmpleadoWS : IWS<Empleado>
 {
     Task<Empleado?> obtenerPorIdAsync(int id);
     Task<List<Empleado>> listarPorNombreApellidoAsync(string q);
+    Task<List<Empleado>> listarPorAreaAsync(int idArea);
 }

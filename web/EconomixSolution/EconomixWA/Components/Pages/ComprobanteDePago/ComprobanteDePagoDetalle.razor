@@ -5,9 +5,8 @@
 @inject NavigationManager Navigation
 @inject IComprobantePagoWS ComprobantePagoWS
 
-<div class="rounded-4 mb-3 p-3 h-100">
-
-    <div class="row h-100">
+<div class="d-flex flex-column h-100 mb-3 overflow-hidden">
+    <div class="row h-100 overflow-scroll">
         <div class="col-4 h-100">
             <ComprobanteDePagoSustento EsCreacion="EsCreacion" EsEvaluacion="EsEvaluacion" EsAsociacion="EsAsociacion" RequiereAutorizacion="RequiereAutorizacion" IdSolicitudPasada="IdSolicitud" />
         </div>
