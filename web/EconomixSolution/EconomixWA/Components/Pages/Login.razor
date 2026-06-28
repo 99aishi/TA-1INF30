@@ -32,7 +32,7 @@
         </div>
     }
 
-    <form action="/auth/login" method="post">
+    <form action="/auth/login" method="post" onsubmit="showLoginLoading(event)">
         <input type="hidden" name="returnUrl" value="@ReturnUrl" />
         <div class="mb-3">
             <label class="form-label">Correo electronico</label>
@@ -45,7 +45,7 @@
         </div>
 
         <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-primary">
+            <button id="login-btn" type="submit" class="btn btn-primary">
                 Iniciar sesion
             </button>
         </div>
@@ -73,3 +73,14 @@
         }
     }
 }
+
+<script>
+    function showLoginLoading(e) {
+        e.preventDefault();
+        var btn = document.getElementById('login-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Iniciando sesión...';
+        var form = e.target;
+        setTimeout(function () { form.submit(); }, 60);
+    }
+</script>
