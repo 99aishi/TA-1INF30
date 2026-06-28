@@ -38,8 +38,10 @@
     <CuentaBancariaSearchBar @bind-BusquedaBanco="BusquedaBanco"
                              @bind-BusquedaCuentaCCI="BusquedaCuentaCCI"
                              @bind-MonedaSeleccionadaId="FiltroMonedaId"
+                             @bind-FiltroAreaId="FiltroAreaIdBusqueda"
                              @bind-TipoDueno="FiltroTipoDueno"
                              Monedas="Monedas"
+                             Areas="Areas"
                              OnBuscar="Filtrar" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
@@ -255,6 +257,7 @@
     private string BusquedaBanco { get; set; } = string.Empty;
     private string BusquedaCuentaCCI { get; set; } = string.Empty;
     private int FiltroMonedaId { get; set; }
+    private int FiltroAreaIdBusqueda { get; set; }
     private string FiltroTipoDueno { get; set; } = "Todos";
 
     private List<CuentaBancaria> Cuentas { get; set; } = new();
@@ -290,6 +293,7 @@
         !string.IsNullOrWhiteSpace(BusquedaBanco)
         || !string.IsNullOrWhiteSpace(BusquedaCuentaCCI)
         || FiltroMonedaId > 0
+        || FiltroAreaIdBusqueda > 0
         || FiltroTipoDueno != "Todos";
 
     private IEnumerable<CuentaBancaria> CuentasFiltradas => Cuentas
@@ -302,6 +306,7 @@
             || c.NumeroBancario.Contains(BusquedaCuentaCCI, StringComparison.OrdinalIgnoreCase)
             || (c.Cci?.Contains(BusquedaCuentaCCI, StringComparison.OrdinalIgnoreCase) ?? false))
         .Where(c => FiltroMonedaId == 0 || c.Moneda?.IdMoneda == FiltroMonedaId)
+        .Where(c => FiltroAreaIdBusqueda <= 0 || c.AreaAdministradora?.AreaID == FiltroAreaIdBusqueda)
         .Where(c => FiltroTipoDueno == "Todos"
             || (FiltroTipoDueno == "Empleado" && c.EmpleadoAdministrador != null)
             || (FiltroTipoDueno == "Area" && c.AreaAdministradora != null));

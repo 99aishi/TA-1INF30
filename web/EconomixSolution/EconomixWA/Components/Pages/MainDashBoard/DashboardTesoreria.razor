@@ -7,6 +7,8 @@
 @inject IEmpleadoWS EmpleadoWS
 @using EconomixWA.Components.Pages.CajaChica
 
+<div class="d-flex flex-column h-100">
+
 <div class="row g-3 mb-3">
     <div class="col-6 col-lg-3">
         <div class="card rounded-4 h-100">
@@ -49,7 +51,7 @@
 </div>
 
 
-<div class="card rounded-4 mt-2 overflow-hidden">
+<div class="card rounded-4 d-flex flex-column overflow-hidden flex-fill mt-2">
     <div class="card-body p-0 d-flex flex-column">
 
         <div class="p-3">
@@ -61,7 +63,7 @@
 
         <hr class="my-0" />
 
-        <div class="overflow-scroll overflow-x-hidden flex-fill" style="max-height: 330px;">
+        <div class="overflow-scroll overflow-x-hidden flex-fill">
             @foreach (var ciclo in CiclosCajaChica)
             {
                 <CajaChicaItem Titulo="@ciclo.Area"
@@ -79,6 +81,7 @@
     </div>
 </div>
 
+</div>
 
 @code {
     private double FondosTotales { get; set; }

@@ -80,14 +80,40 @@
     {
         if (string.IsNullOrEmpty(estado)) return "bg-secondary-subtle text-secondary-emphasis";
         var e = estado.ToUpperInvariant();
-        if (e.Contains("REGISTRAR") || e.Contains("CREAR") || e.Contains("INSERT") || e.Contains("NUEVO"))
+
+        // Acciones de login
+        if (e.Contains("INICIO DE SESIÓN EXITOSO") || e.Contains("LOGIN_SUCCESS"))
             return "bg-success text-white";
-        if (e.Contains("MODIFICAR") || e.Contains("ACTUALIZAR") || e.Contains("UPDATE") || e.Contains("CAMBIO"))
-            return "bg-warning text-dark";
-        if (e.Contains("ELIMINAR") || e.Contains("BORRAR") || e.Contains("DELETE"))
+        if (e.Contains("INTENTO DE LOGIN FALLIDO") || e.Contains("LOGIN_FAILED"))
             return "bg-danger text-white";
-        if (e.Contains("APROBAR") || e.Contains("APROBADA") || e.Contains("ACEPTAR"))
+
+        // Acciones de creación
+        if (e.Contains("CREÓ") || e.Contains("CREAR") || e.Contains("INSERT") || e.Contains("NUEVO") || e.Contains("REGISTRAR"))
+            return "bg-success text-white";
+
+        // Acciones de modificación
+        if (e.Contains("MODIFICÓ") || e.Contains("MODIFICAR") || e.Contains("ACTUALIZAR") || e.Contains("UPDATE") || e.Contains("CAMBIO"))
+            return "bg-warning text-dark";
+
+        // Acciones de eliminación
+        if (e.Contains("ELIMINÓ") || e.Contains("ELIMINAR") || e.Contains("BORRAR") || e.Contains("DELETE"))
+            return "bg-danger text-white";
+
+        // Acciones de aprobación
+        if (e.Contains("APROBÓ") || e.Contains("APROBAR") || e.Contains("APROBADA") || e.Contains("ACEPTÓ") || e.Contains("ACEPTAR"))
             return "bg-info text-dark";
+
+        // Acciones de rechazo
+        if (e.Contains("RECHAZÓ") || e.Contains("RECHAZAR") || e.Contains("RECHAZADA") || e.Contains("DENEGÓ") || e.Contains("DENEGAR") || e.Contains("DENEGADA"))
+            return "bg-danger text-white";
+
+        // Acciones de observación
+        if (e.Contains("OBSERVÓ") || e.Contains("OBSERVAR") || e.Contains("OBSERVADA"))
+            return "bg-warning text-dark";
+
+        // Acciones de revocación
+        if (e.Contains("REVOCÓ") || e.Contains("REVOCAR") || e.Contains("REVOCADO"))
+            return "bg-danger text-white";
 
         return estado switch
         {

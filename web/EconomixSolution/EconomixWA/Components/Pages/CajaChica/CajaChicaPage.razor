@@ -105,6 +105,7 @@
     private List<Area> Areas { get; set; } = new();
     private CicloCajaChica? CicloSeleccionado { get; set; }
     private string? RolUsuario { get; set; }
+    private Dictionary<int, int> _areaIdByCajaChicaId = new();
 
     private bool PuedeEditar => RolUsuario is "Tesorero" or "Tesoreria" or "Tesorero y Finanzas";
 
@@ -119,7 +120,10 @@
     private IEnumerable<CicloCajaChica> CiclosFiltrados => Ciclos
         .Where(c => string.IsNullOrWhiteSpace(FiltroNombre)
             || (c.CajaChica?.Nombre?.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase) ?? false))
-        .Where(c => FiltroAreaId <= 0 || c.CajaChica?.CuentaBancaria?.AreaAdministradora?.AreaID == FiltroAreaId)
+        .Where(c => FiltroAreaId <= 0
+            || (c.CajaChica != null
+                && _areaIdByCajaChicaId.TryGetValue(c.CajaChica.IdFondo, out var areaId)
+                && areaId == FiltroAreaId))
         .Where(c => FiltroCuentaBancariaId <= 0 || c.CajaChica?.CuentaBancaria?.IdCuenta == FiltroCuentaBancariaId)
         .Where(c => FiltroEstado == "Todos" || c.Estado == FiltroEstado)
         .Where(c => !FiltroFechaDesde.HasValue || c.FechaApertura >= FiltroFechaDesde.Value)
@@ -132,6 +136,7 @@
         Cargando = true;
         RolUsuario = UsuarioWS.GetCurrentUser()?.Rol?.Titulo;
         await CargarCatalogos();
+        BuildAreaLookup();
         await ListarCiclos();
         Cargando = false;
     }
@@ -167,6 +172,17 @@
 
         try { Areas = await AreaWS.listarAsync(); }
         catch { Areas = new List<Area>(); }
+    }
+
+    private void BuildAreaLookup()
+    {
+        var cbByCuentaId = CuentasBancarias
+            .Where(cb => cb.AreaAdministradora != null)
+            .ToDictionary(cb => cb.IdCuenta, cb => cb.AreaAdministradora!.AreaID);
+
+        _areaIdByCajaChicaId = CajasChicas
+            .Where(cc => cc.CuentaBancaria != null && cbByCuentaId.ContainsKey(cc.CuentaBancaria.IdCuenta))
+            .ToDictionary(cc => cc.IdFondo, cc => cbByCuentaId[cc.CuentaBancaria!.IdCuenta]);
     }
 
     private async Task ListarCiclos()
