@@ -1,13 +1,18 @@
 @page "/Reportes"
+@using EconomixWS.UsuarioWS
+@using EconomixModel.Model
+@using AreaModel = EconomixModel.Model.Area
 
 @rendermode InteractiveServer
 @inject IConfiguration Configuration
 @inject NavigationManager Navigation
+@inject IUsuarioWS UsuarioWS
+@inject IAreaWS AreaWS
 
 <h3>Reportes</h3>
-<p>Panel de indicadores y consolidados financieros.</p>
+<p class="text-muted">Panel de indicadores y consolidados financieros.</p>
 
-<div class="row mt-4">
+<div class="row mt-4 g-4">
     <div class="col-12">
         <div class="card rounded-4 p-4">
             <p class="h5 mb-3">Reporte: Gastos por &Aacute;rea</p>
@@ -15,7 +20,7 @@
 
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
-                    <label for="fechaInicio" class="form-label">Fecha Inicio</label>
+                    <label for="fechaInicio" class="form-label small text-muted">Fecha Inicio</label>
                     <input type="date"
                            class="form-control form-control-lg rounded-4 bg-light"
                            id="fechaInicio"
@@ -24,7 +29,7 @@
                 </div>
 
                 <div class="col-md-4">
-                    <label for="fechaFin" class="form-label">Fecha Fin</label>
+                    <label for="fechaFin" class="form-label small text-muted">Fecha Fin</label>
                     <input type="date"
                            class="form-control form-control-lg rounded-4 bg-light"
                            id="fechaFin"
@@ -49,12 +54,103 @@
             }
         </div>
     </div>
+
+    <div class="col-12">
+        <div class="card rounded-4 p-4">
+            <p class="h5 mb-3">Reporte: Solicitudes de Gasto por &Aacute;rea</p>
+            <p class="text-muted mb-3">Seleccione el &aacute;rea y rango de fechas para generar el ranking de empleados por monto solicitado.</p>
+
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="solFechaInicio" class="form-label small text-muted">Fecha Inicio</label>
+                    <input type="date"
+                           class="form-control form-control-lg rounded-4 bg-light"
+                           id="solFechaInicio"
+                           @bind="SolFechaInicio"
+                           @bind:format="yyyy-MM-dd" />
+                </div>
+
+                <div class="col-md-3">
+                    <label for="solFechaFin" class="form-label small text-muted">Fecha Fin</label>
+                    <input type="date"
+                           class="form-control form-control-lg rounded-4 bg-light"
+                           id="solFechaFin"
+                           @bind="SolFechaFin"
+                           @bind:format="yyyy-MM-dd" />
+                </div>
+
+                <div class="col-md-3">
+                    <label for="solArea" class="form-label small text-muted">&Aacute;rea</label>
+                    @if (EsAdmin)
+                    {
+                        <select class="form-select form-select-lg rounded-4 bg-light"
+                                id="solArea"
+                                @bind="SolAreaNombre">
+                            <option value="">Seleccione...</option>
+                            @foreach (var area in AreasList)
+                            {
+                                <option value="@area.Nombre">@area.Nombre</option>
+                            }
+                        </select>
+                    }
+                    else
+                    {
+                        <input type="text"
+                               class="form-control form-control-lg rounded-4 bg-light"
+                               id="solArea"
+                               value="@SolAreaNombre"
+                               disabled />
+                    }
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button"
+                            class="btn btn-outline-primary btn-lg rounded-4 w-100"
+                            disabled="@Procesando"
+                            @onclick="GenerarReporteSolicitudes">
+                        @(Procesando ? "Generando..." : "Generar Reporte")
+                    </button>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(ErrorSolicitudes))
+            {
+                <div class="alert alert-danger mt-3">
+                    @ErrorSolicitudes
+                </div>
+            }
+        </div>
+    </div>
 </div>
 
 @code {
     private DateOnly? FechaInicio { get; set; } = DateOnly.FromDateTime(DateTime.Now.AddMonths(-1));
     private DateOnly? FechaFin { get; set; } = DateOnly.FromDateTime(DateTime.Now);
     private string? MensajeError { get; set; }
+
+    private DateOnly? SolFechaInicio { get; set; } = DateOnly.FromDateTime(DateTime.Now.AddMonths(-1));
+    private DateOnly? SolFechaFin { get; set; } = DateOnly.FromDateTime(DateTime.Now);
+    private string? SolAreaNombre { get; set; }
+    private string? ErrorSolicitudes { get; set; }
+    private bool Procesando { get; set; }
+
+    private bool EsAdmin { get; set; }
+    private List<AreaModel> AreasList { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var usuario = UsuarioWS.GetCurrentUser();
+        EsAdmin = usuario is Administrador;
+
+        if (EsAdmin)
+        {
+            AreasList = await AreaWS.listarActivasAsync();
+        }
+        else if (usuario is Empleado emp && emp.Area != null)
+        {
+            SolAreaNombre = emp.Area.Nombre;
+        }
+    }
 
     private void GenerarReporte()
     {
@@ -76,5 +172,42 @@
         var url = $"{baseUrl}reportes/gastos-por-area?fechaInicio={FechaInicio:yyyy-MM-dd}&fechaFin={FechaFin:yyyy-MM-dd}";
 
         Navigation.NavigateTo(url, forceLoad: true);
+    }
+
+    private async Task GenerarReporteSolicitudes()
+    {
+        ErrorSolicitudes = null;
+
+        if (SolFechaInicio == null || SolFechaFin == null)
+        {
+            ErrorSolicitudes = "Debe seleccionar ambas fechas.";
+            return;
+        }
+
+        if (SolFechaInicio > SolFechaFin)
+        {
+            ErrorSolicitudes = "La fecha de inicio no puede ser mayor que la fecha fin.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(SolAreaNombre))
+        {
+            ErrorSolicitudes = "Debe seleccionar un &aacute;rea.";
+            return;
+        }
+
+        Procesando = true;
+
+        try
+        {
+            var baseUrl = Configuration["URLServices:BaseWSPath"];
+            var url = $"{baseUrl}reportes/solicitudes-gasto?nombreArea={Uri.EscapeDataString(SolAreaNombre)}&fechaInicio={SolFechaInicio:yyyy-MM-dd}&fechaFin={SolFechaFin:yyyy-MM-dd}";
+
+            Navigation.NavigateTo(url, forceLoad: true);
+        }
+        finally
+        {
+            Procesando = false;
+        }
     }
 }
