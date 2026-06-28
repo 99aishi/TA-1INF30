@@ -17,12 +17,20 @@ public class UnixDateTimeConverter : JsonConverter<DateTime>
         if (reader.TokenType == JsonTokenType.String)
         {
             string? value = reader.GetString();
-            if (DateTime.TryParse(value, CultureInfo.InvariantCulture,
-                DateTimeStyles.RoundtripKind, out var date))
+            if (!string.IsNullOrEmpty(value))
             {
-                if (date.Kind == DateTimeKind.Unspecified)
-                    return DateTime.SpecifyKind(date, DateTimeKind.Local);
-                return date.ToLocalTime();
+                // Strip Java ZonedDateTime suffixes like [UTC], [America/Lima], etc.
+                var bracketIndex = value.IndexOf('[');
+                if (bracketIndex > 0)
+                    value = value.Substring(0, bracketIndex);
+
+                if (DateTime.TryParse(value, CultureInfo.InvariantCulture,
+                    DateTimeStyles.RoundtripKind, out var date))
+                {
+                    if (date.Kind == DateTimeKind.Unspecified)
+                        return DateTime.SpecifyKind(date, DateTimeKind.Local);
+                    return date.ToLocalTime();
+                }
             }
         }
 
@@ -31,7 +39,6 @@ public class UnixDateTimeConverter : JsonConverter<DateTime>
 
     public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
     {
-        var utc = value.Kind == DateTimeKind.Utc ? value : value.ToUniversalTime();
-        writer.WriteStringValue(utc.ToString("yyyy-MM-ddTHH:mm:ssZ"));
+        writer.WriteStringValue(value.ToString("yyyy-MM-ddTHH:mm:ss.fffK"));
     }
 }

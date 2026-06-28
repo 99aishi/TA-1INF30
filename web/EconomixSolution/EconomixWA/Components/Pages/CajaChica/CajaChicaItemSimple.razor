@@ -1,33 +1,21 @@
 <div class="card rounded-4 p-3 bg-light mb-3">
     <div class="d-flex flex-row justify-content-between align-items-center gap-3">
         <div class="d-flex flex-column gap-1">
-            <p class="h6 mb-0">@CajaChica?.Nombre</p>
-            <div class="d-flex flex-row gap-3">
-                <span class="badge @EstadoClase rounded-pill">@CajaChica?.Estado</span>
-                <p class="text-muted mb-0">@CuentaBancariaText</p>
+            <p class="h5 mb-0">@CajaChica?.Nombre</p>
+            <div class="d-flex flex-row align-items-center gap-2">
+                <span class="badge @EstadoClase rounded-pill px-2">@CajaChica?.Estado</span>
+                <p class="text-muted mb-0 small">@AreaText</p>
             </div>
         </div>
         <div class="d-flex flex-row align-items-center gap-2">
-            <p class="h6 mb-0 me-2">@(MonedaSimbolo) @MontoTecho.ToString("N2")</p>
-            <button type="button" class="btn btn-outline-primary" @onclick="VerCiclos">
+            <p class="h5 mb-0 me-2">@(MonedaSimbolo) @MontoTecho.ToString("N2")</p>
+            <button type="button" class="btn btn-sm btn-outline-primary" @onclick="VerCiclos" @onclick:stopPropagation>
                 Ver ciclos
             </button>
-            @if (OnEditar.HasDelegate)
+            @if (OnVer.HasDelegate)
             {
-                <button type="button" class="btn btn-outline-dark" @onclick="Editar">
-                    Editar
-                </button>
-            }
-            @if (OnEliminar.HasDelegate && EsActivo)
-            {
-                <button type="button" class="btn btn-outline-danger" @onclick="Eliminar">
-                    Eliminar
-                </button>
-            }
-            @if (OnRecuperar.HasDelegate && !EsActivo)
-            {
-                <button type="button" class="btn btn-outline-success" @onclick="Recuperar">
-                    Recuperar
+                <button type="button" class="btn btn-sm btn-outline-dark" @onclick="Ver" @onclick:stopPropagation>
+                    Ver
                 </button>
             }
         </div>
@@ -42,16 +30,13 @@
     public List<CuentaBancaria> CuentasBancarias { get; set; } = new();
 
     [Parameter]
+    public List<Area> Areas { get; set; } = new();
+
+    [Parameter]
     public EventCallback OnVerCiclos { get; set; }
 
     [Parameter]
-    public EventCallback OnEditar { get; set; }
-
-    [Parameter]
-    public EventCallback OnEliminar { get; set; }
-
-    [Parameter]
-    public EventCallback OnRecuperar { get; set; }
+    public EventCallback OnVer { get; set; }
 
     private string MonedaSimbolo => CajaChica?.Moneda?.Simbolo ?? "S/";
 
@@ -59,21 +44,30 @@
 
     private bool EsActivo => string.Equals(CajaChica?.Estado, "ACTIVO", StringComparison.OrdinalIgnoreCase);
 
-    private string CuentaBancariaText
+    private string AreaText
     {
         get
         {
-            var id = CajaChica?.CuentaBancaria?.IdCuenta ?? 0;
-            if (id <= 0) return "Sin cuenta bancaria";
-            var cuenta = CuentasBancarias.FirstOrDefault(c => c.IdCuenta == id);
-            return cuenta != null ? $"{cuenta.NombreBanco} - {cuenta.NumeroBancario}" : $"Cuenta #{id}";
+            var cuentaId = CajaChica?.CuentaBancaria?.IdCuenta ?? 0;
+            if (cuentaId <= 0) return "Sin cuenta bancaria";
+
+            var cuenta = CuentasBancarias.FirstOrDefault(c => c.IdCuenta == cuentaId);
+            if (cuenta?.AreaAdministradora == null)
+            {
+                var cuentaDirecta = CajaChica?.CuentaBancaria;
+                if (cuentaDirecta?.AreaAdministradora != null)
+                    return cuentaDirecta.AreaAdministradora.Nombre ?? "Sin área";
+                return "Sin área";
+            }
+
+            return cuenta.AreaAdministradora.Nombre ?? "Sin área";
         }
     }
 
     private string EstadoClase => CajaChica?.Estado?.ToUpperInvariant() switch
     {
-        "ACTIVO" => "bg-success-subtle text-success",
-        "INACTIVO" => "bg-secondary-subtle text-secondary",
+        "ACTIVO" => "bg-success-subtle text-success-emphasis",
+        "INACTIVO" => "bg-secondary-subtle text-secondary-emphasis",
         _ => "bg-light text-dark"
     };
 
@@ -82,18 +76,8 @@
         await OnVerCiclos.InvokeAsync();
     }
 
-    private async Task Editar()
+    private async Task Ver()
     {
-        await OnEditar.InvokeAsync();
-    }
-
-    private async Task Eliminar()
-    {
-        await OnEliminar.InvokeAsync();
-    }
-
-    private async Task Recuperar()
-    {
-        await OnRecuperar.InvokeAsync();
+        await OnVer.InvokeAsync();
     }
 }
