@@ -1,0 +1,191 @@
+@inject ISolicitudGastoWS SolicitudGastoWS
+@inject IUsuarioWS UsuarioWS
+
+<div class="card rounded-4 p-3 mb-3 bg-light">
+    <div class="d-flex flex-row justify-content-between align-items-start">
+        <div class="d-flex flex-column">
+            <div class="d-flex justify-content-start align-items-center gap-3 mb-1">
+                <p class="h5 mb-0">SG-@Solicitud?.IdSolicitudGasto</p>
+                <span class="badge @ClaseBadge rounded-pill">@Solicitud?.Estado</span>
+            </div>
+            <div class="d-flex flex-column justify-content-start">
+                <p class="text-muted m-0">
+                    <i class="bi bi-person me-1"></i>@NombreSolicitante
+                    <span class="mx-1">&middot;</span>
+                    <span class="badge bg-light text-dark border">@AreaSolicitante</span>
+                </p>
+                <p class="text-muted m-0">
+                    <i class="bi bi-calendar me-1"></i>@Solicitud?.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")
+                </p>
+                <p class="text-muted m-0 small mt-1">@Solicitud?.MotivoSolicitud</p>
+            </div>
+        </div>
+        <div class="d-flex flex-column align-items-end">
+            <p class="h4 mb-0">@(Solicitud?.MonedaOriginal?.Simbolo ?? "S/") @MontoFormateado</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-2 mb-0 py-2" role="alert">
+            @ErrorMessage
+            <button type="button" class="btn-close btn-close-sm" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+        </div>
+    }
+
+    @if (EstadoEval == EstadoEvaluacion.Idle)
+    {
+        <div class="d-flex justify-content-end gap-2 mt-3">
+            <button type="button" class="btn btn-outline-success btn-sm" @onclick="Aprobar" disabled="@Procesando">
+                <i class="bi bi-check-lg me-1"></i>Aprobar
+            </button>
+            <button type="button" class="btn btn-outline-warning btn-sm" @onclick="() => EstadoEval = EstadoEvaluacion.Observando" disabled="@Procesando">
+                <i class="bi bi-eye me-1"></i>Observar
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => EstadoEval = EstadoEvaluacion.Rechazando" disabled="@Procesando">
+                <i class="bi bi-x-lg me-1"></i>Rechazar
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="mt-3">
+            <label class="form-label small">Comentario@(EstadoEval == EstadoEvaluacion.Rechazando ? " (requerido para rechazar)" : "")</label>
+            <textarea class="form-control form-control-sm" rows="2"
+                      placeholder="@(EstadoEval == EstadoEvaluacion.Observando ? "Motivo de la observación..." : "Motivo del rechazo...")"
+                      @bind="ComentarioDecision"></textarea>
+            <div class="d-flex justify-content-end gap-2 mt-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="Cancelar" disabled="@Procesando">
+                    Cancelar
+                </button>
+                @if (EstadoEval == EstadoEvaluacion.Observando)
+                {
+                    <button type="button" class="btn btn-outline-warning btn-sm" @onclick="Observar" disabled="@Procesando">
+                        @(Procesando ? "Procesando..." : "Confirmar Observación")
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-outline-danger btn-sm" @onclick="Rechazar" disabled="@Procesando">
+                        @(Procesando ? "Procesando..." : "Confirmar Rechazo")
+                    </button>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public SolicitudGasto? Solicitud { get; set; }
+
+    [Parameter]
+    public EventCallback OnEvaluar { get; set; }
+
+    private string ComentarioDecision { get; set; } = string.Empty;
+    private bool Procesando { get; set; }
+    private string ErrorMessage { get; set; } = string.Empty;
+    private EstadoEvaluacion EstadoEval { get; set; } = EstadoEvaluacion.Idle;
+
+    private enum EstadoEvaluacion { Idle, Observando, Rechazando }
+
+    private string NombreSolicitante => Solicitud?.Solicitante != null
+        ? $"{Solicitud.Solicitante.Nombres} {Solicitud.Solicitante.ApellidoPaterno}"
+        : string.Empty;
+
+    private string AreaSolicitante => Solicitud?.Solicitante?.Area?.Nombre ?? "Sin área";
+
+    private string MontoFormateado => (Solicitud?.MontoSolicitado ?? 0).ToString("N2");
+
+    private string ClaseBadge => Solicitud?.Estado?.ToUpperInvariant() switch
+    {
+        "PENDIENTE" => "bg-warning-subtle text-warning-emphasis",
+        "APROBADO" => "bg-success-subtle text-success",
+        "PAGADO" => "bg-primary-subtle text-primary",
+        "RENDIDO" => "bg-info-subtle text-info",
+        "RECHAZADO" => "bg-danger-subtle text-danger",
+        "OBSERVADO" => "bg-info-subtle text-info",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+
+    private void Cancelar()
+    {
+        EstadoEval = EstadoEvaluacion.Idle;
+        ComentarioDecision = string.Empty;
+        ErrorMessage = string.Empty;
+    }
+
+    private async Task Aprobar()
+    {
+        if (Solicitud == null || Procesando) return;
+
+        Procesando = true;
+        ErrorMessage = string.Empty;
+        try
+        {
+            var comentario = string.IsNullOrWhiteSpace(ComentarioDecision) ? "Aprobado" : ComentarioDecision;
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await SolicitudGastoWS.evaluarAsync(Solicitud.IdSolicitudGasto, "APROBAR", comentario, idUsuarioAccion, idUsuarioAccion);
+            await OnEvaluar.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+
+    private async Task Observar()
+    {
+        if (Solicitud == null || Procesando) return;
+
+        Procesando = true;
+        ErrorMessage = string.Empty;
+        try
+        {
+            var comentario = string.IsNullOrWhiteSpace(ComentarioDecision) ? "Observado" : ComentarioDecision;
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await SolicitudGastoWS.evaluarAsync(Solicitud.IdSolicitudGasto, "OBSERVAR", comentario, idUsuarioAccion, idUsuarioAccion);
+            await OnEvaluar.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+
+    private async Task Rechazar()
+    {
+        if (Solicitud == null || Procesando) return;
+
+        if (string.IsNullOrWhiteSpace(ComentarioDecision))
+        {
+            ErrorMessage = "Debe ingresar un comentario justificando el rechazo.";
+            return;
+        }
+
+        Procesando = true;
+        ErrorMessage = string.Empty;
+        try
+        {
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await SolicitudGastoWS.evaluarAsync(Solicitud.IdSolicitudGasto, "RECHAZAR", ComentarioDecision, idUsuarioAccion, idUsuarioAccion);
+            await OnEvaluar.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+}
