@@ -58,19 +58,30 @@
 
 <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden flex-fill mb-3">
         <div class="overflow-scroll overflow-x-hidden flex-fill">
-            @foreach (var ciclo in CiclosCajaChica)
+            @if (Cargando)
             {
-                var c = ciclo;
-                <CajaChicaItem Titulo="@c.Area"
-                               Subtitulo="@c.Responsable"
-                               PorcentajeUso="@c.PorcentajeUso"
-                               MontoTotal="@c.MontoTotal"
-                               Gastado="@c.Gastado"
-                               Disponible="@c.Disponible"
-                               ProximoCierre="@c.ProximoCierre"
-                               CerrarPronto="@c.CerrarPronto"
-                               OnMuestraDetalle="() => VerDetalleCiclo(c)"
-                               OnGestionarCiclos="() => VerCiclosCajaChica(c)" />
+                <div class="p-3 text-center text-muted">Cargando ciclos...</div>
+            }
+            else if (CiclosCajaChica.Count == 0)
+            {
+                <div class="p-3 text-center text-muted">No se encontraron ciclos de caja chica</div>
+            }
+            else
+            {
+                @foreach (var ciclo in CiclosCajaChica)
+                {
+                    var c = ciclo;
+                    <CajaChicaItem Titulo="@c.Area"
+                                   Subtitulo="@c.Responsable"
+                                   PorcentajeUso="@c.PorcentajeUso"
+                                   MontoTotal="@c.MontoTotal"
+                                   Gastado="@c.Gastado"
+                                   Disponible="@c.Disponible"
+                                   ProximoCierre="@c.ProximoCierre"
+                                   CerrarPronto="@c.CerrarPronto"
+                                   OnMuestraDetalle="() => VerDetalleCiclo(c)"
+                                   OnGestionarCiclos="() => VerCiclosCajaChica(c)" />
+                }
             }
         </div>
 </div>
@@ -91,15 +102,18 @@
     private List<CajaChica> CajasChicas { get; set; } = new();
     private List<CuentaBancaria> CuentasBancarias { get; set; } = new();
     private Dictionary<int, int> _areaIdByCajaChicaId = new();
+    private bool Cargando { get; set; } = true;
 
     protected override async Task OnInitializedAsync()
     {
+        Cargando = true;
         await Task.WhenAll(
             CargarFondos(),
             CargarCatalogos());
 
         BuildAreaLookup();
         await CargarCiclos();
+        Cargando = false;
     }
 
     private async Task CargarCatalogos()
