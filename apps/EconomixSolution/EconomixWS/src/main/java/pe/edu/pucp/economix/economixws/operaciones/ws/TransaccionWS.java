@@ -98,4 +98,19 @@ public class TransaccionWS {
                     .entity(Map.of("error", e.getMessage())).build();
         }
     }
+
+    @GET
+    @Path("ListarPorEmpleado")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listarPorEmpleado(@QueryParam("idEmpleado") int idEmpleado) {
+        try {
+            List<Transaccion> transacciones = transaccionBO.listarPorEmpleado(idEmpleado);
+            if (transacciones == null || transacciones.isEmpty())
+                return Response.status(Response.Status.NO_CONTENT).build();
+            return Response.ok(transacciones).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage())).build();
+        }
+    }
 }

@@ -87,11 +87,20 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         TipoCambio tipoCambio = tipoCambioDAO.buscarPorMonedasYFecha(
                 monedaSolicitud.getIdMoneda(), monedaCajaChica.getIdMoneda(), new java.sql.Date(fecha.getTime()));
 
-        if (tipoCambio == null) {
-            throw new Exception("No existe tipo de cambio registrado entre la moneda solicitada y la moneda de la caja chica para la fecha indicada.");
+        double factor = 0.0;
+        if (tipoCambio != null) {
+            factor = tipoCambio.getValor();
+        } else {
+            // Intentar buscar la tasa inversa
+            TipoCambio tipoCambioInverso = tipoCambioDAO.buscarPorMonedasYFecha(
+                    monedaCajaChica.getIdMoneda(), monedaSolicitud.getIdMoneda(), new java.sql.Date(fecha.getTime()));
+            if (tipoCambioInverso != null && tipoCambioInverso.getValor() > 0) {
+                factor = 1.0 / tipoCambioInverso.getValor();
+            } else {
+                throw new Exception("No existe tipo de cambio registrado entre la moneda solicitada y la moneda de la caja chica para la fecha indicada.");
+            }
         }
 
-        double factor = tipoCambio.getValor();
         solicitud.setTipoCambio(factor);
         solicitud.setMontoConvertido(solicitud.getMontoSolicitado() * factor);
     }

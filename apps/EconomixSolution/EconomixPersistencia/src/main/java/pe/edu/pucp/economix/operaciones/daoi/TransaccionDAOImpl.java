@@ -216,6 +216,28 @@ public class TransaccionDAOImpl implements ITransaccionDAO {
         return transacciones;
     }
 
+    @Override
+    public List<Transaccion> listarPorEmpleado(int idEmpleado) throws SQLException {
+        List<Transaccion> transacciones = null;
+        Map<String, Object> parametrosEntrada = new HashMap<>();
+        parametrosEntrada.put("p_id_empleado", idEmpleado);
+        rs = DBManager.getDBManager().ejecutarProcedimientoLectura("pa_listar_transacciones_por_empleado", parametrosEntrada);
+        try {
+            while (rs.next()) {
+                if (transacciones == null) {
+                    transacciones = new ArrayList<>();
+                }
+                transacciones.add(mapearTransaccion(rs, new HashMap<>()));
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error al listar transacciones por empleado: " + ex.getMessage());
+            throw ex;
+        } finally {
+            DBManager.getDBManager().cerrarConexion();
+        }
+        return transacciones;
+    }
+
     @SuppressWarnings("unchecked")
     private <T> T getOrCreate(Map<Class<?>, Map<Integer, Object>> cache, Class<T> type, int id, Supplier<T> factory) {
         if (id <= 0) return null;

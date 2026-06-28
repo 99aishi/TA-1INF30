@@ -60,15 +60,23 @@
                     <div class="col-4 mt-3 align-self-center" style="height: 2rem">
                         <span class="badge h-100 @EstadoClase rounded-pill px-2 align-self-start mt-4">@(SolicitudEdicion?.Estado ?? "PENDIENTE")</span>
                     </div>
-                    @if (EsCreacion || SolicitudEdicion.TipoCambio != 1.0)
+                    @if (EsCreacion || SolicitudEdicion.TipoCambio != 1.0 || TipoCambioNoEncontrado)
                     {
                         <div class="col-6 mt-3">
                             <label class="form-label">Tipo de Cambio</label>
-                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SolicitudEdicion.TipoCambio.ToString("N4"))" disabled="true">
+                            @if (TipoCambioNoEncontrado)
+                            {
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light border-danger text-danger fw-bold" value="No registrado" disabled="true">
+                                <small class="text-danger">Por favor, registre el tipo de cambio.</small>
+                            }
+                            else
+                            {
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SolicitudEdicion.TipoCambio.ToString("N4"))" disabled="true">
+                            }
                         </div>
                         <div class="col-6 mt-3">
                             <label class="form-label">Monto Convertido (@(SimboloMonedaCiclo))</label>
-                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SolicitudEdicion.MontoConvertido.ToString("N2"))" disabled="true">
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TipoCambioNoEncontrado ? "-" : SolicitudEdicion.MontoConvertido.ToString("N2"))" disabled="true">
                         </div>
                     }
                     <div class="col-6 mt-3">
@@ -262,6 +270,7 @@
     private bool EsCreacion => !IdSolicitud.HasValue && Solicitud == null;
     private bool Cargando { get; set; } = true;
     private string ErrorMessage { get; set; } = string.Empty;
+    private bool TipoCambioNoEncontrado = false;
 
     private SolicitudGasto SolicitudEdicion { get; set; } = new();
     private List<Moneda> Monedas { get; set; } = new();
@@ -364,6 +373,7 @@
         var monedaSolicitud = SolicitudEdicion.MonedaOriginal;
         var ciclo = SolicitudEdicion.Ciclo;
         var monedaCiclo = ciclo?.CajaChica?.Moneda;
+        TipoCambioNoEncontrado = false;
 
         if (monedaSolicitud == null || monedaCiclo == null)
         {
@@ -389,8 +399,9 @@
         }
         else
         {
-            SolicitudEdicion.TipoCambio = 1.0;
-            SolicitudEdicion.MontoConvertido = SolicitudEdicion.MontoSolicitado;
+            SolicitudEdicion.TipoCambio = 0.0;
+            SolicitudEdicion.MontoConvertido = 0.0;
+            TipoCambioNoEncontrado = true;
         }
 
         await InvokeAsync(StateHasChanged);
@@ -675,6 +686,8 @@
             error = "El motivo es obligatorio.";
         else if (SolicitudEdicion.MontoSolicitado > SaldoDisponibleCiclo)
             error = "El monto solicitado excede el saldo disponible del ciclo.";
+        else if (TipoCambioNoEncontrado)
+            error = "No existe tipo de cambio registrado entre la moneda solicitada y la de la caja chica para la fecha indicada.";
 
         return string.IsNullOrEmpty(error);
     }

@@ -79,6 +79,11 @@ public class TransaccionBOImpl implements ITransaccionBO {
         return transaccionDAO.listarPorJefe(idJefe);
     }
 
+    @Override
+    public List<Transaccion> listarPorEmpleado(int idEmpleado) throws Exception {
+        return transaccionDAO.listarPorEmpleado(idEmpleado);
+    }
+
     public void validar(Transaccion transaccion, boolean esModificacion) throws Exception{
         if(transaccion==null){
             throw new Exception("La transaccion no puede ser nula.");
