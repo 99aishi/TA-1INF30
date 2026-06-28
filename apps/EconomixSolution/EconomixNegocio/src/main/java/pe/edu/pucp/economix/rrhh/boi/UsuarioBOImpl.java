@@ -7,6 +7,7 @@ import pe.edu.pucp.economix.auditoria.daoi.AuditoriaDAOImpl;
 import pe.edu.pucp.economix.rrhh.ibo.IUsuarioBO;
 import pe.edu.pucp.economix.rrhh.daoi.UsuarioDAOImpl;
 import pe.edu.pucp.economix.rrhh.idao.IUsuarioDAO;
+import pe.edu.pucp.economix.rrhh.model.EstadoUsuario;
 import pe.edu.pucp.economix.rrhh.model.Usuario;
 
 public class UsuarioBOImpl implements IUsuarioBO {
@@ -54,6 +55,12 @@ public class UsuarioBOImpl implements IUsuarioBO {
                     + estadoDespues.get("minutosRestantes") + " minutos.");
             }
             throw new Exception("Usuario o contraseña incorrectos. Intentos restantes: " + intentosRestantes);
+        }
+
+        // Verificar si el usuario esta inactivo o eliminado
+        if (usuario.getEstado() == EstadoUsuario.INACTIVO) {
+            auditoriaDAO.registrarLogin(correo, usuario.getUsuarioID(), false, 0, false);
+            throw new Exception("Usuario inactivo o eliminado.");
         }
 
         if (!usuario.validarPassword(password)) {

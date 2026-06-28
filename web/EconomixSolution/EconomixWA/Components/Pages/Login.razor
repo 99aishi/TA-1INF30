@@ -24,6 +24,14 @@
         </div>
     }
 
+    @if (MostrarInactivo)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            El usuario se encuentra inactivo o ha sido eliminado. Contacte con el administrador.
+            <button type="button" class="btn-close" @onclick="() => MostrarInactivo = false" aria-label="close"></button>
+        </div>
+    }
+
     <form action="/auth/login" method="post">
         <input type="hidden" name="returnUrl" value="@ReturnUrl" />
         <div class="mb-3">
@@ -47,6 +55,7 @@
 @code {
     private bool MostrarError { get; set; } = false;
     private bool MostrarBloqueo { get; set; } = false;
+    private bool MostrarInactivo { get; set; } = false;
     private string ReturnUrl { get; set; } = "";
 
     protected override void OnInitialized()
@@ -56,6 +65,7 @@
         {
             MostrarError = errorVal == "1";
             MostrarBloqueo = errorVal == "blocked";
+            MostrarInactivo = errorVal == "inactive";
         }
         if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query).TryGetValue("returnUrl", out var returnUrlVal))
         {

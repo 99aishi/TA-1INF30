@@ -143,6 +143,11 @@ app.MapPost("/auth/login", async (HttpContext context, IUsuarioWS usuarioWS) =>
     {
         usuarioEncontrado = await usuarioWS.ValidarCredencialesAsync(request);
     }
+    catch (LoginException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden
+        && ex.Message.Contains("inactivo", StringComparison.OrdinalIgnoreCase))
+    {
+        return Results.Redirect("/?error=inactive" + (string.IsNullOrEmpty(returnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(returnUrl)}"));
+    }
     catch (LoginException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
     {
         return Results.Redirect("/?error=blocked" + (string.IsNullOrEmpty(returnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(returnUrl)}"));
