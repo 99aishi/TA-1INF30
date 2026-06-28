@@ -194,6 +194,14 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
             generarTransaccionCierre(TipoTransaccion.REEMBOLSO_DEFICIT, Math.abs(saldoFinal), cuentaArea, null, cajaChica.getMoneda(), idUsuarioAccion);
         }
 
+        // Marcar todas las solicitudes del ciclo como RENDIDO (Cerradas/Liquidadas)
+        for (SolicitudGasto s : solicitudes) {
+            if (s.getEstado() == EstadoSolicitudGasto.APROBADO || s.getEstado() == EstadoSolicitudGasto.PAGADO) {
+                s.setEstado(EstadoSolicitudGasto.RENDIDO);
+                solicitudGastoDAO.modificar(s, idUsuarioAccion);
+            }
+        }
+
         ciclo.setEstado(EstadoCicloCaja.CERRADO);
         ciclo.setFechaCierre(new Date());
         return cicloCajaChicaDAO.modificar(ciclo, idUsuarioAccion);
