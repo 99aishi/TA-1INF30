@@ -167,23 +167,21 @@
 
     private string ObtenerRol()
     {
-        return UsuarioActual switch
+        if (UsuarioActual == null) return "Empleado";
+        if (UsuarioActual is Administrador) return "Administrador";
+        if (UsuarioActual.Rol != null && !string.IsNullOrEmpty(UsuarioActual.Rol.Titulo))
         {
-            Administrador => "Administrador",
-            Empleado emp => DeterminarRolEmpleado(emp),
-            _ => "Empleado"
-        };
-    }
-
-    private string DeterminarRolEmpleado(Empleado emp)
-    {
-        if (emp.Area != null && !string.IsNullOrEmpty(emp.Area.Nombre) &&
-            emp.Area.Nombre.Contains("Tesorer", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Tesoreria";
+            if (UsuarioActual.Rol.Titulo.Equals("Tesoreria", StringComparison.OrdinalIgnoreCase) ||
+                UsuarioActual.Rol.Titulo.Equals("Tesorero", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Tesoreria";
+            }
         }
-
-        return emp.RolFlujo == RolFlujo.JEFE_AREA ? "Jefe" : "Empleado";
+        if (UsuarioActual is Empleado emp)
+        {
+            return emp.RolFlujo == RolFlujo.JEFE_AREA ? "Jefe" : "Empleado";
+        }
+        return "Empleado";
     }
 
     private string ObtenerSaludo()
