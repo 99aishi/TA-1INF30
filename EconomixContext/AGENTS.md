@@ -242,15 +242,47 @@ The `/Caja Chica` route now shows **all cycles** (not the list of cajas chicas):
 
 ## UI — Dashboard Administrador
 
-The administrator dashboard now uses reusable card components instead of inline tables/list groups:
+The administrator dashboard uses a responsive 6-6 two-column layout with reusable card components:
 - `SolicitudRecienteItem`: clickable card that navigates to `/Mis Solicitudes De Gasto/Detalle/{id}`.
-- `ActividadDashboardItem`: read-only activity card with relative timestamps.
-- Responsive two-column grid with scroll overflow and unified empty state "No hay registros".
+- `ActividadDashboardItem`: read-only activity card with **color-coded icons and entity badges** using custom CSS classes from `app.css`:
+  - **Icon color by action type** (`TipoEvento`) via `.actividad-icon-*` classes:
+    - `INSERT` (Creó): green `.actividad-icon-success`
+    - `UPDATE` (Modificó): blue `.actividad-icon-primary`
+    - `DELETE` (Eliminó): red `.actividad-icon-danger`
+    - `LOGIN_SUCCESS`: cyan `.actividad-icon-info`
+    - `LOGIN_FAILED`: yellow `.actividad-icon-warning`
+  - **Entity badge color by module** (`EntidadNombre`):
+    - RRHH (Empleado, Usuario, Área, Rol): blue `bg-primary text-white`
+    - Tesorería (Caja chica, Cuenta bancaria, Moneda): green `bg-success text-white`
+    - Operaciones (Solicitud, Comprobante, Rendición, Transacción): orange `bg-warning text-dark`
+- Layout: `col-12 col-lg-6` columns inside `row g-3 flex-fill overflow-hidden`.
 
 ### File locations
 - `web/.../EconomixWA/Components/Pages/MainDashBoard/DashboardAdministrador.razor`
 - `web/.../EconomixWA/Components/Pages/MainDashBoard/SolicitudRecienteItem.razor`
 - `web/.../EconomixWA/Components/Pages/MainDashBoard/ActividadDashboardItem.razor`
+
+## UI — Dashboard Jefe: Inline Evaluation + Activity
+
+The Jefe dashboard (`DashboardJefe.razor`) uses the same 6-6 two-column layout as the admin dashboard:
+- **KPI cards**: Saldo de Caja Chica, Pendientes de Aprobación (count + urgentes), Gastos del Ciclo, Solicitudes Aprobadas.
+- **Left column**: Pending solicitudes list via `SolicitudPendienteJefeItem`.
+- **Right column**: Activity reciente filtered by the jefe's area (client-side). Loads 50 global logs, filters by employee IDs in the jefe's area via `EmpleadoWS.listarPorAreaAsync`, takes 10.
+
+### `SolicitudPendienteJefeItem` component
+Each pending solicitud card shows:
+- Solicitud info: SG-Id, solicitante + area, fecha, motivo, monto.
+- **3-state evaluation** (no navigation):
+  1. **Idle**: 3 buttons — Aprobar (green), Observar (yellow), Rechazar (red).
+  2. **Observando**: textarea appears for comment + "Confirmar Observación" + "Cancelar".
+  3. **Rechazando**: textarea appears for comment (required) + "Confirmar Rechazo" + "Cancelar".
+- **Aprobar**: immediate action, defaults comment to "Aprobado" if empty.
+- **Observar/Rechazar**: requires clicking confirm after entering comment. Rechazar requires a comment (validation error if empty).
+- After successful evaluation, the item is removed from the list and KPI counters update in real-time.
+
+### File locations
+- `web/.../EconomixWA/Components/Pages/MainDashBoard/DashboardJefe.razor`
+- `web/.../EconomixWA/Components/Pages/MainDashBoard/SolicitudPendienteJefeItem.razor`
 
 ## Business Rules — SolicitudGasto ↔ Transaccion Linkage
 
