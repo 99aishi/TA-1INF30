@@ -2,8 +2,9 @@
 @rendermode InteractiveServer
 @inject IUsuarioWS UsuarioWS
 @inject ISolicitudGastoWS SolicitudGastoWS
-
 @inject IEmpleadoWS EmpleadoWS
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
 @using System.Collections.Generic;
 @using EconomixWA.Components.Pages.MainDashBoard;
 @using EconomixWA.Components.Pages.SolicitudDeGasto.SolicitudRecibida;
@@ -15,13 +16,48 @@
 
 <div class="h-100 d-flex flex-column">
     
-    <div class="d-flex flex-row align-items-center mb-4">
+    <div class="d-flex flex-row align-items-center mb-4 flex-wrap gap-2">
         <div class="flex-grow-1">
             <p class="h4 mb-1">@Saludo, @(UsuarioActual?.Nombres ?? "Usuario")</p>    
             <p class="h6 text-muted mb-0">Área: @(AreaUsuario)</p>
         </div>
         <LiveClock />
-        <div class="flex-grow-1 text-end"></div>
+        @if (Rol == "Jefe")
+        {
+            <div class="flex-grow-1 d-flex justify-content-end align-items-center">
+
+                <div class="d-flex flex-column align-items-start">
+
+                    <small class="text-muted mb-1">Reporte de Solicitudes de Gasto por Empleado</small>
+
+                    <div class="d-flex align-items-center">
+                        <input type="date"
+                               class="form-control form-control-sm rounded-4 bg-light"
+                               style="width:130px"
+                               @bind="RepFechaInicio"
+                               @bind:format="yyyy-MM-dd" />
+
+                        <input type="date"
+                               class="form-control form-control-sm rounded-4 bg-light ms-1"
+                               style="width:130px"
+                               @bind="RepFechaFin"
+                               @bind:format="yyyy-MM-dd" />
+
+                        <button type="button"
+                                class="btn btn-outline-primary btn-sm rounded-4 ms-2"
+                                disabled="@RepProcesando"
+                                @onclick="GenerarReporteJefe">
+                            @(RepProcesando ? "..." : "Generar Reporte")
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="flex-grow-1 text-end"></div>
+        }
     </div>
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
@@ -113,6 +149,10 @@
     private List<SolicitudGasto> SolicitudesEmpleado { get; set; } = new();
     private SolicitudGasto? SolicitudSeleccionadaEmp { get; set; }
 
+    private DateOnly? RepFechaInicio { get; set; } = DateOnly.FromDateTime(DateTime.Now.AddMonths(-1));
+    private DateOnly? RepFechaFin { get; set; } = DateOnly.FromDateTime(DateTime.Now);
+    private bool RepProcesando { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -138,6 +178,27 @@
         if (Rol == "Empleado")
         {
             await CargarSolicitudesEmpleado();
+        }
+    }
+
+    private async Task GenerarReporteJefe()
+    {
+        if (RepFechaInicio == null || RepFechaFin == null) return;
+        if (RepFechaInicio > RepFechaFin) return;
+
+        RepProcesando = true;
+        try
+        {
+            var area = UsuarioActual is Empleado emp ? emp.Area?.Nombre : null;
+            if (string.IsNullOrWhiteSpace(area)) return;
+
+            var baseUrl = Configuration["URLServices:BaseWSPath"];
+            var url = $"{baseUrl}reportes/solicitudes-gasto?nombreArea={Uri.EscapeDataString(area)}&fechaInicio={RepFechaInicio:yyyy-MM-dd}&fechaFin={RepFechaFin:yyyy-MM-dd}";
+            Navigation.NavigateTo(url, forceLoad: true);
+        }
+        finally
+        {
+            RepProcesando = false;
         }
     }
 

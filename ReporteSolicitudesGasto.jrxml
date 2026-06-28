@@ -1,0 +1,192 @@
+<!-- Created with Jaspersoft Studio version 7.0.6.final using JasperReports Library version 7.0.6-5d2a603fdc6b3db8f842a83383e594f41891534d  -->
+<jasperReport name="ReporteSolicitudesGasto" language="java" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="9f8a2c10-1b4d-4a7b-8a78-111111111111">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="net.sf.jasperreports.default.font.name" value="Helvetica"/>
+	<property name="net.sf.jasperreports.default.font.size" value="10"/>
+	<property name="net.sf.jasperreports.print.keep.full.text" value="true"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="MySQL"/>
+	<style name="titleBand" mode="Opaque" backcolor="#E1EDFE" vTextAlign="Middle"/>
+	<style name="titleText" hTextAlign="Center" vTextAlign="Middle" fontSize="16.0" bold="true"/>
+	<style name="subtitleText" forecolor="#6C757D" hTextAlign="Center" vTextAlign="Middle" fontSize="11.0"/>
+	<style name="paramText" forecolor="#6C757D" hTextAlign="Center" vTextAlign="Middle" fontSize="10.0"/>
+	<style name="columnHeaderStyle" mode="Opaque" forecolor="#FFFFFF" backcolor="#3662E3" hTextAlign="Center" vTextAlign="Middle" fontSize="10.0" bold="true">
+		<box leftPadding="4" rightPadding="4">
+			<pen lineWidth="0.5" lineColor="#FFFFFF"/>
+			<topPen lineWidth="0.5" lineColor="#3662E3"/>
+			<leftPen lineWidth="0.5" lineColor="#3662E3"/>
+			<bottomPen lineWidth="0.5" lineColor="#3662E3"/>
+			<rightPen lineWidth="0.5" lineColor="#3662E3"/>
+		</box>
+	</style>
+	<style name="detailCell" mode="Opaque" backcolor="#FFFFFF" vTextAlign="Middle" fontSize="10.0">
+		<box leftPadding="4" rightPadding="4">
+			<pen lineWidth="0.5" lineColor="#DEE2E6"/>
+			<topPen lineWidth="0.5" lineColor="#DEE2E6"/>
+			<leftPen lineWidth="0.5" lineColor="#DEE2E6"/>
+			<bottomPen lineWidth="0.5" lineColor="#DEE2E6"/>
+			<rightPen lineWidth="0.5" lineColor="#DEE2E6"/>
+		</box>
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{REPORT_COUNT} != null && $V{REPORT_COUNT}.intValue() % 2 == 0]]></conditionExpression>
+		</conditionalStyle>
+	</style>
+	<style name="summaryLabelStyle" mode="Opaque" backcolor="#E1EDFE" hTextAlign="Right" vTextAlign="Middle" fontSize="11.0" bold="true">
+		<box leftPadding="4" rightPadding="4">
+			<pen lineWidth="0.5" lineColor="#DEE2E6"/>
+			<topPen lineWidth="0.5" lineColor="#DEE2E6"/>
+			<leftPen lineWidth="0.5" lineColor="#DEE2E6"/>
+			<bottomPen lineWidth="0.5" lineColor="#DEE2E6"/>
+			<rightPen lineWidth="0.5" lineColor="#DEE2E6"/>
+		</box>
+	</style>
+	<style name="summaryValueStyle" mode="Opaque" forecolor="#FFFFFF" backcolor="#3662E3" vTextAlign="Middle" fontSize="11.0" bold="true">
+		<box leftPadding="4" rightPadding="4">
+			<pen lineWidth="0.5" lineColor="#DEE2E6"/>
+			<topPen lineWidth="0.5" lineColor="#DEE2E6"/>
+			<leftPen lineWidth="0.5" lineColor="#DEE2E6"/>
+			<bottomPen lineWidth="0.5" lineColor="#DEE2E6"/>
+			<rightPen lineWidth="0.5" lineColor="#DEE2E6"/>
+		</box>
+	</style>
+	<parameter name="nombreArea" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="fechaInicio" class="java.sql.Date">
+		<defaultValueExpression><![CDATA[java.sql.Date.valueOf("2026-01-01")]]></defaultValueExpression>
+	</parameter>
+	<parameter name="fechaFin" class="java.sql.Date">
+		<defaultValueExpression><![CDATA[java.sql.Date.valueOf("2026-12-31")]]></defaultValueExpression>
+	</parameter>
+	<query language="SQL"><![CDATA[SELECT
+                a.id_area AS id_area,
+                a.nombre_area AS area,
+                u.id_usuario AS id_empleado,
+                CONCAT(
+                    u.nombres, ' ',
+                    u.apellido_paterno, ' ',
+                    IFNULL(u.apellido_materno, '')
+                ) AS empleado,
+                COUNT(sg.id_solicitud_gasto) AS cantidad_solicitudes,
+                SUM(sg.monto_solicitado) AS monto_total_solicitado
+            FROM ope_solicitud_gasto sg
+            INNER JOIN rrhh_empleado e
+                ON sg.id_usuario_solicitante = e.id_usuario
+            INNER JOIN rrhh_usuario u
+                ON e.id_usuario = u.id_usuario
+            INNER JOIN rrhh_area a
+                ON e.id_area = a.id_area
+            WHERE
+                a.nombre_area = $P{nombreArea}
+                AND DATE(sg.fecha_solicitud) BETWEEN $P{fechaInicio} AND $P{fechaFin}
+            GROUP BY
+                a.id_area,
+                a.nombre_area,
+                u.id_usuario,
+                u.nombres,
+                u.apellido_paterno,
+                u.apellido_materno
+            ORDER BY
+                SUM(sg.monto_solicitado) DESC]]></query>
+	<field name="id_area" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="id_area"/>
+		<property name="com.jaspersoft.studio.field.label" value="id_area"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="rrhh_area"/>
+	</field>
+	<field name="area" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="nombre_area"/>
+		<property name="com.jaspersoft.studio.field.label" value="area"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="rrhh_area"/>
+	</field>
+	<field name="id_empleado" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="id_usuario"/>
+		<property name="com.jaspersoft.studio.field.label" value="id_empleado"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="rrhh_usuario"/>
+	</field>
+	<field name="empleado" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="empleado"/>
+		<property name="com.jaspersoft.studio.field.label" value="empleado"/>
+	</field>
+	<field name="cantidad_solicitudes" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="cantidad_solicitudes"/>
+		<property name="com.jaspersoft.studio.field.label" value="cantidad_solicitudes"/>
+	</field>
+	<field name="monto_total_solicitado" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="monto_total_solicitado"/>
+		<property name="com.jaspersoft.studio.field.label" value="monto_total_solicitado"/>
+	</field>
+	<variable name="totalSolicitudes" calculation="Sum" class="java.lang.Long">
+		<expression><![CDATA[$F{cantidad_solicitudes}]]></expression>
+	</variable>
+	<variable name="totalMontoSolicitado" calculation="Sum" class="java.math.BigDecimal">
+		<expression><![CDATA[$F{monto_total_solicitado}]]></expression>
+	</variable>
+	<title height="90">
+		<element kind="rectangle" uuid="11111111-1111-1111-1111-111111111110" x="0" y="0" width="555" height="90" style="titleBand"/>
+		<element kind="staticText" uuid="11111111-1111-1111-1111-111111111111" x="0" y="5" width="555" height="30" style="titleText">
+			<text><![CDATA[Ranking de empleados por monto solicitado]]></text>
+		</element>
+		<element kind="staticText" uuid="22222222-2222-2222-2222-222222222222" x="0" y="38" width="555" height="20" style="subtitleText">
+			<text><![CDATA[Solicitudes de gasto por área y rango de fechas]]></text>
+		</element>
+		<element kind="textField" uuid="33333333-3333-3333-3333-333333333333" x="0" y="62" width="555" height="20" style="paramText">
+			<expression><![CDATA["Área: " + $P{nombreArea}
+                    + "    |    Desde: " + $P{fechaInicio}
+                    + "    |    Hasta: " + $P{fechaFin}]]></expression>
+		</element>
+	</title>
+	<columnHeader height="30">
+		<element kind="staticText" uuid="44444444-4444-4444-4444-444444444444" x="0" y="0" width="45" height="30" style="columnHeaderStyle">
+			<text><![CDATA[Rank]]></text>
+		</element>
+		<element kind="staticText" uuid="55555555-5555-5555-5555-555555555555" x="45" y="0" width="65" height="30" style="columnHeaderStyle">
+			<text><![CDATA[ID Emp.]]></text>
+		</element>
+		<element kind="staticText" uuid="66666666-6666-6666-6666-666666666666" x="110" y="0" width="210" height="30" style="columnHeaderStyle">
+			<text><![CDATA[Empleado]]></text>
+		</element>
+		<element kind="staticText" uuid="77777777-7777-7777-7777-777777777777" x="320" y="0" width="105" height="30" style="columnHeaderStyle">
+			<text><![CDATA[Solicitudes]]></text>
+		</element>
+		<element kind="staticText" uuid="88888888-8888-8888-8888-888888888888" x="425" y="0" width="130" height="30" style="columnHeaderStyle">
+			<text><![CDATA[Monto total]]></text>
+		</element>
+	</columnHeader>
+	<detail>
+		<band height="25">
+			<element kind="textField" uuid="99999999-9999-9999-9999-999999999999" x="0" y="0" width="45" height="25" hTextAlign="Center" style="detailCell">
+				<expression><![CDATA[$V{REPORT_COUNT}]]></expression>
+			</element>
+			<element kind="textField" uuid="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" x="45" y="0" width="65" height="25" hTextAlign="Center" style="detailCell">
+				<expression><![CDATA[$F{id_empleado}]]></expression>
+			</element>
+			<element kind="textField" uuid="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" x="110" y="0" width="210" height="25" style="detailCell">
+				<expression><![CDATA[$F{empleado}]]></expression>
+			</element>
+			<element kind="textField" uuid="cccccccc-cccc-cccc-cccc-cccccccccccc" x="320" y="0" width="105" height="25" hTextAlign="Center" style="detailCell">
+				<expression><![CDATA[$F{cantidad_solicitudes}]]></expression>
+			</element>
+			<element kind="textField" uuid="dddddddd-dddd-dddd-dddd-dddddddddddd" x="425" y="0" width="130" height="25" hTextAlign="Right" style="detailCell">
+				<expression><![CDATA["S/ " + new java.text.DecimalFormat("#,##0.00").format($F{monto_total_solicitado})]]></expression>
+			</element>
+		</band>
+	</detail>
+	<pageFooter height="25">
+		<element kind="textField" uuid="eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee" x="0" y="0" width="250" height="20" forecolor="#6C757D" fontSize="9.0" vTextAlign="Middle">
+			<expression><![CDATA["Generado: " + new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(new java.util.Date())]]></expression>
+		</element>
+		<element kind="textField" uuid="ffffffff-ffff-ffff-ffff-ffffffffffff" x="400" y="0" width="155" height="20" forecolor="#6C757D" fontSize="9.0" hTextAlign="Right" vTextAlign="Middle">
+			<expression><![CDATA["Página " + $V{PAGE_NUMBER}]]></expression>
+		</element>
+	</pageFooter>
+	<summary height="60">
+		<element kind="staticText" uuid="12345678-aaaa-bbbb-cccc-111111111111" x="0" y="15" width="320" height="30" style="summaryLabelStyle">
+			<text><![CDATA[TOTALES DEL REPORTE: ]]></text>
+		</element>
+		<element kind="textField" uuid="12345678-aaaa-bbbb-cccc-222222222222" x="320" y="15" width="105" height="30" hTextAlign="Center" style="summaryValueStyle">
+			<expression><![CDATA[$V{totalSolicitudes}]]></expression>
+		</element>
+		<element kind="textField" uuid="12345678-aaaa-bbbb-cccc-333333333333" x="425" y="15" width="130" height="30" hTextAlign="Right" style="summaryValueStyle">
+			<expression><![CDATA["S/ " + new java.text.DecimalFormat("#,##0.00").format($V{totalMontoSolicitado} != null ? $V{totalMontoSolicitado} : java.math.BigDecimal.ZERO)]]></expression>
+		</element>
+	</summary>
+</jasperReport>
