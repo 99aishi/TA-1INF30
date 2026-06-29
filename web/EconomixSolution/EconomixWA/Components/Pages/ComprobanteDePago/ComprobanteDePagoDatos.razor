@@ -5,6 +5,7 @@
 @inject ITransaccionWS TransaccionWS
 @inject ISolicitudGastoWS SolicitudGastoWS
 @inject IMonedaWS MonedaWS
+@inject ITipoCambioWS TipoCambioWS
 
 <div class="card p-3 h-100 rounded-4 d-flex justify-content-between flex-column mb-3">
     
@@ -82,7 +83,7 @@
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.NumeroSerial" placeholder="Número Serial" disabled="@RequiereAutorizacion">
             }
         </div>
-        <div class="col-4 mt-3">
+        <div class="col-3 mt-3">
             <label for="FechaDeEmision" class="form-label small text-muted">Fecha de Emisión</label>    
             @if (RequiereAutorizacion)
             {
@@ -93,7 +94,7 @@
                 <input type="date" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.FechaEmision" disabled="@RequiereAutorizacion">
             }
         </div>
-        <div class="col-2 mt-3">
+        <div class="col-3 mt-3">
             <label for="Total" class="form-label small text-muted">Total</label>
             @if (RequiereAutorizacion)
             {
@@ -107,15 +108,15 @@
                 }
                 else
                 {
-                    <input type="number" step="0.01" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.MontoTotal" placeholder="0.00">
+                    <input type="number" step="0.01" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante.MontoTotal" @oninput="OnTotalInput" placeholder="0.00">
                 }
             }
         </div>
-        <div class="col-2 mt-3">
+        <div class="col-3 mt-3">
             <label for="Moneda" class="form-label small text-muted">Moneda</label>
             @if (EsCreacion || EsAsociacion)
             {
-                <select class="form-select form-select-lg rounded-4 bg-light" @bind="IdMonedaSeleccionada">
+                <select class="form-select form-select-lg rounded-4 bg-light" value="@IdMonedaSeleccionada" @onchange="OnMonedaChanged">
                     <option value="0">Seleccione...</option>
                     @foreach (var moneda in Monedas)
                     {
@@ -128,6 +129,50 @@
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Comprobante?.Moneda?.CodigoISO ?? "PEN")" disabled>
             }
         </div>
+        @if (Comprobante?.Solicitud == null || Comprobante.Solicitud.IdSolicitudGasto == 0)
+        {
+            <div class="col-3 mt-3">
+                <label class="form-label small text-muted">Tipo de Cambio</label>
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="0.0000" disabled="true">
+            </div>
+            <div class="col-3 mt-3">
+                <label class="form-label small text-muted">Monto Convertido</label>
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="0.00" disabled="true">
+            </div>
+        }
+        else if (RequiereTipoCambio)
+        {
+            <div class="col-3 mt-3">
+                <label class="form-label small text-muted">Tipo de Cambio</label>
+                @if (TipoCambioNoEncontrado)
+                {
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light text-danger fw-bold border-danger" value="No registrado" disabled="true">
+                    @if (!RequiereAutorizacion)
+                    {
+                        <small class="text-danger">Por favor, registre el tipo de cambio.</small>
+                    }
+                }
+                else
+                {
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Comprobante.TipoCambio.ToString("N4"))" disabled="true">
+                }
+            </div>
+            <div class="col-3 mt-3">
+                <label class="form-label small text-muted">Monto Convertido (@(Comprobante?.Solicitud?.MonedaOriginal?.Simbolo ?? "$"))</label>
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TipoCambioNoEncontrado ? "-" : Comprobante.MontoConvertido.ToString("N2"))" disabled="true">
+            </div>
+        }
+        else
+        {
+            <div class="col-3 mt-3">
+                <label class="form-label small text-muted">Tipo de Cambio</label>
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="1.0000" disabled="true">
+            </div>
+            <div class="col-3 mt-3">
+                <label class="form-label small text-muted">Monto Convertido (@(Comprobante?.Solicitud?.MonedaOriginal?.Simbolo ?? "$"))</label>
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Comprobante?.MontoTotal.ToString("N2"))" disabled="true">
+            </div>
+        }
         @if (!RequiereAutorizacion && (EsCreacion || EsAsociacion) && Comprobante?.IdComprobante > 0)
         {
             <div class="col-4 mt-3">
@@ -336,6 +381,10 @@
                     return;
                 }
 
+                if (Comprobante.FechaEmision == null)
+                {
+                    Comprobante.FechaEmision = DateTime.Today;
+                }
                 Comprobante.Estado = "POR_REVISAR";
                 Comprobante.FechaCreacion = DateTime.Today;
                 Comprobante.FechaCreacionString = DateTime.Today.ToString("yyyy-MM-dd");
@@ -470,6 +519,82 @@
     }
 
     private List<Moneda> Monedas { get; set; } = new();
+    private bool TipoCambioNoEncontrado = false;
+    private int _ultimoIdSolicitud = 0;
+    private int _ultimoIdMoneda = 0;
+    private DateTime? _ultimoFechaEmision = null;
+
+    private bool RequiereTipoCambio => Comprobante?.Solicitud?.MonedaOriginal != null && 
+                                       Comprobante?.Moneda != null && 
+                                       Comprobante.Moneda.IdMoneda != Comprobante.Solicitud.MonedaOriginal.IdMoneda;
+
+    private async Task RecalcularTipoCambioComprobante()
+    {
+        if (Comprobante == null || Comprobante.Moneda == null || Comprobante.Solicitud == null || Comprobante.Solicitud.IdSolicitudGasto == 0)
+        {
+            if (Comprobante != null) Comprobante.TipoCambio = 0.0;
+            RecalcularMontoConvertido();
+            return;
+        }
+
+        if (Comprobante.Solicitud.MonedaOriginal == null)
+        {
+            try
+            {
+                var fullSolicitud = await SolicitudGastoWS.obtenerPorIdAsync(Comprobante.Solicitud.IdSolicitudGasto);
+                if (fullSolicitud != null)
+                {
+                    Comprobante.Solicitud = fullSolicitud;
+                }
+            }
+            catch
+            {
+                // Ignorar error al precargar
+            }
+        }
+
+        if (Comprobante.Solicitud.MonedaOriginal == null)
+        {
+            Comprobante.TipoCambio = 0.0;
+            RecalcularMontoConvertido();
+            return;
+        }
+
+        TipoCambioNoEncontrado = false;
+
+        if (Comprobante.Moneda.IdMoneda == Comprobante.Solicitud.MonedaOriginal.IdMoneda)
+        {
+            Comprobante.TipoCambio = 1.0;
+            RecalcularMontoConvertido();
+            return;
+        }
+
+        try
+        {
+            var tc = await TipoCambioWS.buscarPorMonedasYFechaAsync(
+                Comprobante.Moneda.IdMoneda, 
+                Comprobante.Solicitud.MonedaOriginal.IdMoneda, 
+                Comprobante.FechaEmision ?? DateTime.Today
+            );
+
+            if (tc != null)
+            {
+                Comprobante.TipoCambio = tc.Valor;
+                TipoCambioNoEncontrado = false;
+            }
+            else
+            {
+                Comprobante.TipoCambio = 0.0;
+                TipoCambioNoEncontrado = true;
+            }
+        }
+        catch
+        {
+            Comprobante.TipoCambio = 0.0;
+            TipoCambioNoEncontrado = true;
+        }
+        RecalcularMontoConvertido();
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -479,6 +604,24 @@
             if (Comprobante != null && Comprobante.Moneda == null && Monedas.Any())
             {
                 Comprobante.Moneda = Monedas.FirstOrDefault();
+            }
+
+            if (Comprobante != null)
+            {
+                int currentIdSolicitud = Comprobante.Solicitud?.IdSolicitudGasto ?? 0;
+                int currentIdMoneda = Comprobante.Moneda?.IdMoneda ?? 0;
+                DateTime? currentFechaEmision = Comprobante.FechaEmision;
+
+                if (currentIdSolicitud != _ultimoIdSolicitud || 
+                    currentIdMoneda != _ultimoIdMoneda || 
+                    currentFechaEmision != _ultimoFechaEmision)
+                {
+                    _ultimoIdSolicitud = currentIdSolicitud;
+                    _ultimoIdMoneda = currentIdMoneda;
+                    _ultimoFechaEmision = currentFechaEmision;
+
+                    await RecalcularTipoCambioComprobante();
+                }
             }
         }
         catch
@@ -505,7 +648,53 @@
                     Comprobante.Moneda.Simbolo = selected.Simbolo;
                     Comprobante.Moneda.CodigoISO = selected.CodigoISO;
                 }
+                _ = RecalcularTipoCambioComprobante();
             }
+        }
+    }
+
+    private async Task OnMonedaChanged(ChangeEventArgs e)
+    {
+        if (Comprobante != null && int.TryParse(e.Value?.ToString(), out int val))
+        {
+            if (Comprobante.Moneda == null)
+            {
+                Comprobante.Moneda = new Moneda();
+            }
+            Comprobante.Moneda.IdMoneda = val;
+            var selected = Monedas.FirstOrDefault(m => m.IdMoneda == val);
+            if (selected != null)
+            {
+                Comprobante.Moneda.Simbolo = selected.Simbolo;
+                Comprobante.Moneda.CodigoISO = selected.CodigoISO;
+            }
+            await RecalcularTipoCambioComprobante();
+        }
+    }
+
+    private void OnTotalInput(ChangeEventArgs e)
+    {
+        if (Comprobante != null && double.TryParse(e.Value?.ToString(), out double val))
+        {
+            Comprobante.MontoTotal = val;
+            RecalcularMontoConvertido();
+        }
+    }
+
+    private void OnTipoCambioInput(ChangeEventArgs e)
+    {
+        if (Comprobante != null && double.TryParse(e.Value?.ToString(), out double val))
+        {
+            Comprobante.TipoCambio = val;
+            RecalcularMontoConvertido();
+        }
+    }
+
+    private void RecalcularMontoConvertido()
+    {
+        if (Comprobante != null)
+        {
+            Comprobante.MontoConvertido = Comprobante.MontoTotal * Comprobante.TipoCambio;
         }
     }
 

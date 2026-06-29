@@ -1,60 +1,60 @@
 @rendermode InteractiveServer
 
 <div class="card rounded-4 p-3 mb-3">
-    <div class="row g-2 align-items-end">
-        <div class="col-12 col-md-2">
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-4">
             <label class="form-label small text-muted">Proveedor / Razón Soc.</label>
             <input type="text"
-                   class="form-control bg-light rounded-4"
-                   placeholder="Razón social"
+                   class="form-control form-control-lg bg-light rounded-4"
+                   placeholder="Buscar proveedor..."
                    value="@FiltroTexto"
                    @oninput="OnTextoCambiado" />
         </div>
-        <div class="col-4 col-md-1">
+        <div class="col-6 col-md-2">
             <label class="form-label small text-muted">Tipo</label>
-            <select class="form-select bg-light rounded-4"
+            <select class="form-select form-select-lg bg-light rounded-4"
                      value="@FiltroTipo"
                      @onchange="OnTipoCambiado">
                 <option value="Todos">Todos</option>
-                <option value="FACTURA">Fact.</option>
-                <option value="BOLETA">Bolet.</option>
+                <option value="FACTURA">Factura</option>
+                <option value="BOLETA">Boleta</option>
             </select>
         </div>
-        <div class="col-4 col-md-1">
+        <div class="col-6 col-md-2">
             <label class="form-label small text-muted">Estado</label>
-            <select class="form-select bg-light rounded-4"
+            <select class="form-select form-select-lg bg-light rounded-4"
                      value="@FiltroEstado"
                      @onchange="OnEstadoCambiado">
                 <option value="Todas">Todas</option>
-                <option value="POR_REVISAR">P. revisar</option>
-                <option value="APROBADO">Aprob.</option>
-                <option value="OBSERVADO">Observ.</option>
-                <option value="ANULADO">Anul.</option>
+                <option value="POR_REVISAR">Por revisar</option>
+                <option value="APROBADO">Aprobado</option>
+                <option value="OBSERVADO">Observado</option>
+                <option value="ANULADO">Anulado</option>
             </select>
         </div>
-        <div class="col-4 col-md-1">
+        <div class="col-6 col-md-2">
             <label class="form-label small text-muted">Monto mín.</label>
             <input type="number"
                    step="0.01"
-                   class="form-control bg-light rounded-4"
+                   class="form-control form-control-lg bg-light rounded-4"
                    placeholder="0.00"
                    value="@FiltroMontoMin"
                    @oninput="OnMontoMinCambiado" />
         </div>
-        <div class="col-4 col-md-1">
+        <div class="col-6 col-md-2">
             <label class="form-label small text-muted">Monto máx.</label>
             <input type="number"
                    step="0.01"
-                   class="form-control bg-light rounded-4"
+                   class="form-control form-control-lg bg-light rounded-4"
                    placeholder="0.00"
                    value="@FiltroMontoMax"
                    @oninput="OnMontoMaxCambiado" />
         </div>
         @if (!OcultarAreaEmpleado)
         {
-            <div class="col-3 col-md-2">
+            <div class="col-6 col-md-3">
                 <label class="form-label small text-muted">Área</label>
-                <select class="form-select bg-light rounded-4"
+                <select class="form-select form-select-lg bg-light rounded-4"
                         value="@FiltroAreaId"
                         @onchange="OnAreaCambiado">
                     <option value="0">Todas</option>
@@ -64,12 +64,9 @@
                     }
                 </select>
             </div>
-        }
-        @if (!OcultarAreaEmpleado)
-        {
-            <div class="col-3 col-md-2">
+            <div class="col-6 col-md-3">
                 <label class="form-label small text-muted">Empleado</label>
-                <select class="form-select bg-light rounded-4"
+                <select class="form-select form-select-lg bg-light rounded-4"
                         value="@FiltroEmpleadoId"
                         @onchange="OnEmpleadoCambiado">
                     <option value="0">Todos</option>
@@ -80,23 +77,22 @@
                 </select>
             </div>
         }
-        <div class="col-4 col-md-1">
+        <div class="col-6 col-md-2">
             <label class="form-label small text-muted">Fecha inicio</label>
             <input type="date"
-                   class="form-control bg-light rounded-4"
+                   class="form-control form-control-lg bg-light rounded-4"
                    value="@FiltroFechaInicio?.ToString("yyyy-MM-dd")"
                    @onchange="OnFechaInicioCambiada" />
         </div>
-        <div class="col-4 col-md-1">
+        <div class="col-6 col-md-2">
             <label class="form-label small text-muted">Fecha fin</label>
             <input type="date"
-                   class="form-control bg-light rounded-4"
+                   class="form-control form-control-lg bg-light rounded-4"
                    value="@FiltroFechaFin?.ToString("yyyy-MM-dd")"
                    @onchange="OnFechaFinCambiada" />
         </div>
-        <div class="col-4 col-md-1 d-grid">
-            <label class="form-label small text-muted">&nbsp;</label>
-            <button type="button" class="btn btn-outline-secondary rounded-4" @onclick="Limpiar">
+        <div class="col-12 col-md-2 d-grid">
+            <button type="button" class="btn btn-outline-secondary btn-lg rounded-4" @onclick="Limpiar">
                 Limpiar
             </button>
         </div>
