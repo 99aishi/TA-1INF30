@@ -1,4 +1,6 @@
 @page "/dashboard"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.WebUtilities
 @rendermode InteractiveServer
 @inject IUsuarioWS UsuarioWS
 @inject ISolicitudGastoWS SolicitudGastoWS

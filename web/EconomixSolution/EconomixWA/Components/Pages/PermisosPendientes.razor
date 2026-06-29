@@ -1,4 +1,6 @@
 @page "/Permisos Pendientes"
+@attribute [Authorize(Roles = "Jefe, Tesoreria")]
+@using Microsoft.AspNetCore.WebUtilities
 @inject IPermisoEdicionWS PermisoEdicionWS
 @inject IUsuarioWS UsuarioWS
 @inject NavigationManager Navigation

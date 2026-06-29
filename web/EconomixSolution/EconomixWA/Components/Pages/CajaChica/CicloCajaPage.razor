@@ -1,5 +1,6 @@
 @page "/Ciclos"
 @page "/Caja Chica/Ciclos"
+@attribute [Authorize(Roles = "Administrador, Tesoreria")]
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject ICicloCajaWS CicloCajaWS
@@ -7,6 +8,7 @@
 @inject ICuentaBancariaWS CuentaBancariaWS
 @inject IAreaWS AreaWS
 @inject IUsuarioWS UsuarioWS
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 
 <div class="h-100 d-flex flex-column">

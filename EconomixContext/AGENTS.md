@@ -588,3 +588,21 @@ Each parent page follows the same pattern:
 - `web/.../EconomixWA/Components/Pages/Rol/RolPage.razor`
 - `web/.../EconomixWA/Components/Pages/Rendicion/RendicionSearchBar.razor`
 - `web/.../EconomixWA/Components/Pages/Rendicion/RendicionPage.razor`
+
+## Page-Level Authorization (`[Authorize]` Attributes)
+
+All routable Blazor pages now have `[Authorize]` / `[Authorize(Roles = "...")]` or `[AllowAnonymous]`:
+- `@attribute [AllowAnonymous]` — Login, Logout, NotFound, Error
+- `@attribute [Authorize]` — Home (any authenticated user)
+- `@attribute [Authorize(Roles = "Administrador")]` — Area, AreaDetalle, Rol, Usuarios, UsuarioDetalle, CuentaBancaria, Moneda, MonedaDetalle, Reportes
+- `@attribute [Authorize(Roles = "Administrador, Tesoreria")]` — CajaChica, CicloCaja, CicloCajaDetalle
+- `@attribute [Authorize(Roles = "Administrador, Jefe, Tesoreria")]` — SolicitudesDeGastoRecibidas, Transacciones, Rendiciones, DashboardTesoreria
+- `@attribute [Authorize(Roles = "Administrador, Jefe, Empleado, Tesoreria")]` — ComprobantesDePago, ComprobanteDePagoDetalle
+- `@attribute [Authorize(Roles = "Empleado, Jefe")]` — MisSolicitudesDeGasto, MiSolicitudDeGastoDetalle
+- `@attribute [Authorize(Roles = "Empleado")]` — MisComprobantesDePago
+- `@attribute [Authorize(Roles = "Jefe, Tesoreria")]` — PermisosPendientes
+
+The `using Microsoft.AspNetCore.Authorization` is in `_Imports.razor` (global).
+`AuthorizeRouteView` in `Routes.razor` handles unauthorized users: unauthenticated → redirect to login, authenticated but wrong role → "Acceso Denegado" message.
+
+**Important**: The 4 auth policies in `Program.cs` (`IsAdministrador`, `IsJefe`, `IsEmpleado`, `IsTesoreria`) are defined but **never referenced** — role enforcement is done entirely via `[Authorize(Roles = "...")]` attributes on each page.

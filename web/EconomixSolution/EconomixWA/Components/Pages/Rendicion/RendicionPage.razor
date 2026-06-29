@@ -1,4 +1,6 @@
 @page "/Rendiciones"
+@attribute [Authorize(Roles = "Administrador, Jefe, Tesoreria")]
+@using Microsoft.AspNetCore.WebUtilities
 @rendermode InteractiveServer
 @inject IRendicionWS RendicionWS
 @inject IAreaWS AreaWS

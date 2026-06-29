@@ -1,4 +1,6 @@
 @page "/DashboardTesoreria"
+@attribute [Authorize(Roles = "Administrador, Jefe, Tesoreria")]
+@using Microsoft.AspNetCore.WebUtilities
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject ICajaChicaWS CajaChicaWS

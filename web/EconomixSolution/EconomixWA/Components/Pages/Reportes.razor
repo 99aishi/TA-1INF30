@@ -1,4 +1,6 @@
 @page "/Reportes"
+@attribute [Authorize(Roles = "Administrador")]
+@using Microsoft.AspNetCore.WebUtilities
 @using EconomixWS.UsuarioWS
 @using EconomixModel.Model
 @using AreaModel = EconomixModel.Model.Area

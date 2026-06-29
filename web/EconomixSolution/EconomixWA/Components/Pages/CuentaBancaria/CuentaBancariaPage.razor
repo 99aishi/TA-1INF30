@@ -1,4 +1,5 @@
 @page "/Cuentas Bancarias"
+@attribute [Authorize(Roles = "Administrador")]
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.WebUtilities
 @inject NavigationManager Navigation

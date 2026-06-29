@@ -1,4 +1,5 @@
 @page "/Caja Chica"
+@attribute [Authorize(Roles = "Administrador, Tesoreria")]
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject ICajaChicaWS CajaChicaWS
@@ -6,6 +7,7 @@
 @inject IAreaWS AreaWS
 @inject IUsuarioWS UsuarioWS
 @inject IJSRuntime JSRuntime
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 
 <div class="h-100 d-flex flex-column">

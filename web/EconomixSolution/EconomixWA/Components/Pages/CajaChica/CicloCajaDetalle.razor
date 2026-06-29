@@ -1,5 +1,6 @@
 @page "/Caja Chica/Detalle"
 @page "/Caja Chica/Crear"
+@attribute [Authorize(Roles = "Administrador, Tesoreria")]
 
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
