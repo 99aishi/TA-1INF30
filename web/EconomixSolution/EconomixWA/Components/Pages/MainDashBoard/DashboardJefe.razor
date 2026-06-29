@@ -171,8 +171,10 @@
             var todas = await SolicitudGastoWS.listarAsync();
             if (_empleadoJefe?.Area != null)
             {
-                var empleadosArea = await EmpleadoWS.listarPorAreaAsync(_empleadoJefe.Area.AreaID);
-                var idsArea = new HashSet<int>(empleadosArea.Select(e => e.UsuarioID));
+                var todosEmpleados = await EmpleadoWS.listarAsync();
+                var idsArea = new HashSet<int>(todosEmpleados
+                    .Where(e => e.Area?.AreaID == _empleadoJefe.Area.AreaID)
+                    .Select(e => e.UsuarioID));
                 Pendientes = todas
                     .Where(s => s.Estado.Equals("PENDIENTE", StringComparison.OrdinalIgnoreCase)
                              && idsArea.Contains(s.Solicitante?.UsuarioID ?? 0))
@@ -238,8 +240,10 @@
             {
                 if (_empleadoJefe?.Area != null)
                 {
-                    var empleadosArea = await EmpleadoWS.listarPorAreaAsync(_empleadoJefe.Area.AreaID);
-                    var idsArea = new HashSet<int>(empleadosArea.Select(e => e.UsuarioID));
+                    var todosEmpleados = await EmpleadoWS.listarAsync();
+                    var idsArea = new HashSet<int>(todosEmpleados
+                        .Where(e => e.Area?.AreaID == _empleadoJefe.Area.AreaID)
+                        .Select(e => e.UsuarioID));
                     ActividadReciente = todos
                         .Where(a => idsArea.Contains(a.IdUsuarioAuditoria))
                         .Where(a => a.TipoEvento != "LOGIN_SUCCESS")
