@@ -93,7 +93,7 @@ AuditoriaLogDto (standalone)
 | `EstadoUsuario` | `ACTIVO, INACTIVO` |
 | `RolFlujo` | `EMPLEADO, JEFE_AREA` |
 | `EstadoFondo` | `ACTIVO, INACTIVO` |
-| `EstadoSolicitudGasto` | `PENDIENTE, APROBADO, PAGADO, RENDIDO, RECHAZADO, ANULADO` |
+| `EstadoSolicitudGasto` | `PENDIENTE, APROBADO, PAGADO, RENDIDO, RECHAZADO, ANULADO, OBSERVADO` |
 | `EstadoCicloCaja` | `ABIERTO, CERRADO, LIQUIDADO, EN_EXCEPCION` |
 | `EstadoComprobante` | `POR_REVISAR, ANULADO, APROBADO, OBSERVADO` |
 | `EstadoRendicion` | `ACEPTADO, EN_ESPERA, DENEGADO, OBSERVADO, ANULADO` |

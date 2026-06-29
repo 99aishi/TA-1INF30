@@ -4,12 +4,19 @@
 @inject IUsuarioWS UsuarioWS
 @inject ITransaccionWS TransaccionWS
 @inject ISolicitudGastoWS SolicitudGastoWS
+@inject IMonedaWS MonedaWS
 
 <div class="card p-3 h-100 rounded-4 d-flex justify-content-between flex-column">
     
     <div class="row">
         <div class="col-12 d-flex justify-content-between align-items-center mb-2">
-            <p class="h5 mb-0">Datos extraidos</p> 
+            <div class="d-flex align-items-center gap-3">
+                <p class="h5 mb-0">Datos extraidos</p> 
+                @if (Comprobante != null && Comprobante.Estado != "EN_EDICION" && !EsCreacion && !EsAsociacion)
+                {
+                    <span class="badge @ObtenerEstadoBadgeClase(Comprobante.Estado) rounded-pill px-2">@Comprobante.Estado</span>
+                }
+            </div>
             @if (RequiereAutorizacion)
             {
                 <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill" style="font-size: 0.95rem;">
@@ -106,7 +113,20 @@
         </div>
         <div class="col-4 mt-3">
             <label for="Moneda" class="form-label small text-muted">Moneda</label>
-            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@SimboloMoneda" disabled>
+            @if (EsCreacion || EsAsociacion)
+            {
+                <select class="form-select form-select-lg rounded-4 bg-light" @bind="IdMonedaSeleccionada">
+                    <option value="0">Seleccione...</option>
+                    @foreach (var moneda in Monedas)
+                    {
+                        <option value="@moneda.IdMoneda">@moneda.CodigoISO (@moneda.Simbolo)</option>
+                    }
+                </select>
+            }
+            else
+            {
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Comprobante?.Moneda?.CodigoISO ?? "PEN")" disabled>
+            }
         </div>
         @if (!RequiereAutorizacion && (EsCreacion || EsAsociacion) && Comprobante?.IdComprobante > 0)
         {
@@ -115,40 +135,9 @@
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="CP-@Comprobante.IdComprobante" disabled>
             </div>
         }
-        <div class="col-4 mt-3" style="margin-top: 30px;">
-            <label class="form-label small text-muted">Estado</label>
-            @if (RequiereAutorizacion)
-            {
-                <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill" style="font-size: 1rem;">
-                    <i class="bi bi-lock-fill me-1"></i> @Comprobante?.Estado
-                </span>
-            }
-            else
-            {
-                if (EsEvaluacion)
-                {
-                    <span class="badge bg-success-subtle text-success rounded-pill" style="font-size: 1rem;">
-                        Validado
-                    </span>
-                }
-                else
-                {
-                    <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill" style="font-size: 1rem;">
-                        En edición
-                    </span>
-                }
-            }
-        </div>
         <div class="col-12 mt-3">
             <label for="Comentario" class="form-label small text-muted">Comentario</label>    
-            @if (RequiereAutorizacion)
-            {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.Comentario" disabled>
-            }
-            else
-            {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.Comentario" placeholder="Por Evaluar" disabled="@EsEvaluacion">
-            }
+            <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.Comentario" placeholder="Por Evaluar" disabled="@ComentarioDeshabilitado">
         </div>
     </div>
 
@@ -272,7 +261,7 @@
     [Parameter]
     public EventCallback OnEvaluado { get; set; }
 
-    private string SimboloMoneda = "S/.";
+    private string SimboloMoneda => Comprobante?.Moneda?.Simbolo ?? "S/.";
     private string ErrorMessage { get; set; } = string.Empty;
     private bool MostrarModalSolicitud { get; set; }
     private string MotivoSolicitud { get; set; } = string.Empty;
@@ -390,7 +379,7 @@
             ErrorMessage = string.Empty;
 
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, false, "Rechazado", idUsuarioAccion);
+            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, false, Comprobante.Comentario ?? "Rechazado", idUsuarioAccion);
             await OnEvaluado.InvokeAsync();
             Volver();
         }
@@ -414,7 +403,7 @@
             ErrorMessage = string.Empty;
 
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, false, "Observado", idUsuarioAccion);
+            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, false, Comprobante.Comentario ?? "Observado", idUsuarioAccion);
             await OnEvaluado.InvokeAsync();
             Volver();
         }
@@ -466,7 +455,7 @@
             ErrorMessage = string.Empty;
 
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, true, string.Empty, idUsuarioAccion);
+            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, true, Comprobante.Comentario ?? string.Empty, idUsuarioAccion);
             await OnEvaluado.InvokeAsync();
             Volver();
         }
@@ -478,5 +467,69 @@
         {
             Procesando = false;
         }
+    }
+
+    private List<Moneda> Monedas { get; set; } = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            Monedas = await MonedaWS.listarAsync();
+            if (Comprobante != null && Comprobante.Moneda == null && Monedas.Any())
+            {
+                Comprobante.Moneda = Monedas.FirstOrDefault();
+            }
+        }
+        catch
+        {
+            Monedas = new();
+        }
+    }
+
+    private int IdMonedaSeleccionada
+    {
+        get => Comprobante?.Moneda?.IdMoneda ?? 0;
+        set
+        {
+            if (Comprobante != null)
+            {
+                if (Comprobante.Moneda == null)
+                {
+                    Comprobante.Moneda = new Moneda();
+                }
+                Comprobante.Moneda.IdMoneda = value;
+                var selected = Monedas.FirstOrDefault(m => m.IdMoneda == value);
+                if (selected != null)
+                {
+                    Comprobante.Moneda.Simbolo = selected.Simbolo;
+                    Comprobante.Moneda.CodigoISO = selected.CodigoISO;
+                }
+            }
+        }
+    }
+
+    private bool ComentarioDeshabilitado
+    {
+        get
+        {
+            if (RequiereAutorizacion) return true;
+            var rol = UsuarioWS.GetCurrentUser()?.Rol?.Titulo?.ToUpperInvariant();
+            if (rol == "EMPLEADO") return true;
+            return !EsEvaluacion;
+        }
+    }
+
+    private string ObtenerEstadoBadgeClase(string? estado)
+    {
+        if (string.IsNullOrEmpty(estado)) return "bg-secondary-subtle text-secondary";
+        return estado.ToUpperInvariant() switch
+        {
+            "APROBADO" or "VALIDADO" => "bg-success-subtle text-success",
+            "RECHAZADO" or "ANULADO" => "bg-danger-subtle text-danger",
+            "OBSERVADO" => "bg-warning-subtle text-warning-emphasis",
+            "POR_REVISAR" => "bg-info-subtle text-info-emphasis",
+            _ => "bg-secondary-subtle text-secondary"
+        };
     }
 }

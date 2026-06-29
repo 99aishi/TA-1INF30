@@ -24,8 +24,8 @@
     else if (EsCreacion)
     {
         <div class="mt-2">
-            <label for="SolicitudAsociada" class="form-label fw-bold small">Seleccionar Solicitud</label>
-            <select id="SolicitudAsociada" class="form-select bg-light" value="@IdSolicitudSeleccionada" @onchange="OnSolicitudChanged">
+            <label for="SolicitudAsociada" class="form-label small text-muted">Seleccionar Solicitud</label>
+            <select id="SolicitudAsociada" class="form-select form-select-lg bg-light rounded-4" value="@IdSolicitudSeleccionada" @onchange="OnSolicitudChanged">
                 <option value="0">Seleccionar Solicitud de Gasto</option>
                 @if (SolicitudesDisponibles.Any())
                 {
@@ -75,6 +75,9 @@
     [Parameter]
     public int IdSolicitudPasada { get; set; } = 0;
 
+    [Parameter]
+    public ComprobantePago? Comprobante { get; set; }
+
     private List<SolicitudGasto> SolicitudesDisponibles { get; set; } = new();
     private int IdSolicitudSeleccionada { get; set; } = 0;
     private SolicitudGasto? SolicitudSeleccionada { get; set; }
@@ -110,6 +113,17 @@
     {
         var id = int.Parse(e.Value?.ToString() ?? "0");
         IdSolicitudSeleccionada = id;
+        if (Comprobante != null)
+        {
+            if (id > 0)
+            {
+                Comprobante.Solicitud = new SolicitudGasto { IdSolicitudGasto = id };
+            }
+            else
+            {
+                Comprobante.Solicitud = null;
+            }
+        }
         if (id > 0)
         {
             await CargarSolicitudEspecifica(id);
