@@ -9,7 +9,10 @@
             <p class="h4">@(Transaccion?.Moneda?.Simbolo ?? "S/") @Transaccion?.Monto.ToString("N2")</p>
         </div>
         <div class="d-flex flex-column justify-content-center gap-2">
-            <span class="badge h-100 bg-warning-subtle text-warning-emphasis rounded-pill px-2">@Transaccion?.MedioPago</span>
+            @if (Transaccion?.EstadoTransaccion != "REGISTRADA")
+            {
+                <span class="badge h-100 rounded-pill px-2" style="@GetMedioPagoBadgeStyle()">@Transaccion?.MedioPago</span>
+            }
         </div>
         <button class="btn btn-outline-primary" @onclick="AbrirDetalle">Ver</button>
     </div>
@@ -26,5 +29,17 @@
     {
         if (Transaccion != null)
             await OnMuestraDetalle.InvokeAsync(Transaccion);
+    }
+
+    private string GetMedioPagoBadgeStyle()
+    {
+        return Transaccion?.MedioPago switch
+        {
+            "EFECTIVO" => "background-color: #198754; color: #fff;",
+            "YAPE" => "background-color: rgb(157, 0, 255); color: #fff;",
+            "PLIN" => "background-color: rgb(229, 185, 49); color: #000;",
+            "TRANSFERENCIA" => "background-color: #0d6efd; color: #fff;",
+            _ => "background-color: #ffc107; color: #000;"
+        };
     }
 }

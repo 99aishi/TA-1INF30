@@ -3,7 +3,10 @@
         <p class="h3 mb-0">Detalle de Transacción</p>
         @if (Transaccion != null)
         {
-            <span class="badge rounded-pill @GetTipoBadgeClass() align-self-center">@Transaccion.TipoTransaccion</span>
+            @if (!EsModoEdicion)
+            {
+                <span class="badge rounded-pill @GetTipoBadgeClass() align-self-center">@Transaccion.TipoTransaccion</span>
+            }
             <span class="badge rounded-pill @GetEstadoBadgeClass() align-self-center">@Transaccion.EstadoTransaccion</span>
         }
     </div>
@@ -52,29 +55,29 @@
                         <label class="form-label small text-muted">Beneficiario</label>
                         <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.Beneficiario != null ? $"{Transaccion.Beneficiario.Nombres} {Transaccion.Beneficiario.ApellidoPaterno} (N° {Transaccion.Beneficiario.UsuarioID})" : "-")" disabled="true" />
                     </div>
-                    <div class="col-6 mt-3">
-                        <label class="form-label small text-muted">Cuenta Destino</label>
-                        @if (Transaccion.TipoTransaccion == "DEVOLUCION_SOBRANTE")
-                        {
-                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaDestino != null ? $"{Transaccion.CuentaDestino.NombreBanco} — N° {Transaccion.CuentaDestino.NumeroBancario}" : "-")" disabled="true" />
-                        }
-                        else
-                        {
-                            <select class="form-select form-select-lg rounded-4" @bind="cuentaDestinoId">
-                                <option value="">Seleccione una cuenta</option>
-                                @foreach (var cuenta in CuentasBancarias)
-                                {
-                                    <option value="@cuenta.IdCuenta">@cuenta.NombreBanco — @cuenta.NumeroBancario @((!string.IsNullOrEmpty(cuenta.Cci)) ? $"CCI {cuenta.Cci}" : "")</option>
-                                }
-                            </select>
-                        }
-                    </div>
+                    @if (Transaccion.MedioPago == "TRANSFERENCIA")
+                    {
+                        <div class="col-6 mt-3">
+                            <label class="form-label small text-muted">Cuenta Destino</label>
+                            @if (Transaccion.TipoTransaccion == "DEVOLUCION_SOBRANTE")
+                            {
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaDestino != null ? $"{Transaccion.CuentaDestino.NombreBanco} — N° {Transaccion.CuentaDestino.NumeroBancario}" : "-")" disabled="true" />
+                            }
+                            else
+                            {
+                                <select class="form-select form-select-lg rounded-4" @bind="cuentaDestinoId">
+                                    <option value="">Seleccione una cuenta</option>
+                                    @foreach (var cuenta in CuentasBancarias)
+                                    {
+                                        <option value="@cuenta.IdCuenta">@cuenta.NombreBanco — @cuenta.NumeroBancario @((!string.IsNullOrEmpty(cuenta.Cci)) ? $"CCI {cuenta.Cci}" : "")</option>
+                                    }
+                                </select>
+                            }
+                        </div>
+                    }
                     <div class="col-12 mt-3">
                         <label class="form-label small text-muted">Cuenta Origen (Caja Chica)</label>
-                        @{
-                            var ctaOrigen = Transaccion.Ciclo?.CajaChica?.CuentaBancaria ?? Transaccion.CuentaOrigen;
-                        }
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(ctaOrigen != null ? $"{ctaOrigen.NombreBanco} — N° {ctaOrigen.NumeroBancario} {((!string.IsNullOrEmpty(ctaOrigen.Cci)) ? $"CCI {ctaOrigen.Cci}" : "")}" : "-")" disabled="true" />
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(_cajaChicaNombre ?? "-")" disabled="true" />
                     </div>
                 </div>
             }
@@ -109,16 +112,16 @@
                         <label class="form-label small text-muted">Beneficiario</label>
                         <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.Beneficiario != null ? $"{Transaccion.Beneficiario.Nombres} {Transaccion.Beneficiario.ApellidoPaterno} (N° {Transaccion.Beneficiario.UsuarioID})" : "-")" disabled="true" />
                     </div>
-                    <div class="col-6 mt-3">
-                        <label class="form-label small text-muted">Cuenta Destino</label>
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaDestino != null ? $"{Transaccion.CuentaDestino.NombreBanco} — N° {Transaccion.CuentaDestino.NumeroBancario} {((!string.IsNullOrEmpty(Transaccion.CuentaDestino.Cci)) ? $"CCI {Transaccion.CuentaDestino.Cci}" : "")}" : "-")" disabled="true" />
-                    </div>
+                    @if (Transaccion.MedioPago == "TRANSFERENCIA")
+                    {
+                        <div class="col-6 mt-3">
+                            <label class="form-label small text-muted">Cuenta Destino</label>
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaDestino != null ? $"{Transaccion.CuentaDestino.NombreBanco} — N° {Transaccion.CuentaDestino.NumeroBancario} {((!string.IsNullOrEmpty(Transaccion.CuentaDestino.Cci)) ? $"CCI {Transaccion.CuentaDestino.Cci}" : "")}" : "-")" disabled="true" />
+                        </div>
+                    }
                     <div class="col-12 mt-3">
                         <label class="form-label small text-muted">Cuenta Origen (Caja Chica)</label>
-                        @{
-                            var ctaOrigen = Transaccion.Ciclo?.CajaChica?.CuentaBancaria ?? Transaccion.CuentaOrigen;
-                        }
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(ctaOrigen != null ? $"{ctaOrigen.NombreBanco} — N° {ctaOrigen.NumeroBancario} {((!string.IsNullOrEmpty(ctaOrigen.Cci)) ? $"CCI {ctaOrigen.Cci}" : "")}" : "-")" disabled="true" />
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(_cajaChicaNombre ?? "-")" disabled="true" />
                     </div>
                 </div>
             }
@@ -147,6 +150,8 @@
 @inject ITransaccionWS TransaccionWS
 @inject IUsuarioWS UsuarioWS
 @inject ICuentaBancariaWS CuentaBancariaWS
+@inject ICicloCajaWS CicloCajaWS
+@inject ICajaChicaWS CajaChicaWS
 
 @code {
     [Parameter]
@@ -161,6 +166,8 @@
     private List<CuentaBancaria> CuentasBancarias { get; set; } = new();
     private bool EsJefe { get; set; } = false;
     private bool Procesando { get; set; } = false;
+    private CuentaBancaria? _cuentaOrigen;
+    private string? _cajaChicaNombre;
 
     protected override async Task OnInitializedAsync()
     {
@@ -182,9 +189,51 @@
         DeterminarModo();
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         DeterminarModo();
+        await CargarCuentaOrigen();
+    }
+
+    private async Task CargarCuentaOrigen()
+    {
+        _cuentaOrigen = Transaccion?.Ciclo?.CajaChica?.CuentaBancaria
+            ?? Transaccion?.CuentaOrigen;
+        _cajaChicaNombre = Transaccion?.Ciclo?.CajaChica?.Nombre;
+
+        if (_cajaChicaNombre != null)
+            return;
+
+        if (Transaccion?.Ciclo?.IdCicloCaja > 0)
+        {
+            try
+            {
+                var ciclo = await CicloCajaWS.obtenerPorIdAsync(Transaccion.Ciclo.IdCicloCaja);
+                if (ciclo?.CajaChica != null)
+                {
+                    _cajaChicaNombre = ciclo.CajaChica.Nombre;
+                    if (ciclo.CajaChica.CuentaBancaria != null)
+                        _cuentaOrigen = ciclo.CajaChica.CuentaBancaria;
+                    if (_cuentaOrigen != null)
+                        return;
+                }
+
+                if (ciclo?.CajaChica?.IdFondo > 0)
+                {
+                    var caja = await CajaChicaWS.obtenerPorIdAsync(ciclo.CajaChica.IdFondo);
+                    if (caja != null)
+                    {
+                        _cajaChicaNombre ??= caja.Nombre;
+                        if (caja.CuentaBancaria != null)
+                            _cuentaOrigen = caja.CuentaBancaria;
+                    }
+                }
+            }
+            catch
+            {
+                // fallback already set above
+            }
+        }
     }
 
     private void DeterminarModo()
@@ -260,7 +309,7 @@
 
             Transaccion.Fecha = DateTime.Parse(fechaInput);
 
-            if (cuentaDestinoId > 0 && Transaccion.TipoTransaccion != "DEVOLUCION_SOBRANTE")
+            if (cuentaDestinoId > 0 && Transaccion.TipoTransaccion != "DEVOLUCION_SOBRANTE" && Transaccion.MedioPago == "TRANSFERENCIA")
             {
                 Transaccion.CuentaDestino = CuentasBancarias.FirstOrDefault(c => c.IdCuenta == cuentaDestinoId);
             }
