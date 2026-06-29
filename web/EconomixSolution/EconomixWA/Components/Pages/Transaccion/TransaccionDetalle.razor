@@ -230,6 +230,7 @@
 @inject ICuentaBancariaWS CuentaBancariaWS
 @inject ICicloCajaWS CicloCajaWS
 @inject ICajaChicaWS CajaChicaWS
+@inject ISolicitudGastoWS SolicitudGastoWS
 
 @code {
     [Parameter]
@@ -275,65 +276,103 @@
 
     private async Task CargarCuentaOrigen()
     {
-        _cuentaOrigen = Transaccion?.Ciclo?.CajaChica?.CuentaBancaria
-            ?? Transaccion?.CuentaOrigen;
-        _cajaChicaNombre = Transaccion?.Ciclo?.CajaChica?.Nombre;
-
-        if (_cajaChicaNombre != null && _cuentaOrigen != null)
+        if (Transaccion == null)
+        {
+            _cuentaOrigen = null;
+            _cajaChicaNombre = null;
             return;
+        }
 
-        if (Transaccion?.Ciclo?.IdCicloCaja > 0)
+        _cuentaOrigen = Transaccion.Ciclo?.CajaChica?.CuentaBancaria ?? Transaccion.CuentaOrigen;
+        _cajaChicaNombre = Transaccion.Ciclo?.CajaChica?.Nombre;
+
+        // Fallback 1: Fetch via SolicitudGasto if available (strongly recommended since DB stored procedures have issues joining CajaChica on Desembolso destination account)
+        if ((_cuentaOrigen == null || string.IsNullOrEmpty(_cuentaOrigen.NombreBanco)) && Transaccion.IdSolicitudGasto > 0)
         {
             try
             {
-                var ciclo = await CicloCajaWS.obtenerPorIdAsync(Transaccion.Ciclo.IdCicloCaja);
-                if (ciclo?.CajaChica != null)
+                var solicitud = await SolicitudGastoWS.obtenerPorIdAsync(Transaccion.IdSolicitudGasto);
+                if (solicitud?.Ciclo?.IdCicloCaja > 0)
                 {
-                    _cajaChicaNombre = ciclo.CajaChica.Nombre;
-                    if (ciclo.CajaChica.CuentaBancaria != null)
-                        _cuentaOrigen = ciclo.CajaChica.CuentaBancaria;
-                    if (_cuentaOrigen != null)
-                        return;
-                }
-
-                if (ciclo?.CajaChica?.IdFondo > 0)
-                {
-                    var caja = await CajaChicaWS.obtenerPorIdAsync(ciclo.CajaChica.IdFondo);
-                    if (caja != null)
+                    var ciclo = await CicloCajaWS.obtenerPorIdAsync(solicitud.Ciclo.IdCicloCaja);
+                    if (ciclo?.CajaChica != null)
                     {
-                        _cajaChicaNombre ??= caja.Nombre;
-                        if (caja.CuentaBancaria != null)
-                            _cuentaOrigen = caja.CuentaBancaria;
+                        _cajaChicaNombre = ciclo.CajaChica.Nombre;
+                        
+                        int idCuenta = ciclo.CajaChica.CuentaBancaria?.IdCuenta ?? 0;
+                        if (idCuenta == 0)
+                        {
+                            var caja = await CajaChicaWS.obtenerPorIdAsync(ciclo.CajaChica.IdFondo);
+                            if (caja?.CuentaBancaria != null)
+                            {
+                                idCuenta = caja.CuentaBancaria.IdCuenta;
+                            }
+                        }
+
+                        if (idCuenta > 0)
+                        {
+                            var cb = await CuentaBancariaWS.obtenerPorIdAsync(idCuenta);
+                            if (cb != null && !string.IsNullOrEmpty(cb.NombreBanco))
+                            {
+                                _cuentaOrigen = cb;
+                                StateHasChanged();
+                                return; // Success!
+                            }
+                        }
                     }
                 }
             }
             catch
             {
-                // fallback already set above
+                // silent fallback
             }
         }
 
-        if (_cajaChicaNombre == null || _cuentaOrigen == null)
+        // Fallback 2: General database lookup of full transaction (for non-solicitud transactions)
+        if (_cajaChicaNombre == null || _cuentaOrigen == null || string.IsNullOrEmpty(_cuentaOrigen.NombreBanco))
         {
             try
             {
                 var full = await TransaccionWS.obtenerPorIdAsync(Transaccion.IdTransaccion);
-                _cajaChicaNombre ??= full?.Ciclo?.CajaChica?.Nombre;
-                _cuentaOrigen ??= full?.Ciclo?.CajaChica?.CuentaBancaria
-                    ?? full?.CuentaOrigen;
-
-                if (_cuentaOrigen == null && full?.Ciclo?.CajaChica?.IdFondo > 0)
+                if (full != null)
                 {
-                    var caja = await CajaChicaWS.obtenerPorIdAsync(full.Ciclo.CajaChica.IdFondo);
-                    _cajaChicaNombre ??= caja?.Nombre;
-                    _cuentaOrigen = caja?.CuentaBancaria;
+                    if (string.IsNullOrEmpty(_cajaChicaNombre))
+                        _cajaChicaNombre = full.Ciclo?.CajaChica?.Nombre;
+
+                    var fullCuenta = full.Ciclo?.CajaChica?.CuentaBancaria ?? full.CuentaOrigen;
+                    if (fullCuenta != null && !string.IsNullOrEmpty(fullCuenta.NombreBanco))
+                    {
+                        _cuentaOrigen = fullCuenta;
+                    }
+
+                    if ((_cuentaOrigen == null || string.IsNullOrEmpty(_cuentaOrigen.NombreBanco)) && full.Ciclo?.CajaChica?.IdFondo > 0)
+                    {
+                        var caja = await CajaChicaWS.obtenerPorIdAsync(full.Ciclo.CajaChica.IdFondo);
+                        if (caja != null)
+                        {
+                            if (string.IsNullOrEmpty(_cajaChicaNombre))
+                                _cajaChicaNombre = caja.Nombre;
+                            
+                            int idCuentaFallback = caja.CuentaBancaria?.IdCuenta ?? 0;
+                            if (idCuentaFallback > 0)
+                            {
+                                var cb = await CuentaBancariaWS.obtenerPorIdAsync(idCuentaFallback);
+                                if (cb != null && !string.IsNullOrEmpty(cb.NombreBanco))
+                                {
+                                    _cuentaOrigen = cb;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             catch
             {
-                // all fallbacks exhausted
+                // silent fallback
             }
         }
+        
+        StateHasChanged();
     }
 
     private void DeterminarModo()
