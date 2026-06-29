@@ -56,42 +56,7 @@
         }
         else
         {
-            if (Rol == "Tesoreria")
-            {
-                <div class="flex-grow-1 d-flex justify-content-end align-items-center">
-
-                    <div class="d-flex flex-column align-items-start">
-
-                        <small class="text-muted mb-1">Reporte de Gastos de Áreas</small>
-
-                        <div class="d-flex align-items-center">
-                            <input type="date"
-                                   class="form-control form-control-sm rounded-4 bg-light"
-                                   style="width:130px"
-                                   @bind="RepFechaInicio"
-                                   @bind:format="yyyy-MM-dd" />
-
-                            <input type="date"
-                                   class="form-control form-control-sm rounded-4 bg-light ms-1"
-                                   style="width:130px"
-                                   @bind="RepFechaFin"
-                                   @bind:format="yyyy-MM-dd" />
-
-                            <button type="button"
-                                    class="btn btn-outline-primary btn-sm rounded-4 ms-2"
-                                    disabled="@RepProcesando"
-                                    @onclick="GenerarReporteTesoreria">
-                                @(RepProcesando ? "..." : "Generar Reporte")
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div class="flex-grow-1 text-end"></div>                
-            }
+            <div class="flex-grow-1 text-end"></div>
         }
     </div>
 
@@ -229,24 +194,6 @@
 
             var baseUrl = Configuration["URLServices:BaseWSPath"];
             var url = $"{baseUrl}reportes/solicitudes-gasto?nombreArea={Uri.EscapeDataString(area)}&fechaInicio={RepFechaInicio:yyyy-MM-dd}&fechaFin={RepFechaFin:yyyy-MM-dd}";
-            Navigation.NavigateTo(url, forceLoad: true);
-        }
-        finally
-        {
-            RepProcesando = false;
-        }
-    }
-
-    private async Task GenerarReporteTesoreria()
-    {
-        if (RepFechaInicio == null || RepFechaFin == null) return;
-        if (RepFechaInicio > RepFechaFin) return;
-
-        RepProcesando = true;
-        try
-        {
-            var baseUrl = Configuration["URLServices:BaseWSPath"];
-            var url = $"{baseUrl}reportes/gastos-de-areas?fechaInicio={RepFechaInicio:yyyy-MM-dd}&fechaFin={RepFechaFin:yyyy-MM-dd}";
             Navigation.NavigateTo(url, forceLoad: true);
         }
         finally

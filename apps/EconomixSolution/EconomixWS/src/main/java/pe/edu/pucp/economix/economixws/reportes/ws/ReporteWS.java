@@ -18,9 +18,9 @@ public class ReporteWS {
     private final ReporteService reporteService = new ReporteService();
 
     @GET
-    @Path("gastos-de-areas")
+    @Path("gastos-por-area")
     @Produces("application/pdf")
-    public Response generarReporteGastosDeAreas(
+    public Response generarReporteGastosPorArea(
             @QueryParam("fechaInicio") String fechaInicioStr,
             @QueryParam("fechaFin") String fechaFinStr) {
         try {
@@ -28,10 +28,10 @@ public class ReporteWS {
             Date fechaInicio = sdf.parse(fechaInicioStr);
             Date fechaFin = sdf.parse(fechaFinStr);
 
-            byte[] pdf = reporteService.generarReporteGastosDeAreas(fechaInicio, fechaFin);
+            byte[] pdf = reporteService.generarReporteGastosPorArea(fechaInicio, fechaFin);
 
             return Response.ok(pdf)
-                    .header("Content-Disposition", "inline; filename=\"ReporteGastosDeAreas.pdf\"")
+                    .header("Content-Disposition", "inline; filename=\"ReporteGastosPorArea.pdf\"")
                     .type("application/pdf")
                     .build();
         } catch (Exception e) {
