@@ -12,6 +12,7 @@
 @inject ITipoCambioWS TipoCambioWS
 @inject IRendicionWS RendicionWS
 @inject IComprobantePagoWS ComprobantePagoWS
+@inject ICuentaBancariaWS CuentaBancariaWS
 @using EconomixWA.Components.Pages.ComprobanteDePago
 
 <div class="d-flex flex-column h-100 mb-3 overflow-hidden">
@@ -53,11 +54,11 @@
                         <label class="form-label">Destinatario</label>
                         <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(NombreDestinatario)" disabled="true">
                     </div>
-                    <div class="col-4 mt-3">
-                        <label class="form-label">Monto</label>
+                    <div class="col-3 mt-3">
+                        <label class="form-label">Monto (@SimboloMonedaSeleccionada)</label>
                         <input type="number" step="0.01" class="form-control form-control-lg rounded-4 bg-light" @bind="MontoSolicitadoEdicion" disabled="@(!PuedeEditar)">
                     </div>
-                    <div class="col-4 mt-3">
+                    <div class="col-3 mt-3">
                         <label class="form-label">Moneda</label>
                         <select class="form-select form-select-lg rounded-4 bg-light" @bind="MonedaSeleccionadaId" disabled="@(!PuedeEditar)">
                             <option value="0">Seleccione...</option>
@@ -67,12 +68,9 @@
                             }
                         </select>
                     </div>
-                    <div class="col-4 mt-3 align-self-center" style="height: 2rem">
-                        <span class="badge h-100 @EstadoClase rounded-pill px-2 align-self-start mt-4">@(SolicitudEdicion?.Estado ?? "PENDIENTE")</span>
-                    </div>
                     @if (EsCreacion || SolicitudEdicion.TipoCambio != 1.0 || TipoCambioNoEncontrado)
                     {
-                        <div class="col-6 mt-3">
+                        <div class="col-3 mt-3">
                             <label class="form-label">Tipo de Cambio</label>
                             @if (TipoCambioNoEncontrado)
                             {
@@ -84,14 +82,31 @@
                                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SolicitudEdicion.TipoCambio.ToString("N4"))" disabled="true">
                             }
                         </div>
-                        <div class="col-6 mt-3">
-                            <label class="form-label">Monto Convertido (@(SimboloMonedaCiclo))</label>
+                        <div class="col-3 mt-3">
+                            <label class="form-label">Monto Convertido (@SimboloMonedaCiclo)</label>
                             <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TipoCambioNoEncontrado ? "-" : SolicitudEdicion.MontoConvertido.ToString("N2"))" disabled="true">
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-3 mt-3">
+                            <label class="form-label">Tipo de Cambio</label>
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="1.0000" disabled="true">
+                        </div>
+                        <div class="col-3 mt-3">
+                            <label class="form-label">Monto Convertido (@SimboloMonedaCiclo)</label>
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@SolicitudEdicion.MontoSolicitado.ToString("N2")" disabled="true">
+                        </div>
+                    }
+                    @if (!EsCreacion)
+                    {
+                        <div class="col-12 mt-3 d-flex justify-content-end">
+                            <span class="badge @EstadoClase rounded-pill px-2">@(SolicitudEdicion?.Estado ?? "PENDIENTE")</span>
                         </div>
                     }
                     <div class="col-6 mt-3">
                         <label class="form-label">Caja Chica</label>
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SolicitudEdicion.Ciclo?.CajaChica?.Nombre ?? "-")" disabled="true">
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@((SolicitudEdicion.Ciclo?.CajaChica?.Nombre ?? "-") + " (" + (SolicitudEdicion.Ciclo?.CajaChica?.Moneda?.Simbolo ?? "") + ")")" disabled="true">
                     </div>
                     <div class="col-6 mt-3">
                         <label class="form-label">Ciclo de Caja Chica</label>
@@ -99,7 +114,7 @@
                             <option value="0">Seleccione...</option>
                             @foreach (var ciclo in CiclosActivos)
                             {
-                                <option value="@ciclo.IdCicloCaja">@(ciclo.CajaChica?.Nombre) - Semana @ciclo.NumeroSemana (@ciclo.FechaApertura?.ToString("dd/MM/yyyy"))</option>
+                                <option value="@ciclo.IdCicloCaja">@(ciclo.CajaChica?.Nombre) (@(ciclo.CajaChica?.Moneda?.Simbolo ?? "")) - Semana @ciclo.NumeroSemana (@ciclo.FechaApertura?.ToString("dd/MM/yyyy"))</option>
                             }
                         </select>
                         <small class="text-muted">Saldo disponible: @(SimboloMonedaCiclo) @(SaldoDisponibleCiclo.ToString("N2"))</small>
@@ -285,6 +300,7 @@
     private SolicitudGasto SolicitudEdicion { get; set; } = new();
     private List<Moneda> Monedas { get; set; } = new();
     private List<CicloCajaChica> CiclosActivos { get; set; } = new();
+    private Dictionary<int, int> _cuentaIdToAreaId = new();
     private Empleado? EmpleadoActual { get; set; }
 
     private ComprobantePago? ComprobanteEnEdicion { get; set; }
@@ -362,6 +378,10 @@
         ? (CiclosActivos.FirstOrDefault(c => c.IdCicloCaja == CicloSeleccionadoId)?.CajaChica?.Moneda?.Simbolo ?? "S/")
         : "S/";
 
+    private string SimboloMonedaSeleccionada => MonedaSeleccionadaId > 0
+        ? Monedas.FirstOrDefault(m => m.IdMoneda == MonedaSeleccionadaId)?.Simbolo ?? "S/"
+        : "S/";
+
     private double SaldoDisponibleCiclo => CicloSeleccionadoId > 0
         ? (CiclosActivos.FirstOrDefault(c => c.IdCicloCaja == CicloSeleccionadoId)?.SaldoInicial ?? 0)
           - (CiclosActivos.FirstOrDefault(c => c.IdCicloCaja == CicloSeleccionadoId)?.TotalGastado ?? 0)
@@ -425,6 +445,19 @@
         await CargarCatalogos();
         await CargarEmpleadoActual();
 
+        // Filter ciclos by employee's area (AreaAdministradora not populated by ciclo SP, so use lookup)
+        if (EmpleadoActual?.Area?.AreaID > 0 && _cuentaIdToAreaId.Count > 0)
+        {
+            var areaId = EmpleadoActual.Area.AreaID;
+            CiclosActivos = CiclosActivos
+                .Where(c =>
+                {
+                    var cuentaId = c.CajaChica?.CuentaBancaria?.IdCuenta ?? 0;
+                    return _cuentaIdToAreaId.TryGetValue(cuentaId, out var id) && id == areaId;
+                })
+                .ToList();
+        }
+
         if (Solicitud != null)
         {
             SolicitudEdicion = CopiarSolicitud(Solicitud);
@@ -472,6 +505,18 @@
         {
             if (string.IsNullOrEmpty(ErrorMessage))
                 ErrorMessage = $"Error al cargar ciclos de caja: {ex.Message}";
+        }
+
+        try
+        {
+            var cuentas = await CuentaBancariaWS.listarAsync();
+            _cuentaIdToAreaId = cuentas
+                .Where(c => c.AreaAdministradora?.AreaID > 0)
+                .ToDictionary(c => c.IdCuenta, c => c.AreaAdministradora!.AreaID);
+        }
+        catch
+        {
+            // non-critical; area filter will be skipped
         }
     }
 

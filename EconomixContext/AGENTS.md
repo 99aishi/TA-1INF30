@@ -463,11 +463,13 @@ Employees can only register new `SolicitudGasto` requests during business hours:
 - **Hours**: 8:00 AM to 6:00 PM
 
 ### Java Backend — `SolicitudGastoBOImpl.validarHorarioLaboral()`
-Called from `validarFecha()` during both insert and update. Validates:
+Called from `validarFecha()` during both insert and update. Validates against the **current server time** (not the solicitud date):
 1. Day is not Saturday or Sunday.
 2. Current time is between 08:00 and 18:00 (checked via `HOUR_OF_DAY` and `MINUTE`).
 
 Throws `Exception` with descriptive message if validation fails.
+
+**Important**: Uses `Calendar.getInstance()` (current server time), NOT the `fechaSolicitud` parameter. The `fechaSolicitud` column is `DATE` (no time), so checking its time component would always yield midnight (00:00), rejecting all submissions.
 
 ### Java Backend — `GET /horario-habilitado` Endpoint
 `SolicitudGastoWS.HorarioHabilitado()` returns a JSON response:
