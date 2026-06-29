@@ -11,48 +11,67 @@
 
     @if (EsAsociacion && IdSolicitudPasada > 0)
     {
-        <div class="alert alert-info mt-2 mb-0">
-            <small class="fw-bold">Solicitud pre-seleccionada</small>
-            <hr class="my-1" />
-            <div class="d-flex justify-content-between">
-                <span>N° @(SolicitudSeleccionada?.IdSolicitudGasto ?? IdSolicitudPasada)</span>
-                <span>@TotalMontoSolicitud @SimboloMonedaSolicitud</span>
+        <div class="alert alert-info mt-3 mb-0 p-3 rounded-4">
+            <p class="fs-3 fw-bold text-info-emphasis mb-2">Solicitud #@(SolicitudSeleccionada?.IdSolicitudGasto ?? IdSolicitudPasada)</p>
+            <hr class="my-2" />
+            <div class="d-flex justify-content-between fs-5 mb-1">
+                <span class="text-muted">Total:</span>
+                <span class="fw-bold">@TotalMontoSolicitud @SimboloMonedaSolicitud</span>
             </div>
-            <small class="text-muted">@(SolicitudSeleccionada?.FechaSolicitud.ToString("dd/MM/yyyy") ?? "")</small>
+            <div class="d-flex justify-content-between fs-5 mb-1">
+                <span class="text-muted">Moneda:</span>
+                <span class="fw-bold">@SimboloMonedaSolicitud</span>
+            </div>
+            <small class="text-muted d-block mt-2">Fecha Solicitud: @(SolicitudSeleccionada?.FechaSolicitud.ToString("dd/MM/yyyy") ?? "")</small>
         </div>
     }
     else if (EsCreacion)
     {
-        <div class="mt-2">
-            <label for="SolicitudAsociada" class="form-label small text-muted">Seleccionar Solicitud</label>
-            <select id="SolicitudAsociada" class="form-select form-select-lg bg-light rounded-4" value="@IdSolicitudSeleccionada" @onchange="OnSolicitudChanged">
-                <option value="0">Seleccionar Solicitud de Gasto</option>
-                @if (SolicitudesDisponibles.Any())
-                {
-                    @foreach (var solicitud in SolicitudesDisponibles)
-                    {
-                        <option value="@solicitud.IdSolicitudGasto">Monto: @(solicitud.MonedaOriginal?.Simbolo ?? "S/") @solicitud.MontoSolicitado.ToString("N2") - Fecha: @solicitud.FechaSolicitud.ToString("dd/MM/yyyy") (@solicitud.Estado)</option>
-                    }
-                }
-                else
-                {
-                    <option disabled>No hay solicitudes disponibles</option>
-                }
-            </select>
-        </div>
-        @if (TieneSolicitudSeleccionada)
+        @if (!TieneSolicitudSeleccionada)
         {
-            <div class="alert alert-info mt-2 mb-0 p-2">
-                <p class="fs-5 fw-bold text-info-emphasis mb-1">Solicitud #@(SolicitudSeleccionada?.IdSolicitudGasto ?? 0)</p>
-                <hr class="my-1" />
-                <div class="d-flex justify-content-between small">
-                    <span>Total:</span>
-                    <span>@TotalMontoSolicitud @SimboloMonedaSolicitud</span>
+            <div class="mt-2">
+                <label for="SolicitudAsociada" class="form-label small text-muted">Seleccionar Solicitud</label>
+                <select id="SolicitudAsociada" class="form-select form-select-lg bg-light rounded-4" value="@IdSolicitudSeleccionada" @onchange="OnSolicitudChanged">
+                    <option value="0">Seleccionar Solicitud de Gasto</option>
+                    @if (SolicitudesDisponibles.Any())
+                    {
+                        @foreach (var solicitud in SolicitudesDisponibles)
+                        {
+                            <option value="@solicitud.IdSolicitudGasto">Monto: @(solicitud.MonedaOriginal?.Simbolo ?? "S/") @solicitud.MontoSolicitado.ToString("N2") - Fecha: @solicitud.FechaSolicitud.ToString("dd/MM/yyyy") (@solicitud.Estado)</option>
+                        }
+                    }
+                    else
+                    {
+                        <option disabled>No hay solicitudes disponibles</option>
+                    }
+                </select>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info mt-3 mb-0 p-3 rounded-4 position-relative">
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" @onclick="DeseleccionarSolicitud" aria-label="Close"></button>
+                <p class="fs-3 fw-bold text-info-emphasis mb-2">Solicitud #@(SolicitudSeleccionada?.IdSolicitudGasto ?? 0)</p>
+                <hr class="my-2" />
+                <div class="d-flex justify-content-between fs-5 mb-1">
+                    <span class="text-muted">Total:</span>
+                    <span class="fw-bold">@TotalMontoSolicitud @SimboloMonedaSolicitud</span>
                 </div>
-                <div class="d-flex justify-content-between small">
-                    <span>Moneda:</span>
-                    <span>@SimboloMonedaSolicitud</span>
+                <div class="d-flex justify-content-between fs-5 mb-1">
+                    <span class="text-muted">Moneda:</span>
+                    <span class="fw-bold">@SimboloMonedaSolicitud</span>
                 </div>
+                <div class="d-flex justify-content-between fs-5 mb-1">
+                    <span class="text-muted">Fecha Solicitud:</span>
+                    <span class="fw-bold">@(SolicitudSeleccionada?.FechaSolicitud.ToString("dd/MM/yyyy") ?? "")</span>
+                </div>
+                @if (!string.IsNullOrEmpty(SolicitudSeleccionada?.Ciclo?.CajaChica?.Nombre))
+                {
+                    <div class="d-flex justify-content-between fs-5">
+                        <span class="text-muted">Caja Chica:</span>
+                        <span class="fw-bold">@SolicitudSeleccionada.Ciclo.CajaChica.Nombre</span>
+                    </div>
+                }
             </div>
         }
     }
@@ -165,6 +184,16 @@
         catch
         {
             SolicitudSeleccionada = null;
+        }
+    }
+
+    private void DeseleccionarSolicitud()
+    {
+        IdSolicitudSeleccionada = 0;
+        SolicitudSeleccionada = null;
+        if (Comprobante != null)
+        {
+            Comprobante.Solicitud = null;
         }
     }
 }

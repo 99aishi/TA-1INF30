@@ -93,7 +93,7 @@
                 <input type="date" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.FechaEmision" disabled="@RequiereAutorizacion">
             }
         </div>
-        <div class="col-3 mt-3">
+        <div class="col-2 mt-3">
             <label for="Total" class="form-label small text-muted">Total</label>
             @if (RequiereAutorizacion)
             {
@@ -111,7 +111,7 @@
                 }
             }
         </div>
-        <div class="col-3 mt-3">
+        <div class="col-2 mt-3">
             <label for="Moneda" class="form-label small text-muted">Moneda</label>
             @if (EsCreacion || EsAsociacion)
             {
