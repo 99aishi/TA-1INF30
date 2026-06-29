@@ -489,3 +489,53 @@ The .NET frontend calls this endpoint on page load to proactively disable the fo
 - `web/.../EconomixWS/operaciones/IWS/ISolicitudGastoWS.cs` — `obtenerHorarioHabilitadoAsync()`
 - `web/.../EconomixWS/operaciones/WSImpl/SolicitudGastoWSImpl.cs` — implementation
 - `web/.../EconomixWA/Components/Pages/SolicitudDeGasto/MiSolicitudesDeGasto/MiSolicitudDeGastoDetalle.razor` — UI
+
+## UI — Real-Time Area & Employee Search Filters
+
+### Overview
+All search bars that previously used `<select>` dropdowns for Área filtering now use a **real-time search** component (`AreaSearchFilter.razor`). This provides type-to-search with autocomplete results and selected chips, replacing static dropdowns.
+
+### `AreaSearchFilter` Component
+Shared component at `web/.../EconomixWA/Components/Shared/AreaSearchFilter.razor`:
+- **Parameters**: `Areas` (full list), `Seleccionadas` (selected list, bindable), `SeleccionadasChanged`, `OnCambio`
+- **Behavior**: Type 2+ characters → dropdown shows matching areas (max 10). Click to add → shown as removable badge chip. `LimpiarBusqueda()` clears the text input.
+- **Layout**: Does NOT include column wrapper — each search bar wraps it in its own `col-md-*` to preserve layout dimensions.
+
+### Search Bars Updated
+| Search Bar | Page | Column Width |
+|---|---|---|
+| `CuentaBancariaSearchBar` | CuentaBancariaPage | `col-6 col-md-2` |
+| `CajaChicaSearchBar` | CajaChicaPage | `col-6 col-md-2` |
+| `CicloCajaSearchBar` | CicloCajaPage | `col-12 col-md-2` |
+| `UsuarioSearchBar` | UsuariosPage | `col-4 col-md-2` |
+| `RolSearchBar` | RolPage | `col-6 col-md-2` |
+| `RendicionSearchBar` | RendicionPage | `col-12 col-md-3` (conditional) |
+
+### CuentaBancariaSearchBar — Employee Search
+The CuentaBancaria search bar also has a **real-time employee search** (replaced the old "Tipo de Dueño" dropdown):
+- **Parameters**: `Empleados` (full list), `EmpleadosSeleccionados` (selected list, bindable), `EmpleadosSeleccionadosChanged`
+- **Behavior**: Same as area search — type name → dropdown → click to add → chips with X to remove
+- **Filtering logic**: `CuentasFiltradas` filters accounts where `c.EmpleadoAdministrador?.UsuarioID` matches any selected employee
+
+### Parent Page Pattern
+Each parent page follows the same pattern:
+1. Replace `FiltroAreaId` (int) with `AreasSeleccionadas` (List\<Area\>)
+2. Update search bar binding: `@bind-FiltroAreaId` → `@bind-AreasSeleccionadas`
+3. Update `HayFiltrosActivos`: `FiltroAreaId > 0` → `AreasSeleccionadas.Any()`
+4. Update filtering: `FiltroAreaId <= 0 || entity.Area?.AreaID == FiltroAreaId` → `!AreasSeleccionadas.Any() || AreasSeleccionadas.Any(a => a.AreaID == entity.Area?.AreaID)`
+5. Update `LimpiarFiltros`: `FiltroAreaId = 0` → `AreasSeleccionadas = new()`
+
+### File Locations
+- `web/.../EconomixWA/Components/Shared/AreaSearchFilter.razor`
+- `web/.../EconomixWA/Components/Pages/CuentaBancaria/CuentaBancariaSearchBar.razor`
+- `web/.../EconomixWA/Components/Pages/CuentaBancaria/CuentaBancariaPage.razor`
+- `web/.../EconomixWA/Components/Pages/CajaChica/CajaChicaSearchBar.razor`
+- `web/.../EconomixWA/Components/Pages/CajaChica/CajaChicaPage.razor`
+- `web/.../EconomixWA/Components/Pages/CajaChica/CicloCajaSearchBar.razor`
+- `web/.../EconomixWA/Components/Pages/CajaChica/CicloCajaPage.razor`
+- `web/.../EconomixWA/Components/Pages/Usuario/UsuarioSearchBar.razor`
+- `web/.../EconomixWA/Components/Pages/Usuario/UsuariosPage.razor`
+- `web/.../EconomixWA/Components/Pages/Rol/RolSearchBar.razor`
+- `web/.../EconomixWA/Components/Pages/Rol/RolPage.razor`
+- `web/.../EconomixWA/Components/Pages/Rendicion/RendicionSearchBar.razor`
+- `web/.../EconomixWA/Components/Pages/Rendicion/RendicionPage.razor`

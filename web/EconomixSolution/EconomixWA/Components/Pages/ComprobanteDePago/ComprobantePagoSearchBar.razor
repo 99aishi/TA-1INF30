@@ -3,7 +3,7 @@
 <div class="card rounded-4 p-3 mb-3">
     <div class="row g-2 align-items-end">
         <div class="col-12 col-md-2">
-            <label class="form-label small text-muted">Proveedor / Empl.</label>
+            <label class="form-label small text-muted">Proveedor / Razón Soc.</label>
             <input type="text"
                    class="form-control bg-light rounded-4"
                    placeholder="Razón social"
@@ -13,8 +13,8 @@
         <div class="col-4 col-md-1">
             <label class="form-label small text-muted">Tipo</label>
             <select class="form-select bg-light rounded-4"
-                    value="@FiltroTipo"
-                    @onchange="OnTipoCambiado">
+                     value="@FiltroTipo"
+                     @onchange="OnTipoCambiado">
                 <option value="Todos">Todos</option>
                 <option value="FACTURA">Fact.</option>
                 <option value="BOLETA">Bolet.</option>
@@ -23,12 +23,13 @@
         <div class="col-4 col-md-1">
             <label class="form-label small text-muted">Estado</label>
             <select class="form-select bg-light rounded-4"
-                    value="@FiltroEstado"
-                    @onchange="OnEstadoCambiado">
+                     value="@FiltroEstado"
+                     @onchange="OnEstadoCambiado">
                 <option value="Todas">Todas</option>
-                <option value="PorRevisar">P. revisar</option>
-                <option value="Aprobado">Aprob.</option>
-                <option value="Rechazado">Rechaz.</option>
+                <option value="POR_REVISAR">P. revisar</option>
+                <option value="APROBADO">Aprob.</option>
+                <option value="OBSERVADO">Observ.</option>
+                <option value="ANULADO">Anul.</option>
             </select>
         </div>
         <div class="col-4 col-md-1">
@@ -49,21 +50,45 @@
                    value="@FiltroMontoMax"
                    @oninput="OnMontoMaxCambiado" />
         </div>
-        <div class="col-4 col-md-2">
+        <div class="col-3 col-md-2">
+            <label class="form-label small text-muted">Área</label>
+            <select class="form-select bg-light rounded-4"
+                    value="@FiltroAreaId"
+                    @onchange="OnAreaCambiado">
+                <option value="0">Todas</option>
+                @foreach (var a in Areas)
+                {
+                    <option value="@a.AreaID">@a.Nombre</option>
+                }
+            </select>
+        </div>
+        <div class="col-3 col-md-2">
+            <label class="form-label small text-muted">Empleado</label>
+            <select class="form-select bg-light rounded-4"
+                    value="@FiltroEmpleadoId"
+                    @onchange="OnEmpleadoCambiado">
+                <option value="0">Todos</option>
+                @foreach (var e in Empleados)
+                {
+                    <option value="@e.UsuarioID">@($"{e.Nombres} {e.ApellidoPaterno}")</option>
+                }
+            </select>
+        </div>
+        <div class="col-4 col-md-1">
             <label class="form-label small text-muted">Fecha inicio</label>
             <input type="date"
                    class="form-control bg-light rounded-4"
                    value="@FiltroFechaInicio?.ToString("yyyy-MM-dd")"
                    @onchange="OnFechaInicioCambiada" />
         </div>
-        <div class="col-4 col-md-2">
+        <div class="col-4 col-md-1">
             <label class="form-label small text-muted">Fecha fin</label>
             <input type="date"
                    class="form-control bg-light rounded-4"
                    value="@FiltroFechaFin?.ToString("yyyy-MM-dd")"
                    @onchange="OnFechaFinCambiada" />
         </div>
-        <div class="col-4 col-md-2 d-grid">
+        <div class="col-4 col-md-1 d-grid">
             <label class="form-label small text-muted">&nbsp;</label>
             <button type="button" class="btn btn-outline-secondary rounded-4" @onclick="Limpiar">
                 Limpiar
@@ -102,6 +127,24 @@
 
     [Parameter]
     public EventCallback<double?> FiltroMontoMaxChanged { get; set; }
+
+    [Parameter]
+    public int FiltroAreaId { get; set; }
+
+    [Parameter]
+    public EventCallback<int> FiltroAreaIdChanged { get; set; }
+
+    [Parameter]
+    public int FiltroEmpleadoId { get; set; }
+
+    [Parameter]
+    public EventCallback<int> FiltroEmpleadoIdChanged { get; set; }
+
+    [Parameter]
+    public List<Area> Areas { get; set; } = new();
+
+    [Parameter]
+    public List<Empleado> Empleados { get; set; } = new();
 
     [Parameter]
     public DateTime? FiltroFechaInicio { get; set; }
@@ -154,6 +197,18 @@
         await FiltroMontoMaxChanged.InvokeAsync(FiltroMontoMax);
     }
 
+    private async Task OnAreaCambiado(ChangeEventArgs e)
+    {
+        FiltroAreaId = int.TryParse(e.Value?.ToString(), out var val) ? val : 0;
+        await FiltroAreaIdChanged.InvokeAsync(FiltroAreaId);
+    }
+
+    private async Task OnEmpleadoCambiado(ChangeEventArgs e)
+    {
+        FiltroEmpleadoId = int.TryParse(e.Value?.ToString(), out var val) ? val : 0;
+        await FiltroEmpleadoIdChanged.InvokeAsync(FiltroEmpleadoId);
+    }
+
     private async Task OnFechaInicioCambiada(ChangeEventArgs e)
     {
         if (DateTime.TryParse(e.Value?.ToString(), out var val))
@@ -188,6 +243,12 @@
 
         FiltroMontoMax = null;
         await FiltroMontoMaxChanged.InvokeAsync(null);
+
+        FiltroAreaId = 0;
+        await FiltroAreaIdChanged.InvokeAsync(0);
+
+        FiltroEmpleadoId = 0;
+        await FiltroEmpleadoIdChanged.InvokeAsync(0);
 
         FiltroFechaInicio = null;
         await FiltroFechaInicioChanged.InvokeAsync(null);

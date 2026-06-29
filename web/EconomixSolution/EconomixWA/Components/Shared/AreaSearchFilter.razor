@@ -1,0 +1,97 @@
+<div class="position-relative">
+    <input type="text"
+           class="form-control bg-light rounded-4"
+           placeholder="Buscar área..."
+           value="@Busqueda"
+           @oninput="OnBusquedaCambiada" />
+    @if (Resultados.Any())
+    {
+        <div class="position-absolute top-100 start-0 w-100 bg-white border rounded-4 shadow-sm mt-1 z-3" style="max-height:200px; overflow-y:auto;">
+            @foreach (var area in Resultados)
+            {
+                <div class="px-3 py-2"
+                     style="cursor:pointer;"
+                     @onmouseenter="() => _hoveredId = area.AreaID"
+                     @onmouseleave="() => _hoveredId = null"
+                     @onclick="() => Seleccionar(area)">
+                    <span class="@(_hoveredId == area.AreaID ? "text-primary" : "text-dark")">
+                        @area.Nombre
+                    </span>
+                </div>
+            }
+        </div>
+    }
+</div>
+@if (Seleccionadas.Any())
+{
+    <div class="d-flex flex-wrap gap-1 mt-2">
+        @foreach (var area in Seleccionadas)
+        {
+            <span class="badge bg-primary bg-opacity-10 text-primary rounded-4 px-2 py-1 d-flex align-items-center gap-1">
+                @area.Nombre
+                <button type="button" class="btn-close btn-close-sm p-0" style="font-size:0.6rem;"
+                        @onclick="() => Quitar(area)" aria-label="Quitar"></button>
+            </span>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public List<Area> Areas { get; set; } = new();
+
+    [Parameter]
+    public List<Area> Seleccionadas { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<List<Area>> SeleccionadasChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnCambio { get; set; }
+
+    private string Busqueda { get; set; } = string.Empty;
+    private List<Area> Resultados { get; set; } = new();
+    private int? _hoveredId;
+
+    private void OnBusquedaCambiada(ChangeEventArgs e)
+    {
+        Busqueda = e.Value?.ToString() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(Busqueda) || Busqueda.Length < 2)
+        {
+            Resultados = new();
+            return;
+        }
+
+        var idsSeleccionados = Seleccionadas.Select(a => a.AreaID).ToHashSet();
+        Resultados = Areas
+            .Where(a => !idsSeleccionados.Contains(a.AreaID))
+            .Where(a => a.Nombre.Contains(Busqueda, StringComparison.OrdinalIgnoreCase))
+            .Take(10)
+            .ToList();
+    }
+
+    private async Task Seleccionar(Area area)
+    {
+        if (Seleccionadas.Any(a => a.AreaID == area.AreaID)) return;
+
+        Seleccionadas.Add(area);
+        Busqueda = string.Empty;
+        Resultados = new();
+        await SeleccionadasChanged.InvokeAsync(Seleccionadas);
+        await OnCambio.InvokeAsync();
+    }
+
+    private async Task Quitar(Area area)
+    {
+        Seleccionadas = Seleccionadas.Where(a => a.AreaID != area.AreaID).ToList();
+        await SeleccionadasChanged.InvokeAsync(Seleccionadas);
+        await OnCambio.InvokeAsync();
+    }
+
+    public void LimpiarBusqueda()
+    {
+        Busqueda = string.Empty;
+        Resultados = new();
+    }
+}
