@@ -26,31 +26,6 @@
             }
         </div>
         <div class="col-4 mt-3">
-            <label for="TipoDocumento" class="form-label small text-muted">Tipo de Documento</label>    
-            @if (RequiereAutorizacion)
-            {
-                <select class="form-select rounded-4 bg-light" disabled>
-                    <option selected value="@Comprobante?.TipoDocumento">@Comprobante?.TipoDocumento</option>
-                </select>
-            }
-            else
-            {
-                <select class="form-select rounded-4 bg-light" @bind="Comprobante.TipoDocumento">
-                    <option value="">Seleccione...</option>
-                    @if (EsEvaluacion)
-                    {
-                        <option value="@Comprobante?.TipoDocumento">@Comprobante?.TipoDocumento</option>
-                    }
-                    else
-                    {
-                        <option value="FACTURA">Factura</option>
-                        <option value="BOLETA">Boleta</option>
-                        <option value="DJ_EXCEPCIONAL">DJ Excepcional</option>
-                    }
-                </select>
-            }
-        </div>
-        <div class="col-4 mt-3">
             <label for="RUC" class="form-label small text-muted">RUC</label>    
             @if (RequiereAutorizacion)
             {
@@ -58,7 +33,7 @@
             }
             else
             {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RucProveedor" placeholder="RUC" disabled="@RequiereAutorizacion">
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RucProveedor" placeholder="RUC" maxlength="11" disabled="@RequiereAutorizacion">
             }
         </div>
         <div class="col-4 mt-3">
@@ -83,7 +58,7 @@
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.NumeroSerial" placeholder="Número Serial" disabled="@RequiereAutorizacion">
             }
         </div>
-        <div class="col-3 mt-3">
+        <div class="col-2 mt-3">
             <label for="FechaDeEmision" class="form-label small text-muted">Fecha de Emisión</label>    
             @if (RequiereAutorizacion)
             {
@@ -94,7 +69,32 @@
                 <input type="date" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.FechaEmision" disabled="@RequiereAutorizacion">
             }
         </div>
-        <div class="col-3 mt-3">
+        <div class="col-2 mt-3">
+            <label for="TipoDocumento" class="form-label small text-muted">Tipo de Documento</label>    
+            @if (RequiereAutorizacion)
+            {
+                <select class="form-select form-select-lg rounded-4 bg-light" disabled>
+                    <option selected value="@Comprobante?.TipoDocumento">@Comprobante?.TipoDocumento</option>
+                </select>
+            }
+            else
+            {
+                <select class="form-select form-select-lg rounded-4 bg-light" @bind="Comprobante.TipoDocumento">
+                    <option value="">Seleccione...</option>
+                    @if (EsEvaluacion)
+                    {
+                        <option value="@Comprobante?.TipoDocumento">@Comprobante?.TipoDocumento</option>
+                    }
+                    else
+                    {
+                        <option value="FACTURA">Factura</option>
+                        <option value="BOLETA">Boleta</option>
+                        <option value="DJ_EXCEPCIONAL">DJ Excepcional</option>
+                    }
+                </select>
+            }
+        </div>
+        <div class="col-2 mt-3">
             <label for="Total" class="form-label small text-muted">Total</label>
             @if (RequiereAutorizacion)
             {
@@ -112,7 +112,7 @@
                 }
             }
         </div>
-        <div class="col-3 mt-3">
+        <div class="col-2 mt-3">
             <label for="Moneda" class="form-label small text-muted">Moneda</label>
             @if (EsCreacion || EsAsociacion)
             {
@@ -131,18 +131,18 @@
         </div>
         @if (Comprobante?.Solicitud == null || Comprobante.Solicitud.IdSolicitudGasto == 0)
         {
-            <div class="col-3 mt-3">
+            <div class="col-2 mt-3">
                 <label class="form-label small text-muted">Tipo de Cambio</label>
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="0.0000" disabled="true">
             </div>
-            <div class="col-3 mt-3">
+            <div class="col-2 mt-3">
                 <label class="form-label small text-muted">Monto Convertido</label>
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="0.00" disabled="true">
             </div>
         }
         else if (RequiereTipoCambio)
         {
-            <div class="col-3 mt-3">
+            <div class="col-2 mt-3">
                 <label class="form-label small text-muted">Tipo de Cambio</label>
                 @if (TipoCambioNoEncontrado)
                 {
@@ -157,18 +157,18 @@
                     <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Comprobante.TipoCambio.ToString("N4"))" disabled="true">
                 }
             </div>
-            <div class="col-3 mt-3">
+            <div class="col-2 mt-3">
                 <label class="form-label small text-muted">Monto Convertido (@(Comprobante?.Solicitud?.MonedaOriginal?.Simbolo ?? "$"))</label>
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TipoCambioNoEncontrado ? "-" : Comprobante.MontoConvertido.ToString("N2"))" disabled="true">
             </div>
         }
         else
         {
-            <div class="col-3 mt-3">
+            <div class="col-2 mt-3">
                 <label class="form-label small text-muted">Tipo de Cambio</label>
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="1.0000" disabled="true">
             </div>
-            <div class="col-3 mt-3">
+            <div class="col-2 mt-3">
                 <label class="form-label small text-muted">Monto Convertido (@(Comprobante?.Solicitud?.MonedaOriginal?.Simbolo ?? "$"))</label>
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Comprobante?.MontoTotal.ToString("N2"))" disabled="true">
             </div>
@@ -370,6 +370,19 @@
                     ErrorMessage = "Debe seleccionar el tipo de documento.";
                     return;
                 }
+                if (Comprobante.TipoDocumento == "FACTURA" || Comprobante.TipoDocumento == "BOLETA")
+                {
+                    if (string.IsNullOrWhiteSpace(Comprobante.RucProveedor))
+                    {
+                        ErrorMessage = "El RUC del proveedor es obligatorio.";
+                        return;
+                    }
+                    if (Comprobante.RucProveedor.Length != 11 || !EsSoloNumeros(Comprobante.RucProveedor))
+                    {
+                        ErrorMessage = "El RUC del proveedor debe tener exactamente 11 dígitos numéricos.";
+                        return;
+                    }
+                }
                 if (Comprobante.MontoTotal <= 0)
                 {
                     ErrorMessage = "El monto total debe ser mayor que 0.";
@@ -388,6 +401,19 @@
                 Comprobante.Estado = "POR_REVISAR";
                 Comprobante.FechaCreacion = DateTime.Today;
                 Comprobante.FechaCreacionString = DateTime.Today.ToString("yyyy-MM-dd");
+
+                if (Comprobante.TipoDocumento == "DJ_EXCEPCIONAL")
+                {
+                    Comprobante.Subtotal = 0;
+                    Comprobante.Igv = 0;
+                    Comprobante.Total = Comprobante.MontoTotal;
+                }
+                else
+                {
+                    Comprobante.Subtotal = Math.Round(Comprobante.MontoTotal / 1.18, 2);
+                    Comprobante.Igv = Math.Round(Comprobante.MontoTotal - Comprobante.Subtotal, 2);
+                    Comprobante.Total = Comprobante.MontoTotal;
+                }
 
                 if (Comprobante.IdComprobante > 0)
                 {
@@ -696,6 +722,16 @@
         {
             Comprobante.MontoConvertido = Comprobante.MontoTotal * Comprobante.TipoCambio;
         }
+    }
+
+    private bool EsSoloNumeros(string val)
+    {
+        if (string.IsNullOrEmpty(val)) return false;
+        foreach (char c in val)
+        {
+            if (c < '0' || c > '9') return false;
+        }
+        return true;
     }
 
     private bool ComentarioDeshabilitado
