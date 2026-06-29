@@ -3,6 +3,8 @@
 @inject NavigationManager Navigation
 @inject IComprobantePagoWS ComprobantePagoWS
 @inject IUsuarioWS UsuarioWS
+@inject IAreaWS AreaWS
+@inject IEmpleadoWS EmpleadoWS
 
 <div class="h-100 d-flex flex-column">
     
@@ -36,7 +38,11 @@
                               @bind-FiltroMontoMin="FiltroMontoMin"
                               @bind-FiltroMontoMax="FiltroMontoMax"
                               @bind-FiltroFechaInicio="FiltroFechaInicio"
-                              @bind-FiltroFechaFin="FiltroFechaFin" />
+                              @bind-FiltroFechaFin="FiltroFechaFin"
+                              @bind-FiltroAreaId="FiltroAreaId"
+                              @bind-FiltroEmpleadoId="FiltroEmpleadoId"
+                              Areas="Areas"
+                              Empleados="Empleados" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
@@ -77,9 +83,13 @@
     private string FiltroEstado { get; set; } = "Todas";
     private double? FiltroMontoMin { get; set; }
     private double? FiltroMontoMax { get; set; }
+    private int FiltroAreaId { get; set; }
+    private int FiltroEmpleadoId { get; set; }
     private DateTime? FiltroFechaInicio { get; set; }
     private DateTime? FiltroFechaFin { get; set; }
     private List<ComprobantePago> Comprobantes { get; set; } = new();
+    private List<Area> Areas { get; set; } = new();
+    private List<Empleado> Empleados { get; set; } = new();
     private ComprobantePago? ComprobanteSeleccionado { get; set; }
     private bool EsAdministrador { get; set; }
 
@@ -90,7 +100,9 @@
         || FiltroMontoMin.HasValue
         || FiltroMontoMax.HasValue
         || FiltroFechaInicio.HasValue
-        || FiltroFechaFin.HasValue;
+        || FiltroFechaFin.HasValue
+        || FiltroAreaId > 0
+        || FiltroEmpleadoId > 0;
 
     private IEnumerable<ComprobantePago> ComprobantesFiltrados => Comprobantes
         .Where(c => string.IsNullOrWhiteSpace(FiltroTexto)
@@ -102,7 +114,9 @@
         .Where(c => !FiltroMontoMin.HasValue || c.MontoTotal >= FiltroMontoMin.Value)
         .Where(c => !FiltroMontoMax.HasValue || c.MontoTotal <= FiltroMontoMax.Value)
         .Where(c => !FiltroFechaInicio.HasValue || (c.FechaEmision?.Date >= FiltroFechaInicio.Value.Date))
-        .Where(c => !FiltroFechaFin.HasValue || (c.FechaEmision?.Date <= FiltroFechaFin.Value.Date));
+        .Where(c => !FiltroFechaFin.HasValue || (c.FechaEmision?.Date <= FiltroFechaFin.Value.Date))
+        .Where(c => FiltroAreaId <= 0 || c.Solicitud?.Solicitante?.Area?.AreaID == FiltroAreaId)
+        .Where(c => FiltroEmpleadoId <= 0 || c.Solicitud?.Solicitante?.UsuarioID == FiltroEmpleadoId);
 
     public void MostrarDetalleComprobante(ComprobantePago cp)
     {
@@ -126,6 +140,8 @@
     {
         EsAdministrador = UsuarioWS.GetCurrentUser() is Administrador;
         Cargando = true;
+        try { Areas = await AreaWS.listarAsync(); } catch {}
+        try { Empleados = await EmpleadoWS.listarAsync(); } catch {}
         await ListarComprobantes();
         Cargando = false;
     }

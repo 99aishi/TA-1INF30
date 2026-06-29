@@ -1,4 +1,5 @@
 @rendermode InteractiveServer
+@inject NavigationManager Navigation
 @inject IUsuarioWS UsuarioWS
 @inject IEmpleadoWS EmpleadoWS
 @inject ISolicitudGastoWS SolicitudGastoWS
@@ -8,7 +9,7 @@
 
 <div class="row g-3 mb-3">
     <div class="col-6 col-lg-3">
-        <div class="card rounded-4 h-100">
+        <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrACajaChica">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-body-primary">Saldo de Caja Chica</h6>
                 <p class="card-text h2">@FormatearSoles(SaldoCajaChica)</p>
@@ -16,7 +17,7 @@
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="card rounded-4 h-100">
+        <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrASolicitudes">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-body-primary">Pendientes de Aprobación</h6>
                 <p class="card-text h2">@PendientesAprobacion</p>
@@ -25,7 +26,7 @@
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="card rounded-4 h-100">
+        <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrACiclos">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-body-primary">Gastos del Ciclo</h6>
                 <p class="card-text h2">@FormatearSoles(GastosCiclo)</p>
@@ -34,7 +35,7 @@
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="card rounded-4 h-100">
+        <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrASolicitudes">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-body-primary">Solicitudes Aprobadas</h6>
                 <p class="card-text h2">@SolicitudesAprobadas</p>
@@ -278,4 +279,8 @@
     {
         return $"S/ {monto:N2}";
     }
+
+    private void IrACajaChica() => Navigation.NavigateTo("/Caja Chica");
+    private void IrASolicitudes() => Navigation.NavigateTo("/Solicitudes De Gasto");
+    private void IrACiclos() => Navigation.NavigateTo("/Ciclos");
 }

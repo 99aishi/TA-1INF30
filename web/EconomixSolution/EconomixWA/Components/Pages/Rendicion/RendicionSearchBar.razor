@@ -1,10 +1,12 @@
-@inject EconomixWS.UsuarioWS.IAreaWS AreaWS
+@rendermode InteractiveServer
 
 <div class="card rounded-4 p-3 mb-3">
     <div class="row g-2 align-items-end">
-        <div class="col-12 @(MostrarFiltroArea ? "col-md-2" : "col-md-3")">
+        <div class="col-12 col-md-2">
             <label class="form-label small text-muted">Estado</label>
-            <select class="form-select rounded-4 bg-light" @bind="FiltroEstado">
+            <select class="form-select rounded-4 bg-light"
+                    value="@FiltroEstado"
+                    @onchange="OnEstadoCambiado">
                 <option value="Todas">Todas</option>
                 <option value="EN_ESPERA">En Espera</option>
                 <option value="OBSERVADO">Observado</option>
@@ -13,28 +15,43 @@
                 <option value="ANULADO">Anulado</option>
             </select>
         </div>
-        <div class="col-6 @(MostrarFiltroArea ? "col-md-3" : "col-md-4")">
+        <div class="col-6 col-md-2">
             <label class="form-label small text-muted">Fecha desde</label>
-            <input type="date" class="form-control rounded-4 bg-light" @bind="FiltroFechaInicio">
+            <input type="date" class="form-control rounded-4 bg-light"
+                   value="@FiltroFechaInicio?.ToString("yyyy-MM-dd")"
+                   @onchange="OnFechaInicioCambiada">
         </div>
-        <div class="col-6 @(MostrarFiltroArea ? "col-md-3" : "col-md-4")">
+        <div class="col-6 col-md-2">
             <label class="form-label small text-muted">Fecha hasta</label>
-            <input type="date" class="form-control rounded-4 bg-light" @bind="FiltroFechaFin">
+            <input type="date" class="form-control rounded-4 bg-light"
+                   value="@FiltroFechaFin?.ToString("yyyy-MM-dd")"
+                   @onchange="OnFechaFinCambiada">
         </div>
-        @if (MostrarFiltroArea)
-        {
-            <div class="col-12 col-md-3">
-                <label class="form-label small text-muted">Area</label>
-                <select class="form-select rounded-4 bg-light" @bind="FiltroAreaId">
-                    <option value="0">Todas</option>
-                    @foreach (var area in Areas)
-                    {
-                        <option value="@area.AreaID">@area.Nombre</option>
-                    }
-                </select>
-            </div>
-        }
-        <div class="col-12 col-md-1 d-grid">
+        <div class="col-12 col-md-2">
+            <label class="form-label small text-muted">Área</label>
+            <select class="form-select bg-light rounded-4"
+                    value="@FiltroAreaId"
+                    @onchange="OnAreaCambiado">
+                <option value="0">Todas</option>
+                @foreach (var a in Areas)
+                {
+                    <option value="@a.AreaID">@a.Nombre</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label small text-muted">Empleado</label>
+            <select class="form-select bg-light rounded-4"
+                    value="@FiltroEmpleadoId"
+                    @onchange="OnEmpleadoCambiado">
+                <option value="0">Todos</option>
+                @foreach (var e in Empleados)
+                {
+                    <option value="@e.UsuarioID">@($"{e.Nombres} {e.ApellidoPaterno}")</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-2 d-grid">
             <label class="form-label small text-muted">&nbsp;</label>
             <button type="button" class="btn btn-outline-secondary rounded-4" @onclick="Limpiar">
                 Limpiar
@@ -56,10 +73,49 @@
     [Parameter] public int FiltroAreaId { get; set; }
     [Parameter] public EventCallback<int> FiltroAreaIdChanged { get; set; }
 
-    [Parameter] public bool MostrarFiltroArea { get; set; } = true;
+    [Parameter] public int FiltroEmpleadoId { get; set; }
+    [Parameter] public EventCallback<int> FiltroEmpleadoIdChanged { get; set; }
+
     [Parameter] public List<Area> Areas { get; set; } = new();
+    [Parameter] public List<Empleado> Empleados { get; set; } = new();
 
     [Parameter] public EventCallback OnLimpiar { get; set; }
+
+    private async Task OnEstadoCambiado(ChangeEventArgs e)
+    {
+        FiltroEstado = e.Value?.ToString() ?? "Todas";
+        await FiltroEstadoChanged.InvokeAsync(FiltroEstado);
+    }
+
+    private async Task OnFechaInicioCambiada(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var val))
+            FiltroFechaInicio = val.Date;
+        else
+            FiltroFechaInicio = null;
+        await FiltroFechaInicioChanged.InvokeAsync(FiltroFechaInicio);
+    }
+
+    private async Task OnFechaFinCambiada(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var val))
+            FiltroFechaFin = val.Date;
+        else
+            FiltroFechaFin = null;
+        await FiltroFechaFinChanged.InvokeAsync(FiltroFechaFin);
+    }
+
+    private async Task OnAreaCambiado(ChangeEventArgs e)
+    {
+        FiltroAreaId = int.TryParse(e.Value?.ToString(), out var val) ? val : 0;
+        await FiltroAreaIdChanged.InvokeAsync(FiltroAreaId);
+    }
+
+    private async Task OnEmpleadoCambiado(ChangeEventArgs e)
+    {
+        FiltroEmpleadoId = int.TryParse(e.Value?.ToString(), out var val) ? val : 0;
+        await FiltroEmpleadoIdChanged.InvokeAsync(FiltroEmpleadoId);
+    }
 
     private async Task Limpiar()
     {
@@ -74,6 +130,9 @@
 
         FiltroAreaId = 0;
         await FiltroAreaIdChanged.InvokeAsync(0);
+
+        FiltroEmpleadoId = 0;
+        await FiltroEmpleadoIdChanged.InvokeAsync(0);
 
         await OnLimpiar.InvokeAsync();
     }
