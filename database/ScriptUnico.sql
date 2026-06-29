@@ -280,7 +280,7 @@ CREATE TABLE IF NOT EXISTS ope_solicitud_gasto (
     tipo_cambio DECIMAL(10,4) DEFAULT 1.0000,
     monto_convertido DECIMAL(12,2) DEFAULT 0.00,
     motivo_solicitud VARCHAR(200),
-    estado_solicitud ENUM('PENDIENTE', 'APROBADO', 'PAGADO', 'RENDIDO', 'RECHAZADO', 'ANULADO') DEFAULT 'PENDIENTE',
+    estado_solicitud ENUM('PENDIENTE', 'APROBADO', 'PAGADO', 'RENDIDO', 'RECHAZADO', 'OBSERVADO', 'ANULADO') DEFAULT 'PENDIENTE',
     comentario_decision VARCHAR(500),
 
     id_usuario_solicitante INT NOT NULL,
@@ -2376,7 +2376,7 @@ CREATE PROCEDURE pa_modificar_solicitud_gasto(
     IN p_tipo_cambio DECIMAL(10,4),
     IN p_monto_convertido DECIMAL(12,2),
     IN p_motivo_solicitud VARCHAR(200),
-    IN p_estado_solicitud ENUM('PENDIENTE','APROBADO','PAGADO','RENDIDO','RECHAZADO','ANULADO'),
+    IN p_estado_solicitud ENUM('PENDIENTE','APROBADO','PAGADO','RENDIDO','RECHAZADO','OBSERVADO','ANULADO'),
     IN p_comentario_decision VARCHAR(500),
     IN p_id_usuario_solicitante INT,
     IN p_id_usuario_destinatario INT,

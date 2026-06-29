@@ -285,8 +285,6 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
             throw new Exception("El monto solicitado supera el limite del 50% del saldo disponible ("
                     + String.format("%.2f", limiteMaximo) + ").");
         }
-
-        verificarLimiteAcumulado(solicitudGasto, saldoDisponible);
     }
 
     private void verificarLimiteAcumulado(SolicitudGasto solicitudGasto,

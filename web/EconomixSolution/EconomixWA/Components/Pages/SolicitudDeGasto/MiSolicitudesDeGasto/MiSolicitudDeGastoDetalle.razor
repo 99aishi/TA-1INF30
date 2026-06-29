@@ -19,7 +19,13 @@
     <div class="row h-100 mb-3">
         <div class="col-8 h-100 mb-3">
             <div class="card rounded-4 p-3 mb-3 h-100 overflow-scroll">
-                <p class="h3">Solicitud de Gasto - No. @(SolicitudEdicion?.IdSolicitudGasto > 0 ? SolicitudEdicion.IdSolicitudGasto : "Nuevo")</p>
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <p class="h3 mb-0">Solicitud de Gasto - No. @(SolicitudEdicion?.IdSolicitudGasto > 0 ? SolicitudEdicion.IdSolicitudGasto : "Nuevo")</p>
+                    @if (!EsCreacion)
+                    {
+                        <span class="badge @EstadoClase rounded-pill px-2">@(SolicitudEdicion?.Estado ?? "PENDIENTE")</span>
+                    }
+                </div>
 
                 @if (!string.IsNullOrEmpty(ErrorMessage))
                 {
@@ -74,8 +80,11 @@
                             <label class="form-label small text-muted">Tipo de Cambio</label>
                             @if (TipoCambioNoEncontrado)
                             {
-                                <input type="text" class="form-control form-control-lg rounded-4 bg-light border-danger text-danger fw-bold" value="No registrado" disabled="true">
-                                <small class="text-danger">Por favor, registre el tipo de cambio.</small>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light @(PuedeEditar ? "border-danger text-danger fw-bold" : "")" value="@(PuedeEditar ? "No registrado" : "-")" disabled="true">
+                                @if (PuedeEditar)
+                                {
+                                    <small class="text-danger">Por favor, registre el tipo de cambio.</small>
+                                }
                             }
                             else
                             {
@@ -96,12 +105,6 @@
                         <div class="col-3 mt-3">
                             <label class="form-label small text-muted">Monto Convertido (@SimboloMonedaCiclo)</label>
                             <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@SolicitudEdicion.MontoSolicitado.ToString("N2")" disabled="true">
-                        </div>
-                    }
-                    @if (!EsCreacion)
-                    {
-                        <div class="col-12 mt-3 d-flex justify-content-end">
-                            <span class="badge @EstadoClase rounded-pill px-2">@(SolicitudEdicion?.Estado ?? "PENDIENTE")</span>
                         </div>
                     }
                     <div class="col-6 mt-3">
@@ -132,40 +135,36 @@
                         </div>
                     }
                  </div>
-
-                 @if (EsObservada)
-                 {
-                     <div class="d-flex flex-wrap-nowrap justify-content-end gap-3 mt-3">
-                         <button type="button" class="btn btn-outline-primary" disabled="@Procesando" @onclick="GuardarCambiosSolicitud">
-                             @(Procesando ? "Procesando..." : "Guardar Cambios")
-                         </button>
-                     </div>
-                 }
-
                  <hr class="my-0" />
-                 <div class="d-flex flex-wrap-nowrap justify-content-end gap-3 mt-3">
-                     @if (EsCreacion)
-                     {
-                         <button type="button" class="btn btn-outline-primary" disabled="@Procesando" @onclick="RegistrarSolicitud">
-                             @(Procesando ? "Procesando..." : "Registrar Solicitud")
-                         </button>
-                         <button type="button" class="btn btn-outline-secondary" @onclick="CerrarDetalle">
-                             Cancelar
-                         </button>
-                     }
-                     else
-                     {
-                         <button type="button" class="btn btn-outline-primary" @onclick="CerrarDetalle">
-                             Cerrar
-                         </button>
-                         @if (PuedeEliminar)
-                         {
-                             <button type="button" class="btn btn-outline-danger" @onclick="EliminarSolicitud">
-                                 Eliminar
-                             </button>
-                         }
-                     }
-                </div>
+                  <div class="d-flex flex-wrap-nowrap justify-content-end gap-3 mt-3">
+                      @if (EsCreacion)
+                      {
+                          <button type="button" class="btn btn-outline-primary" disabled="@Procesando" @onclick="RegistrarSolicitud">
+                              @(Procesando ? "Procesando..." : "Registrar")
+                          </button>
+                          <button type="button" class="btn btn-outline-secondary" @onclick="CerrarDetalle">
+                              Cancelar
+                          </button>
+                      }
+                      else
+                      {
+                          @if (EsObservada)
+                          {
+                              <button type="button" class="btn btn-outline-warning" disabled="@Procesando" @onclick="GuardarCambiosSolicitud">
+                                  @(Procesando ? "Procesando..." : "Guardar Cambios")
+                              </button>
+                          }
+                          <button type="button" class="btn btn-outline-info" @onclick="CerrarDetalle">
+                              Cerrar
+                          </button>
+                          @if (PuedeEliminar)
+                          {
+                              <button type="button" class="btn btn-outline-danger" @onclick="EliminarSolicitud">
+                                  Eliminar
+                              </button>
+                          }
+                      }
+                 </div>
 
                 @if (!EsCreacion)
                 {
@@ -181,15 +180,6 @@
                             </button>
                         </div>
                     }
-                    @if (EsObservada)
-                     {
-                         <div class="alert alert-info d-flex justify-content-between align-items-center mt-4" role="alert">
-                             <span>
-                                 <i class="bi bi-info-circle me-2"></i>
-                                 <strong>Observado por el Jefe:</strong> puedes editar esta solicitud. Cuando termines, regresa a PENDIENTE y el Jefe podrá reevaluarla.
-                             </span>
-                         </div>
-                     }
 
                     @if (ComprobanteEnEdicion != null)
                     {
@@ -560,6 +550,7 @@
 
     private async Task CargarSolicitud(int id)
     {
+        TipoCambioNoEncontrado = false;
         try
         {
             var solicitud = await SolicitudGastoWS.obtenerPorIdAsync(id);
@@ -658,8 +649,12 @@
         try
         {
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            if (SolicitudEdicion.Estado == "OBSERVADO")
+            {
+                SolicitudEdicion.Estado = "PENDIENTE";
+            }
             await SolicitudGastoWS.actualizarAsync(SolicitudEdicion, idUsuarioAccion);
-            await CargarSolicitud(SolicitudEdicion.IdSolicitudGasto);
+            await CerrarDetalle();
         }
         catch (Exception ex)
         {
