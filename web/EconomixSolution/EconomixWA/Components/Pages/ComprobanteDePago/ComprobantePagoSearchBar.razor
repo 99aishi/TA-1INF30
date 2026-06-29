@@ -50,30 +50,36 @@
                    value="@FiltroMontoMax"
                    @oninput="OnMontoMaxCambiado" />
         </div>
-        <div class="col-3 col-md-2">
-            <label class="form-label small text-muted">Área</label>
-            <select class="form-select bg-light rounded-4"
-                    value="@FiltroAreaId"
-                    @onchange="OnAreaCambiado">
-                <option value="0">Todas</option>
-                @foreach (var a in Areas)
-                {
-                    <option value="@a.AreaID">@a.Nombre</option>
-                }
-            </select>
-        </div>
-        <div class="col-3 col-md-2">
-            <label class="form-label small text-muted">Empleado</label>
-            <select class="form-select bg-light rounded-4"
-                    value="@FiltroEmpleadoId"
-                    @onchange="OnEmpleadoCambiado">
-                <option value="0">Todos</option>
-                @foreach (var e in Empleados)
-                {
-                    <option value="@e.UsuarioID">@($"{e.Nombres} {e.ApellidoPaterno}")</option>
-                }
-            </select>
-        </div>
+        @if (!OcultarAreaEmpleado)
+        {
+            <div class="col-3 col-md-2">
+                <label class="form-label small text-muted">Área</label>
+                <select class="form-select bg-light rounded-4"
+                        value="@FiltroAreaId"
+                        @onchange="OnAreaCambiado">
+                    <option value="0">Todas</option>
+                    @foreach (var a in Areas)
+                    {
+                        <option value="@a.AreaID">@a.Nombre</option>
+                    }
+                </select>
+            </div>
+        }
+        @if (!OcultarAreaEmpleado)
+        {
+            <div class="col-3 col-md-2">
+                <label class="form-label small text-muted">Empleado</label>
+                <select class="form-select bg-light rounded-4"
+                        value="@FiltroEmpleadoId"
+                        @onchange="OnEmpleadoCambiado">
+                    <option value="0">Todos</option>
+                    @foreach (var e in Empleados)
+                    {
+                        <option value="@e.UsuarioID">@($"{e.Nombres} {e.ApellidoPaterno}")</option>
+                    }
+                </select>
+            </div>
+        }
         <div class="col-4 col-md-1">
             <label class="form-label small text-muted">Fecha inicio</label>
             <input type="date"
@@ -145,6 +151,9 @@
 
     [Parameter]
     public List<Empleado> Empleados { get; set; } = new();
+
+    [Parameter]
+    public bool OcultarAreaEmpleado { get; set; }
 
     [Parameter]
     public DateTime? FiltroFechaInicio { get; set; }

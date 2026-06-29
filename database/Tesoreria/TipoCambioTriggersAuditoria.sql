@@ -1,29 +1,37 @@
 
+DELIMITER //
+
 -- ================================================================
 -- Triggers para tes_tipo_cambio
 -- TABLA: tes_tipo_cambio
 -- ================================================================
 
-DELIMITER //
+DROP TRIGGER IF EXISTS trg_tes_tipo_cambio_before_insert //
+CREATE TRIGGER trg_tes_tipo_cambio_before_insert
+BEFORE INSERT ON tes_tipo_cambio
+FOR EACH ROW
+BEGIN
+    SET NEW.creado_at = NOW();
+    SET NEW.actualizado_at = NOW();
+END //
+
+DROP TRIGGER IF EXISTS trg_tes_tipo_cambio_before_update //
+CREATE TRIGGER trg_tes_tipo_cambio_before_update
+BEFORE UPDATE ON tes_tipo_cambio
+FOR EACH ROW
+BEGIN
+    SET NEW.actualizado_at = NOW();
+END //
 
 DROP TRIGGER IF EXISTS trg_tes_tipo_cambio_after_insert //
 CREATE TRIGGER trg_tes_tipo_cambio_after_insert
 AFTER INSERT ON tes_tipo_cambio
 FOR EACH ROW
 BEGIN
-    INSERT INTO log_auditoria (
-        nombre_tabla,
-        accion,
-        id_registro_afectado,
-        valores_antiguos,
-        valores_nuevos,
-        id_usuario_accion,
-        momento_cambio
-    )
-    VALUES (
+    CALL pa_insertar_auditoria(
         'tes_tipo_cambio',
         'INSERT',
-        NEW.id_tipo_cambio,
+        CAST(NEW.id_tipo_cambio AS CHAR),
         NULL,
         JSON_OBJECT(
             'id_tipo_cambio', NEW.id_tipo_cambio,
@@ -32,8 +40,7 @@ BEGIN
             'valor_tipo_cambio', NEW.valor_tipo_cambio,
             'fecha_tipo_cambio', NEW.fecha_tipo_cambio
         ),
-        NEW.id_usuario_creacion,
-        NOW()
+        NEW.id_usuario_creacion
     );
 END //
 
@@ -42,19 +49,10 @@ CREATE TRIGGER trg_tes_tipo_cambio_after_update
 AFTER UPDATE ON tes_tipo_cambio
 FOR EACH ROW
 BEGIN
-    INSERT INTO log_auditoria (
-        nombre_tabla,
-        accion,
-        id_registro_afectado,
-        valores_antiguos,
-        valores_nuevos,
-        id_usuario_accion,
-        momento_cambio
-    )
-    VALUES (
+    CALL pa_insertar_auditoria(
         'tes_tipo_cambio',
         'UPDATE',
-        NEW.id_tipo_cambio,
+        CAST(NEW.id_tipo_cambio AS CHAR),
         JSON_OBJECT(
             'id_moneda_origen', OLD.id_moneda_origen,
             'id_moneda_destino', OLD.id_moneda_destino,
@@ -67,8 +65,7 @@ BEGIN
             'valor_tipo_cambio', NEW.valor_tipo_cambio,
             'fecha_tipo_cambio', NEW.fecha_tipo_cambio
         ),
-        NEW.id_usuario_modificacion,
-        NOW()
+        NEW.id_usuario_modificacion
     );
 END //
 
@@ -77,19 +74,10 @@ CREATE TRIGGER trg_tes_tipo_cambio_after_delete
 AFTER DELETE ON tes_tipo_cambio
 FOR EACH ROW
 BEGIN
-    INSERT INTO log_auditoria (
-        nombre_tabla,
-        accion,
-        id_registro_afectado,
-        valores_antiguos,
-        valores_nuevos,
-        id_usuario_accion,
-        momento_cambio
-    )
-    VALUES (
+    CALL pa_insertar_auditoria(
         'tes_tipo_cambio',
         'DELETE',
-        OLD.id_tipo_cambio,
+        CAST(OLD.id_tipo_cambio AS CHAR),
         JSON_OBJECT(
             'id_tipo_cambio', OLD.id_tipo_cambio,
             'id_moneda_origen', OLD.id_moneda_origen,
@@ -98,8 +86,7 @@ BEGIN
             'fecha_tipo_cambio', OLD.fecha_tipo_cambio
         ),
         NULL,
-        OLD.id_usuario_modificacion,
-        NOW()
+        OLD.id_usuario_modificacion
     );
 END //
 

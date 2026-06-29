@@ -42,7 +42,8 @@
                               @bind-FiltroAreaId="FiltroAreaId"
                               @bind-FiltroEmpleadoId="FiltroEmpleadoId"
                               Areas="Areas"
-                              Empleados="Empleados" />
+                              Empleados="Empleados"
+                              OcultarAreaEmpleado="OcultarAreaEmpleado" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
@@ -92,6 +93,7 @@
     private List<Empleado> Empleados { get; set; } = new();
     private ComprobantePago? ComprobanteSeleccionado { get; set; }
     private bool EsAdministrador { get; set; }
+    private bool OcultarAreaEmpleado { get; set; }
 
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(FiltroTexto)
@@ -138,10 +140,15 @@
 
     protected override async Task OnInitializedAsync()
     {
-        EsAdministrador = UsuarioWS.GetCurrentUser() is Administrador;
+        var user = UsuarioWS.GetCurrentUser();
+        EsAdministrador = user is Administrador;
+        OcultarAreaEmpleado = user is Empleado emp && emp.RolFlujo == RolFlujo.EMPLEADO;
         Cargando = true;
-        try { Areas = await AreaWS.listarAsync(); } catch {}
-        try { Empleados = await EmpleadoWS.listarAsync(); } catch {}
+        if (!OcultarAreaEmpleado)
+        {
+            try { Areas = await AreaWS.listarAsync(); } catch {}
+            try { Empleados = await EmpleadoWS.listarAsync(); } catch {}
+        }
         await ListarComprobantes();
         Cargando = false;
     }
