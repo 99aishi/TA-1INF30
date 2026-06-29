@@ -239,25 +239,39 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
             throw new Exception("Tiene que registrar la fecha en la que se genero el documento.");
         }
     }
+    private Date truncarFecha(Date fecha) {
+        if (fecha == null) return null;
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(fecha);
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        cal.set(java.util.Calendar.MINUTE, 0);
+        cal.set(java.util.Calendar.SECOND, 0);
+        cal.set(java.util.Calendar.MILLISECOND, 0);
+        return cal.getTime();
+    }
+
     public void validarFecha(ComprobantePago comprobante) throws Exception{
-        Date fechaEmision=comprobante.getFechaEmision();
+        Date fechaEmision = comprobante.getFechaEmision();
         if(fechaEmision == null) {
             throw new Exception("La fecha de emisión es obligatoria.");
         }
+        
+        Date fechaEmisionTruncada = truncarFecha(fechaEmision);
         SolicitudGasto soli = solicitudGastoDAO.buscarPorId(comprobante.getSolicitud().getIdSolicitudGasto());
-        Date fechaSolicitado= soli.getFechaSolicitud();
-        Date fechaActual= new Date();
-        if(fechaEmision.after(fechaActual)){
+        Date fechaSolicitadoTruncada = truncarFecha(soli.getFechaSolicitud());
+        Date fechaActualTruncada = truncarFecha(new Date());
+
+        if(fechaEmisionTruncada.after(fechaActualTruncada)){
             throw new Exception("La fecha del comprobante no puede ser posterior a la fecha actual.");
         }
-        if(fechaEmision.before(fechaSolicitado)){
+        if(fechaEmisionTruncada.before(fechaSolicitadoTruncada)){
             throw new Exception("La fecha del comprobante no puede ser antes de la fecha de la solicitud relacionada.");
         }
         CicloCajaChica ciclo = cicloCajaChicaDAO.buscarPorId(soli.getCiclo().getIdCicloCaja());
-        Date inicioCiclo = ciclo.getFechaApertura();
-        Date finCiclo = ciclo.getFechaCierre();
+        Date inicioCicloTruncado = truncarFecha(ciclo.getFechaApertura());
+        Date finCicloTruncado = truncarFecha(ciclo.getFechaCierre());
 
-        if (fechaEmision.before(inicioCiclo) || (finCiclo != null && fechaEmision.after(finCiclo))) {
+        if (fechaEmisionTruncada.before(inicioCicloTruncado) || (finCicloTruncado != null && fechaEmisionTruncada.after(finCicloTruncado))) {
             throw new Exception("La fecha del comprobante no pertenece al ciclo activo de la caja chica.");
         }
     }

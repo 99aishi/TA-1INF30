@@ -31,7 +31,7 @@
                 {
                     @foreach (var solicitud in SolicitudesDisponibles)
                     {
-                        <option value="@solicitud.IdSolicitudGasto">@solicitud.IdSolicitudGasto - @solicitud.MontoSolicitado.ToString("N2") - @solicitud.FechaSolicitud.ToString("dd/MM/yyyy") (@solicitud.Estado)</option>
+                        <option value="@solicitud.IdSolicitudGasto">Monto: @(solicitud.MonedaOriginal?.Simbolo ?? "S/") @solicitud.MontoSolicitado.ToString("N2") - Fecha: @solicitud.FechaSolicitud.ToString("dd/MM/yyyy") (@solicitud.Estado)</option>
                     }
                 }
                 else
@@ -43,7 +43,7 @@
         @if (TieneSolicitudSeleccionada)
         {
             <div class="alert alert-info mt-2 mb-0 p-2">
-                <small class="fw-bold">Solicitud #@(SolicitudSeleccionada?.IdSolicitudGasto ?? 0)</small>
+                <p class="fs-5 fw-bold text-info-emphasis mb-1">Solicitud #@(SolicitudSeleccionada?.IdSolicitudGasto ?? 0)</p>
                 <hr class="my-1" />
                 <div class="d-flex justify-content-between small">
                     <span>Total:</span>
