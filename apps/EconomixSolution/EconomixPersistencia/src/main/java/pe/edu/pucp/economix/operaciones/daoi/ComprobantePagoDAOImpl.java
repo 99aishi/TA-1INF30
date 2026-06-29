@@ -145,8 +145,6 @@ public class ComprobantePagoDAOImpl implements IComprobantePagoDAO {
 
         SolicitudGasto sg = mapearSolicitudGastoStub(rs, "sg_", cache);
         if (sg != null) {
-            if (sg.getComprobantes() == null) sg.setComprobantes(new ArrayList<>());
-            sg.getComprobantes().add(comprobante);
             comprobante.setSolicitud(sg);
         }
 
