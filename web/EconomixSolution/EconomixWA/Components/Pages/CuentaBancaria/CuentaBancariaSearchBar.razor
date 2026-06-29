@@ -42,31 +42,15 @@
         </div>
         <div class="col-12 col-md-2">
             <label class="form-label small text-muted">Nombre del empleado</label>
-            <div class="position-relative">
-                <input type="text"
-                       class="form-control bg-light rounded-4"
-                       placeholder="Buscar empleado..."
-                       value="@BusquedaEmpleado"
-                       @oninput="OnBusquedaEmpleadoCambiada"
-                       @onfocus="() => MostrarDropdown = BusquedaEmpleado.Length >= 2"
-                       @onblur="OnBlurEmpleado" />
-                @if (MostrarDropdown && ResultadosBusqueda.Any())
+            <select class="form-select bg-light rounded-4"
+                    value="0"
+                    @onchange="OnEmpleadoSeleccionado">
+                <option value="0">Todos</option>
+                @foreach (var emp in EmpleadosDisponibles)
                 {
-                    <div class="position-absolute top-100 start-0 w-100 bg-white border rounded-4 shadow-sm z-3"
-                         style="max-height:200px;overflow-y:auto;">
-                        @foreach (var emp in ResultadosBusqueda)
-                        {
-                            <div class="px-3 py-2 small cursor-pointer d-flex align-items-center"
-                                 @onmouseenter="() => _hoveredEmpId = emp.UsuarioID"
-                                 @onmouseleave="() => _hoveredEmpId = null"
-                                 @onmousedown="() => SeleccionarEmpleado(emp)"
-                                 style="@(_hoveredEmpId == emp.UsuarioID ? "background-color:#e9ecef;" : "")">
-                                <span>@emp.Nombres @emp.ApellidoPaterno @emp.ApellidoMaterno</span>
-                            </div>
-                        }
-                    </div>
+                    <option value="@emp.UsuarioID">@emp.Nombres @emp.ApellidoPaterno</option>
                 }
-            </div>
+            </select>
         </div>
         <div class="col-12 col-md-2 d-grid">
             <label class="form-label small text-muted">&nbsp;</label>
@@ -159,16 +143,8 @@
     [Parameter]
     public EventCallback OnBuscar { get; set; }
 
-    private string BusquedaEmpleado { get; set; } = string.Empty;
-    private bool MostrarDropdown { get; set; }
-    private int? _hoveredEmpId;
-    private IEnumerable<Empleado> ResultadosBusqueda =>
-        Empleados
-            .Where(e => !EmpleadosSeleccionados.Any(s => s.UsuarioID == e.UsuarioID))
-            .Where(e => (e.Nombres ?? "").Contains(BusquedaEmpleado, StringComparison.OrdinalIgnoreCase)
-                     || (e.ApellidoPaterno ?? "").Contains(BusquedaEmpleado, StringComparison.OrdinalIgnoreCase)
-                     || (e.ApellidoMaterno ?? "").Contains(BusquedaEmpleado, StringComparison.OrdinalIgnoreCase))
-            .Take(10);
+    private IEnumerable<Empleado> EmpleadosDisponibles =>
+        Empleados.Where(e => !EmpleadosSeleccionados.Any(s => s.UsuarioID == e.UsuarioID));
 
     private IEnumerable<Area> AreasDisponibles =>
         Areas.Where(a => !AreasSeleccionadas.Any(s => s.AreaID == a.AreaID));
@@ -235,23 +211,19 @@
         await OnBuscar.InvokeAsync();
     }
 
-    private async Task OnBusquedaEmpleadoCambiada(ChangeEventArgs e)
+    private async Task OnEmpleadoSeleccionado(ChangeEventArgs e)
     {
-        BusquedaEmpleado = e.Value?.ToString() ?? string.Empty;
-        MostrarDropdown = BusquedaEmpleado.Length >= 2;
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task SeleccionarEmpleado(Empleado emp)
-    {
-        if (EmpleadosSeleccionados.All(e => e.UsuarioID != emp.UsuarioID))
+        var empId = int.TryParse(e.Value?.ToString(), out var val) ? val : 0;
+        if (empId > 0)
         {
-            EmpleadosSeleccionados = new List<Empleado>(EmpleadosSeleccionados) { emp };
-            await EmpleadosSeleccionadosChanged.InvokeAsync(EmpleadosSeleccionados);
-            await OnBuscar.InvokeAsync();
+            var emp = Empleados.FirstOrDefault(x => x.UsuarioID == empId);
+            if (emp != null && EmpleadosSeleccionados.All(x => x.UsuarioID != empId))
+            {
+                EmpleadosSeleccionados = new List<Empleado>(EmpleadosSeleccionados) { emp };
+                await EmpleadosSeleccionadosChanged.InvokeAsync(EmpleadosSeleccionados);
+                await OnBuscar.InvokeAsync();
+            }
         }
-        BusquedaEmpleado = string.Empty;
-        MostrarDropdown = false;
     }
 
     private async Task QuitarEmpleado(Empleado emp)
@@ -259,13 +231,6 @@
         EmpleadosSeleccionados = EmpleadosSeleccionados.Where(e => e.UsuarioID != emp.UsuarioID).ToList();
         await EmpleadosSeleccionadosChanged.InvokeAsync(EmpleadosSeleccionados);
         await OnBuscar.InvokeAsync();
-    }
-
-    private async Task OnBlurEmpleado()
-    {
-        await Task.Delay(200);
-        MostrarDropdown = false;
-        await InvokeAsync(StateHasChanged);
     }
 
     private async Task Limpiar()

@@ -39,23 +39,23 @@
 
                 <div class="row">
                     <div class="col-6 mt-3">
-                        <label class="form-label">Área</label>
+                        <label class="form-label small text-muted">Área</label>
                         <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(AreaSolicitante)" disabled="true">
                     </div>
                     <div class="col-6 mt-3">
-                        <label class="form-label">Fecha</label>
+                        <label class="form-label small text-muted">Fecha</label>
                         <input type="date" class="form-control form-control-lg rounded-4 bg-light" @bind="SolicitudEdicion.FechaSolicitud" disabled="@(!PuedeEditar)">
                     </div>
                     <div class="col-6 mt-3">
-                        <label class="form-label">Solicitante</label>
+                        <label class="form-label small text-muted">Solicitante</label>
                         <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(NombreSolicitante)" disabled="true">
                     </div>
                     <div class="col-6 mt-3">
-                        <label class="form-label">Destinatario</label>
+                        <label class="form-label small text-muted">Destinatario</label>
                         <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(NombreDestinatario)" disabled="true">
                     </div>
                     <div class="col-3 mt-3">
-                        <label class="form-label">Monto (@SimboloMonedaSeleccionada)</label>
+                        <label class="form-label small text-muted">Monto (@SimboloMonedaSeleccionada)</label>
                         <input type="number" step="0.01" class="form-control form-control-lg rounded-4 bg-light" @bind="MontoSolicitadoEdicion" disabled="@(!PuedeEditar)">
                     </div>
                     <div class="col-3 mt-3">
@@ -71,7 +71,7 @@
                     @if (EsCreacion || SolicitudEdicion.TipoCambio != 1.0 || TipoCambioNoEncontrado)
                     {
                         <div class="col-3 mt-3">
-                            <label class="form-label">Tipo de Cambio</label>
+                            <label class="form-label small text-muted">Tipo de Cambio</label>
                             @if (TipoCambioNoEncontrado)
                             {
                                 <input type="text" class="form-control form-control-lg rounded-4 bg-light border-danger text-danger fw-bold" value="No registrado" disabled="true">
@@ -83,18 +83,18 @@
                             }
                         </div>
                         <div class="col-3 mt-3">
-                            <label class="form-label">Monto Convertido (@SimboloMonedaCiclo)</label>
+                            <label class="form-label small text-muted">Monto Convertido (@SimboloMonedaCiclo)</label>
                             <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TipoCambioNoEncontrado ? "-" : SolicitudEdicion.MontoConvertido.ToString("N2"))" disabled="true">
                         </div>
                     }
                     else
                     {
                         <div class="col-3 mt-3">
-                            <label class="form-label">Tipo de Cambio</label>
+                            <label class="form-label small text-muted">Tipo de Cambio</label>
                             <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="1.0000" disabled="true">
                         </div>
                         <div class="col-3 mt-3">
-                            <label class="form-label">Monto Convertido (@SimboloMonedaCiclo)</label>
+                            <label class="form-label small text-muted">Monto Convertido (@SimboloMonedaCiclo)</label>
                             <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@SolicitudEdicion.MontoSolicitado.ToString("N2")" disabled="true">
                         </div>
                     }
@@ -105,11 +105,11 @@
                         </div>
                     }
                     <div class="col-6 mt-3">
-                        <label class="form-label">Caja Chica</label>
+                        <label class="form-label small text-muted">Caja Chica</label>
                         <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@_ObtenerNombreCajaChica(SolicitudEdicion.Ciclo)" disabled="true">
                     </div>
                     <div class="col-6 mt-3">
-                        <label class="form-label">Ciclo de Caja Chica</label>
+                        <label class="form-label small text-muted">Ciclo de Caja Chica</label>
                         <select class="form-select form-select-lg rounded-4 bg-light" @bind="CicloSeleccionadoId" disabled="@(!PuedeEditar)">
                             <option value="0">Seleccione...</option>
                             @foreach (var ciclo in CiclosActivos)
@@ -120,14 +120,14 @@
                         <small class="text-muted">Saldo disponible: @(SimboloMonedaCiclo) @(SaldoDisponibleCiclo.ToString("N2"))</small>
                     </div>
                     <div class="col-12 mt-3">
-                        <label class="form-label">Motivo</label>
+                        <label class="form-label small text-muted">Motivo</label>
                         <textarea class="form-control bg-light" rows="3" @bind="SolicitudEdicion.MotivoSolicitud" disabled="@(!PuedeEditar)"></textarea>
                     </div>
 
                     @if (!EsCreacion)
                     {
                         <div class="col-12 mt-3">
-                            <label class="form-label">Decisión / Comentario</label>
+                            <label class="form-label small text-muted">Decisión / Comentario</label>
                             <textarea class="form-control bg-light" rows="2" @bind="SolicitudEdicion.ComentarioDecision" disabled="true"></textarea>
                         </div>
                     }
@@ -142,13 +142,14 @@
                      </div>
                  }
 
+                 <hr class="my-0" />
                  <div class="d-flex flex-wrap-nowrap justify-content-end gap-3 mt-3">
                      @if (EsCreacion)
                      {
                          <button type="button" class="btn btn-outline-primary" disabled="@Procesando" @onclick="RegistrarSolicitud">
                              @(Procesando ? "Procesando..." : "Registrar Solicitud")
                          </button>
-                         <button type="button" class="btn btn-outline-danger" @onclick="CerrarDetalle">
+                         <button type="button" class="btn btn-outline-secondary" @onclick="CerrarDetalle">
                              Cancelar
                          </button>
                      }
@@ -204,7 +205,7 @@
                                     </select>
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label">Moneda</label>
+                        <label class="form-label small text-muted">Moneda</label>
                                     <select class="form-select" @bind="MonedaEdicionId">
                                         <option value="0">Seleccione...</option>
                                         @foreach (var moneda in Monedas)

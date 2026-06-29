@@ -25,52 +25,52 @@
                 {
                     <div class="row">
                         <div class="col-6 mt-3">
-                            <label class="form-label">Área</label>
+                            <label class="form-label small text-muted">Área</label>
                             <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Solicitud.Solicitante?.Area?.Nombre ?? "-")" disabled="true">
                         </div>
                         <div class="col-6 mt-3">
-                            <label class="form-label">Fecha</label>
+                            <label class="form-label small text-muted">Fecha</label>
                             <input type="date" class="form-control form-control-lg rounded-4 bg-light" value="@Solicitud.FechaSolicitud.ToString("yyyy-MM-dd")" disabled="true">
                         </div>
                         <div class="col-6 mt-3">
-                            <label class="form-label">Solicitante</label>
+                            <label class="form-label small text-muted">Solicitante</label>
                             <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(NombreSolicitante)" disabled="true">
                         </div>
                         <div class="col-6 mt-3">
-                            <label class="form-label">Destinatario</label>
+                            <label class="form-label small text-muted">Destinatario</label>
                             <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(NombreDestinatario)" disabled="true">
                         </div>
                         <div class="col-4 mt-3">
-                            <label class="form-label">Monto</label>
+                            <label class="form-label small text-muted">Monto</label>
                             <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SimboloMoneda) @(Solicitud.MontoSolicitado.ToString("N2"))" disabled="true">
                         </div>
                         <div class="col-4 mt-3">
-                            <label class="form-label">Moneda</label>
+                            <label class="form-label small text-muted">Moneda</label>
                             <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Solicitud.MonedaOriginal?.Nombre ?? "-")" disabled="true">
                         </div>
                         <div class="col-4 mt-3 align-self-center" style="height: 2rem">
                             <span class="badge h-100 @(EstadoClase) rounded-pill px-2 align-self-start mt-4">@(Solicitud.Estado ?? "PENDIENTE")</span>
                         </div>
                         <div class="col-12 mt-3">
-                            <label class="form-label">Ciclo de Caja Chica</label>
+                            <label class="form-label small text-muted">Ciclo de Caja Chica</label>
                             <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Solicitud.Ciclo?.CajaChica?.Nombre ?? "-") - Semana @(Solicitud.Ciclo?.NumeroSemana ?? 0)" disabled="true">
                         </div>
                         <div class="col-12 mt-3">
-                            <label class="form-label">Motivo</label>
+                            <label class="form-label small text-muted">Motivo</label>
                             <textarea class="form-control bg-light" rows="3" disabled="true">@Solicitud.MotivoSolicitud</textarea>
                         </div>
 
                         @if (EsPendiente)
                         {
                             <div class="col-12 mt-3">
-                                <label class="form-label">Decisión / Comentario</label>
+                                <label class="form-label small text-muted">Decisión / Comentario</label>
                                 <textarea class="form-control bg-light" rows="3" placeholder="Comentario de la decisión" @bind="ComentarioDecision"></textarea>
                             </div>
                         }
                         else
                         {
                             <div class="col-12 mt-3">
-                                <label class="form-label">Decisión / Comentario</label>
+                                <label class="form-label small text-muted">Decisión / Comentario</label>
                                 <textarea class="form-control bg-light" rows="3" disabled="true">@Solicitud.ComentarioDecision</textarea>
                             </div>
                         }
@@ -78,7 +78,7 @@
                         @if (Solicitud.IdTransaccion > 0)
                         {
                             <div class="col-12 mt-3">
-                                <label class="form-label">Transacción asociada</label>
+                                <label class="form-label small text-muted">Transacción asociada</label>
                                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="TR-@Solicitud.IdTransaccion" disabled="true">
                             </div>
                         }
@@ -86,7 +86,8 @@
 
                     @if (EsPendiente)
                     {
-                        <div class="d-flex justify-content-end gap-3 mt-4">
+                        <hr class="my-0" />
+                        <div class="d-flex justify-content-end gap-3 mt-3">
                             <button type="button" class="btn btn-outline-success" @onclick="Aprobar" disabled="@Procesando">
                                 @(Procesando ? "Procesando..." : "Aprobar")
                             </button>
