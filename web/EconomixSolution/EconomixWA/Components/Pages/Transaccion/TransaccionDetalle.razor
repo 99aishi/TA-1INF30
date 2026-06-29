@@ -53,31 +53,81 @@
                     </div>
                     <div class="col-6 mt-3">
                         <label class="form-label small text-muted">Beneficiario</label>
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.Beneficiario != null ? $"{Transaccion.Beneficiario.Nombres} {Transaccion.Beneficiario.ApellidoPaterno} (N° {Transaccion.Beneficiario.UsuarioID})" : "-")" disabled="true" />
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.Beneficiario != null ? $"{Transaccion.Beneficiario.Nombres} {Transaccion.Beneficiario.ApellidoPaterno}" : "-")" disabled="true" />
                     </div>
                     @if (Transaccion.MedioPago == "TRANSFERENCIA")
                     {
-                        <div class="col-6 mt-3">
-                            <label class="form-label small text-muted">Cuenta Destino</label>
-                            @if (Transaccion.TipoTransaccion == "DEVOLUCION_SOBRANTE")
-                            {
-                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaDestino != null ? $"{Transaccion.CuentaDestino.NombreBanco} — N° {Transaccion.CuentaDestino.NumeroBancario}" : "-")" disabled="true" />
-                            }
-                            else
-                            {
+                        @if (Transaccion.TipoTransaccion == "DEVOLUCION_SOBRANTE")
+                        {
+                            <div class="row mt-3">
+                                <div class="col-4">
+                                    <label class="form-label small text-muted">Banco (Destino)</label>
+                                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaDestino?.NombreBanco ?? "-")" disabled="true" />
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small text-muted">N° Cuenta (Destino)</label>
+                                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaDestino?.NumeroBancario ?? "-")" disabled="true" />
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small text-muted">CCI (Destino)</label>
+                                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaDestino?.Cci ?? "-")" disabled="true" />
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-6 mt-3">
+                                <label class="form-label small text-muted">Cuenta Destino</label>
                                 <select class="form-select form-select-lg rounded-4" @bind="cuentaDestinoId">
                                     <option value="">Seleccione una cuenta</option>
                                     @foreach (var cuenta in CuentasBancarias)
                                     {
-                                        <option value="@cuenta.IdCuenta">@cuenta.NombreBanco — @cuenta.NumeroBancario @((!string.IsNullOrEmpty(cuenta.Cci)) ? $"CCI {cuenta.Cci}" : "")</option>
+                                        <option value="@cuenta.IdCuenta">@FormatearOpcionCuenta(cuenta)</option>
                                     }
                                 </select>
+                            </div>
+                            @if (ObtenerCuentaDestinoSeleccionada() != null)
+                            {
+                                <div class="col-12 mt-3">
+                                    <div class="row">
+                                        <div class="col-4">
+                                            <label class="form-label small text-muted">Banco (Destino)</label>
+                                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@NombreBancoDestino" disabled="true" />
+                                        </div>
+                                        <div class="col-4">
+                                            <label class="form-label small text-muted">N° Cuenta (Destino)</label>
+                                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@NumeroCuentaDestino" disabled="true" />
+                                        </div>
+                                        <div class="col-4">
+                                            <label class="form-label small text-muted">CCI (Destino)</label>
+                                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@CciDestino" disabled="true" />
+                                        </div>
+                                    </div>
+                                </div>
                             }
-                        </div>
+                        }
                     }
+
                     <div class="col-12 mt-3">
                         <label class="form-label small text-muted">Cuenta Origen (Caja Chica)</label>
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(_cajaChicaNombre ?? "-")" disabled="true" />
+                        <div class="row">
+                            <div class="col-3">
+                                <label class="form-label small text-muted">Caja Chica</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(_cajaChicaNombre ?? "-")" disabled="true" />
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label small text-muted">Banco (Origen)</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(_cuentaOrigen?.NombreBanco ?? "-")" disabled="true" />
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label small text-muted">N° Cuenta (Origen)</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(_cuentaOrigen?.NumeroBancario ?? "-")" disabled="true" />
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label small text-muted">Moneda</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(_cuentaOrigen?.Moneda?.Simbolo ?? "-")" disabled="true" />
+                            </div>
+                        </div>
                     </div>
                 </div>
             }
@@ -110,18 +160,46 @@
                     </div>
                     <div class="col-6 mt-3">
                         <label class="form-label small text-muted">Beneficiario</label>
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.Beneficiario != null ? $"{Transaccion.Beneficiario.Nombres} {Transaccion.Beneficiario.ApellidoPaterno} (N° {Transaccion.Beneficiario.UsuarioID})" : "-")" disabled="true" />
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.Beneficiario != null ? $"{Transaccion.Beneficiario.Nombres} {Transaccion.Beneficiario.ApellidoPaterno}" : "-")" disabled="true" />
                     </div>
                     @if (Transaccion.MedioPago == "TRANSFERENCIA")
                     {
-                        <div class="col-6 mt-3">
-                            <label class="form-label small text-muted">Cuenta Destino</label>
-                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaDestino != null ? $"{Transaccion.CuentaDestino.NombreBanco} — N° {Transaccion.CuentaDestino.NumeroBancario} {((!string.IsNullOrEmpty(Transaccion.CuentaDestino.Cci)) ? $"CCI {Transaccion.CuentaDestino.Cci}" : "")}" : "-")" disabled="true" />
+                        <div class="row mt-3">
+                            <div class="col-4">
+                                <label class="form-label small text-muted">Banco (Destino)</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaDestino?.NombreBanco ?? "-")" disabled="true" />
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small text-muted">N° Cuenta (Destino)</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaDestino?.NumeroBancario ?? "-")" disabled="true" />
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small text-muted">CCI (Destino)</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Transaccion.CuentaDestino?.Cci ?? "-")" disabled="true" />
+                            </div>
                         </div>
                     }
+
                     <div class="col-12 mt-3">
                         <label class="form-label small text-muted">Cuenta Origen (Caja Chica)</label>
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(_cajaChicaNombre ?? "-")" disabled="true" />
+                        <div class="row">
+                            <div class="col-3">
+                                <label class="form-label small text-muted">Caja Chica</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(_cajaChicaNombre ?? "-")" disabled="true" />
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label small text-muted">Banco (Origen)</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(_cuentaOrigen?.NombreBanco ?? "-")" disabled="true" />
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label small text-muted">N° Cuenta (Origen)</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(_cuentaOrigen?.NumeroBancario ?? "-")" disabled="true" />
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label small text-muted">Moneda</label>
+                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(_cuentaOrigen?.Moneda?.Simbolo ?? "-")" disabled="true" />
+                            </div>
+                        </div>
                     </div>
                 </div>
             }
@@ -201,7 +279,7 @@
             ?? Transaccion?.CuentaOrigen;
         _cajaChicaNombre = Transaccion?.Ciclo?.CajaChica?.Nombre;
 
-        if (_cajaChicaNombre != null)
+        if (_cajaChicaNombre != null && _cuentaOrigen != null)
             return;
 
         if (Transaccion?.Ciclo?.IdCicloCaja > 0)
@@ -232,6 +310,28 @@
             catch
             {
                 // fallback already set above
+            }
+        }
+
+        if (_cajaChicaNombre == null || _cuentaOrigen == null)
+        {
+            try
+            {
+                var full = await TransaccionWS.obtenerPorIdAsync(Transaccion.IdTransaccion);
+                _cajaChicaNombre ??= full?.Ciclo?.CajaChica?.Nombre;
+                _cuentaOrigen ??= full?.Ciclo?.CajaChica?.CuentaBancaria
+                    ?? full?.CuentaOrigen;
+
+                if (_cuentaOrigen == null && full?.Ciclo?.CajaChica?.IdFondo > 0)
+                {
+                    var caja = await CajaChicaWS.obtenerPorIdAsync(full.Ciclo.CajaChica.IdFondo);
+                    _cajaChicaNombre ??= caja?.Nombre;
+                    _cuentaOrigen = caja?.CuentaBancaria;
+                }
+            }
+            catch
+            {
+                // all fallbacks exhausted
             }
         }
     }
@@ -342,5 +442,37 @@
     public async Task CerrarDetalleComprobante()
     {
         await OnCierraDetalle.InvokeAsync();
+    }
+
+    private CuentaBancaria? ObtenerCuentaDestinoSeleccionada()
+    {
+        if (Transaccion == null) return null;
+        if (Transaccion.TipoTransaccion == "DEVOLUCION_SOBRANTE")
+            return Transaccion.CuentaDestino;
+        if (EsModoEdicion)
+        {
+            return CuentasBancarias.FirstOrDefault(c => c.IdCuenta == cuentaDestinoId);
+        }
+        else
+        {
+            return Transaccion.CuentaDestino;
+        }
+    }
+
+    private string NombreBancoDestino => 
+        ObtenerCuentaDestinoSeleccionada()?.NombreBanco ?? "-";
+
+    private string NumeroCuentaDestino => 
+        ObtenerCuentaDestinoSeleccionada()?.NumeroBancario ?? "-";
+
+    private string CciDestino => 
+        ObtenerCuentaDestinoSeleccionada()?.Cci ?? "-";
+
+    private string FormatearOpcionCuenta(CuentaBancaria cuenta)
+    {
+        if (cuenta == null) return string.Empty;
+        string num = cuenta.NumeroBancario;
+        string ultimos = num.Length > 4 ? "..." + num.Substring(num.Length - 4) : num;
+        return $"{cuenta.NombreBanco} ({ultimos})";
     }
 }
