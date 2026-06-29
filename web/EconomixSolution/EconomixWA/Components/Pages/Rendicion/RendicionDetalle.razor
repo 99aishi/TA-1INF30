@@ -2,6 +2,7 @@
 @inject IRendicionWS RendicionWS
 @inject ISolicitudGastoWS SolicitudGastoWS
 @inject IUsuarioWS UsuarioWS
+@inject IComprobantePagoWS ComprobantePagoWS
 
 <div class="card rounded-4 h-100 p-3 d-flex flex-column overflow-hidden">
     <div class="d-flex gap-3 align-items-center mb-2">
@@ -97,7 +98,7 @@
                             <tbody>
                                 @foreach (var s in Solicitudes)
                                 {
-                                    <tr class="cursor-pointer" @onclick="() => VerSolicitud(s.IdSolicitudGasto)">
+                                    <tr class="cursor-pointer" @onclick="() => AlternarSolicitud(s)">
                                         <td>SG-@s.IdSolicitudGasto</td>
                                         <td>@(s.Solicitante != null ? $"{s.Solicitante.Nombres} {s.Solicitante.ApellidoPaterno}" : "-")</td>
                                         <td>@(s.MonedaOriginal?.Simbolo ?? "S/") @s.MontoSolicitado.ToString("N2")</td>
@@ -105,6 +106,95 @@
                                         <td>@(s.Comprobantes?.Count ?? 0)</td>
                                         <td>@(s.MonedaOriginal?.Simbolo ?? "S/") @((s.Comprobantes?.Sum(c => c.MontoTotal) ?? 0).ToString("N2"))</td>
                                     </tr>
+                                    @if (SolicitudesExpandidas.Contains(s.IdSolicitudGasto))
+                                    {
+                                        <tr>
+                                            <td colspan="6" class="bg-light p-3 border-top-0">
+                                                <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                                                    <span class="text-muted small"><strong>Monto Solicitado:</strong> @(s.MonedaOriginal?.Simbolo ?? "S/") @s.MontoSolicitado.ToString("N2")</span>
+                                                    @if (ComprobantesPorSolicitud.ContainsKey(s.IdSolicitudGasto))
+                                                    {
+                                                        <span class="text-muted small"><strong>Total Declarado (Comprobantes):</strong> @(s.MonedaOriginal?.Simbolo ?? "S/") @(ComprobantesPorSolicitud[s.IdSolicitudGasto].Sum(c => c.MontoTotal).ToString("N2"))</span>
+                                                        <span class="text-muted small"><strong>Total Aprobado:</strong> @(s.MonedaOriginal?.Simbolo ?? "S/") @(ComprobantesPorSolicitud[s.IdSolicitudGasto].Where(c => c.Estado == "APROBADO").Sum(c => c.MontoTotal).ToString("N2"))</span>
+                                                    }
+                                                </div>
+                                                @if (!ComprobantesPorSolicitud.ContainsKey(s.IdSolicitudGasto))
+                                                {
+                                                    <p class="text-muted small text-center mb-0">Cargando comprobantes...</p>
+                                                }
+                                                else if (!ComprobantesPorSolicitud[s.IdSolicitudGasto].Any())
+                                                {
+                                                    <p class="text-muted small mb-0">No hay comprobantes cargados para esta solicitud.</p>
+                                                }
+                                                else
+                                                {
+                                                    <table class="table table-sm table-bordered bg-white mb-0 small">
+                                                        <thead>
+                                                            <tr class="table-secondary">
+                                                                <th>Tipo</th>
+                                                                <th>RUC / Razón Social</th>
+                                                                <th>Nro. Serie</th>
+                                                                <th>Fecha Emisión</th>
+                                                                <th>Total</th>
+                                                                <th>Estado</th>
+                                                                @if (MostrarAccionesTesoreria)
+                                                                {
+                                                                    <th class="text-center" style="width: 150px;">Acciones</th>
+                                                                }
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var c in ComprobantesPorSolicitud[s.IdSolicitudGasto])
+                                                            {
+                                                                <tr>
+                                                                    <td>@c.TipoDocumento</td>
+                                                                    <td>
+                                                                        <div>@c.RucProveedor</div>
+                                                                        <div class="text-muted font-monospace" style="font-size: 0.75rem;">@c.RazonSocial</div>
+                                                                    </td>
+                                                                    <td>@c.NumeroSerial</td>
+                                                                    <td>@c.FechaEmision?.ToString("dd/MM/yyyy")</td>
+                                                                    <td>@(c.Moneda?.Simbolo ?? "S/") @c.MontoTotal.ToString("N2")</td>
+                                                                    <td>
+                                                                        <span class="badge @ObtenerEstadoComprobanteClase(c.Estado)">@c.Estado</span>
+                                                                    </td>
+                                                                    @if (MostrarAccionesTesoreria)
+                                                                    {
+                                                                        <td class="text-center">
+                                                                            @if (c.Estado == "POR_REVISAR")
+                                                                            {
+                                                                                @if (IdComprobanteObservando == c.IdComprobante)
+                                                                                {
+                                                                                    <div class="d-flex flex-column gap-1">
+                                                                                        <input type="text" class="form-control form-control-xs" style="font-size: 0.75rem;" placeholder="Obs..." @bind="ComentarioComprobante" />
+                                                                                        <div class="d-flex gap-1 justify-content-center">
+                                                                                            <button type="button" class="btn btn-success btn-xs py-0" style="font-size: 0.7rem;" @onclick="() => ConfirmarObservacionComprobante(c, s)" @onclick:stopPropagation>✔</button>
+                                                                                            <button type="button" class="btn btn-secondary btn-xs py-0" style="font-size: 0.7rem;" @onclick="() => IdComprobanteObservando = 0" @onclick:stopPropagation>✖</button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <div class="d-flex gap-1 justify-content-center">
+                                                                                        <button type="button" class="btn btn-outline-success btn-xs px-2 py-0" style="font-size: 0.7rem;" @onclick="() => ValidarComprobante(c, s)" @onclick:stopPropagation>Aceptar</button>
+                                                                                        <button type="button" class="btn btn-outline-danger btn-xs px-2 py-0" style="font-size: 0.7rem;" @onclick="() => ObservarComprobante(c, s)" @onclick:stopPropagation>Observar</button>
+                                                                                    </div>
+                                                                                }
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <span class="text-muted small">Evaluado</span>
+                                                                            }
+                                                                        </td>
+                                                                    }
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
                                 }
                             </tbody>
                         </table>
@@ -155,6 +245,11 @@
     private string ComentarioAccion { get; set; } = string.Empty;
     private bool Procesando { get; set; } = false;
     private List<SolicitudGasto> Solicitudes { get; set; } = new();
+
+    private HashSet<int> SolicitudesExpandidas { get; set; } = new();
+    private Dictionary<int, List<ComprobantePago>> ComprobantesPorSolicitud { get; set; } = new();
+    private int IdComprobanteObservando { get; set; } = 0;
+    private string ComentarioComprobante { get; set; } = string.Empty;
 
     private string? RolUsuario { get; set; }
     private bool EsTesoreria => RolUsuario is "Tesorero" or "Tesoreria" or "Tesorero y Finanzas";
@@ -227,9 +322,93 @@
         _ => "bg-light text-dark"
     };
 
-    private void VerSolicitud(int idSolicitud)
+    private async Task AlternarSolicitud(SolicitudGasto s)
     {
-        Navigation.NavigateTo($"/Mis Solicitudes De Gasto/Detalle/{idSolicitud}");
+        int id = s.IdSolicitudGasto;
+        if (SolicitudesExpandidas.Contains(id))
+        {
+            SolicitudesExpandidas.Remove(id);
+        }
+        else
+        {
+            SolicitudesExpandidas.Add(id);
+            if (!ComprobantesPorSolicitud.ContainsKey(id))
+            {
+                try
+                {
+                    var comprobantes = await ComprobantePagoWS.listarPorSolicitudAsync(id);
+                    ComprobantesPorSolicitud[id] = comprobantes ?? new List<ComprobantePago>();
+                }
+                catch
+                {
+                    ComprobantesPorSolicitud[id] = new List<ComprobantePago>();
+                }
+            }
+        }
+    }
+
+    private string ObtenerEstadoComprobanteClase(string? estado) => estado?.ToUpperInvariant() switch
+    {
+        "POR_REVISAR" => "bg-warning-subtle text-warning-emphasis",
+        "APROBADO" => "bg-success-subtle text-success-emphasis",
+        "OBSERVADO" => "bg-danger-subtle text-danger-emphasis",
+        "ANULADO" => "bg-secondary-subtle text-secondary-emphasis",
+        _ => "bg-light text-dark"
+    };
+
+    private async Task ValidarComprobante(ComprobantePago c, SolicitudGasto s)
+    {
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            var idUsuario = UsuarioWS.GetCurrentUserId();
+            await ComprobantePagoWS.evaluarAsync(c.IdComprobante, true, "", idUsuario);
+            c.Estado = "APROBADO";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+
+    private void ObservarComprobante(ComprobantePago c, SolicitudGasto s)
+    {
+        IdComprobanteObservando = c.IdComprobante;
+        ComentarioComprobante = string.Empty;
+    }
+
+    private async Task ConfirmarObservacionComprobante(ComprobantePago c, SolicitudGasto s)
+    {
+        if (Procesando) return;
+        if (string.IsNullOrWhiteSpace(ComentarioComprobante))
+        {
+            ErrorMessage = "Debe escribir una observación para el comprobante.";
+            return;
+        }
+        Procesando = true;
+        try
+        {
+            var idUsuario = UsuarioWS.GetCurrentUserId();
+            await ComprobantePagoWS.evaluarAsync(c.IdComprobante, false, ComentarioComprobante, idUsuario);
+            c.Estado = "OBSERVADO";
+            IdComprobanteObservando = 0;
+            ComentarioComprobante = string.Empty;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
     }
 
     private async Task CerrarDetalle()

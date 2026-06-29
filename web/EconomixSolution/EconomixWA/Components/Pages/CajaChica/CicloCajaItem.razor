@@ -62,11 +62,11 @@
 
     private string EstadoClase => Ciclo?.Estado?.ToUpperInvariant() switch
     {
-        "ABIERTO" => "bg-success-subtle text-success",
-        "CERRADO" => "bg-secondary-subtle text-secondary",
-        "LIQUIDADO" => "bg-info-subtle text-info",
-        "EN_EXCEPCION" => "bg-warning-subtle text-warning",
-        _ => "bg-secondary-subtle text-secondary"
+        "ABIERTO" => "bg-success-subtle text-success-emphasis",
+        "CERRADO" => "bg-secondary-subtle text-secondary-emphasis",
+        "LIQUIDADO" => "bg-info-subtle text-info-emphasis",
+        "EN_EXCEPCION" => "bg-warning-subtle text-warning-emphasis",
+        _ => "bg-secondary-subtle text-secondary-emphasis"
     };
 
     private string ProximoCierreTexto

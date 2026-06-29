@@ -12,7 +12,7 @@
 
 <div class="row g-3 mb-3">
     <div class="col-6 col-lg-3">
-        <div class="card rounded-4 h-100">
+        <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrACajaChica">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-body-primary">Fondos Totales</h6>
                 <p class="card-text h2">@FormatearSoles(FondosTotales)</p>
@@ -20,7 +20,7 @@
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="card rounded-4 h-100">
+        <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrACajaChica">
             <div class="card-body d-flex flex-column justify-content-between">
                 <div>
                     <h6 class="card-subtitle mb-2 text-body-primary">Fondos utilizados</h6>
@@ -33,7 +33,7 @@
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="card rounded-4 h-100">
+        <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrACajaChica">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-body-primary">Saldo disponible</h6>
                 <p class="card-text h2">@FormatearSoles(SaldoDisponible)</p>
@@ -41,7 +41,7 @@
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="card rounded-4 h-100">
+        <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrACiclos">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-body-primary">Ciclos Activos</h6>
                 <p class="card-text h2">@CiclosActivos</p>
@@ -57,7 +57,7 @@
 </div>
 
 <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden flex-fill mb-3">
-        <div class="overflow-scroll overflow-x-hidden flex-fill">
+        <div class="overflow-scroll overflow-x-hidden flex-fill p-3">
             @if (Cargando)
             {
                 <div class="p-3 text-center text-muted">Cargando ciclos...</div>
@@ -209,6 +209,9 @@
     {
         Navigation.NavigateTo($"/Caja Chica?cajaId={ciclo.CajaChicaId}");
     }
+
+    private void IrACajaChica() => Navigation.NavigateTo("/Caja Chica");
+    private void IrACiclos() => Navigation.NavigateTo("/Ciclos");
 
     private string FormatearSoles(double monto)
     {

@@ -28,7 +28,7 @@
         string categoria = UsuarioCategoria?.Trim() ?? "";
         if (categoria.Equals("Administrador", StringComparison.OrdinalIgnoreCase))
         {
-            opcionesMenu = new List<String>() { "Dashboard", "Areas", "Roles", "Usuarios", "Cuentas Bancarias", "Monedas", "Caja Chica", "Solicitudes de Gasto", "Transacciones", "Comprobantes de Pago", "Rendiciones" };
+            opcionesMenu = new List<String>() { "Dashboard", "Areas", "Roles", "Usuarios", "Cuentas Bancarias", "Monedas", "Caja Chica", "Ciclos", "Solicitudes de Gasto", "Transacciones", "Comprobantes de Pago", "Rendiciones" };
         }
         else if (categoria.Equals("Jefe", StringComparison.OrdinalIgnoreCase) || 
                  categoria.Equals("Jefe de Área", StringComparison.OrdinalIgnoreCase) || 

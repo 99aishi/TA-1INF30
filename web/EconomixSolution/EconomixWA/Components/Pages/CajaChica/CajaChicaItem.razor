@@ -5,7 +5,7 @@
                 <p class="h5 mb-0">@(Titulo ?? CuentaBancariaText)</p>
                 @if (string.IsNullOrEmpty(Titulo))
                 {
-                    <span class="badge rounded-pill @(CajaChica?.Estado == "ACTIVO" ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary")">
+                    <span class="badge rounded-pill @(CajaChica?.Estado == "ACTIVO" ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
                         @(CajaChica?.Estado ?? "-")
                     </span>
                 }
