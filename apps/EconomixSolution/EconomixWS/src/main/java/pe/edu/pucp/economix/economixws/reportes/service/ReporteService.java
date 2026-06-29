@@ -33,12 +33,12 @@ public class ReporteService {
         }
     }
 
-    public byte[] generarReporteGastosDeAreas(Date fechaInicio, Date fechaFin) throws Exception {
+    public byte[] generarReporteGastosPorArea(Date fechaInicio, Date fechaFin) throws Exception {
         Map<String, Object> parametros = new HashMap<>();
         parametros.put("FECHA_INICIO", new java.sql.Date(fechaInicio.getTime()));
         parametros.put("FECHA_FIN", new java.sql.Date(fechaFin.getTime()));
 
-        return ejecutarReporte("ReporteGastosDeAreas", parametros);
+        return ejecutarReporte("GastosPorArea", parametros);
     }
 
     public byte[] generarReporteSolicitudesGasto(String nombreArea, Date fechaInicio, Date fechaFin) throws Exception {
