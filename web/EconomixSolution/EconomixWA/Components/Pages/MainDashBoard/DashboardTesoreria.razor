@@ -15,7 +15,8 @@
         <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrACajaChica">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-body-primary">Fondos Totales</h6>
-                <p class="card-text h2">@FormatearSoles(FondosTotales)</p>
+                <hr class="my-2" />
+                <p class="card-text h2 mb-0">@FormatearSoles(FondosTotales)</p>
             </div>
         </div>
     </div>
@@ -24,7 +25,8 @@
             <div class="card-body d-flex flex-column justify-content-between">
                 <div>
                     <h6 class="card-subtitle mb-2 text-body-primary">Fondos utilizados</h6>
-                    <p class="card-text h2">@FormatearSoles(FondosUtilizados)</p>
+                    <hr class="my-2" />
+                    <p class="card-text h2 mb-0">@FormatearSoles(FondosUtilizados)</p>
                 </div>
                 <div class="progress rounded-4 mt-2" style="height: 10px">
                     <div class="progress-bar rounded-4" style="width: @PorcentajeUtilizado%" role="progressbar" aria-valuenow="@PorcentajeUtilizado" aria-valuemin="0" aria-valuemax="100"></div>
@@ -36,7 +38,8 @@
         <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrACajaChica">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-body-primary">Saldo disponible</h6>
-                <p class="card-text h2">@FormatearSoles(SaldoDisponible)</p>
+                <hr class="my-2" />
+                <p class="card-text h2 mb-0">@FormatearSoles(SaldoDisponible)</p>
             </div>
         </div>
     </div>
@@ -44,8 +47,8 @@
         <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrACiclos">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-body-primary">Ciclos Activos</h6>
-                <p class="card-text h2">@CiclosActivos</p>
-                <p class="card-text" style="color: rgb(188, 94, 53)">@CiclosRevision requieren revisión</p>
+                <hr class="my-2" />
+                <p class="card-text h2 mb-0">@CiclosActivos</p>
             </div>
         </div>
     </div>
@@ -53,8 +56,16 @@
 
 <div class="mb-2">
     <p class="h5 mb-1">Ciclos de caja chica por área</p>
-    <p class="text-muted mb-0 small">Visualización y seguimiento de cajas chicas por cada área de la empresa</p>
 </div>
+
+<CicloCajaSearchBar @bind-FiltroNombre="FiltroNombre"
+                    @bind-AreasSeleccionadas="AreasSeleccionadasBusqueda"
+                    @bind-FiltroCuentaBancariaId="FiltroCuentaBancariaId"
+                    @bind-FiltroEstado="FiltroEstado"
+                    @bind-FiltroFechaDesde="FiltroFechaDesde"
+                    @bind-FiltroFechaHasta="FiltroFechaHasta"
+                    Areas="Areas"
+                    CuentasBancarias="CuentasBancarias" />
 
 <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden flex-fill mb-3">
         <div class="overflow-scroll overflow-x-hidden flex-fill p-3">
@@ -68,7 +79,7 @@
             }
             else
             {
-                @foreach (var ciclo in CiclosCajaChica)
+                @foreach (var ciclo in CiclosFiltrados)
                 {
                     var c = ciclo;
                     <CajaChicaItem Titulo="@c.Area"
@@ -103,6 +114,21 @@
     private List<CuentaBancaria> CuentasBancarias { get; set; } = new();
     private Dictionary<int, int> _areaIdByCajaChicaId = new();
     private bool Cargando { get; set; } = true;
+
+    private string FiltroNombre { get; set; } = string.Empty;
+    private List<Area> AreasSeleccionadasBusqueda { get; set; } = new();
+    private int FiltroCuentaBancariaId { get; set; }
+    private string FiltroEstado { get; set; } = "Todos";
+    private DateTime? FiltroFechaDesde { get; set; }
+    private DateTime? FiltroFechaHasta { get; set; }
+
+    private List<CicloCajaChica> CiclosFiltrados =>
+        CiclosCajaChica
+            .Where(c => string.IsNullOrWhiteSpace(FiltroNombre) || c.Area.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase))
+            .Where(c => !AreasSeleccionadasBusqueda.Any()
+                || AreasSeleccionadasBusqueda.Any(a =>
+                    c.CajaChicaId > 0 && _areaIdByCajaChicaId.TryGetValue(c.CajaChicaId, out var areaId) && areaId == a.AreaID))
+            .ToList();
 
     protected override async Task OnInitializedAsync()
     {
@@ -182,6 +208,7 @@
                     CajaChicaId = c.CajaChica?.IdFondo ?? 0,
                     Area = areaNombre,
                     Responsable = responsableNombre,
+                    Estado = c.Estado,
                     PorcentajeUso = porcentaje,
                     MontoTotal = montoTotal,
                     Gastado = gastado,
@@ -224,6 +251,7 @@
         public int CajaChicaId { get; set; }
         public string Area { get; set; } = string.Empty;
         public string Responsable { get; set; } = string.Empty;
+        public string Estado { get; set; } = string.Empty;
         public int PorcentajeUso { get; set; }
         public decimal MontoTotal { get; set; }
         public decimal Gastado { get; set; }

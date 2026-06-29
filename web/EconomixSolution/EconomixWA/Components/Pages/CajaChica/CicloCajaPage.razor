@@ -38,13 +38,14 @@
     }
 
     <CicloCajaSearchBar @bind-FiltroNombre="FiltroNombre"
-                        @bind-FiltroAreaId="FiltroAreaId"
+                        @bind-AreasSeleccionadas="AreasSeleccionadasBusqueda"
                         @bind-FiltroCuentaBancariaId="FiltroCuentaBancariaId"
-                        @bind-FiltroEstado="FiltroEstado"
+                        @bind-EstadosSeleccionados="EstadosSeleccionados"
                         @bind-FiltroFechaDesde="FiltroFechaDesde"
                         @bind-FiltroFechaHasta="FiltroFechaHasta"
                         Areas="Areas"
-                        CuentasBancarias="CuentasBancarias" />
+                        CuentasBancarias="CuentasBancarias"
+                        OnFiltrar="Filtrar" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
@@ -94,9 +95,9 @@
     private bool Cargando { get; set; } = true;
     private string ErrorMessage { get; set; } = string.Empty;
     private string FiltroNombre { get; set; } = string.Empty;
-    private int FiltroAreaId { get; set; }
+    private List<Area> AreasSeleccionadasBusqueda { get; set; } = new();
     private int FiltroCuentaBancariaId { get; set; }
-    private string FiltroEstado { get; set; } = "Todos";
+    private List<string> EstadosSeleccionados { get; set; } = new();
     private DateTime? FiltroFechaDesde { get; set; }
     private DateTime? FiltroFechaHasta { get; set; }
 
@@ -112,21 +113,20 @@
 
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(FiltroNombre)
-        || FiltroAreaId > 0
+        || AreasSeleccionadasBusqueda.Any()
         || FiltroCuentaBancariaId > 0
-        || FiltroEstado != "Todos"
+        || EstadosSeleccionados.Any()
         || FiltroFechaDesde.HasValue
         || FiltroFechaHasta.HasValue;
 
     private IEnumerable<CicloCajaChica> CiclosFiltrados => Ciclos
         .Where(c => string.IsNullOrWhiteSpace(FiltroNombre)
             || (c.CajaChica?.Nombre?.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase) ?? false))
-        .Where(c => FiltroAreaId <= 0
+        .Where(c => !AreasSeleccionadasBusqueda.Any()
             || (c.CajaChica != null
-                && _areaIdByCajaChicaId.TryGetValue(c.CajaChica.IdFondo, out var areaId)
-                && areaId == FiltroAreaId))
+                && AreasSeleccionadasBusqueda.Any(a => _areaIdByCajaChicaId.TryGetValue(c.CajaChica.IdFondo, out var areaId) && areaId == a.AreaID)))
         .Where(c => FiltroCuentaBancariaId <= 0 || c.CajaChica?.CuentaBancaria?.IdCuenta == FiltroCuentaBancariaId)
-        .Where(c => FiltroEstado == "Todos" || c.Estado == FiltroEstado)
+        .Where(c => !EstadosSeleccionados.Any() || EstadosSeleccionados.Any(e => e == c.Estado))
         .Where(c => !FiltroFechaDesde.HasValue || c.FechaApertura >= FiltroFechaDesde.Value)
         .Where(c => !FiltroFechaHasta.HasValue || c.FechaApertura <= FiltroFechaHasta.Value)
         .OrderByDescending(c => c.FechaApertura)
@@ -216,4 +216,6 @@
     {
         Navigation.NavigateTo("/Caja Chica/Crear");
     }
+
+    private void Filtrar() => StateHasChanged();
 }

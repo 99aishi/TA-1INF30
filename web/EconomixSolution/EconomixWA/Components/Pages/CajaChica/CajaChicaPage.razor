@@ -35,13 +35,14 @@
 
     <CajaChicaSearchBar @bind-FiltroNombre="FiltroNombre"
                         @bind-FiltroCuentaBancariaId="FiltroCuentaBancariaId"
-                        @bind-FiltroAreaId="FiltroAreaId"
+                        @bind-AreasSeleccionadas="AreasSeleccionadasBusqueda"
                         @bind-FiltroEstado="FiltroEstado"
                         @bind-FiltroMontoMin="FiltroMontoMin"
                         @bind-FiltroMontoMax="FiltroMontoMax"
                         CuentasBancarias="CuentasBancarias"
                         Areas="Areas"
-                        OnLimpiar="LimpiarFiltros" />
+                        OnLimpiar="LimpiarFiltros"
+                        OnFiltrar="Filtrar" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
@@ -95,7 +96,7 @@
 
     private string FiltroNombre { get; set; } = string.Empty;
     private int FiltroCuentaBancariaId { get; set; }
-    private int FiltroAreaId { get; set; }
+    private List<Area> AreasSeleccionadasBusqueda { get; set; } = new();
     private string FiltroEstado { get; set; } = "Todas";
     private double? FiltroMontoMin { get; set; }
     private double? FiltroMontoMax { get; set; }
@@ -109,7 +110,7 @@
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(FiltroNombre)
         || FiltroCuentaBancariaId > 0
-        || FiltroAreaId > 0
+        || AreasSeleccionadasBusqueda.Any()
         || FiltroEstado != "Todas"
         || FiltroMontoMin.HasValue
         || FiltroMontoMax.HasValue;
@@ -118,8 +119,8 @@
         .Where(cc => string.IsNullOrWhiteSpace(FiltroNombre)
             || (cc.Nombre?.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase) ?? false))
         .Where(cc => FiltroCuentaBancariaId <= 0 || cc.CuentaBancaria?.IdCuenta == FiltroCuentaBancariaId)
-        .Where(cc => FiltroAreaId <= 0
-            || (_areaIdByCajaChicaId.TryGetValue(cc.IdFondo, out var areaId) && areaId == FiltroAreaId))
+        .Where(cc => !AreasSeleccionadasBusqueda.Any()
+            || AreasSeleccionadasBusqueda.Any(a => _areaIdByCajaChicaId.TryGetValue(cc.IdFondo, out var areaId) && areaId == a.AreaID))
         .Where(cc => FiltroEstado == "Todas" || cc.Estado == FiltroEstado)
         .Where(cc => !FiltroMontoMin.HasValue || cc.MontoTecho >= FiltroMontoMin.Value)
         .Where(cc => !FiltroMontoMax.HasValue || cc.MontoTecho <= FiltroMontoMax.Value)
@@ -129,8 +130,8 @@
     {
         Cargando = true;
         await CargarCatalogos();
-        BuildAreaLookup();
         await ListarCajasChicas();
+        BuildAreaLookup();
         Cargando = false;
     }
 
@@ -178,11 +179,13 @@
     {
         FiltroNombre = string.Empty;
         FiltroCuentaBancariaId = 0;
-        FiltroAreaId = 0;
+        AreasSeleccionadasBusqueda = new();
         FiltroEstado = "Todas";
         FiltroMontoMin = null;
         FiltroMontoMax = null;
     }
+
+    private void Filtrar() => StateHasChanged();
 
     private void PrepararNueva()
     {

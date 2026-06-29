@@ -34,7 +34,7 @@
 
     <CuentaBancariaSearchBar @bind-BusquedaBanco="BusquedaBanco"
                              @bind-BusquedaCuentaCCI="BusquedaCuentaCCI"
-                             @bind-MonedaSeleccionadaId="FiltroMonedaId"
+                             @bind-MonedasSeleccionadas="MonedasSeleccionadasBusqueda"
                              Empleados="Empleados"
                              @bind-EmpleadosSeleccionados="EmpleadosSeleccionados"
                              @bind-AreasSeleccionadas="AreasSeleccionadasBusqueda"
@@ -217,7 +217,7 @@
     private string ErrorMessage { get; set; } = string.Empty;
     private string BusquedaBanco { get; set; } = string.Empty;
     private string BusquedaCuentaCCI { get; set; } = string.Empty;
-    private int FiltroMonedaId { get; set; }
+    private List<Moneda> MonedasSeleccionadasBusqueda { get; set; } = new();
     private List<Area> AreasSeleccionadasBusqueda { get; set; } = new();
     private List<Empleado> EmpleadosSeleccionados { get; set; } = new();
 
@@ -250,7 +250,7 @@
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(BusquedaBanco)
         || !string.IsNullOrWhiteSpace(BusquedaCuentaCCI)
-        || FiltroMonedaId > 0
+        || MonedasSeleccionadasBusqueda.Any()
         || AreasSeleccionadasBusqueda.Any()
         || EmpleadosSeleccionados.Any();
 
@@ -263,7 +263,7 @@
         .Where(c => string.IsNullOrWhiteSpace(BusquedaCuentaCCI)
             || c.NumeroBancario.Contains(BusquedaCuentaCCI, StringComparison.OrdinalIgnoreCase)
             || (c.Cci?.Contains(BusquedaCuentaCCI, StringComparison.OrdinalIgnoreCase) ?? false))
-        .Where(c => FiltroMonedaId == 0 || c.Moneda?.IdMoneda == FiltroMonedaId)
+        .Where(c => !MonedasSeleccionadasBusqueda.Any() || MonedasSeleccionadasBusqueda.Any(m => m.IdMoneda == c.Moneda?.IdMoneda))
         .Where(c => !AreasSeleccionadasBusqueda.Any()
             || AreasSeleccionadasBusqueda.Any(a => a.AreaID == c.AreaAdministradora?.AreaID))
         .Where(c => !EmpleadosSeleccionados.Any()

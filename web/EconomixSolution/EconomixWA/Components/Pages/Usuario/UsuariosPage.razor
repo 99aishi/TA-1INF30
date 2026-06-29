@@ -30,11 +30,12 @@
 
     <UsuarioSearchBar @bind-FiltroNombre="FiltroNombre"
                       @bind-FiltroCorreo="FiltroCorreo"
-                      @bind-FiltroRol="FiltroRol"
-                      @bind-FiltroAreaId="FiltroAreaId"
+                      @bind-RolesSeleccionados="RolesSeleccionadosBusqueda"
+                      @bind-AreasSeleccionadas="AreasSeleccionadasBusqueda"
                       @bind-FiltroEstado="FiltroEstado"
                       Roles="Roles"
-                      Areas="AreasDisponibles" />
+                      Areas="AreasDisponibles"
+                      OnFiltrar="Filtrar" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
 
@@ -83,8 +84,8 @@
     private string ErrorMessage { get; set; } = string.Empty;
     private string FiltroNombre { get; set; } = string.Empty;
     private string FiltroCorreo { get; set; } = string.Empty;
-    private string FiltroRol { get; set; } = "Todos";
-    private int FiltroAreaId { get; set; }
+    private List<Rol> RolesSeleccionadosBusqueda { get; set; } = new();
+    private List<Area> AreasSeleccionadasBusqueda { get; set; } = new();
     private string FiltroEstado { get; set; } = "Todas";
     private List<Usuario> Usuarios { get; set; } = new();
     private List<Rol> Roles { get; set; } = new();
@@ -94,8 +95,8 @@
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(FiltroNombre)
         || !string.IsNullOrWhiteSpace(FiltroCorreo)
-        || FiltroRol != "Todos"
-        || FiltroAreaId > 0
+        || RolesSeleccionadosBusqueda.Any()
+        || AreasSeleccionadasBusqueda.Any()
         || FiltroEstado != "Todas";
 
     private IEnumerable<Usuario> UsuariosFiltrados => Usuarios
@@ -105,8 +106,8 @@
             || u.ApellidoMaterno.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase))
         .Where(u => string.IsNullOrWhiteSpace(FiltroCorreo)
             || u.Correo.Contains(FiltroCorreo, StringComparison.OrdinalIgnoreCase))
-        .Where(u => FiltroRol == "Todos" || u.Rol?.Titulo == FiltroRol)
-        .Where(u => FiltroAreaId <= 0 || (u is Empleado emp && emp.Area?.AreaID == FiltroAreaId))
+        .Where(u => !RolesSeleccionadosBusqueda.Any() || RolesSeleccionadosBusqueda.Any(r => r.Titulo == u.Rol?.Titulo))
+        .Where(u => !AreasSeleccionadasBusqueda.Any() || (u is Empleado emp && AreasSeleccionadasBusqueda.Any(a => a.AreaID == emp.Area?.AreaID)))
         .Where(u => FiltroEstado == "Todas"
             || (FiltroEstado == "Activo" && u.Estado == EstadoUsuario.ACTIVO)
             || (FiltroEstado == "Inactivo" && u.Estado == EstadoUsuario.INACTIVO));
@@ -115,6 +116,8 @@
     {
         Navigation.NavigateTo("/usuarios/Crear");
     }
+
+    private void Filtrar() => StateHasChanged();
 
     private void MostrarDetalleUsuario(Usuario usuario)
     {

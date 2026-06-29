@@ -7,12 +7,13 @@
 @inject ICicloCajaWS CicloCajaWS
 @inject IAuditoriaWS AuditoriaWS
 
-<div class="row g-3 mb-3">
-    <div class="col-6 col-lg-3">
-        <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrACajaChica">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-body-primary">Saldo de Caja Chica</h6>
-                <p class="card-text h2">@FormatearSoles(SaldoCajaChica)</p>
+<div class="d-flex flex-column flex-grow-1 overflow-hidden pb-4">
+    <div class="row g-3 mb-3 flex-shrink-0">
+        <div class="col-6 col-lg-3">
+            <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrACajaChica">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-body-primary">Saldo de Caja Chica</h6>
+                    <p class="card-text h2">@FormatearSoles(SaldoCajaChica)</p>
             </div>
         </div>
     </div>
@@ -45,8 +46,8 @@
 </div>
 
 <div class="row g-3 flex-fill overflow-hidden mb-3">
-    <div class="col-12 col-lg-6 h-100 d-flex flex-column overflow-hidden">
-        <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden mb-3">
+    <div class="col-12 col-lg-6 h-100 d-flex flex-column">
+        <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
             <div class="card-header bg-white py-3">
                 <h6 class="mb-0">Solicitudes Pendientes de Aprobación</h6>
             </div>
@@ -75,8 +76,8 @@
         </div>
     </div>
 
-    <div class="col-12 col-lg-6 h-100 d-flex flex-column overflow-hidden mb-3">
-        <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden mb-3">
+    <div class="col-12 col-lg-6 h-100 d-flex flex-column">
+        <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
             <div class="card-header bg-white py-3">
                 <h6 class="mb-0">Actividad Reciente</h6>
             </div>
@@ -104,6 +105,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 
 @code {

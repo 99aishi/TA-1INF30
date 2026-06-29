@@ -24,14 +24,15 @@
         </div>
     }
 
-    <RendicionSearchBar @bind-FiltroEstado="FiltroEstado"
+    <RendicionSearchBar @bind-EstadosSeleccionados="EstadosSeleccionados"
                         @bind-FiltroFechaInicio="FiltroFechaInicio"
                         @bind-FiltroFechaFin="FiltroFechaFin"
-                        @bind-FiltroAreaId="FiltroAreaId"
-                        @bind-FiltroEmpleadoId="FiltroEmpleadoId"
+                        @bind-AreasSeleccionadas="AreasSeleccionadasBusqueda"
+                        @bind-EmpleadosSeleccionados="EmpleadosSeleccionadosBusqueda"
                         Areas="Areas"
                         Empleados="Empleados"
-                        OnLimpiar="StateHasChanged" />
+                        OnLimpiar="StateHasChanged"
+                        OnFiltrar="Filtrar" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
@@ -70,11 +71,11 @@
     private bool MostrarDetalle { get; set; } = false;
     private bool Cargando { get; set; } = true;
     private string ErrorMessage { get; set; } = string.Empty;
-    private string FiltroEstado { get; set; } = "Todas";
+    private List<string> EstadosSeleccionados { get; set; } = new();
     private DateTime? FiltroFechaInicio { get; set; }
     private DateTime? FiltroFechaFin { get; set; }
-    private int FiltroAreaId { get; set; }
-    private int FiltroEmpleadoId { get; set; }
+    private List<Area> AreasSeleccionadasBusqueda { get; set; } = new();
+    private List<Empleado> EmpleadosSeleccionadosBusqueda { get; set; } = new();
 
     private List<Rendicion> Rendiciones { get; set; } = new();
     private Rendicion? RendicionSeleccionada { get; set; }
@@ -87,18 +88,18 @@
     private bool EsJefe => RolUsuario is "Jefe" or "Jefe de Área" or "Jefe de Area";
 
     private bool HayFiltrosActivos =>
-        FiltroEstado != "Todas"
+        EstadosSeleccionados.Any()
         || FiltroFechaInicio.HasValue
         || FiltroFechaFin.HasValue
-        || FiltroAreaId > 0
-        || FiltroEmpleadoId > 0;
+        || AreasSeleccionadasBusqueda.Any()
+        || EmpleadosSeleccionadosBusqueda.Any();
 
     private IEnumerable<Rendicion> RendicionesFiltradas => Rendiciones
-        .Where(r => FiltroEstado == "Todas" || r.Estado.Equals(FiltroEstado, StringComparison.OrdinalIgnoreCase))
+        .Where(r => !EstadosSeleccionados.Any() || EstadosSeleccionados.Any(e => e.Equals(r.Estado, StringComparison.OrdinalIgnoreCase)))
         .Where(r => !FiltroFechaInicio.HasValue || (r.FechaPresentacion.HasValue && r.FechaPresentacion.Value.Date >= FiltroFechaInicio.Value.Date))
         .Where(r => !FiltroFechaFin.HasValue || (r.FechaPresentacion.HasValue && r.FechaPresentacion.Value.Date <= FiltroFechaFin.Value.Date))
-        .Where(r => FiltroAreaId <= 0 || (r.CicloCajaChica?.CajaChica?.CuentaBancaria?.AreaAdministradora?.AreaID == FiltroAreaId))
-        .Where(r => FiltroEmpleadoId <= 0 || (r.CicloCajaChica?.SolicitudesDeGasto?.Any(s => s.Solicitante?.UsuarioID == FiltroEmpleadoId) ?? false))
+        .Where(r => !AreasSeleccionadasBusqueda.Any() || AreasSeleccionadasBusqueda.Any(a => a.AreaID == r.CicloCajaChica?.CajaChica?.CuentaBancaria?.AreaAdministradora?.AreaID))
+        .Where(r => !EmpleadosSeleccionadosBusqueda.Any() || EmpleadosSeleccionadosBusqueda.Any(e => r.CicloCajaChica?.SolicitudesDeGasto?.Any(s => s.Solicitante?.UsuarioID == e.UsuarioID) ?? false))
         .OrderByDescending(r => r.IdRendicion);
 
     protected override async Task OnInitializedAsync()
@@ -174,4 +175,6 @@
         MostrarDetalle = false;
         RendicionSeleccionada = null;
     }
+
+    private void Filtrar() => StateHasChanged();
 }

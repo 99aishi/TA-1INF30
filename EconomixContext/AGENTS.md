@@ -266,6 +266,7 @@ The administrator dashboard uses a responsive 6-6 two-column layout with reusabl
     - Tesorería (Caja chica, Cuenta bancaria, Moneda): green `bg-success text-white`
     - Operaciones (Solicitud, Comprobante, Rendición, Transacción): orange `bg-warning text-dark`
 - Layout: `col-12 col-lg-6` columns inside `row g-3 flex-fill overflow-hidden`.
+- **Bottom clipping fix**: The outer container uses `pb-4` and the stat cards row uses `flex-shrink-0` to prevent card bottom borders and rounded corners from being clipped by `overflow-hidden`.
 
 ### File locations
 - `web/.../EconomixWA/Components/Pages/MainDashBoard/DashboardAdministrador.razor`
@@ -516,6 +517,54 @@ The CuentaBancaria search bar also has a **real-time employee search** (replaced
 - **Parameters**: `Empleados` (full list), `EmpleadosSeleccionados` (selected list, bindable), `EmpleadosSeleccionadosChanged`
 - **Behavior**: Same as area search — type name → dropdown → click to add → chips with X to remove
 - **Filtering logic**: `CuentasFiltradas` filters accounts where `c.EmpleadoAdministrador?.UsuarioID` matches any selected employee
+
+### CuentasBancariasDisponibles — Relational Dropdown Filtering
+
+When a search bar has both an **Área** multi-select filter and a **Cuenta bancaria** dropdown, the CuentaBancaria dropdown should show only accounts belonging to the selected areas. This prevents selecting a bank account from a non-selected area.
+
+**Pattern** (CajaChicaSearchBar / CicloCajaSearchBar):
+```csharp
+private IEnumerable<CuentaBancaria> CuentasBancariasDisponibles =>
+    CuentasBancarias
+        .Where(cb => !AreasSeleccionadas.Any()
+            || AreasSeleccionadas.Any(a => a.AreaID == cb.AreaAdministradora?.AreaID));
+```
+
+Then use `CuentasBancariasDisponibles` in the `<select>`:
+```razor
+<select class="form-select bg-light rounded-4" @bind="FiltroCuentaBancariaId">
+    <option value="0">Todas</option>
+    @foreach (var cuenta in CuentasBancariasDisponibles)
+    {
+        <option value="@cuenta.IdCuenta">@cuenta.NombreBanco - @cuenta.NumeroBancario</option>
+    }
+</select>
+```
+
+Also reset `FiltroCuentaBancariaId = 0` when adding/removing areas (the previously selected account may not belong to the filtered set).
+
+### BuildAreaLookup Timing
+
+When filtering CajaChica or CicloCaja pages by area via `_areaIdByCajaChicaId`, `BuildAreaLookup()` must be called **after** `ListarCajasChicas()` has populated `CajasChicas`. Calling it before will result in an empty dictionary and **no results shown** for area filters.
+
+```csharp
+// Correct ordering:
+await CargarCatalogos();    // loads Areas, CuentasBancarias
+await ListarCajasChicas();  // loads CajasChicas first
+BuildAreaLookup();           // now CajasChicas is populated
+```
+
+### Badge Color Scheme for Multi-Select Filter Chips
+
+Each filter type in multi-select search bars uses distinct badge colors:
+
+| Filter | Badge Classes |
+|--------|---------------|
+| Área | `bg-success-subtle text-success-emphasis` (green) |
+| Empleado | `bg-primary-subtle text-primary-emphasis` (blue) |
+| Moneda | `bg-info-subtle text-info-emphasis` (teal) |
+| Rol | `bg-warning-subtle text-warning-emphasis` (amber) |
+| Estado | `bg-danger-subtle text-danger-emphasis` (red) |
 
 ### Parent Page Pattern
 Each parent page follows the same pattern:
