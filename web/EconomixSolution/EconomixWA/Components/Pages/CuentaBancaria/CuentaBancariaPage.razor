@@ -143,15 +143,39 @@
 
                                     @if (TipoDuenoEdicion == "Empleado")
                                     {
-                                        <select class="form-select rounded-4 bg-light mt-2 @(Errores.ContainsKey("Dueno") ? "is-invalid" : "")"
-                                                @bind="EmpleadoSeleccionadoId"
-                                                disabled="@(CuentaEnEdicion.IdCuenta > 0)">
-                                            <option value="0">Seleccione un empleado</option>
-                                            @foreach (var emp in Empleados)
+                                        <div class="position-relative mt-2">
+                                            <input type="text"
+                                                   class="form-control rounded-4 bg-light @(Errores.ContainsKey("Dueno") ? "is-invalid" : "")"
+                                                   placeholder="Buscar empleado..."
+                                                   value="@(EmpleadoSeleccionadoId > 0 ? Empleados.FirstOrDefault(e => e.UsuarioID == EmpleadoSeleccionadoId)?.Nombres + " " + Empleados.FirstOrDefault(e => e.UsuarioID == EmpleadoSeleccionadoId)?.ApellidoPaterno : BusquedaEmpleadoDueno)"
+                                                   @oninput="OnBusquedaEmpleadoDuenoCambiada"
+                                                   @onfocus="OnFocusEmpleadoDueno"
+                                                   @onblur="OnBlurEmpleadoDueno"
+                                                   disabled="@(CuentaEnEdicion.IdCuenta > 0 || EmpleadoSeleccionadoId > 0)"
+                                                   readonly="@(EmpleadoSeleccionadoId > 0)" />
+                                            @if (EmpleadoSeleccionadoId > 0 && CuentaEnEdicion.IdCuenta <= 0)
                                             {
-                                                <option value="@emp.UsuarioID">@emp.Nombres @emp.ApellidoPaterno</option>
+                                                <button type="button" class="btn btn-sm btn-outline-danger position-absolute top-50 end-0 translate-middle-y me-2 py-0" style="font-size:0.7rem;" @onclick="QuitarEmpleadoDueno">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
                                             }
-                                        </select>
+                                            @if (MostrarDropdownDueno && ObtenerResultadosBusquedaDueno().Any())
+                                            {
+                                                <div class="position-absolute top-100 start-0 w-100 bg-white border rounded-4 shadow-sm z-3"
+                                                     style="max-height:200px;overflow-y:auto;z-index:1050;">
+                                                    @foreach (var emp in ObtenerResultadosBusquedaDueno())
+                                                    {
+                                                        <div class="px-3 py-2 small cursor-pointer d-flex align-items-center"
+                                                             @onmouseenter="() => _hoveredEmpIdDueno = emp.UsuarioID"
+                                                             @onmouseleave="() => _hoveredEmpIdDueno = null"
+                                                             @onmousedown="() => SeleccionarEmpleadoDueno(emp)"
+                                                             style="@(_hoveredEmpIdDueno == emp.UsuarioID ? "background-color:#e9ecef;" : "")">
+                                                            <span>@emp.Nombres @emp.ApellidoPaterno</span>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
                                     }
                                     else if (TipoDuenoEdicion == "Area")
                                     {
@@ -238,6 +262,10 @@
     private string TipoDuenoEdicion { get; set; } = string.Empty;
     private int EmpleadoSeleccionadoId { get; set; }
     private int AreaSeleccionadaId { get; set; }
+
+    private string BusquedaEmpleadoDueno { get; set; } = string.Empty;
+    private bool MostrarDropdownDueno { get; set; }
+    private int? _hoveredEmpIdDueno;
 
     private int MonedaSeleccionadaId
     {
@@ -336,6 +364,56 @@
         StateHasChanged();
     }
 
+    private async Task OnBusquedaEmpleadoDuenoCambiada(ChangeEventArgs e)
+    {
+        BusquedaEmpleadoDueno = e.Value?.ToString() ?? string.Empty;
+        MostrarDropdownDueno = BusquedaEmpleadoDueno.Length >= 2;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void OnFocusEmpleadoDueno()
+    {
+        if (EmpleadoSeleccionadoId <= 0)
+            MostrarDropdownDueno = BusquedaEmpleadoDueno.Length >= 2;
+    }
+
+    private async Task SeleccionarEmpleadoDueno(Empleado emp)
+    {
+        EmpleadoSeleccionadoId = emp.UsuarioID;
+        BusquedaEmpleadoDueno = string.Empty;
+        MostrarDropdownDueno = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnBlurEmpleadoDueno()
+    {
+        await Task.Delay(200);
+        MostrarDropdownDueno = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void QuitarEmpleadoDueno()
+    {
+        EmpleadoSeleccionadoId = 0;
+        BusquedaEmpleadoDueno = string.Empty;
+        MostrarDropdownDueno = false;
+    }
+
+    private List<Empleado> ObtenerResultadosBusquedaDueno()
+    {
+        if (string.IsNullOrWhiteSpace(BusquedaEmpleadoDueno) || BusquedaEmpleadoDueno.Length < 2)
+            return new List<Empleado>();
+
+        var busqueda = BusquedaEmpleadoDueno.Trim();
+        return Empleados
+            .Where(e => e.UsuarioID != EmpleadoSeleccionadoId)
+            .Where(e => (e.Nombres ?? "").Contains(busqueda, StringComparison.OrdinalIgnoreCase)
+                     || (e.ApellidoPaterno ?? "").Contains(busqueda, StringComparison.OrdinalIgnoreCase)
+                     || (e.ApellidoMaterno ?? "").Contains(busqueda, StringComparison.OrdinalIgnoreCase))
+            .Take(10)
+            .ToList();
+    }
+
     private async void Seleccionar(CuentaBancaria cuenta)
     {
         CuentaSeleccionada = cuenta;
@@ -380,6 +458,8 @@
         TipoDuenoEdicion = string.Empty;
         EmpleadoSeleccionadoId = 0;
         AreaSeleccionadaId = 0;
+        BusquedaEmpleadoDueno = string.Empty;
+        MostrarDropdownDueno = false;
         MostrarEditor = true;
         Errores.Clear();
     }
@@ -483,6 +563,8 @@
         MostrarEditor = false;
         CuentaSeleccionada = null;
         CuentaEnEdicion = new CuentaBancaria();
+        BusquedaEmpleadoDueno = string.Empty;
+        MostrarDropdownDueno = false;
         Errores.Clear();
     }
 
