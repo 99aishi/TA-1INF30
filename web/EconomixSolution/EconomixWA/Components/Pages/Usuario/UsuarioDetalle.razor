@@ -1,5 +1,7 @@
 @page "/usuarios/Crear"
 @page "/usuarios/detalle"
+@attribute [Authorize(Roles = "Administrador")]
+@using Microsoft.AspNetCore.WebUtilities
 
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
@@ -8,178 +10,169 @@
 @inject IAreaWS AreaWS
 @inject IUsuarioWS UsuarioWS
 
-<div class="d-flex flex-column h-100 mb-3 overflow-hidden">
-    <div class="row h-100 @(EsCreacion? "mb-3": " ")">
-        <div class="col-12 h-100 mb-3">
-            <div class="card rounded-4 p-3 mb-3 h-100 d-flex flex-column overflow-scroll">
-                <div class="d-flex flex-column">
-                    <div class="d-flex gap-4">
-                        @if (EsCreacion)
-                        {
-                            <p class="h3"> Registrar Usuario </p>
-                        }
-                        else
-                        {
-                            <p class="h3"> @(Usuario?.Nombres ?? "Usuario") </p>
-                        }
-                        <div class="d-flex flex-column justify-content-center gap-2">
-                            <span class="badge @(EstadoActivo ? "text-bg-success" : "text-bg-secondary") rounded-pill px-2">
-                                @(EstadoActivo ? "Activo" : "Inactivo")
-                            </span>
-                        </div>
-                    </div>
+<div class="d-flex flex-column h-100 mb-3">
+    <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
+        <div class="p-3 pb-2 d-flex gap-4 align-items-center">
+            @if (EsCreacion)
+            {
+                <p class="h3 mb-0">Registrar Usuario</p>
+            }
+            else
+            {
+                <p class="h3 mb-0">@(Usuario?.Nombres ?? "Usuario")</p>
+                <span class="badge @(EstadoActivo ? "text-bg-success" : "text-bg-secondary") rounded-pill px-2">
+                    @(EstadoActivo ? "Activo" : "Inactivo")
+                </span>
+            }
+        </div>
+        <hr class="my-0" />
+        <div class="flex-fill overflow-scroll p-3">
 
-                    @if (!string.IsNullOrEmpty(ErrorMessage))
-                    {
-                        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                            @ErrorMessage
-                            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
-                        </div>
-                    }
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @ErrorMessage
+                    <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty" aria-label="close"></button>
+                </div>
+            }
 
-                    <div class="row">
-                        <div class="col-12 mt-3">
-                            <label for="Nombres" class="form-label small text-muted">Nombres</label>
-                            <input type="text" id="Nombres" placeholder="Nombres"
-                                   class="form-control form-control-lg rounded-4 bg-light"
-                                   @bind="UsuarioEdicion.Nombres">
-                        </div>
-
-                        <div class="col-6 mt-3">
-                            <label for="ApellidoPaterno" class="form-label small text-muted">Apellido Paterno</label>
-                            <input type="text" id="ApellidoPaterno" placeholder="Apellido paterno"
-                                   class="form-control form-control-lg rounded-4 bg-light"
-                                   @bind="UsuarioEdicion.ApellidoPaterno">
-                        </div>
-                        <div class="col-6 mt-3">
-                            <label for="ApellidoMaterno" class="form-label small text-muted">Apellido Materno</label>
-                            <input type="text"
-                                   class="form-control form-control-lg rounded-4 bg-light"
-                                   id="ApellidoMaterno"
-                                   placeholder="Apellido materno"
-                                   @bind="UsuarioEdicion.ApellidoMaterno">
-                        </div>
-
-                        <div class="col-6 mt-3">
-                            <label for="Correo" class="form-label small text-muted">Correo electronico</label>
-                            <input type="email"
-                                   class="form-control form-control-lg rounded-4 bg-light"
-                                   id="Correo"
-                                   placeholder="ejemplo@correo.com"
-                                   @bind="UsuarioEdicion.Correo">
-                        </div>
-                        <div class="col-6 mt-3">
-                            <label for="Contrasena" class="form-label small text-muted">Contrasena</label>
-                            <input type="password"
-                                   class="form-control form-control-lg rounded-4 bg-light"
-                                   id="Contrasena"
-                                   placeholder="Contrasena"
-                                   @bind="UsuarioEdicion.Password">
-                        </div>
-
-                        @if (EmpleadoEdicion != null)
-                        {
-                            <div class="col-6 mt-3">
-                                <label for="NumeroCelular" class="form-label small text-muted">Celular</label>
-                                <input type="text" id="NumeroCelular" placeholder="999999999"
-                                       class="form-control form-control-lg rounded-4 bg-light"
-                                       @bind="EmpleadoEdicion.NumeroCelular">
-                            </div>
-
-                            <div class="col-6 mt-3">
-                                <label for="Area" class="form-label small text-muted">Área</label>
-                                <select id="Area" class="form-select form-select-lg rounded-4 bg-light"
-                                        @bind="AreaSeleccionadaId">
-                                    <option value="0">Seleccione un área</option>
-                                    @foreach (var area in Areas)
-                                    {
-                                        <option value="@area.AreaID">@area.Nombre</option>
-                                    }
-                                </select>
-                            </div>
-
-                            <div class="col-6 mt-3">
-                                <label for="Rol" class="form-label small text-muted">Rol</label>
-                                <select id="Rol" class="form-select form-select-lg rounded-4 bg-light"
-                                        @bind="RolSeleccionadoId">
-                                    <option value="0">Seleccione un rol</option>
-                                    @foreach (var rol in RolesFiltrados)
-                                    {
-                                        <option value="@rol.RolID">@rol.Titulo</option>
-                                    }
-                                </select>
-                            </div>
-
-                            <div class="col-6 mt-3">
-                                <label class="form-label small text-muted">Jefe directo (automático)</label>
-                                <input type="text" class="form-control form-control-lg rounded-4 bg-light" disabled
-                                       value="@(ObtenerNombreJefeDirecto())" />
-                            </div>
-                        }
-
-                        @if (false)
-                        {
-                            <div class="col-6 mt-3">
-                                <label for="Estado" class="form-label small text-muted">Estado</label>
-                                <select id="Estado" class="form-select form-select-lg rounded-4 bg-light"
-                                        @bind="UsuarioEdicion.Estado">
-                                    <option value="@EstadoUsuario.ACTIVO">Activo</option>
-                                    <option value="@EstadoUsuario.INACTIVO">Inactivo</option>
-                                </select>
-                            </div>
-                        }
-                    </div>
+            <div class="row">
+                <div class="col-12 mt-3">
+                    <label for="Nombres" class="form-label small text-muted">Nombres</label>
+                    <input type="text" id="Nombres" placeholder="Nombres"
+                           class="form-control form-control-lg rounded-4 bg-light"
+                           @bind="UsuarioEdicion.Nombres">
                 </div>
 
-                @if (!EsCreacion && EmpleadoEdicion != null)
+                <div class="col-6 mt-3">
+                    <label for="ApellidoPaterno" class="form-label small text-muted">Apellido Paterno</label>
+                    <input type="text" id="ApellidoPaterno" placeholder="Apellido paterno"
+                           class="form-control form-control-lg rounded-4 bg-light"
+                           @bind="UsuarioEdicion.ApellidoPaterno">
+                </div>
+                <div class="col-6 mt-3">
+                    <label for="ApellidoMaterno" class="form-label small text-muted">Apellido Materno</label>
+                    <input type="text"
+                           class="form-control form-control-lg rounded-4 bg-light"
+                           id="ApellidoMaterno"
+                           placeholder="Apellido materno"
+                           @bind="UsuarioEdicion.ApellidoMaterno">
+                </div>
+
+                <div class="col-6 mt-3">
+                    <label for="Correo" class="form-label small text-muted">Correo electronico</label>
+                    <input type="email"
+                           class="form-control form-control-lg rounded-4 bg-light"
+                           id="Correo"
+                           placeholder="ejemplo@correo.com"
+                           @bind="UsuarioEdicion.Correo">
+                </div>
+                <div class="col-6 mt-3">
+                    <label for="Contrasena" class="form-label small text-muted">Contrasena</label>
+                    <input type="password"
+                           class="form-control form-control-lg rounded-4 bg-light"
+                           id="Contrasena"
+                           placeholder="Contrasena"
+                           @bind="UsuarioEdicion.Password">
+                </div>
+
+                @if (EmpleadoEdicion != null)
                 {
-                    <div class="mt-3">
-                        <button type="button" class="btn btn-outline-primary" @onclick="IrACuentasBancarias">
-                            Gestionar Cuentas Bancarias
-                        </button>
+                    <div class="col-6 mt-3">
+                        <label for="NumeroCelular" class="form-label small text-muted">Celular</label>
+                        <input type="text" id="NumeroCelular" placeholder="999999999"
+                               class="form-control form-control-lg rounded-4 bg-light"
+                               @bind="EmpleadoEdicion.NumeroCelular">
+                    </div>
+
+                    <div class="col-6 mt-3">
+                        <label for="Area" class="form-label small text-muted">Área</label>
+                        <select id="Area" class="form-select form-select-lg rounded-4 bg-light"
+                                @bind="AreaSeleccionadaId">
+                            <option value="0">Seleccione un área</option>
+                            @foreach (var area in Areas)
+                            {
+                                <option value="@area.AreaID">@area.Nombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-6 mt-3">
+                        <label for="Rol" class="form-label small text-muted">Rol</label>
+                        <select id="Rol" class="form-select form-select-lg rounded-4 bg-light"
+                                @bind="RolSeleccionadoId">
+                            <option value="0">Seleccione un rol</option>
+                            @foreach (var rol in RolesFiltrados)
+                            {
+                                <option value="@rol.RolID">@rol.Titulo</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-6 mt-3">
+                        <label class="form-label small text-muted">Jefe directo (automático)</label>
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" disabled
+                               value="@(ObtenerNombreJefeDirecto())" />
                     </div>
                 }
 
-                <div class="d-flex flex-wrap-nowrap justify-content-end gap-3 mt-4">
-
-                    @if (EsCreacion)
-                    {
-                        <button type="button" class="btn btn-outline-primary" disabled="@Procesando" @onclick="Insertar">
-                            @(Procesando ? "Procesando..." : "Registrar")
-                        </button>
-                        <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="IrAUsuarios">
-                            @(Procesando ? "Procesando..." : "Cerrar")
-                        </button>
-                        <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="IrAUsuarios">
-                            @(Procesando ? "Procesando..." : "Cancelar")
-                        </button>
-                    }
-                    else
-                    {
-                        <button type="button" class="btn btn-outline-warning" disabled="@Procesando" @onclick="GuardarCambios">
-                            @(Procesando ? "Procesando..." : "Guardar Cambios")
-                        </button>
-                        <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="CerrarDetalle">
-                            @(Procesando ? "Procesando..." : "Cerrar")
-                        </button>
-                        @if (EstadoActivo)
-                        {
-                            <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="Eliminar">
-                                @(Procesando ? "Procesando..." : "Eliminar")
-                            </button>
-                        }
-                        else
-                        {
-                            <button type="button" class="btn btn-outline-success" disabled="@Procesando" @onclick="Recuperar">
-                                @(Procesando ? "Procesando..." : "Recuperar")
-                            </button>
-                        }
-
-                    }
-                </div>
-
+                @if (false)
+                {
+                    <div class="col-6 mt-3">
+                        <label for="Estado" class="form-label small text-muted">Estado</label>
+                        <select id="Estado" class="form-select form-select-lg rounded-4 bg-light"
+                                @bind="UsuarioEdicion.Estado">
+                            <option value="@EstadoUsuario.ACTIVO">Activo</option>
+                            <option value="@EstadoUsuario.INACTIVO">Inactivo</option>
+                        </select>
+                    </div>
+                }
             </div>
 
+            @if (!EsCreacion && EmpleadoEdicion != null)
+            {
+                <div class="mt-3">
+                    <button type="button" class="btn btn-outline-primary" @onclick="IrACuentasBancarias">
+                        Gestionar Cuentas Bancarias
+                    </button>
+                </div>
+            }
+        </div>
+        <hr class="my-0" />
+        <div class="p-3 d-flex flex-wrap-nowrap justify-content-end gap-3">
+            @if (EsCreacion)
+            {
+                <button type="button" class="btn btn-outline-secondary" disabled="@Procesando" @onclick="IrAUsuarios">
+                    @(Procesando ? "Procesando..." : "Cancelar")
+                </button>
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="IrAUsuarios">
+                    @(Procesando ? "Procesando..." : "Cerrar")
+                </button>
+                <button type="button" class="btn btn-outline-primary" disabled="@Procesando" @onclick="Insertar">
+                    @(Procesando ? "Procesando..." : "Registrar")
+                </button>
+            }
+            else
+            {
+                @if (EstadoActivo)
+                {
+                    <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="Eliminar">
+                        @(Procesando ? "Procesando..." : "Eliminar")
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-outline-success" disabled="@Procesando" @onclick="Recuperar">
+                        @(Procesando ? "Procesando..." : "Recuperar")
+                    </button>
+                }
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="CerrarDetalle">
+                    @(Procesando ? "Procesando..." : "Cerrar")
+                </button>
+                <button type="button" class="btn btn-outline-warning" disabled="@Procesando" @onclick="GuardarCambios">
+                    @(Procesando ? "Procesando..." : "Guardar Cambios")
+                </button>
+            }
         </div>
     </div>
 </div>

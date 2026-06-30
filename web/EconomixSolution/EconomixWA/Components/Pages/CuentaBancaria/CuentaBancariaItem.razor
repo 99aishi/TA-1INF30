@@ -1,7 +1,7 @@
-<div class="card rounded-4 p-3 mb-3 @(Seleccionada ? "border-primary" : "")">
+<div class="card rounded-4 p-3 mb-3 bg-light @(Seleccionada ? "border-primary" : "")">
     <div class="d-flex justify-content-between align-items-start">
         <div @onclick="OnSeleccionar" style="cursor: pointer; flex: 1;">
-            <p class="h6 mb-1"> @(ObtenerNombreDueno()) · @Cuenta.NombreBanco</p>
+            <p class="h5 mb-1"> @(ObtenerNombreDueno()) · @Cuenta.NombreBanco</p>
             <p class="text-muted small mb-0">
                 @Cuenta.NumeroBancario · CCI: @Cuenta.Cci
             </p>
@@ -10,7 +10,7 @@
             </p>
         </div>
         <div class="d-flex flex-column align-items-end gap-2">
-            <span class="badge @(Cuenta.Activa ? "text-bg-success" : "text-bg-secondary") rounded-pill">
+            <span class="badge @(Cuenta.Activa ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis") rounded-pill">
                 @(Cuenta.Activa ? "Activa" : "Inactiva")
             </span>
             @if (OnVer.HasDelegate)

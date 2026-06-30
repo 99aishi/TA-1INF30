@@ -1,4 +1,6 @@
 @page "/Mis Solicitudes De Gasto"
+@attribute [Authorize(Roles = "Empleado, Jefe")]
+@using Microsoft.AspNetCore.WebUtilities
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject ISolicitudGastoWS SolicitudGastoWS

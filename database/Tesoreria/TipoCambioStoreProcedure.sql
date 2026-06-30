@@ -139,7 +139,7 @@ BEGIN
     FROM tes_tipo_cambio
     WHERE id_moneda_origen = p_id_moneda_origen
       AND id_moneda_destino = p_id_moneda_destino
-      AND fecha_tipo_cambio <= p_fecha
+      AND DATE(fecha_tipo_cambio) <= p_fecha
     ORDER BY fecha_tipo_cambio DESC
     LIMIT 1;
 END$$

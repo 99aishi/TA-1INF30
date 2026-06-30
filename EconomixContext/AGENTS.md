@@ -215,10 +215,18 @@ This avoids the previous bug where creating a Caja Chica from the bank-account p
 
 ## UI — Caja Chica / Ciclos
 
-The `/Caja Chica` route now shows **all cycles** (not the list of cajas chicas):
+The `/Caja Chica` route now shows **list of cajas chicas** (funds management):
+- Filters: Caja Chica name, Área, Cuenta bancaria, Estado.
+- List item (`CajaChicaItemSimple`) shows fund info:
+  - Fund name, area name, monto techo.
+  - **Badge**: Only shows for non-ACTIVO states (INACTIVO shows gray badge). ACTIVO items have no badge (default state).
+  - Actions: "Ver ciclos" navigates to `/Caja Chica/Ciclos?cajaId={id}`, "Ver" opens detail.
+- Detail side-panel (`CajaChicaDetalle`) supports view/edit/create; only Tesoreria can modify.
+
+The `/Caja Chica/Ciclos` route (also accessible as `/Ciclos`) shows **all cycles**:
 - Filters: Caja Chica name, Área, Cuenta bancaria, Estado, Fecha apertura desde/hasta.
 - List item (`CicloCajaItem`) shows cycle info plus a summary of its expenses/requests:
-  - Caja Chica name, week number, estado badge, fechas.
+  - Caja Chica name, week number, estado badge (always shown), fechas.
   - Solicitudes count + approved count.
   - Comprobantes count.
   - Techo, disponible.
@@ -226,11 +234,13 @@ The `/Caja Chica` route now shows **all cycles** (not the list of cajas chicas):
 - State can be set to `ABIERTO`, `CERRADO`, `LIQUIDADO`, or `EN_EXCEPCION`.
 - When a cycle is `EN_EXCEPCION`, Tesoreria sees a "Marcar como revisado" button to switch it back to `ABIERTO`.
 - "Cerrar Ciclo" action calls `CicloCajaWS.cerrarCiclo()`.
+- Query params: `?cajaId=X` pre-filters cycles by caja chica.
 - Routes:
-  - `/Caja Chica` — all cycles.
+  - `/Caja Chica` — list of cajas chicas (funds).
+  - `/Caja Chica/Ciclos` or `/Ciclos` — all cycles.
   - `/Caja Chica/Detalle` — view/edit cycle.
   - `/Caja Chica/Crear` — create cycle.
-- NavMenu keeps only "Caja Chica" under Tesoreria; the separate "Ciclos Caja Chica" entry was removed.
+- NavMenu: Admin sees both "Caja Chica" (funds) and "Ciclos" (cycles); other roles see only "Caja Chica" (which shows cycles for them).
 
 ### File locations
 - `web/.../EconomixWA/Components/Pages/CajaChica/CajaChicaPage.razor`
@@ -256,6 +266,7 @@ The administrator dashboard uses a responsive 6-6 two-column layout with reusabl
     - Tesorería (Caja chica, Cuenta bancaria, Moneda): green `bg-success text-white`
     - Operaciones (Solicitud, Comprobante, Rendición, Transacción): orange `bg-warning text-dark`
 - Layout: `col-12 col-lg-6` columns inside `row g-3 flex-fill overflow-hidden`.
+- **Bottom clipping fix**: The outer container uses `pb-4` and the stat cards row uses `flex-shrink-0` to prevent card bottom borders and rounded corners from being clipped by `overflow-hidden`.
 
 ### File locations
 - `web/.../EconomixWA/Components/Pages/MainDashBoard/DashboardAdministrador.razor`
@@ -421,8 +432,8 @@ All `new java.sql.Date()` calls changed to `new java.sql.Timestamp()` when passi
 
 ### .NET Frontend — Timezone-Aware Deserialization
 `UnixDateTimeConverter.cs` updated to:
-- **Read**: Parse ISO 8601 strings with `RoundtripKind`, default `Unspecified` to `Local`, convert UTC to local.
-- **Write**: Always serialize as UTC ISO 8601 (`yyyy-MM-ddTHH:mm:ssZ`).
+- **Read**: Parse ISO 8601 strings with `RoundtripKind`, default `Unspecified` to `Local`, convert UTC to local. Strips Java `ZonedDateTime.toString()` suffixes like `[UTC]`, `[America/Lima]` before parsing (Java serializes `ZonedDateTime` with zone ID in brackets).
+- **Write**: Always serialize as local ISO 8601 with milliseconds and timezone offset (`yyyy-MM-ddTHH:mm:ss.fffK`), matching Java's `SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")` pattern exactly.
 
 ### Dashboard Relative Time Display
 `ActividadDashboardItem.razor` now correctly shows relative times because `creado_at` was already `TIMESTAMP` and `CreadoAt` is a full `DateTime`:
@@ -452,11 +463,13 @@ Employees can only register new `SolicitudGasto` requests during business hours:
 - **Hours**: 8:00 AM to 6:00 PM
 
 ### Java Backend — `SolicitudGastoBOImpl.validarHorarioLaboral()`
-Called from `validarFecha()` during both insert and update. Validates:
+Called from `validarFecha()` during both insert and update. Validates against the **current server time** (not the solicitud date):
 1. Day is not Saturday or Sunday.
 2. Current time is between 08:00 and 18:00 (checked via `HOUR_OF_DAY` and `MINUTE`).
 
 Throws `Exception` with descriptive message if validation fails.
+
+**Important**: Uses `Calendar.getInstance()` (current server time), NOT the `fechaSolicitud` parameter. The `fechaSolicitud` column is `DATE` (no time), so checking its time component would always yield midnight (00:00), rejecting all submissions.
 
 ### Java Backend — `GET /horario-habilitado` Endpoint
 `SolicitudGastoWS.HorarioHabilitado()` returns a JSON response:
@@ -479,3 +492,119 @@ The .NET frontend calls this endpoint on page load to proactively disable the fo
 - `web/.../EconomixWS/operaciones/IWS/ISolicitudGastoWS.cs` — `obtenerHorarioHabilitadoAsync()`
 - `web/.../EconomixWS/operaciones/WSImpl/SolicitudGastoWSImpl.cs` — implementation
 - `web/.../EconomixWA/Components/Pages/SolicitudDeGasto/MiSolicitudesDeGasto/MiSolicitudDeGastoDetalle.razor` — UI
+
+## UI — Real-Time Area & Employee Search Filters
+
+### Overview
+All search bars that previously used `<select>` dropdowns for Área filtering now use a **real-time search** component (`AreaSearchFilter.razor`). This provides type-to-search with autocomplete results and selected chips, replacing static dropdowns.
+
+### `AreaSearchFilter` Component
+Shared component at `web/.../EconomixWA/Components/Shared/AreaSearchFilter.razor`:
+- **Parameters**: `Areas` (full list), `Seleccionadas` (selected list, bindable), `SeleccionadasChanged`, `OnCambio`
+- **Behavior**: Type 2+ characters → dropdown shows matching areas (max 10). Click to add → shown as removable badge chip. `LimpiarBusqueda()` clears the text input.
+- **Layout**: Does NOT include column wrapper — each search bar wraps it in its own `col-md-*` to preserve layout dimensions.
+
+### Search Bars Updated
+| Search Bar | Page | Column Width |
+|---|---|---|
+| `CuentaBancariaSearchBar` | CuentaBancariaPage | `col-6 col-md-2` |
+| `CajaChicaSearchBar` | CajaChicaPage | `col-6 col-md-2` |
+| `CicloCajaSearchBar` | CicloCajaPage | `col-12 col-md-2` |
+| `UsuarioSearchBar` | UsuariosPage | `col-4 col-md-2` |
+| `RolSearchBar` | RolPage | `col-6 col-md-2` |
+| `RendicionSearchBar` | RendicionPage | `col-12 col-md-3` (conditional) |
+
+### CuentaBancariaSearchBar — Employee Search
+The CuentaBancaria search bar also has a **real-time employee search** (replaced the old "Tipo de Dueño" dropdown):
+- **Parameters**: `Empleados` (full list), `EmpleadosSeleccionados` (selected list, bindable), `EmpleadosSeleccionadosChanged`
+- **Behavior**: Same as area search — type name → dropdown → click to add → chips with X to remove
+- **Filtering logic**: `CuentasFiltradas` filters accounts where `c.EmpleadoAdministrador?.UsuarioID` matches any selected employee
+
+### CuentasBancariasDisponibles — Relational Dropdown Filtering
+
+When a search bar has both an **Área** multi-select filter and a **Cuenta bancaria** dropdown, the CuentaBancaria dropdown should show only accounts belonging to the selected areas. This prevents selecting a bank account from a non-selected area.
+
+**Pattern** (CajaChicaSearchBar / CicloCajaSearchBar):
+```csharp
+private IEnumerable<CuentaBancaria> CuentasBancariasDisponibles =>
+    CuentasBancarias
+        .Where(cb => !AreasSeleccionadas.Any()
+            || AreasSeleccionadas.Any(a => a.AreaID == cb.AreaAdministradora?.AreaID));
+```
+
+Then use `CuentasBancariasDisponibles` in the `<select>`:
+```razor
+<select class="form-select bg-light rounded-4" @bind="FiltroCuentaBancariaId">
+    <option value="0">Todas</option>
+    @foreach (var cuenta in CuentasBancariasDisponibles)
+    {
+        <option value="@cuenta.IdCuenta">@cuenta.NombreBanco - @cuenta.NumeroBancario</option>
+    }
+</select>
+```
+
+Also reset `FiltroCuentaBancariaId = 0` when adding/removing areas (the previously selected account may not belong to the filtered set).
+
+### BuildAreaLookup Timing
+
+When filtering CajaChica or CicloCaja pages by area via `_areaIdByCajaChicaId`, `BuildAreaLookup()` must be called **after** `ListarCajasChicas()` has populated `CajasChicas`. Calling it before will result in an empty dictionary and **no results shown** for area filters.
+
+```csharp
+// Correct ordering:
+await CargarCatalogos();    // loads Areas, CuentasBancarias
+await ListarCajasChicas();  // loads CajasChicas first
+BuildAreaLookup();           // now CajasChicas is populated
+```
+
+### Badge Color Scheme for Multi-Select Filter Chips
+
+Each filter type in multi-select search bars uses distinct badge colors:
+
+| Filter | Badge Classes |
+|--------|---------------|
+| Área | `bg-success-subtle text-success-emphasis` (green) |
+| Empleado | `bg-primary-subtle text-primary-emphasis` (blue) |
+| Moneda | `bg-info-subtle text-info-emphasis` (teal) |
+| Rol | `bg-warning-subtle text-warning-emphasis` (amber) |
+| Estado | `bg-danger-subtle text-danger-emphasis` (red) |
+
+### Parent Page Pattern
+Each parent page follows the same pattern:
+1. Replace `FiltroAreaId` (int) with `AreasSeleccionadas` (List\<Area\>)
+2. Update search bar binding: `@bind-FiltroAreaId` → `@bind-AreasSeleccionadas`
+3. Update `HayFiltrosActivos`: `FiltroAreaId > 0` → `AreasSeleccionadas.Any()`
+4. Update filtering: `FiltroAreaId <= 0 || entity.Area?.AreaID == FiltroAreaId` → `!AreasSeleccionadas.Any() || AreasSeleccionadas.Any(a => a.AreaID == entity.Area?.AreaID)`
+5. Update `LimpiarFiltros`: `FiltroAreaId = 0` → `AreasSeleccionadas = new()`
+
+### File Locations
+- `web/.../EconomixWA/Components/Shared/AreaSearchFilter.razor`
+- `web/.../EconomixWA/Components/Pages/CuentaBancaria/CuentaBancariaSearchBar.razor`
+- `web/.../EconomixWA/Components/Pages/CuentaBancaria/CuentaBancariaPage.razor`
+- `web/.../EconomixWA/Components/Pages/CajaChica/CajaChicaSearchBar.razor`
+- `web/.../EconomixWA/Components/Pages/CajaChica/CajaChicaPage.razor`
+- `web/.../EconomixWA/Components/Pages/CajaChica/CicloCajaSearchBar.razor`
+- `web/.../EconomixWA/Components/Pages/CajaChica/CicloCajaPage.razor`
+- `web/.../EconomixWA/Components/Pages/Usuario/UsuarioSearchBar.razor`
+- `web/.../EconomixWA/Components/Pages/Usuario/UsuariosPage.razor`
+- `web/.../EconomixWA/Components/Pages/Rol/RolSearchBar.razor`
+- `web/.../EconomixWA/Components/Pages/Rol/RolPage.razor`
+- `web/.../EconomixWA/Components/Pages/Rendicion/RendicionSearchBar.razor`
+- `web/.../EconomixWA/Components/Pages/Rendicion/RendicionPage.razor`
+
+## Page-Level Authorization (`[Authorize]` Attributes)
+
+All routable Blazor pages now have `[Authorize]` / `[Authorize(Roles = "...")]` or `[AllowAnonymous]`:
+- `@attribute [AllowAnonymous]` — Login, Logout, NotFound, Error
+- `@attribute [Authorize]` — Home (any authenticated user)
+- `@attribute [Authorize(Roles = "Administrador")]` — Area, AreaDetalle, Rol, Usuarios, UsuarioDetalle, CuentaBancaria, Moneda, MonedaDetalle, Reportes
+- `@attribute [Authorize(Roles = "Administrador, Tesoreria")]` — CajaChica, CicloCaja, CicloCajaDetalle
+- `@attribute [Authorize(Roles = "Administrador, Jefe, Tesoreria")]` — SolicitudesDeGastoRecibidas, Transacciones, Rendiciones, DashboardTesoreria
+- `@attribute [Authorize(Roles = "Administrador, Jefe, Empleado, Tesoreria")]` — ComprobantesDePago, ComprobanteDePagoDetalle
+- `@attribute [Authorize(Roles = "Empleado, Jefe")]` — MisSolicitudesDeGasto, MiSolicitudDeGastoDetalle
+- `@attribute [Authorize(Roles = "Empleado")]` — MisComprobantesDePago
+- `@attribute [Authorize(Roles = "Jefe, Tesoreria")]` — PermisosPendientes
+
+The `using Microsoft.AspNetCore.Authorization` is in `_Imports.razor` (global).
+`AuthorizeRouteView` in `Routes.razor` handles unauthorized users: unauthenticated → redirect to login, authenticated but wrong role → "Acceso Denegado" message.
+
+**Important**: The 4 auth policies in `Program.cs` (`IsAdministrador`, `IsJefe`, `IsEmpleado`, `IsTesoreria`) are defined but **never referenced** — role enforcement is done entirely via `[Authorize(Roles = "...")]` attributes on each page.

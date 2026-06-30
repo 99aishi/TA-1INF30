@@ -158,15 +158,18 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         List<ComprobantePago> comprobantesExistentes = comprobantePagoDAO.listarPorSolicitud(soli.getIdSolicitudGasto());
 
         double montoComprobantes = 0;
-        for (ComprobantePago c : comprobantesExistentes) {
-            if (c.getEstado() != null && c.getEstado().toString().equals("ANULADO")) {
-                continue;
+        if(comprobantesExistentes != null){
+            for (ComprobantePago c : comprobantesExistentes) {
+                if (c.getEstado() != null && c.getEstado().toString().equals("ANULADO")) {
+                    continue;
+                }
+                if (esModificacion && c.getIdComprobante() == comprobante.getIdComprobante()) {
+                    continue;
+                }
+                montoComprobantes += c.getTotal();
             }
-            if (esModificacion && c.getIdComprobante() == comprobante.getIdComprobante()) {
-                continue;
-            }
-            montoComprobantes += c.getTotal();
         }
+
 
         double montoDisponible = soli.getMontoSolicitado() - montoComprobantes;
         if (comprobante.getTotal() > montoDisponible) {

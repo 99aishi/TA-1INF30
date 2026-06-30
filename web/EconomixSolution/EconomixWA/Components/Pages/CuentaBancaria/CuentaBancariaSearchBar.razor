@@ -19,36 +19,54 @@
         <div class="col-12 col-md-2">
             <label class="form-label small text-muted">Moneda</label>
             <select class="form-select bg-light rounded-4"
-                    value="@MonedaSeleccionadaId"
-                    @onchange="OnMonedaCambiada">
+                    value="0"
+                    @onchange="OnMonedaSeleccionada">
                 <option value="0">Todas</option>
-                @foreach (var moneda in Monedas)
+                @foreach (var moneda in MonedasDisponibles)
                 {
                     <option value="@moneda.IdMoneda">@moneda.Simbolo - @moneda.Nombre</option>
                 }
             </select>
         </div>
-        <div class="col-6 col-md-2">
+        <div class="col-12 col-md-2">
             <label class="form-label small text-muted">Área</label>
             <select class="form-select bg-light rounded-4"
-                    value="@FiltroAreaId"
-                    @onchange="OnAreaCambiada">
+                    value="0"
+                    @onchange="OnAreaSeleccionada">
                 <option value="0">Todas</option>
-                @foreach (var area in Areas)
+                @foreach (var area in AreasDisponibles)
                 {
                     <option value="@area.AreaID">@area.Nombre</option>
                 }
             </select>
         </div>
-        <div class="col-6 col-md-2">
-            <label class="form-label small text-muted">Tipo de dueño</label>
-            <select class="form-select bg-light rounded-4"
-                    value="@TipoDueno"
-                    @onchange="OnTipoDuenoCambiado">
-                <option value="Todos">Todos</option>
-                <option value="Empleado">Empleado</option>
-                <option value="Area">Área</option>
-            </select>
+        <div class="col-12 col-md-2">
+            <label class="form-label small text-muted">Nombre del empleado</label>
+            <div class="position-relative">
+                <input type="text"
+                       class="form-control bg-light rounded-4"
+                       placeholder="Buscar empleado..."
+                       value="@BusquedaEmpleado"
+                       @oninput="OnBusquedaEmpleadoCambiada"
+                       @onfocus="() => MostrarDropdown = BusquedaEmpleado.Length >= 2"
+                       @onblur="OnBlurEmpleado" />
+                @if (MostrarDropdown && ResultadosBusqueda.Any())
+                {
+                    <div class="position-absolute top-100 start-0 w-100 bg-white border rounded-4 shadow-sm z-3"
+                         style="max-height:200px;overflow-y:auto;z-index:1050;">
+                        @foreach (var emp in ResultadosBusqueda)
+                        {
+                            <div class="px-3 py-2 small cursor-pointer d-flex align-items-center"
+                                 @onmouseenter="() => _hoveredEmpId = emp.UsuarioID"
+                                 @onmouseleave="() => _hoveredEmpId = null"
+                                 @onmousedown="() => SeleccionarEmpleado(emp)"
+                                 style="@(_hoveredEmpId == emp.UsuarioID ? "background-color:#e9ecef;" : "")">
+                                <span>@emp.Nombres @emp.ApellidoPaterno</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
         </div>
         <div class="col-12 col-md-2 d-grid">
             <label class="form-label small text-muted">&nbsp;</label>
@@ -57,6 +75,45 @@
             </button>
         </div>
     </div>
+    @if (MonedasSeleccionadas.Any() || AreasSeleccionadas.Any() || EmpleadosSeleccionados.Any())
+    {
+        <div class="row mt-2">
+            <div class="col-12">
+                <div class="d-flex flex-wrap gap-1">
+                    @foreach (var moneda in MonedasSeleccionadas)
+                    {
+                        <span class="badge bg-info-subtle text-info-emphasis rounded-pill d-flex align-items-center gap-1">
+                            @moneda.Simbolo - @moneda.Nombre
+                            <button type="button" class="btn-close"
+                                    style="font-size:0.6em;"
+                                    @onclick="() => QuitarMoneda(moneda)">
+                            </button>
+                        </span>
+                    }
+                    @foreach (var area in AreasSeleccionadas)
+                    {
+                        <span class="badge bg-success-subtle text-success-emphasis rounded-pill d-flex align-items-center gap-1">
+                            @area.Nombre
+                            <button type="button" class="btn-close"
+                                    style="font-size:0.6em;"
+                                    @onclick="() => QuitarArea(area)">
+                            </button>
+                        </span>
+                    }
+                    @foreach (var emp in EmpleadosSeleccionados)
+                    {
+                        <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill d-flex align-items-center gap-1">
+                            @emp.Nombres @emp.ApellidoPaterno
+                            <button type="button" class="btn-close"
+                                    style="font-size:0.6em;"
+                                    @onclick="() => QuitarEmpleado(emp)">
+                            </button>
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
@@ -73,31 +130,51 @@
     public EventCallback<string> BusquedaCuentaCCIChanged { get; set; }
 
     [Parameter]
-    public int MonedaSeleccionadaId { get; set; }
-
-    [Parameter]
-    public EventCallback<int> MonedaSeleccionadaIdChanged { get; set; }
-
-    [Parameter]
-    public int FiltroAreaId { get; set; }
-
-    [Parameter]
-    public EventCallback<int> FiltroAreaIdChanged { get; set; }
-
-    [Parameter]
-    public string TipoDueno { get; set; } = "Todos";
-
-    [Parameter]
-    public EventCallback<string> TipoDuenoChanged { get; set; }
-
-    [Parameter]
     public List<Moneda> Monedas { get; set; } = new();
+
+    [Parameter]
+    public List<Moneda> MonedasSeleccionadas { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<List<Moneda>> MonedasSeleccionadasChanged { get; set; }
 
     [Parameter]
     public List<Area> Areas { get; set; } = new();
 
     [Parameter]
+    public List<Area> AreasSeleccionadas { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<List<Area>> AreasSeleccionadasChanged { get; set; }
+
+    [Parameter]
+    public List<Empleado> Empleados { get; set; } = new();
+
+    [Parameter]
+    public List<Empleado> EmpleadosSeleccionados { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<List<Empleado>> EmpleadosSeleccionadosChanged { get; set; }
+
+    [Parameter]
     public EventCallback OnBuscar { get; set; }
+
+    private string BusquedaEmpleado { get; set; } = string.Empty;
+    private bool MostrarDropdown { get; set; }
+    private int? _hoveredEmpId;
+    private IEnumerable<Empleado> ResultadosBusqueda =>
+        Empleados
+            .Where(e => !EmpleadosSeleccionados.Any(s => s.UsuarioID == e.UsuarioID))
+            .Where(e => (e.Nombres ?? "").Contains(BusquedaEmpleado, StringComparison.OrdinalIgnoreCase)
+                     || (e.ApellidoPaterno ?? "").Contains(BusquedaEmpleado, StringComparison.OrdinalIgnoreCase)
+                     || (e.ApellidoMaterno ?? "").Contains(BusquedaEmpleado, StringComparison.OrdinalIgnoreCase))
+            .Take(10);
+
+    private IEnumerable<Area> AreasDisponibles =>
+        Areas.Where(a => !AreasSeleccionadas.Any(s => s.AreaID == a.AreaID));
+
+    private IEnumerable<Moneda> MonedasDisponibles =>
+        Monedas.Where(m => !MonedasSeleccionadas.Any(s => s.IdMoneda == m.IdMoneda));
 
     private async Task OnBancoCambiado(ChangeEventArgs e)
     {
@@ -113,25 +190,82 @@
         await OnBuscar.InvokeAsync();
     }
 
-    private async Task OnMonedaCambiada(ChangeEventArgs e)
+    private async Task OnMonedaSeleccionada(ChangeEventArgs e)
     {
-        MonedaSeleccionadaId = int.TryParse(e.Value?.ToString(), out var val) ? val : 0;
-        await MonedaSeleccionadaIdChanged.InvokeAsync(MonedaSeleccionadaId);
+        var monedaId = int.TryParse(e.Value?.ToString(), out var val) ? val : 0;
+        if (monedaId > 0)
+        {
+            var moneda = Monedas.FirstOrDefault(m => m.IdMoneda == monedaId);
+            if (moneda != null)
+            {
+                MonedasSeleccionadas = new List<Moneda>(MonedasSeleccionadas) { moneda };
+                await MonedasSeleccionadasChanged.InvokeAsync(MonedasSeleccionadas);
+            }
+        }
+    }
+
+    private async Task QuitarMoneda(Moneda moneda)
+    {
+        if (MonedasSeleccionadas.Any(m => m.IdMoneda == moneda.IdMoneda))
+        {
+            MonedasSeleccionadas = MonedasSeleccionadas.Where(m => m.IdMoneda != moneda.IdMoneda).ToList();
+            await MonedasSeleccionadasChanged.InvokeAsync(MonedasSeleccionadas);
+        }
+    }
+
+    private async Task OnAreaSeleccionada(ChangeEventArgs e)
+    {
+        var areaId = int.TryParse(e.Value?.ToString(), out var val) ? val : 0;
+        if (areaId > 0)
+        {
+            var area = Areas.FirstOrDefault(a => a.AreaID == areaId);
+            if (area != null && AreasSeleccionadas.All(a => a.AreaID != areaId))
+            {
+                AreasSeleccionadas = new List<Area>(AreasSeleccionadas) { area };
+                await AreasSeleccionadasChanged.InvokeAsync(AreasSeleccionadas);
+                await OnBuscar.InvokeAsync();
+            }
+        }
+    }
+
+    private async Task QuitarArea(Area area)
+    {
+        AreasSeleccionadas = AreasSeleccionadas.Where(a => a.AreaID != area.AreaID).ToList();
+        await AreasSeleccionadasChanged.InvokeAsync(AreasSeleccionadas);
         await OnBuscar.InvokeAsync();
     }
 
-    private async Task OnAreaCambiada(ChangeEventArgs e)
+    private async Task OnBusquedaEmpleadoCambiada(ChangeEventArgs e)
     {
-        FiltroAreaId = int.TryParse(e.Value?.ToString(), out var val) ? val : 0;
-        await FiltroAreaIdChanged.InvokeAsync(FiltroAreaId);
+        BusquedaEmpleado = e.Value?.ToString() ?? string.Empty;
+        MostrarDropdown = BusquedaEmpleado.Length >= 2;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SeleccionarEmpleado(Empleado emp)
+    {
+        if (EmpleadosSeleccionados.All(e => e.UsuarioID != emp.UsuarioID))
+        {
+            EmpleadosSeleccionados = new List<Empleado>(EmpleadosSeleccionados) { emp };
+            await EmpleadosSeleccionadosChanged.InvokeAsync(EmpleadosSeleccionados);
+            await OnBuscar.InvokeAsync();
+        }
+        BusquedaEmpleado = string.Empty;
+        MostrarDropdown = false;
+    }
+
+    private async Task QuitarEmpleado(Empleado emp)
+    {
+        EmpleadosSeleccionados = EmpleadosSeleccionados.Where(e => e.UsuarioID != emp.UsuarioID).ToList();
+        await EmpleadosSeleccionadosChanged.InvokeAsync(EmpleadosSeleccionados);
         await OnBuscar.InvokeAsync();
     }
 
-    private async Task OnTipoDuenoCambiado(ChangeEventArgs e)
+    private async Task OnBlurEmpleado()
     {
-        TipoDueno = e.Value?.ToString() ?? "Todos";
-        await TipoDuenoChanged.InvokeAsync(TipoDueno);
-        await OnBuscar.InvokeAsync();
+        await Task.Delay(200);
+        MostrarDropdown = false;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task Limpiar()
@@ -142,14 +276,14 @@
         BusquedaCuentaCCI = string.Empty;
         await BusquedaCuentaCCIChanged.InvokeAsync(BusquedaCuentaCCI);
 
-        MonedaSeleccionadaId = 0;
-        await MonedaSeleccionadaIdChanged.InvokeAsync(MonedaSeleccionadaId);
+        MonedasSeleccionadas = new();
+        await MonedasSeleccionadasChanged.InvokeAsync(MonedasSeleccionadas);
 
-        FiltroAreaId = 0;
-        await FiltroAreaIdChanged.InvokeAsync(0);
+        AreasSeleccionadas = new();
+        await AreasSeleccionadasChanged.InvokeAsync(AreasSeleccionadas);
 
-        TipoDueno = "Todos";
-        await TipoDuenoChanged.InvokeAsync(TipoDueno);
+        EmpleadosSeleccionados = new();
+        await EmpleadosSeleccionadosChanged.InvokeAsync(EmpleadosSeleccionados);
 
         await OnBuscar.InvokeAsync();
     }

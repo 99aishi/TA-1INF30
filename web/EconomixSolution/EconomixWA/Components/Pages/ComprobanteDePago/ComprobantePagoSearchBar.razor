@@ -1,55 +1,55 @@
 @rendermode InteractiveServer
 
-<div class="card rounded-4 p-2 mb-3 shadow-sm border-0 bg-white">
-    <div class="d-flex flex-wrap align-items-end gap-1">
-        <div style="flex: 2 1 140px; min-width: 120px;">
-            <label class="form-label small text-muted mb-1 ms-1">Proveedor</label>
-            <input type="text" class="form-control form-control-sm bg-light border-0 rounded-3 px-2 py-1" style="font-size: 0.85rem;" placeholder="Buscar proveedor..."
+<div class="card rounded-4 p-3 mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="@GetColumnClass("proveedor")">
+            <label class="form-label small text-muted">Proveedor</label>
+            <input type="text" class="form-control bg-light rounded-4" placeholder="Buscar proveedor..."
                    value="@FiltroTexto" @oninput="OnTextoCambiado" />
         </div>
-        <div style="flex: 1 1 80px; min-width: 75px;">
-            <label class="form-label small text-muted mb-1 ms-1">Estado</label>
-            <select class="form-select form-select-sm bg-light border-0 rounded-3 py-1" style="font-size: 0.85rem;" value="@FiltroEstado" @onchange="OnEstadoCambiado">
+        <div class="@GetColumnClass("estado")">
+            <label class="form-label small text-muted">Estado</label>
+            <select class="form-select bg-light rounded-4" value="@FiltroEstado" @onchange="OnEstadoCambiado">
                 <option value="Todas">Todas</option>
-                <option value="POR_REVISAR">P. rev</option>
-                <option value="APROBADO">Aprob.</option>
-                <option value="OBSERVADO">Obs.</option>
-                <option value="ANULADO">Anul.</option>
+                <option value="POR_REVISAR">Por revisar</option>
+                <option value="APROBADO">Aprobado</option>
+                <option value="OBSERVADO">Observado</option>
+                <option value="ANULADO">Anulado</option>
             </select>
         </div>
-        <div style="flex: 1 1 80px; min-width: 75px;">
-            <label class="form-label small text-muted mb-1 ms-1">Tipo</label>
-            <select class="form-select form-select-sm bg-light border-0 rounded-3 py-1" style="font-size: 0.85rem;" value="@FiltroTipo" @onchange="OnTipoCambiado">
+        <div class="@GetColumnClass("tipo")">
+            <label class="form-label small text-muted">Tipo</label>
+            <select class="form-select bg-light rounded-4" value="@FiltroTipo" @onchange="OnTipoCambiado">
                 <option value="Todos">Todos</option>
-                <option value="FACTURA">Fact.</option>
-                <option value="BOLETA">Bolet.</option>
+                <option value="FACTURA">Factura</option>
+                <option value="BOLETA">Boleta</option>
             </select>
         </div>
-        <div style="flex: 1 1 65px; min-width: 60px;">
-            <label class="form-label small text-muted mb-1 ms-1">Mín</label>
-            <input type="number" step="0.01" class="form-control form-control-sm bg-light border-0 rounded-3 px-2 py-1" style="font-size: 0.85rem;" placeholder="0"
+        <div class="@GetColumnClass("montoMin")">
+            <label class="form-label small text-muted">Monto mín</label>
+            <input type="number" step="0.01" class="form-control bg-light rounded-4" placeholder="0"
                    value="@FiltroMontoMin" @oninput="OnMontoMinCambiado" />
         </div>
-        <div style="flex: 1 1 65px; min-width: 60px;">
-            <label class="form-label small text-muted mb-1 ms-1">Máx</label>
-            <input type="number" step="0.01" class="form-control form-control-sm bg-light border-0 rounded-3 px-2 py-1" style="font-size: 0.85rem;" placeholder="0"
+        <div class="@GetColumnClass("montoMax")">
+            <label class="form-label small text-muted">Monto máx</label>
+            <input type="number" step="0.01" class="form-control bg-light rounded-4" placeholder="0"
                    value="@FiltroMontoMax" @oninput="OnMontoMaxCambiado" />
         </div>
-        <div style="flex: 1.2 1 100px; min-width: 90px;">
-            <label class="form-label small text-muted mb-1 ms-1">Inicio</label>
-            <input type="date" class="form-control form-control-sm bg-light border-0 rounded-3 px-2 py-1" style="font-size: 0.85rem;"
+        <div class="@GetColumnClass("fechaInicio")">
+            <label class="form-label small text-muted">Fecha inicio</label>
+            <input type="date" class="form-control bg-light rounded-4"
                    value="@FiltroFechaInicio?.ToString("yyyy-MM-dd")" @onchange="OnFechaInicioCambiada" />
         </div>
-        <div style="flex: 1.2 1 100px; min-width: 90px;">
-            <label class="form-label small text-muted mb-1 ms-1">Fin</label>
-            <input type="date" class="form-control form-control-sm bg-light border-0 rounded-3 px-2 py-1" style="font-size: 0.85rem;"
+        <div class="@GetColumnClass("fechaFin")">
+            <label class="form-label small text-muted">Fecha fin</label>
+            <input type="date" class="form-control bg-light rounded-4"
                    value="@FiltroFechaFin?.ToString("yyyy-MM-dd")" @onchange="OnFechaFinCambiada" />
         </div>
         @if (MostrarArea)
         {
-            <div style="flex: 1.5 1 110px; min-width: 100px;">
-                <label class="form-label small text-muted mb-1 ms-1">Área</label>
-                <select class="form-select form-select-sm bg-light border-0 rounded-3 py-1" style="font-size: 0.85rem;" value="0" @onchange="OnAreaSeleccionada">
+            <div class="@GetColumnClass("area")">
+                <label class="form-label small text-muted">Área</label>
+                <select class="form-select bg-light rounded-4" value="0" @onchange="OnAreaSeleccionada">
                     <option value="0">Seleccione...</option>
                     @foreach (var a in Areas.Where(x => !AreasSeleccionadas.Any(s => s.AreaID == x.AreaID)))
                     {
@@ -61,9 +61,9 @@
                     <div class="d-flex flex-wrap gap-1 mt-1">
                         @foreach (var area in AreasSeleccionadas)
                         {
-                            <span class="badge bg-success-subtle text-success-emphasis rounded-pill d-flex align-items-center gap-1" style="font-size:0.65rem; padding: 2px 6px;">
+                            <span class="badge bg-success-subtle text-success-emphasis rounded-pill d-flex align-items-center gap-1" style="font-size:0.7rem;">
                                 @area.Nombre
-                                <button type="button" class="btn-close p-0" style="font-size:0.45rem;" @onclick="() => QuitarArea(area)"></button>
+                                <button type="button" class="btn-close p-0" style="font-size:0.5rem;" @onclick="() => QuitarArea(area)"></button>
                             </span>
                         }
                     </div>
@@ -72,20 +72,20 @@
         }
         @if (MostrarEmpleado)
         {
-            <div style="flex: 2 1 130px; min-width: 110px;">
-                <label class="form-label small text-muted mb-1 ms-1">Empleado</label>
+            <div class="@GetColumnClass("empleado")">
+                <label class="form-label small text-muted">Empleado</label>
                 <div class="position-relative">
-                    <input type="text" class="form-control form-control-sm bg-light border-0 rounded-3 px-2 py-1" style="font-size: 0.85rem;" placeholder="Buscar..."
+                    <input type="text" class="form-control bg-light rounded-4" placeholder="Buscar..."
                            value="@BusquedaEmpleado" @oninput="OnBusquedaEmpleadoCambiada"
                            @onfocus="() => MostrarDropdown = BusquedaEmpleado.Length >= 2"
                            @onblur="OnBlurEmpleado" />
                     @if (MostrarDropdown && ResultadosBusqueda.Any())
                     {
-                        <div class="position-absolute top-100 start-0 w-100 bg-white border rounded-3 shadow-sm z-3"
-                             style="max-height:150px;overflow-y:auto;z-index:1050;">
+                        <div class="position-absolute top-100 start-0 w-100 bg-white border rounded-4 shadow-sm z-3"
+                             style="max-height:200px;overflow-y:auto;z-index:1050;">
                             @foreach (var emp in ResultadosBusqueda)
                             {
-                                <div class="px-2 py-1 small cursor-pointer d-flex align-items-center"
+                                <div class="px-3 py-2 small cursor-pointer d-flex align-items-center"
                                      @onmouseenter="() => _hoveredEmpId = emp.UsuarioID"
                                      @onmouseleave="() => _hoveredEmpId = null"
                                      @onmousedown="() => SeleccionarEmpleado(emp)"
@@ -101,17 +101,18 @@
                     <div class="d-flex flex-wrap gap-1 mt-1">
                         @foreach (var emp in EmpleadosSeleccionados)
                         {
-                            <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill d-flex align-items-center gap-1" style="font-size:0.65rem; padding: 2px 6px;">
+                            <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill d-flex align-items-center gap-1" style="font-size:0.7rem;">
                                 @emp.Nombres @emp.ApellidoPaterno
-                                <button type="button" class="btn-close p-0" style="font-size:0.45rem;" @onclick="() => QuitarEmpleado(emp)"></button>
+                                <button type="button" class="btn-close p-0" style="font-size:0.5rem;" @onclick="() => QuitarEmpleado(emp)"></button>
                             </span>
                         }
                     </div>
                 }
             </div>
         }
-        <div style="flex: 0 0 auto;">
-            <button type="button" class="btn btn-sm btn-outline-secondary rounded-3 px-3 py-1" style="font-size: 0.85rem;" @onclick="Limpiar">Limpiar</button>
+        <div class="@GetColumnClass("limpiar") d-grid">
+            <label class="form-label small text-muted">&nbsp;</label>
+            <button type="button" class="btn btn-outline-secondary rounded-4" @onclick="Limpiar">Limpiar</button>
         </div>
     </div>
 </div>

@@ -1,5 +1,7 @@
 @page "/area/detalle"
 @page "/area/Crear"
+@attribute [Authorize(Roles = "Administrador")]
+@using Microsoft.AspNetCore.WebUtilities
 
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
@@ -35,7 +37,7 @@
 
             <div class="row">
                 <div class="col-12 col-md-6 mt-3">
-                    <label for="NombreArea" class="form-label">Nombre del área</label>
+                    <label for="NombreArea" class="form-label small text-muted">Nombre del área</label>
                     <input type="text"
                            class="form-control form-control-lg rounded-4 bg-light @(Errores.ContainsKey("Nombre") ? "is-invalid" : "")"
                            id="NombreArea"
@@ -46,7 +48,7 @@
                     }
                 </div>
                 <div class="col-12 col-md-6 mt-3">
-                    <label for="NombreJefe" class="form-label">Jefe del área</label>
+                    <label for="NombreJefe" class="form-label small text-muted">Jefe del área</label>
                     <select id="NombreJefe" class="form-select form-select-lg rounded-4 bg-light"
                             @bind="JefeSeleccionadoId">
                         <option value="0">Sin jefe asignado</option>
@@ -58,7 +60,7 @@
                 </div>
 
                 <div class="col-12 mt-3">
-                    <label for="DescripcionArea" class="form-label">Descripción</label>
+                    <label for="DescripcionArea" class="form-label small text-muted">Descripción</label>
                     <textarea class="form-control bg-light rounded-4 @(Errores.ContainsKey("Descripcion") ? "is-invalid" : "")"
                               id="DescripcionArea" rows="5"
                               placeholder="Ingrese una descripción del área" @bind="Area.Descripcion"></textarea>
@@ -88,7 +90,7 @@
                 <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="IrAAreas">
                     @(Procesando ? "Procesando..." : "Cerrar")
                 </button>
-                <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="IrAAreas">
+                <button type="button" class="btn btn-outline-secondary" disabled="@Procesando" @onclick="IrAAreas">
                     @(Procesando ? "Procesando..." : "Cancelar")
                 </button>
             }

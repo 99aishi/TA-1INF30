@@ -28,17 +28,17 @@
         string categoria = UsuarioCategoria?.Trim() ?? "";
         if (categoria.Equals("Administrador", StringComparison.OrdinalIgnoreCase))
         {
-            opcionesMenu = new List<String>() { "Dashboard", "Areas", "Roles", "Usuarios", "Cuentas Bancarias", "Monedas", "Caja Chica", "Solicitudes de Gasto", "Transacciones", "Comprobantes de Pago", "Rendiciones" };
+            opcionesMenu = new List<String>() { "Dashboard", "Areas", "Roles", "Usuarios", "Cuentas Bancarias", "Monedas", "Caja Chica", "Ciclos", "Solicitudes de Gasto", "Transacciones", "Comprobantes de Pago", "Rendiciones" };
         }
         else if (categoria.Equals("Jefe", StringComparison.OrdinalIgnoreCase) || 
                  categoria.Equals("Jefe de Área", StringComparison.OrdinalIgnoreCase) || 
                  categoria.Equals("Jefe de Area", StringComparison.OrdinalIgnoreCase))
         {
-            opcionesMenu = new List<String>() { "Dashboard", "Mis Solicitudes de Gasto", "Solicitudes de Gasto", "Comprobantes de Pago", "Rendiciones", "Transacciones" };
+            opcionesMenu = new List<String>() { "Dashboard", "Solicitudes de Gasto", "Comprobantes de Pago", "Rendiciones", "Transacciones" };
         }
         else if (categoria.Equals("Empleado", StringComparison.OrdinalIgnoreCase))
         {
-            opcionesMenu = new List<String>() { "Dashboard", "Mis Solicitudes de Gasto", "Mis Comprobantes de Pago", "Comprobantes de Pago", "Transacciones" };
+            opcionesMenu = new List<String>() { "Dashboard", "Mis Solicitudes de Gasto", "Mis Comprobantes de Pago",  "Transacciones" };
         }
         else if (categoria.Equals("Tesoreria", StringComparison.OrdinalIgnoreCase) || 
                  categoria.Equals("Tesorero", StringComparison.OrdinalIgnoreCase) || 

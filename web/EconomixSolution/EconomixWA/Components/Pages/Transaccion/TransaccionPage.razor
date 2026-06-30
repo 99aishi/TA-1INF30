@@ -1,4 +1,6 @@
 @page "/Transacciones"
+@attribute [Authorize(Roles = "Administrador, Jefe, Empleado, Tesoreria")]
+@using Microsoft.AspNetCore.WebUtilities
 @rendermode InteractiveServer
 @inject ITransaccionWS TransaccionWS
 @inject IUsuarioWS UsuarioWS

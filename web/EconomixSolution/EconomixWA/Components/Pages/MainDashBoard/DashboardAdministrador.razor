@@ -6,8 +6,8 @@
 @inject ICajaChicaWS CajaChicaWS
 @inject IAuditoriaWS AuditoriaWS
 
-<div class="d-flex flex-column h-100">
-    <div class="row g-3 mb-3">
+<div class="d-flex flex-column h-100 overflow-hidden pb-4">
+    <div class="row g-3 mb-3 flex-shrink-0">
         <div class="col-6 col-lg-3">
             <div class="card rounded-4 h-100 cursor-pointer hover-shadow" @onclick="IrAUsuarios">
                 <div class="card-body">
@@ -45,12 +45,11 @@
         </div>
     </div>
 
-    <div class="row g-3 flex-fill overflow-hidden mb-3">
+    <div class="row g-3 flex-fill overflow-hidden">
         <div class="col-12 col-lg-6 h-100 d-flex flex-column overflow-hidden">
-            <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden mb-3">
+                <div class="card-header bg-white py-3">
                     <h6 class="mb-0">Solicitudes Recientes</h6>
-                    <button class="btn btn-sm btn-outline-primary" @onclick="IrASolicitudes">Ver todas</button>
                 </div>
                 <hr class="my-0" />
                 <div class="card-body p-3 overflow-scroll flex-fill">
@@ -79,13 +78,9 @@
         </div>
 
         <div class="col-12 col-lg-6 h-100 d-flex flex-column overflow-hidden">
-            <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden mb-3">
+                <div class="card-header bg-white py-3">
                     <h6 class="mb-0">Actividad Reciente</h6>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-secondary-subtle text-secondary">@ActividadReciente.Count eventos</span>
-                        <button class="btn btn-sm btn-outline-primary" @onclick="IrAAuditoria">Ver todo</button>
-                    </div>
                 </div>
                 <hr class="my-0" />
                 <div class="card-body p-3 overflow-scroll flex-fill">
@@ -206,7 +201,6 @@
             var todas = await SolicitudGastoWS.listarAsync();
             SolicitudesRecientes = todas
                 .OrderByDescending(s => s.FechaSolicitud)
-                .Take(10)
                 .ToList();
         }
         catch
@@ -224,7 +218,6 @@
             var todos = await AuditoriaWS.listarRecientesAsync(50);
             ActividadReciente = todos
                 .Where(a => a.TipoEvento != "LOGIN_SUCCESS")
-                .Take(15)
                 .ToList();
         }
         catch

@@ -631,7 +631,22 @@ private async Task CargarAreas()
 .Where(c => FiltroAreaId <= 0 || c.AreaAdministradora?.AreaID == FiltroAreaId) // CuentaBancaria
 ```
 
-Pages with Area filter: `RolPage`, `UsuariosPage`, `CuentaBancariaPage`, `CajaChicaPage` (CicloCaja).
+Pages with Area filter: `RolPage`, `UsuariosPage`, `CuentaBancariaPage`, `CajaChicaPage`, `RendicionPage`, `CicloCajaPage`, `DashboardTesoreria`.
+
+> **Multi-select migration:** Most pages now use **multi-select dropdown+chips** instead of single-select for Área, Estado, Moneda, Rol, and Empleado filters. See `AGENTS.md` "UI — Real-Time Area & Employee Search Filters" section for the full pattern. The chips use distinct badge colors per filter type (Área=green, Empleado=blue, Moneda=teal, Rol=amber, Estado=red).
+
+### Relational Dropdown Filtering (CuentaBancariasDisponibles)
+
+When a search bar has both an **Área** multi-select and a **Cuenta bancaria** dropdown, filter the CuentaBancaria list to show only accounts belonging to the selected areas:
+
+```csharp
+private IEnumerable<CuentaBancaria> CuentasBancariasDisponibles =>
+    CuentasBancarias
+        .Where(cb => !AreasSeleccionadas.Any()
+            || AreasSeleccionadas.Any(a => a.AreaID == cb.AreaAdministradora?.AreaID));
+```
+
+Reset `FiltroCuentaBancariaId = 0` when adding/removing areas. Used in `CajaChicaSearchBar` and `CicloCajaSearchBar`.
 
 ### State Management
 
@@ -823,6 +838,24 @@ This pattern is used in both `Home.razor` and `DashboardJefe.razor` (via `_emple
     </div>
 </div>
 ```
+
+### Dashboard Outer Container
+
+All dashboards use an outer `d-flex flex-column h-100 overflow-hidden` container. To prevent card bottom borders/shadows/rounded corners from being clipped by `overflow-hidden`:
+
+```html
+<div class="d-flex flex-column h-100 overflow-hidden pb-4">
+    <div class="row g-3 mb-3 flex-shrink-0">
+        <!-- Stat cards -->
+    </div>
+    <div class="row g-3 flex-fill overflow-hidden mb-3">
+        <!-- List panels -->
+    </div>
+</div>
+```
+
+- `pb-4` on the outer container provides enough bottom padding so the `overflow-hidden` boundary doesn't clip card borders.
+- `flex-shrink-0` on the stat cards row prevents it from being compressed when content fills the flex container.
 
 ### Dashboard List Panel
 

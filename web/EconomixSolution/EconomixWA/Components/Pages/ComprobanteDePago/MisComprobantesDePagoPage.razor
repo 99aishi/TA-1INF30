@@ -1,4 +1,6 @@
 @page "/Mis Comprobantes de Pago"
+@attribute [Authorize(Roles = "Empleado")]
+@using Microsoft.AspNetCore.WebUtilities
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject IComprobantePagoWS ComprobantePagoWS
@@ -33,7 +35,8 @@
                               @bind-FiltroMontoMin="FiltroMontoMin"
                               @bind-FiltroMontoMax="FiltroMontoMax"
                               @bind-FiltroFechaInicio="FiltroFechaInicio"
-                              @bind-FiltroFechaFin="FiltroFechaFin" />
+                              @bind-FiltroFechaFin="FiltroFechaFin"
+                              OcultarAreaEmpleado="true" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">

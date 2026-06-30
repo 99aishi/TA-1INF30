@@ -12,17 +12,14 @@ import net.sf.jasperreports.engine.JasperPrint;
 import pe.edu.pucp.economix.config.DBManager;
 
 public class ReporteService {
-    public byte[] generarReporteGastosPorArea(Date fechaInicio, Date fechaFin) throws Exception {
+
+    private byte[] ejecutarReporte(String reporte, Map<String, Object> parametros) throws Exception {
         InputStream reporteStream = getClass().getClassLoader()
-                .getResourceAsStream("reportes/GastosPorArea.jasper");
+                .getResourceAsStream("reportes/" + reporte + ".jasper");
 
         if (reporteStream == null) {
-            throw new Exception("No se encontró el archivo del reporte: reportes/GastosPorArea.jasper");
+            throw new Exception("No se encontró el archivo del reporte: reportes/" + reporte + ".jasper");
         }
-
-        Map<String, Object> parametros = new HashMap<>();
-        parametros.put("FECHA_INICIO", new java.sql.Date(fechaInicio.getTime()));
-        parametros.put("FECHA_FIN", new java.sql.Date(fechaFin.getTime()));
 
         Connection con = DBManager.getDBManager().getConnection();
 
@@ -34,5 +31,22 @@ public class ReporteService {
                 con.close();
             }
         }
+    }
+
+    public byte[] generarReporteGastosDeAreas(Date fechaInicio, Date fechaFin) throws Exception {
+        Map<String, Object> parametros = new HashMap<>();
+        parametros.put("FECHA_INICIO", new java.sql.Date(fechaInicio.getTime()));
+        parametros.put("FECHA_FIN", new java.sql.Date(fechaFin.getTime()));
+
+        return ejecutarReporte("ReporteGastosDeAreas", parametros);
+    }
+
+    public byte[] generarReporteSolicitudesGasto(String nombreArea, Date fechaInicio, Date fechaFin) throws Exception {
+        Map<String, Object> parametros = new HashMap<>();
+        parametros.put("nombreArea", nombreArea);
+        parametros.put("fechaInicio", new java.sql.Date(fechaInicio.getTime()));
+        parametros.put("fechaFin", new java.sql.Date(fechaFin.getTime()));
+
+        return ejecutarReporte("ReporteSolicitudesGasto", parametros);
     }
 }

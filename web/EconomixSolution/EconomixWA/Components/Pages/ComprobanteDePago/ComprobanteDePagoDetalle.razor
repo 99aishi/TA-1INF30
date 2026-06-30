@@ -3,6 +3,7 @@
 @page "/Comprobantes de Pago/Crear"
 @page "/Comprobantes de Pago/Asociar/{IdSolicitud:int}"
 @attribute [Authorize(Roles = "Administrador, Jefe, Empleado, Tesoreria")]
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 @inject NavigationManager Navigation
 @inject IComprobantePagoWS ComprobantePagoWS

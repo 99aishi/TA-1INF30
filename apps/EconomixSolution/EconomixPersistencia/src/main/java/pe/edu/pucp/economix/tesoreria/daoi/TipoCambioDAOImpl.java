@@ -42,7 +42,7 @@ public class TipoCambioDAOImpl implements ITipoCambioDAO {
         parametrosEntrada.put("p_id_moneda_origen", tipoCambio.getMonedaOrigen().getIdMoneda());
         parametrosEntrada.put("p_id_moneda_destino", tipoCambio.getMonedaDestino().getIdMoneda());
         parametrosEntrada.put("p_valor_tipo_cambio", tipoCambio.getValor());
-        parametrosEntrada.put("p_fecha_tipo_cambio", new java.sql.Timestamp(tipoCambio.getFecha().getTime()));
+        parametrosEntrada.put("p_fecha_tipo_cambio", new java.sql.Date(tipoCambio.getFecha().getTime()));
 
         return DBManager.getDBManager().ejecutarProcedimiento("pa_modificar_tipo_cambio", parametrosEntrada, null);
     }

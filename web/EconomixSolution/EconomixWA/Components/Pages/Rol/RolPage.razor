@@ -1,4 +1,6 @@
 @page "/roles"
+@attribute [Authorize(Roles = "Administrador")]
+@using Microsoft.AspNetCore.WebUtilities
 
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
@@ -26,8 +28,9 @@
 
     <RolSearchBar @bind-FiltroTitulo="FiltroTitulo"
                   @bind-FiltroDescripcion="FiltroDescripcion"
-                  @bind-FiltroAreaId="FiltroAreaId"
+                  @bind-AreasSeleccionadas="AreasSeleccionadasBusqueda"
                   @bind-FiltroEstado="FiltroEstado"
+                  OnFiltrar="Filtrar"
                   Areas="AreasDisponibles" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
@@ -79,7 +82,7 @@
     private bool Cargando { get; set; } = true;
     private string FiltroTitulo { get; set; } = string.Empty;
     private string FiltroDescripcion { get; set; } = string.Empty;
-    private int FiltroAreaId { get; set; }
+    private List<Area> AreasSeleccionadasBusqueda { get; set; } = new();
     private string FiltroEstado { get; set; } = "Todas";
     private List<Rol> Roles { get; set; } = new List<Rol>();
     private List<Area> AreasDisponibles { get; set; } = new List<Area>();
@@ -88,7 +91,7 @@
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(FiltroTitulo)
         || !string.IsNullOrWhiteSpace(FiltroDescripcion)
-        || FiltroAreaId > 0
+        || AreasSeleccionadasBusqueda.Any()
         || FiltroEstado != "Todas";
 
     private IEnumerable<Rol> RolesFiltrados => Roles
@@ -96,7 +99,8 @@
             || r.Titulo.Contains(FiltroTitulo, StringComparison.OrdinalIgnoreCase))
         .Where(r => string.IsNullOrWhiteSpace(FiltroDescripcion)
             || r.Descripcion.Contains(FiltroDescripcion, StringComparison.OrdinalIgnoreCase))
-        .Where(r => FiltroAreaId <= 0 || r.Area?.AreaID == FiltroAreaId)
+        .Where(r => !AreasSeleccionadasBusqueda.Any()
+            || AreasSeleccionadasBusqueda.Any(a => a.AreaID == r.Area?.AreaID))
         .Where(r => FiltroEstado == "Todas"
             || (FiltroEstado == "Activo" && r.EstaActivo)
             || (FiltroEstado == "Inactivo" && !r.EstaActivo));
@@ -137,4 +141,6 @@
     {
         Roles = await RolWS.listarAsync();
     }
+
+    private void Filtrar() => StateHasChanged();
 }

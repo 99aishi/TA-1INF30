@@ -206,6 +206,12 @@
         }
     </div>
     <hr class="my-0" />
+    @if (!string.IsNullOrEmpty(_mensajeError))
+    {
+        <div class="alert alert-danger rounded-4 mb-0 px-3 py-2 small" role="alert">
+            @_mensajeError
+        </div>
+    }
     <div class="p-3 d-flex flex-wrap-nowrap justify-content-end gap-3">
         @if (Transaccion != null && EsModoEdicion)
         {
@@ -247,6 +253,7 @@
     private bool Procesando { get; set; } = false;
     private CuentaBancaria? _cuentaOrigen;
     private string? _cajaChicaNombre;
+    private string? _mensajeError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -377,6 +384,7 @@
 
     private void DeterminarModo()
     {
+        _mensajeError = null;
         if (Transaccion == null)
         {
             EsModoEdicion = false;
@@ -395,7 +403,8 @@
             return;
         }
 
-        bool yaEditado = !string.IsNullOrEmpty(Transaccion.MedioPago)
+        bool yaEditado = Transaccion.EstadoTransaccion != "REGISTRADA"
+            && !string.IsNullOrEmpty(Transaccion.MedioPago)
             && Transaccion.Fecha != default;
 
         EsModoEdicion = !yaEditado;
@@ -436,15 +445,28 @@
     private async Task ConfirmarTransaccion()
     {
         if (Procesando) return;
+        _mensajeError = null;
         Procesando = true;
         try
         {
             var usuario = UsuarioWS.GetCurrentUser();
             if (usuario == null || Transaccion == null)
+            {
+                _mensajeError = "No se pudo identificar al usuario o la transacción.";
                 return;
+            }
 
             if (string.IsNullOrEmpty(Transaccion.NumeroOperacionBancaria) && (Transaccion.MedioPago == "YAPE" || Transaccion.MedioPago == "PLIN" || Transaccion.MedioPago == "TRANSFERENCIA"))
+            {
+                _mensajeError = "Debe ingresar el N° de Operación para este medio de pago.";
                 return;
+            }
+
+            if (string.IsNullOrEmpty(fechaInput))
+            {
+                _mensajeError = "Debe seleccionar una fecha.";
+                return;
+            }
 
             Transaccion.Fecha = DateTime.Parse(fechaInput);
 
@@ -464,7 +486,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al guardar cambios: {ex.Message}");
+            _mensajeError = $"Error al guardar: {ex.Message}";
         }
         finally
         {
@@ -475,11 +497,13 @@
     private async Task CancelarEdicion()
     {
         EsModoEdicion = false;
+        _mensajeError = null;
         await OnCierraDetalle.InvokeAsync();
     }
 
     public async Task CerrarDetalleComprobante()
     {
+        _mensajeError = null;
         await OnCierraDetalle.InvokeAsync();
     }
 

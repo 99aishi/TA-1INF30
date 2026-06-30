@@ -1,9 +1,12 @@
 @page "/dashboard"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.WebUtilities
 @rendermode InteractiveServer
 @inject IUsuarioWS UsuarioWS
 @inject ISolicitudGastoWS SolicitudGastoWS
-
 @inject IEmpleadoWS EmpleadoWS
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
 @using System.Collections.Generic;
 @using EconomixWA.Components.Pages.MainDashBoard;
 @using EconomixWA.Components.Pages.SolicitudDeGasto.SolicitudRecibida;
@@ -15,13 +18,83 @@
 
 <div class="h-100 d-flex flex-column">
     
-    <div class="d-flex flex-row align-items-center mb-4">
+    <div class="d-flex flex-row align-items-center mb-4 flex-wrap gap-2">
         <div class="flex-grow-1">
             <p class="h4 mb-1">@Saludo, @(UsuarioActual?.Nombres ?? "Usuario")</p>    
             <p class="h6 text-muted mb-0">Área: @(AreaUsuario)</p>
         </div>
         <LiveClock />
-        <div class="flex-grow-1 text-end"></div>
+        @if (Rol == "Jefe")
+        {
+            <div class="flex-grow-1 d-flex justify-content-end align-items-center">
+
+                <div class="d-flex flex-column align-items-start">
+
+                    <small class="text-muted mb-1">Reporte de Solicitudes de Gasto por Empleado</small>
+
+                    <div class="d-flex align-items-center">
+                        <input type="date"
+                               class="form-control form-control-sm rounded-4 bg-light"
+                               style="width:130px"
+                               @bind="RepFechaInicio"
+                               @bind:format="yyyy-MM-dd" />
+
+                        <input type="date"
+                               class="form-control form-control-sm rounded-4 bg-light ms-1"
+                               style="width:130px"
+                               @bind="RepFechaFin"
+                               @bind:format="yyyy-MM-dd" />
+
+                        <button type="button"
+                                class="btn btn-outline-primary btn-sm rounded-4 ms-2"
+                                disabled="@RepProcesando"
+                                @onclick="GenerarReporteJefe">
+                            @(RepProcesando ? "..." : "Generar Reporte")
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        }
+        else
+        {
+            if (Rol == "Tesoreria")
+            {
+                <div class="flex-grow-1 d-flex justify-content-end align-items-center">
+
+                    <div class="d-flex flex-column align-items-start">
+
+                        <small class="text-muted mb-1">Reporte de Gastos de Áreas</small>
+
+                        <div class="d-flex align-items-center">
+                            <input type="date"
+                                   class="form-control form-control-sm rounded-4 bg-light"
+                                   style="width:130px"
+                                   @bind="RepFechaInicio"
+                                   @bind:format="yyyy-MM-dd" />
+
+                            <input type="date"
+                                   class="form-control form-control-sm rounded-4 bg-light ms-1"
+                                   style="width:130px"
+                                   @bind="RepFechaFin"
+                                   @bind:format="yyyy-MM-dd" />
+
+                            <button type="button"
+                                    class="btn btn-outline-primary btn-sm rounded-4 ms-2"
+                                    disabled="@RepProcesando"
+                                    @onclick="GenerarReporteTesoreria">
+                                @(RepProcesando ? "..." : "Generar Reporte")
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="flex-grow-1 text-end"></div>                
+            }
+        }
     </div>
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
@@ -41,7 +114,7 @@
                 <DashboardEmpleado/>
                 <div class="row g-3 flex-fill mt-3 mb-3 overflow-hidden d-flex">
                     <div class="col-6 h-100 d-flex flex-column overflow-hidden">
-                        <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
+                        <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden mb-3">
                             <div class="p-3 pb-2">
                                 <h5 class="mb-0">Mis solicitudes</h5>
                             </div>
@@ -72,7 +145,7 @@
                         }
                         else
                         {
-                            <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
+                            <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden mb-3">
                                 <div class="p-3 pb-2">
                                     <h5 class="mb-0">Estado de solicitud</h5>
                                 </div>
@@ -113,6 +186,10 @@
     private List<SolicitudGasto> SolicitudesEmpleado { get; set; } = new();
     private SolicitudGasto? SolicitudSeleccionadaEmp { get; set; }
 
+    private DateOnly? RepFechaInicio { get; set; } = DateOnly.FromDateTime(DateTime.Now.AddMonths(-1));
+    private DateOnly? RepFechaFin { get; set; } = DateOnly.FromDateTime(DateTime.Now);
+    private bool RepProcesando { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -138,6 +215,45 @@
         if (Rol == "Empleado")
         {
             await CargarSolicitudesEmpleado();
+        }
+    }
+
+    private async Task GenerarReporteJefe()
+    {
+        if (RepFechaInicio == null || RepFechaFin == null) return;
+        if (RepFechaInicio > RepFechaFin) return;
+
+        RepProcesando = true;
+        try
+        {
+            var area = UsuarioActual is Empleado emp ? emp.Area?.Nombre : null;
+            if (string.IsNullOrWhiteSpace(area)) return;
+
+            var baseUrl = Configuration["URLServices:BaseWSPath"];
+            var url = $"{baseUrl}reportes/solicitudes-gasto?nombreArea={Uri.EscapeDataString(area)}&fechaInicio={RepFechaInicio:yyyy-MM-dd}&fechaFin={RepFechaFin:yyyy-MM-dd}";
+            Navigation.NavigateTo(url, forceLoad: true);
+        }
+        finally
+        {
+            RepProcesando = false;
+        }
+    }
+
+    private async Task GenerarReporteTesoreria()
+    {
+        if (RepFechaInicio == null || RepFechaFin == null) return;
+        if (RepFechaInicio > RepFechaFin) return;
+
+        RepProcesando = true;
+        try
+        {
+            var baseUrl = Configuration["URLServices:BaseWSPath"];
+            var url = $"{baseUrl}reportes/gastos-de-areas?fechaInicio={RepFechaInicio:yyyy-MM-dd}&fechaFin={RepFechaFin:yyyy-MM-dd}";
+            Navigation.NavigateTo(url, forceLoad: true);
+        }
+        finally
+        {
+            RepProcesando = false;
         }
     }
 
