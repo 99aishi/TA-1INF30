@@ -2,7 +2,7 @@
     <div class="d-flex flex-column justify-content-between">
         <p class="h5 mb-1">@Transaccion?.Beneficiario?.Nombres @Transaccion?.Beneficiario?.ApellidoPaterno</p>
         <div>
-            <span class="badge rounded-pill text-uppercase align-self-start mb-2 px-2 py-1" style="@GetTipoTransaccionBadgeStyle()">@Transaccion?.TipoTransaccion</span>
+            <span class="badge rounded-pill align-self-start mb-2 px-2 py-1" style="@GetTipoTransaccionBadgeStyle()">@TextoTipoTransaccion</span>
         </div>
         <p class="text-muted mb-1">Fecha: @(Transaccion == null || Transaccion.Fecha == default ? "-" : Transaccion.Fecha.ToString("yyyy-MM-dd"))</p>
     </div>
@@ -35,6 +35,14 @@
             return string.IsNullOrWhiteSpace(s) ? "S/" : s;
         }
     }
+
+    private string TextoTipoTransaccion => Transaccion?.TipoTransaccion switch
+    {
+        "DEVOLUCION_SOBRANTE" => "Devolución de Sobrante",
+        "DESEMBOLSO" => "Desembolso",
+        "REEMBOLSO_DEFICIT" => "Reembolso de Déficit",
+        _ => Transaccion?.TipoTransaccion ?? string.Empty
+    };
 
     public async Task AbrirDetalle()
     {

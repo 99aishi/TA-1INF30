@@ -2,6 +2,7 @@
 @inject ISolicitudGastoWS SolicitudGastoWS
 @inject IUsuarioWS UsuarioWS
 @inject IComprobantePagoWS ComprobantePagoWS
+@inject ICicloCajaWS CicloCajaWS
 @using EconomixWA.Components.Pages.ComprobanteDePago
 
 <div class="d-flex flex-column h-100 mb-3 overflow-hidden">
@@ -90,7 +91,7 @@
                                 <div class="d-flex flex-column gap-2">
                                     @foreach (var comprobante in Comprobantes)
                                     {
-                                        <ComprobanteDePagoItem EsParteDeSolicitud="true" Comprobante="comprobante" />
+                                        <ComprobanteDePagoItem EsParteDeSolicitud="true" Comprobante="comprobante" OnMuestraDetalle="() => VerComprobante(comprobante)" />
                                     }
                                 </div>
                             </div>
@@ -172,6 +173,20 @@
             catch
             {
                 Comprobantes = new();
+            }
+
+            if (Solicitud.Ciclo?.IdCicloCaja > 0)
+            {
+                try
+                {
+                    var cicloCompleto = await CicloCajaWS.obtenerPorIdAsync(Solicitud.Ciclo.IdCicloCaja);
+                    if (cicloCompleto != null)
+                        Solicitud.Ciclo = cicloCompleto;
+                }
+                catch
+                {
+                    // Mantener el original
+                }
             }
         }
     }
@@ -256,6 +271,19 @@
         finally
         {
             Procesando = false;
+        }
+    }
+
+    private void VerComprobante(ComprobantePago comprobante)
+    {
+        if (comprobante == null) return;
+        if (comprobante.Estado == "POR_REVISAR")
+        {
+            Navigation.NavigateTo($"/Comprobantes de Pago/Evaluar/{comprobante.IdComprobante}");
+        }
+        else
+        {
+            Navigation.NavigateTo($"/Comprobantes de Pago/Detalle/{comprobante.IdComprobante}");
         }
     }
 }

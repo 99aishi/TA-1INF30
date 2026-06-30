@@ -13,6 +13,12 @@ import pe.edu.pucp.economix.tesoreria.daoi.CuentaBancariaDAOImpl;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
 
+import pe.edu.pucp.economix.operaciones.daoi.SolicitudGastoDAOImpl;
+import pe.edu.pucp.economix.operaciones.idao.ISolicitudGastoDAO;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
+import pe.edu.pucp.economix.operaciones.model.enums.EstadoTransaccion;
+import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
+
 import java.util.Date;
 import java.util.List;
 
@@ -47,7 +53,20 @@ public class TransaccionBOImpl implements ITransaccionBO {
     public int modificar(Transaccion transaccion, int idUsuarioAccion) throws Exception {
         validarIdUsuarioAccion(idUsuarioAccion);
         validar(transaccion,true);
-        return transaccionDAO.modificar(transaccion, idUsuarioAccion);
+        int result = transaccionDAO.modificar(transaccion, idUsuarioAccion);
+        if (result > 0 
+                && transaccion.getEstadoTransaccion() == EstadoTransaccion.COMPLETADA 
+                && transaccion.getTipoTransaccion() == TipoTransaccion.DESEMBOLSO 
+                && transaccion.getSolicitud() != null 
+                && transaccion.getSolicitud().getIdSolicitudGasto() > 0) {
+            ISolicitudGastoDAO solicitudDAO = new SolicitudGastoDAOImpl();
+            SolicitudGasto solicitud = solicitudDAO.buscarPorId(transaccion.getSolicitud().getIdSolicitudGasto());
+            if (solicitud != null) {
+                solicitud.setEstado(EstadoSolicitudGasto.PAGADO);
+                solicitudDAO.modificar(solicitud, idUsuarioAccion);
+            }
+        }
+        return result;
     }
 
     @Override
@@ -98,10 +117,12 @@ public class TransaccionBOImpl implements ITransaccionBO {
 
         // Solo en MODIFICACIÓN validar campos obligatorios completos
         if(esModificacion){
-            validarCuentaOrigen(transaccion.getCuentaOrigen());
-            validarCuentaDestino(transaccion.getCuentaDestino());
             validarMedioPagoYOperacion(transaccion);
-            validarMoneda(transaccion.getMoneda());
+            if (transaccion.getMedioPago() == MedioPago.TRANSFERENCIA) {
+                validarCuentaOrigen(transaccion.getCuentaOrigen());
+                validarCuentaDestino(transaccion.getCuentaDestino());
+                validarMoneda(transaccion.getMoneda());
+            }
             validarFecha(transaccion.getFecha());
         }
     }

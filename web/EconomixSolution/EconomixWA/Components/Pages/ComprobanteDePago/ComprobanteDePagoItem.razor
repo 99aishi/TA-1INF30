@@ -16,7 +16,7 @@
         </div>
         <div class="d-flex flex-row align-items-center gap-3">
             <p class="h6">@Comprobante?.FechaEmision?.ToString("dd/MM/yyyy")</p>
-            <span class="badge h-100 bg-warning-subtle text-warning-emphasis rounded-pill px-2">@Comprobante?.Estado</span>
+            <span class="badge h-100 @ClaseBadge rounded-pill px-2">@Comprobante?.Estado</span>
             <p class="h6">@(Comprobante?.Moneda?.Simbolo ?? "S/") @Comprobante?.MontoTotal.ToString("N2")</p>
             <div class="d-flex align-items-center">
                 <button type="button" class="btn btn-outline-primary align-self-start" @onclick="AbrirDetalle">
@@ -36,6 +36,17 @@
 
     [Parameter]
     public ComprobantePago? Comprobante { get; set; }
+
+    private string ClaseBadge => Comprobante?.Estado?.ToUpperInvariant() switch
+    {
+        "POR_REVISAR" => "bg-warning-subtle text-warning-emphasis",
+        "APROBADO" => "bg-success-subtle text-success-emphasis",
+        "VALIDADO" => "bg-primary-subtle text-primary-emphasis",
+        "RECHAZADO" => "bg-danger-subtle text-danger-emphasis",
+        "OBSERVADO" => "bg-info-subtle text-info-emphasis",
+        "ANULADO" => "bg-secondary-subtle text-secondary-emphasis",
+        _ => "bg-light text-dark"
+    };
 
     public async Task AbrirDetalle()
     {

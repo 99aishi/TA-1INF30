@@ -60,7 +60,7 @@ CREATE PROCEDURE pa_modificar_ciclo_caja(
     IN p_fecha_cierre DATE,
     IN p_monto_saldo_inicial DECIMAL(12,2),
     IN p_monto_total_gastado DECIMAL(12,2),
-    IN p_estado_ciclo ENUM('ABIERTO','CERRADO','LIQUIDADO','EN_EXCEPCION'),
+    IN p_estado_ciclo VARCHAR(20),
     IN p_id_caja_chica INT,
     IN p_id_rendicion INT
 )
@@ -85,7 +85,7 @@ BEGIN
     ), 0);
 
     -- Auto-crear rendicion si se cierra/liquida y no existe
-    IF p_estado_ciclo IN ('CERRADO', 'LIQUIDADO') AND (p_id_rendicion IS NULL OR p_id_rendicion <= 0) THEN
+    IF p_estado_ciclo IN ('EN_EVALUACION', 'CERRADO', 'LIQUIDADO') AND (p_id_rendicion IS NULL OR p_id_rendicion <= 0) THEN
         -- Obtener saldo inicial del ciclo
         SET v_ciclo_saldo_inicial = COALESCE((
             SELECT occ.monto_saldo_inicial

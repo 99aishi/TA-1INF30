@@ -41,13 +41,14 @@
     }
 
     <CicloCajaSearchBar @bind-FiltroNombre="FiltroNombre"
-                        @bind-AreasSeleccionadas="AreasSeleccionadasBusqueda"
                         @bind-FiltroCuentaBancariaId="FiltroCuentaBancariaId"
+                        @bind-AreasSeleccionadas="AreasSeleccionadasBusqueda"
                         @bind-EstadosSeleccionados="EstadosSeleccionados"
                         @bind-FiltroFechaDesde="FiltroFechaDesde"
                         @bind-FiltroFechaHasta="FiltroFechaHasta"
-                        Areas="Areas"
                         CuentasBancarias="CuentasBancarias"
+                        Areas="Areas"
+                        OnLimpiar="LimpiarFiltros"
                         OnFiltrar="Filtrar" />
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
@@ -122,6 +123,19 @@
         || FiltroFechaDesde.HasValue
         || FiltroFechaHasta.HasValue;
 
+    private int ObtenerPrioridadEstadoCiclo(string estado)
+    {
+        return estado?.ToUpperInvariant() switch
+        {
+            "ABIERTO" => 1,
+            "EN_EVALUACION" => 2,
+            "CERRADO" => 3,
+            "LIQUIDADO" => 4,
+            "EN_EXCEPCION" => 5,
+            _ => 99
+        };
+    }
+
     private IEnumerable<CicloCajaChica> CiclosFiltrados => Ciclos
         .Where(c => string.IsNullOrWhiteSpace(FiltroNombre)
             || (c.CajaChica?.Nombre?.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase) ?? false))
@@ -132,8 +146,9 @@
         .Where(c => !EstadosSeleccionados.Any() || EstadosSeleccionados.Any(e => e == c.Estado))
         .Where(c => !FiltroFechaDesde.HasValue || c.FechaApertura >= FiltroFechaDesde.Value)
         .Where(c => !FiltroFechaHasta.HasValue || c.FechaApertura <= FiltroFechaHasta.Value)
-        .OrderByDescending(c => c.FechaApertura)
-        .ThenByDescending(c => c.IdCicloCaja);
+        .OrderBy(c => ObtenerPrioridadEstadoCiclo(c.Estado))
+        .ThenByDescending(c => c.SaldoInicial > 0 ? (c.TotalGastado / c.SaldoInicial) : 0)
+        .ThenByDescending(c => c.FechaApertura);
 
     protected override async Task OnInitializedAsync()
     {
@@ -218,6 +233,16 @@
     private void IrRegistrarCiclo()
     {
         Navigation.NavigateTo("/Caja Chica/Crear");
+    }
+
+    private void LimpiarFiltros()
+    {
+        FiltroNombre = string.Empty;
+        FiltroCuentaBancariaId = 0;
+        AreasSeleccionadasBusqueda = new();
+        EstadosSeleccionados = new();
+        FiltroFechaDesde = null;
+        FiltroFechaHasta = null;
     }
 
     private void Filtrar() => StateHasChanged();

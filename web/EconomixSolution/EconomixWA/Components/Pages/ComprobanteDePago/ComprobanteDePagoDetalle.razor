@@ -64,7 +64,7 @@
         if (EsCreacion || EsAsociacion || EsEvaluacion) return false;
         if (Comprobante?.Solicitud?.Ciclo == null) return false;
         var estado = Comprobante.Solicitud.Ciclo.Estado?.ToUpperInvariant();
-        return estado == "CERRADO" || estado == "LIQUIDADO" || estado == "EN_EXCEPCION";
+        return estado == "CERRADO" || estado == "LIQUIDADO" || estado == "EN_EXCEPCION" || estado == "EN_EVALUACION";
     }
 
     private void VolverALista()

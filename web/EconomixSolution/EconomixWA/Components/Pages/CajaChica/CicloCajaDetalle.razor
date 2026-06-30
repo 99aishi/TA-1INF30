@@ -92,6 +92,7 @@
                             @bind="Ciclo!.Estado"
                             disabled="@(!PuedeEditar)">
                         <option value="ABIERTO">Abierto</option>
+                        <option value="EN_EVALUACION">En evaluación</option>
                         <option value="CERRADO">Cerrado</option>
                         <option value="LIQUIDADO">Liquidado</option>
                         <option value="EN_EXCEPCION">En excepción</option>
@@ -127,6 +128,11 @@
                                value="@(SimboloMoneda) @Disponible.ToString("N2")"
                                disabled />
                     </div>
+                    <div class="col-12 mt-4">
+                        <button type="button" class="btn btn-outline-primary w-100 rounded-4 py-2 fw-semibold" @onclick="NavegarASolicitudes">
+                            <i class="bi bi-list-check me-2"></i>Ver Solicitudes del Ciclo
+                        </button>
+                    </div>
                 }
             </div>
         </div>
@@ -151,8 +157,20 @@
                     <button type="button" class="btn btn-outline-warning" disabled="@Procesando" @onclick="GuardarCambios">
                         @(Procesando ? "Procesando..." : "Guardar Cambios")
                     </button>
-                    <button type="button" class="btn btn-outline-dark" disabled="@Procesando" @onclick="CerrarCiclo">
-                        @(Procesando ? "Procesando..." : "Cerrar Ciclo")
+                    <button type="button" class="btn btn-outline-dark" disabled="@Procesando" @onclick="EnviarAEvaluacion">
+                        @(Procesando ? "Procesando..." : "Enviar a Evaluación")
+                    </button>
+                }
+                else if (PuedeEditar && Ciclo?.Estado == "EN_EVALUACION")
+                {
+                    <button type="button" class="btn btn-outline-warning" disabled="@Procesando" @onclick="GuardarCambios">
+                        @(Procesando ? "Procesando..." : "Guardar Cambios")
+                    </button>
+                    <button type="button" class="btn btn-outline-success" disabled="@Procesando" @onclick="CerrarCiclo">
+                        @(Procesando ? "Procesando..." : "Confirmar y Cerrar Ciclo")
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="DevolverAlEmpleado">
+                        @(Procesando ? "Procesando..." : "Devolver al Empleado")
                     </button>
                 }
                 else if (PuedeEditar)
@@ -414,6 +432,52 @@
         }
     }
 
+    private async Task EnviarAEvaluacion()
+    {
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            if (!PuedeEditar || Ciclo == null) return;
+            ErrorMessage = string.Empty;
+            Ciclo.Estado = "EN_EVALUACION";
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await CicloCajaWS.actualizarAsync(Ciclo, idUsuarioAccion);
+            await CerrarDetalle();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+
+    private async Task DevolverAlEmpleado()
+    {
+        if (Procesando) return;
+        Procesando = true;
+        try
+        {
+            if (!PuedeEditar || Ciclo == null) return;
+            ErrorMessage = string.Empty;
+            Ciclo.Estado = "ABIERTO";
+            var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
+            await CicloCajaWS.actualizarAsync(Ciclo, idUsuarioAccion);
+            await CerrarDetalle();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
+    }
+
     private async Task MarcarRevisado()
     {
         if (!PuedeEditar || Ciclo == null) return;
@@ -464,6 +528,14 @@
         finally
         {
             ProcesandoRendicion = false;
+        }
+    }
+
+    private void NavegarASolicitudes()
+    {
+        if (Ciclo?.IdCicloCaja > 0)
+        {
+            Navigation.NavigateTo($"/Solicitudes De Gasto?cicloId={Ciclo.IdCicloCaja}");
         }
     }
 }

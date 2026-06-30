@@ -33,7 +33,7 @@ BEGIN
         WHERE sg.id_solicitud_gasto = NEW.id_solicitud_gasto
         LIMIT 1;
 
-        IF v_estado_ciclo IS NOT NULL AND v_estado_ciclo != 'ABIERTO' THEN
+        IF v_estado_ciclo IS NOT NULL AND v_estado_ciclo NOT IN ('ABIERTO', 'EN_EVALUACION') THEN
             SELECT pe.id_permiso INTO v_permiso_id
             FROM ope_permiso_edicion pe
             WHERE pe.id_comprobante = NEW.id_comprobante

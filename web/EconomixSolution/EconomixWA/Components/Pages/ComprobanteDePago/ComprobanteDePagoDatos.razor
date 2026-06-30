@@ -36,51 +36,51 @@
 
         <div class="col-4 mt-3">
             <label for="RUC" class="form-label small text-muted">RUC</label>    
-            @if (RequiereAutorizacion || SoloLectura)
+            @if (DeshabilitarCamposPrincipales)
             {
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.RucProveedor" disabled>
             }
             else
             {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RucProveedor" placeholder="RUC" maxlength="11" disabled="@(RequiereAutorizacion || SoloLectura)">
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RucProveedor" placeholder="RUC" maxlength="11" disabled="@(DeshabilitarCamposPrincipales)">
             }
         </div>
         <div class="col-4 mt-3">
             <label for="RazonSocial" class="form-label small text-muted">Razón Social</label>    
-            @if (RequiereAutorizacion || SoloLectura)
+            @if (DeshabilitarCamposPrincipales)
             {
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.RazonSocial" disabled>
             }
             else
             {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RazonSocial" placeholder="Razón Social" disabled="@(RequiereAutorizacion || SoloLectura)">
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RazonSocial" placeholder="Razón Social" disabled="@(DeshabilitarCamposPrincipales)">
             }
         </div>
         <div class="col-4 mt-3">
             <label for="NumeroSerial" class="form-label small text-muted">Número Serial</label>    
-            @if (RequiereAutorizacion || SoloLectura)
+            @if (DeshabilitarCamposPrincipales)
             {
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.NumeroSerial" disabled>
             }
             else
             {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.NumeroSerial" placeholder="Número Serial" disabled="@(RequiereAutorizacion || SoloLectura)">
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.NumeroSerial" placeholder="Número Serial" disabled="@(DeshabilitarCamposPrincipales)">
             }
         </div>
         <div class="col-2 mt-3">
             <label for="FechaDeEmision" class="form-label small text-muted">Fecha de Emisión</label>    
-            @if (RequiereAutorizacion || SoloLectura)
+            @if (DeshabilitarCamposPrincipales)
             {
                 <input type="date" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.FechaEmision?.ToString("yyyy-MM-dd")" disabled>
             }
             else
             {
-                <input type="date" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.FechaEmision" disabled="@(RequiereAutorizacion || SoloLectura)">
+                <input type="date" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.FechaEmision" disabled="@(DeshabilitarCamposPrincipales)">
             }
         </div>
         <div class="col-2 mt-3">
             <label for="TipoDocumento" class="form-label small text-muted">Tipo de Documento</label>    
-            @if (RequiereAutorizacion || SoloLectura)
+            @if (DeshabilitarCamposPrincipales)
             {
                 <select class="form-select form-select-lg rounded-4 bg-light" disabled>
                     <option selected value="@Comprobante?.TipoDocumento">@Comprobante?.TipoDocumento</option>
@@ -105,19 +105,19 @@
         </div>
         <div class="col-2 mt-3">
             <label for="Total" class="form-label small text-muted">Total</label>
-            @if (RequiereAutorizacion || SoloLectura)
+            @if (DeshabilitarCamposPrincipales)
             {
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SimboloMoneda) @Comprobante?.MontoTotal.ToString("N2")" disabled>
             }
             else
             {
-                if (EsEvaluacion)
+                if (EsEvaluacion || DeshabilitarCamposPrincipales)
                 {
                     <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SimboloMoneda) @Comprobante?.MontoTotal.ToString("N2")" disabled>
                 }
                 else
                 {
-                    <input type="number" step="0.01" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante.MontoTotal" @oninput="OnTotalInput" placeholder="0.00">
+                    <input type="number" step="0.01" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante.MontoTotal" @oninput="OnTotalInput" placeholder="0.00" disabled="@(DeshabilitarCamposPrincipales)">
                 }
             }
         </div>
@@ -314,10 +314,13 @@
                         @onclick="MostrarItemsComprobante">
                     @(Procesando ? "Procesando..." : "Volver")
                 </button>
-                <button type="button" class="btn btn-outline-danger" disabled="@Procesando"
-                        @onclick="MostrarItemsComprobante">
-                    @(Procesando ? "Procesando..." : "Eliminar")
-                </button>
+                @if (Comprobante?.Estado != "APROBADO")
+                {
+                    <button type="button" class="btn btn-outline-danger" disabled="@Procesando"
+                            @onclick="MostrarItemsComprobante">
+                        @(Procesando ? "Procesando..." : "Eliminar")
+                    </button>
+                }
             }
         </div>
     </div>
@@ -366,6 +369,11 @@
     private string MotivoSolicitud { get; set; } = string.Empty;
     private bool Solicitando { get; set; }
     private bool Procesando { get; set; } = false;
+    private bool DeshabilitarCamposPrincipales =>
+        RequiereAutorizacion
+        || !EsEmpleadoSimple
+        || (!EsCreacion && !EsAsociacion && Comprobante?.Estado != "OBSERVADO");
+
     private bool SoloLectura =>
         !EsCreacion
         && !EsAsociacion
@@ -399,7 +407,7 @@
 
     public void Volver()
     {
-        Navigation.NavigateTo(UsuarioWS.GetCurrentUser() is Empleado
+        Navigation.NavigateTo(EsEmpleadoSimple
             ? "/Mis Comprobantes de Pago" : "/Comprobantes de Pago");
     }
 
@@ -409,7 +417,7 @@
         Procesando = true;
         try
         {
-            Navigation.NavigateTo(UsuarioWS.GetCurrentUser() is Empleado
+            Navigation.NavigateTo(EsEmpleadoSimple
                 ? "/Mis Comprobantes de Pago" : "/Comprobantes de Pago");
         }
         finally

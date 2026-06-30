@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject ICajaChicaWS CajaChicaWS
+@inject ICicloCajaWS CicloCajaWS
 @inject ICuentaBancariaWS CuentaBancariaWS
 @inject IAreaWS AreaWS
 @inject IUsuarioWS UsuarioWS
@@ -71,6 +72,7 @@
                         @foreach (var cc in CajasChicasFiltradas)
                         {
                             <CajaChicaItemSimple CajaChica="cc"
+                                                 UltimoCiclo="ObtenerUltimoCiclo(cc.IdFondo)"
                                                  CuentasBancarias="CuentasBancarias"
                                                  Areas="Areas"
                                                  OnVerCiclos="() => IrACiclos(cc)"
@@ -104,10 +106,19 @@
     private double? FiltroMontoMax { get; set; }
 
     private List<CajaChica> CajasChicas { get; set; } = new();
+    private List<CicloCajaChica> Ciclos { get; set; } = new();
     private List<CuentaBancaria> CuentasBancarias { get; set; } = new();
     private List<Area> Areas { get; set; } = new();
     private CajaChica CajaChicaEnEdicion { get; set; } = new();
     private Dictionary<int, int> _areaIdByCajaChicaId = new();
+
+    private CicloCajaChica? ObtenerUltimoCiclo(int idCajaChica)
+    {
+        return Ciclos
+            .Where(c => c.CajaChica?.IdFondo == idCajaChica)
+            .OrderByDescending(c => c.IdCicloCaja)
+            .FirstOrDefault();
+    }
 
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(FiltroNombre)
@@ -133,6 +144,8 @@
         Cargando = true;
         await CargarCatalogos();
         await ListarCajasChicas();
+        try { Ciclos = await CicloCajaWS.listarAsync(); }
+        catch { Ciclos = new List<CicloCajaChica>(); }
         BuildAreaLookup();
         Cargando = false;
     }

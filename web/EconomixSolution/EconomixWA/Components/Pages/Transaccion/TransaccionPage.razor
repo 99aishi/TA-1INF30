@@ -115,6 +115,17 @@
         || FiltroFechaInicio.HasValue
         || FiltroFechaFin.HasValue;
 
+    private int ObtenerPrioridadEstadoTransaccion(string estado)
+    {
+        return estado?.ToUpperInvariant() switch
+        {
+            "REGISTRADA" => 1,
+            "COMPLETADA" => 2,
+            "ANULADA" => 3,
+            _ => 99
+        };
+    }
+
     private IEnumerable<Transaccion> TransaccionesFiltradas => Transacciones
         .Where(t => string.IsNullOrWhiteSpace(FiltroBeneficiario)
             || (t.Beneficiario?.Nombres.Contains(FiltroBeneficiario, StringComparison.OrdinalIgnoreCase) ?? false)
@@ -125,7 +136,9 @@
         .Where(t => !FiltroMontoMin.HasValue || t.Monto >= FiltroMontoMin.Value)
         .Where(t => !FiltroMontoMax.HasValue || t.Monto <= FiltroMontoMax.Value)
         .Where(t => !FiltroFechaInicio.HasValue || t.Fecha.Date >= FiltroFechaInicio.Value.Date)
-        .Where(t => !FiltroFechaFin.HasValue || t.Fecha.Date <= FiltroFechaFin.Value.Date);
+        .Where(t => !FiltroFechaFin.HasValue || t.Fecha.Date <= FiltroFechaFin.Value.Date)
+        .OrderBy(t => ObtenerPrioridadEstadoTransaccion(t.EstadoTransaccion))
+        .ThenByDescending(t => t.Fecha);
 
     private void MostrarDetalleTransaccion(Transaccion transaccion)
     {
@@ -155,7 +168,8 @@
             var usuario = UsuarioWS.GetCurrentUser();
             if (usuario is Empleado emp && emp.RolFlujo == RolFlujo.JEFE_AREA)
             {
-                Transacciones = await TransaccionWS.listarPorJefeAsync(usuario.UsuarioID);
+                var list = await TransaccionWS.listarPorJefeAsync(usuario.UsuarioID);
+                Transacciones = list?.Where(t => t.TipoTransaccion != "DEVOLUCION_SOBRANTE").ToList() ?? new List<Transaccion>();
             }
             else if (usuario is Empleado)
             {

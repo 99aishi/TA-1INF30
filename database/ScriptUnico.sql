@@ -232,7 +232,7 @@ CREATE TABLE IF NOT EXISTS ope_ciclo_caja (
     fecha_cierre DATE NULL,
     monto_saldo_inicial DECIMAL(12,2) DEFAULT 0.00,
     monto_total_gastado DECIMAL(12,2) DEFAULT 0.00,
-    estado_ciclo ENUM('ABIERTO', 'CERRADO', 'LIQUIDADO', 'EN_EXCEPCION') DEFAULT 'ABIERTO',
+    estado_ciclo ENUM('ABIERTO', 'EN_EVALUACION', 'CERRADO', 'LIQUIDADO', 'EN_EXCEPCION') DEFAULT 'ABIERTO',
     id_caja_chica INT NOT NULL,
     id_rendicion INT NULL,
     
@@ -729,7 +729,7 @@ CREATE PROCEDURE pa_modificar_ciclo_caja(
     IN p_fecha_cierre DATE,
     IN p_monto_saldo_inicial DECIMAL(12,2),
     IN p_monto_total_gastado DECIMAL(12,2),
-    IN p_estado_ciclo ENUM('ABIERTO','CERRADO','LIQUIDADO','EN_EXCEPCION'),
+    IN p_estado_ciclo VARCHAR(20),
     IN p_id_caja_chica INT,
     IN p_id_rendicion INT
 )
@@ -754,7 +754,7 @@ BEGIN
     ), 0);
 
     -- Auto-crear rendicion si se cierra/liquida y no existe
-    IF p_estado_ciclo IN ('CERRADO', 'LIQUIDADO') AND (p_id_rendicion IS NULL OR p_id_rendicion <= 0) THEN
+    IF p_estado_ciclo IN ('EN_EVALUACION', 'CERRADO', 'LIQUIDADO') AND (p_id_rendicion IS NULL OR p_id_rendicion <= 0) THEN
         -- Obtener saldo inicial del ciclo
         SET v_ciclo_saldo_inicial = COALESCE((
             SELECT occ.monto_saldo_inicial
@@ -5413,7 +5413,7 @@ BEGIN
         WHERE sg.id_solicitud_gasto = NEW.id_solicitud_gasto
         LIMIT 1;
 
-        IF v_estado_ciclo IS NOT NULL AND v_estado_ciclo != 'ABIERTO' THEN
+        IF v_estado_ciclo IS NOT NULL AND v_estado_ciclo NOT IN ('ABIERTO', 'EN_EVALUACION') THEN
             SELECT pe.id_permiso INTO v_permiso_id
             FROM ope_permiso_edicion pe
             WHERE pe.id_comprobante = NEW.id_comprobante

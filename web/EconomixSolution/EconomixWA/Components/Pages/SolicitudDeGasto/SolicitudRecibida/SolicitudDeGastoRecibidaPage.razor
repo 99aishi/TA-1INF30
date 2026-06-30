@@ -70,6 +70,7 @@
 </div>
 
 @code {
+    private int FiltroCicloId { get; set; } = 0;
     private bool MostrarDetalle { get; set; } = false;
     private bool Cargando { get; set; } = true;
     private string ErrorMessage { get; set; } = string.Empty;
@@ -87,7 +88,8 @@
     private SolicitudGasto? SolicitudSeleccionada { get; set; }
 
     private bool HayFiltrosActivos =>
-        !string.IsNullOrWhiteSpace(FiltroTexto)
+        FiltroCicloId > 0
+        || !string.IsNullOrWhiteSpace(FiltroTexto)
         || FiltroMontoMin.HasValue
         || FiltroMontoMax.HasValue
         || FiltroEstado != "Todas"
@@ -126,6 +128,14 @@
         Cargando = true;
         try { Areas = await AreaWS.listarAsync(); } catch {}
         try { Empleados = await EmpleadoWS.listarAsync(); } catch {}
+
+        var uri = new Uri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("cicloId", out var cicloIdStr) && int.TryParse(cicloIdStr, out var id))
+        {
+            FiltroCicloId = id;
+        }
+
         await ListarSolicitudes();
         Cargando = false;
     }
@@ -142,15 +152,22 @@
         ErrorMessage = string.Empty;
         try
         {
-            var usuario = UsuarioWS.GetCurrentUser();
-            if (usuario is Administrador)
+            if (FiltroCicloId > 0)
             {
-                Solicitudes = await SolicitudGastoWS.listarAsync();
+                Solicitudes = await SolicitudGastoWS.listarPorCicloAsync(FiltroCicloId);
             }
             else
             {
-                var idJefe = usuario.UsuarioID;
-                Solicitudes = await SolicitudGastoWS.listarPendientesJefeAsync(idJefe);
+                var usuario = UsuarioWS.GetCurrentUser();
+                if (usuario is Administrador)
+                {
+                    Solicitudes = await SolicitudGastoWS.listarAsync();
+                }
+                else
+                {
+                    var idJefe = usuario.UsuarioID;
+                    Solicitudes = await SolicitudGastoWS.listarPendientesJefeAsync(idJefe);
+                }
             }
             var list = await ComprobantePagoWS.listarAsync();
             Comprobantes = list != null ? new List<ComprobantePago>(list) : new List<ComprobantePago>();

@@ -1,23 +1,52 @@
-<div class="card rounded-4 p-3 bg-light mb-3">
-    <div class="d-flex flex-row justify-content-between align-items-center gap-3">
-        <div class="d-flex flex-column gap-1">
-            <p class="h5 mb-0">@CajaChica?.Nombre</p>
-            <div class="d-flex flex-row align-items-center gap-2">
+@using EconomixModel.Model
+<div class="card rounded-4 p-3 bg-light mb-3 hover-shadow transition-all">
+    <div class="d-flex flex-row justify-content-between align-items-start gap-3">
+        <div class="d-flex flex-column gap-1 flex-grow-1">
+            <div class="d-flex align-items-center gap-2">
+                <p class="h5 mb-0 fw-bold">@CajaChica?.Nombre</p>
                 @if (!EsActivo)
                 {
                     <span class="badge @EstadoClase rounded-pill px-2">@CajaChica?.Estado</span>
                 }
-                <p class="text-muted mb-0 small">@AreaText</p>
+                @if (UltimoCiclo != null)
+                {
+                    <span class="badge @ObtenerEstadoCicloBadgeClase(UltimoCiclo.Estado) rounded-pill px-2">
+                        @UltimoCiclo.Estado
+                    </span>
+                }
             </div>
+            <p class="text-muted mb-2 small"><i class="bi bi-geo-alt"></i> @AreaText</p>
+
+            @if (UltimoCiclo != null)
+            {
+                <div class="mt-1" style="max-width: 320px;">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted">Uso del Ciclo (@PorcentajeUso%)</small>
+                        <small class="fw-bold">@MonedaSimbolo @UltimoCiclo.TotalGastado.ToString("N2") / @UltimoCiclo.SaldoInicial.ToString("N2")</small>
+                    </div>
+                    <div class="progress rounded-4" style="height: 6px">
+                        <div class="progress-bar rounded-4 @(PorcentajeUso >= 90 ? "bg-warning" : "bg-primary")"
+                             style="width: @($"{PorcentajeUso}%")"
+                             role="progressbar"
+                             aria-valuenow="@PorcentajeUso"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
-        <div class="d-flex flex-row align-items-center gap-2">
-            <p class="h5 mb-0 me-2">@(MonedaSimbolo) @MontoTecho.ToString("N2")</p>
-            <button type="button" class="btn btn-sm btn-outline-primary" @onclick="VerCiclos" @onclick:stopPropagation>
+        <div class="d-flex flex-row align-items-center gap-2 mt-1">
+            <div class="text-end me-2">
+                <small class="text-muted d-block small lh-1">MONTO TECHO</small>
+                <p class="h5 mb-0 fw-bold">@(MonedaSimbolo) @MontoTecho.ToString("N2")</p>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" @onclick="VerCiclos" @onclick:stopPropagation>
                 Ver ciclos
             </button>
             @if (OnVer.HasDelegate)
             {
-                <button type="button" class="btn btn-sm btn-outline-dark" @onclick="Ver" @onclick:stopPropagation>
+                <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3" @onclick="Ver" @onclick:stopPropagation>
                     Ver
                 </button>
             }
@@ -28,6 +57,9 @@
 @code {
     [Parameter]
     public CajaChica? CajaChica { get; set; }
+
+    [Parameter]
+    public CicloCajaChica? UltimoCiclo { get; set; }
 
     [Parameter]
     public List<CuentaBancaria> CuentasBancarias { get; set; } = new();
@@ -46,6 +78,10 @@
     private double MontoTecho => CajaChica?.MontoTecho ?? 0;
 
     private bool EsActivo => string.Equals(CajaChica?.Estado, "ACTIVO", StringComparison.OrdinalIgnoreCase);
+
+    private int PorcentajeUso => UltimoCiclo != null && UltimoCiclo.SaldoInicial > 0
+        ? (int)((UltimoCiclo.TotalGastado / UltimoCiclo.SaldoInicial) * 100)
+        : 0;
 
     private string AreaText
     {
@@ -72,6 +108,16 @@
         "ACTIVO" => "bg-success-subtle text-success-emphasis",
         "INACTIVO" => "bg-secondary-subtle text-secondary-emphasis",
         _ => "bg-light text-dark"
+    };
+
+    private string ObtenerEstadoCicloBadgeClase(string? estado) => estado?.ToUpperInvariant() switch
+    {
+        "ABIERTO" => "bg-success-subtle text-success-emphasis",
+        "EN_EVALUACION" => "bg-primary-subtle text-primary-emphasis",
+        "CERRADO" => "bg-secondary-subtle text-secondary-emphasis",
+        "LIQUIDADO" => "bg-info-subtle text-info-emphasis",
+        "EN_EXCEPCION" => "bg-warning-subtle text-warning-emphasis",
+        _ => "bg-secondary-subtle text-secondary-emphasis"
     };
 
     private async Task VerCiclos()

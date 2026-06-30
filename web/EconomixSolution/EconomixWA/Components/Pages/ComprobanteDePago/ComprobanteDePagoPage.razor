@@ -93,6 +93,20 @@
         || AreasSeleccionadas.Any()
         || EmpleadosSeleccionados.Any();
 
+    private int ObtenerPrioridadEstadoComprobante(string estado)
+    {
+        return estado?.ToUpperInvariant() switch
+        {
+            "POR_REVISAR" => 1,
+            "OBSERVADO" => 2,
+            "VALIDADO" => 3,
+            "APROBADO" => 4,
+            "RECHAZADO" => 5,
+            "ANULADO" => 6,
+            _ => 99
+        };
+    }
+
     private IEnumerable<ComprobantePago> ComprobantesFiltrados => Comprobantes
         .Where(c => string.IsNullOrWhiteSpace(FiltroTexto)
             || (c.RazonSocial?.Contains(FiltroTexto, StringComparison.OrdinalIgnoreCase) ?? false)
@@ -105,7 +119,9 @@
         .Where(c => !FiltroFechaInicio.HasValue || (c.FechaEmision?.Date >= FiltroFechaInicio.Value.Date))
         .Where(c => !FiltroFechaFin.HasValue || (c.FechaEmision?.Date <= FiltroFechaFin.Value.Date))
         .Where(c => !AreasSeleccionadas.Any() || AreasSeleccionadas.Any(a => a.AreaID == c.Solicitud?.Solicitante?.Area?.AreaID))
-        .Where(c => !EmpleadosSeleccionados.Any() || EmpleadosSeleccionados.Any(e => e.UsuarioID == c.Solicitud?.Solicitante?.UsuarioID));
+        .Where(c => !EmpleadosSeleccionados.Any() || EmpleadosSeleccionados.Any(e => e.UsuarioID == c.Solicitud?.Solicitante?.UsuarioID))
+        .OrderBy(c => ObtenerPrioridadEstadoComprobante(c.Estado))
+        .ThenByDescending(c => c.FechaEmision);
 
     public void MostrarDetalleComprobante(ComprobantePago cp)
     {

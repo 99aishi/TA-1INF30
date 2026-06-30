@@ -117,7 +117,7 @@
             .Where(cb => !AreasSeleccionadas.Any()
                 || AreasSeleccionadas.Any(a => a.AreaID == cb.AreaAdministradora?.AreaID));
 
-    private List<string> TodosLosEstados => new() { "ABIERTO", "CERRADO", "LIQUIDADO", "EN_EXCEPCION" };
+    private List<string> TodosLosEstados => new() { "ABIERTO", "EN_EVALUACION", "CERRADO", "LIQUIDADO", "EN_EXCEPCION" };
     private IEnumerable<string> EstadosDisponibles =>
         TodosLosEstados.Where(e => !EstadosSeleccionados.Contains(e));
 

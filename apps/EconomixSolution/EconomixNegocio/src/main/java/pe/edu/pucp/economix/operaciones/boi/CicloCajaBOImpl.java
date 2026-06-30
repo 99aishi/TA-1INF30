@@ -71,6 +71,17 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
     public int modificar(CicloCajaChica ciclo, int idUsuarioAccion) throws Exception {
         validarIdUsuarioAccion(idUsuarioAccion);
         validar(ciclo,true);
+        if (ciclo.getEstado() == EstadoCicloCaja.EN_EVALUACION || ciclo.getEstado() == EstadoCicloCaja.CERRADO || ciclo.getEstado() == EstadoCicloCaja.LIQUIDADO) {
+            List< pe.edu.pucp.economix.operaciones.model.SolicitudGasto > solicitudes = solicitudGastoDAO.listarPorCiclo(ciclo.getIdCicloCaja());
+            if (solicitudes != null) {
+                for (pe.edu.pucp.economix.operaciones.model.SolicitudGasto s : solicitudes) {
+                    if (s.getEstado() == pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto.APROBADO || s.getEstado() == pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto.PAGADO) {
+                        s.setEstado(pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto.RENDIDO);
+                        solicitudGastoDAO.modificar(s, idUsuarioAccion);
+                    }
+                }
+            }
+        }
         return cicloCajaChicaDAO.modificar(ciclo, idUsuarioAccion);
     }
 
@@ -195,6 +206,10 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
             double totalDesembolsado = ciclo.getTotalGastado(); // aprobado
             double saldoFinal = totalDesembolsado - totalComprobantesAprobados;
 
+            if (totalComprobantesAprobados > 0) {
+                generarTransaccionCierre(TipoTransaccion.DESEMBOLSO, totalComprobantesAprobados, cuentaArea, null, cajaChica.getMoneda(), idUsuarioAccion);
+            }
+
             if (saldoFinal > 0) {
                 // El empleado gastó menos de lo desembolsado -> devolución de sobrante
                 generarTransaccionCierre(TipoTransaccion.DEVOLUCION_SOBRANTE, saldoFinal, cuentaArea, null, cajaChica.getMoneda(), idUsuarioAccion);
@@ -247,6 +262,10 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
         if (tipo == TipoTransaccion.DEVOLUCION_SOBRANTE) {
             // El empleado devuelve a la cuenta del área
             transaccion.setCuentaOrigen(cuentaEmpleado);
+            transaccion.setCuentaDestino(cuentaArea);
+        } else if (tipo == TipoTransaccion.DESEMBOLSO) {
+            // Reposición directa de la tesorería a la cuenta de la caja chica
+            transaccion.setCuentaOrigen(null);
             transaccion.setCuentaDestino(cuentaArea);
         } else {
             // El área reembolsa el déficit

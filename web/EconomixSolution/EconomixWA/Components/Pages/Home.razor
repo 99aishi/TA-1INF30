@@ -119,21 +119,23 @@
                                 <h5 class="mb-0">Mis solicitudes</h5>
                             </div>
                             <hr class="my-0" />
-                            <div class="overflow-scroll flex-fill">
+                            <div class="overflow-scroll flex-fill p-3">
                                 @if (CargandoSolicitudesEmp)
                                 {
-                                    <div class="p-3 text-center text-muted">Cargando solicitudes...</div>
+                                    <div class="text-center text-muted py-2">Cargando solicitudes...</div>
                                 }
                                 else if (SolicitudesEmpleado.Count == 0)
                                 {
-                                    <div class="p-3 text-center text-muted">No tiene solicitudes registradas</div>
+                                    <div class="text-center text-muted py-2">No tiene solicitudes registradas</div>
                                 }
                                 else
                                 {
-                                    @foreach (var s in SolicitudesEmpleado)
-                                    {
-                                        <MiSolicitudDeGastoItem Solicitud="s" OnMuestraDetalle="() => SeleccionarSolicitudEmp(s)" />
-                                    }
+                                    <div class="d-flex flex-column gap-2">
+                                        @foreach (var s in SolicitudesEmpleado)
+                                        {
+                                            <MiSolicitudDeGastoItem Solicitud="s" OnMuestraDetalle="() => SeleccionarSolicitudEmp(s)" />
+                                        }
+                                    </div>
                                 }
                             </div>
                         </div>

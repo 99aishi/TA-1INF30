@@ -216,7 +216,7 @@ CREATE TABLE IF NOT EXISTS ope_ciclo_caja (
     fecha_cierre DATE NULL,
     monto_saldo_inicial DECIMAL(12,2) DEFAULT 0.00,
     monto_total_gastado DECIMAL(12,2) DEFAULT 0.00,
-    estado_ciclo ENUM('ABIERTO', 'CERRADO', 'LIQUIDADO', 'EN_EXCEPCION') DEFAULT 'ABIERTO',
+    estado_ciclo ENUM('ABIERTO', 'EN_EVALUACION', 'CERRADO', 'LIQUIDADO', 'EN_EXCEPCION') DEFAULT 'ABIERTO',
     id_caja_chica INT NOT NULL,
     id_rendicion INT NULL,
     

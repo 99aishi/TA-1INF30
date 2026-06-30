@@ -475,10 +475,7 @@
                 Transaccion.CuentaDestino = CuentasBancarias.FirstOrDefault(c => c.IdCuenta == cuentaDestinoId);
             }
 
-            if (Transaccion.TipoTransaccion == "DEVOLUCION_SOBRANTE" && Transaccion.Beneficiario?.UsuarioID == usuario.UsuarioID)
-            {
-                Transaccion.EstadoTransaccion = "COMPLETADA";
-            }
+            Transaccion.EstadoTransaccion = "COMPLETADA";
 
             await TransaccionWS.actualizarAsync(Transaccion, usuario.UsuarioID);
 

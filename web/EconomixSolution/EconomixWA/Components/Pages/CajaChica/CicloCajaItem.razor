@@ -26,6 +26,20 @@
                     @ComprobantesCount comprobantes
                 </p>
             </div>
+            <div class="mt-2" style="width: 280px;">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <small class="text-muted small">Uso del Ciclo (@PorcentajeUso%)</small>
+                </div>
+                <div class="progress rounded-4" style="height: 6px">
+                    <div class="progress-bar rounded-4 @(PorcentajeUso >= 90 ? "bg-warning" : "bg-primary")"
+                         style="width: @($"{PorcentajeUso}%")"
+                         role="progressbar"
+                         aria-valuenow="@PorcentajeUso"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="d-flex flex-row align-items-center gap-3">
             <div class="text-end">
@@ -54,6 +68,8 @@
 
     private double Disponible => MontoTecho - TotalGastado;
 
+    private int PorcentajeUso => MontoTecho > 0 ? (int)((TotalGastado / MontoTecho) * 100) : 0;
+
     private int SolicitudesCount => Ciclo?.SolicitudesDeGasto?.Count ?? 0;
 
     private int SolicitudesAprobadas => Ciclo?.SolicitudesDeGasto?.Count(s => s.Estado?.ToUpperInvariant() == "APROBADO") ?? 0;
@@ -63,6 +79,7 @@
     private string EstadoClase => Ciclo?.Estado?.ToUpperInvariant() switch
     {
         "ABIERTO" => "bg-success-subtle text-success-emphasis",
+        "EN_EVALUACION" => "bg-primary-subtle text-primary-emphasis",
         "CERRADO" => "bg-secondary-subtle text-secondary-emphasis",
         "LIQUIDADO" => "bg-info-subtle text-info-emphasis",
         "EN_EXCEPCION" => "bg-warning-subtle text-warning-emphasis",

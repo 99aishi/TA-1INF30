@@ -109,17 +109,26 @@
                     }
                     <div class="col-6 mt-3">
                         <label class="form-label small text-muted">Caja Chica</label>
-                        <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@_ObtenerNombreCajaChica(SolicitudEdicion.Ciclo)" disabled="true">
+                        @if (PuedeEditar)
+                        {
+                            <select class="form-select form-select-lg rounded-4 bg-light" @bind="CajaChicaSeleccionadaId">
+                                <option value="0">Seleccione Caja Chica...</option>
+                                @foreach (var cc in CajasChicasConCiclosActivos)
+                                {
+                                    <option value="@cc.IdFondo">@cc.Nombre (@(cc.Moneda?.Simbolo ?? "$"))</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@_ObtenerNombreCajaChica(SolicitudEdicion.Ciclo)" disabled="true">
+                        }
                     </div>
                     <div class="col-6 mt-3">
                         <label class="form-label small text-muted">Ciclo de Caja Chica</label>
-                        <select class="form-select form-select-lg rounded-4 bg-light" @bind="CicloSeleccionadoId" disabled="@(!PuedeEditar)">
-                            <option value="0">Seleccione...</option>
-                            @foreach (var ciclo in CiclosActivos)
-                            {
-                                <option value="@ciclo.IdCicloCaja">@_ObtenerNombreCajaChica(ciclo) - Semana @ciclo.NumeroSemana (@ciclo.FechaApertura?.ToString("dd/MM/yyyy"))</option>
-                            }
-                        </select>
+                        <input type="text" class="form-control form-control-lg rounded-4 bg-light"
+                               value="@(SolicitudEdicion.Ciclo != null ? $"{SolicitudEdicion.Ciclo.CajaChica?.Nombre ?? "-"} - Semana {SolicitudEdicion.Ciclo.NumeroSemana}" : "Seleccione Caja Chica primero")"
+                               disabled="true" />
                         <small class="text-muted">Saldo disponible: @(SimboloMonedaCiclo) @(SaldoDisponibleCiclo.ToString("N2"))</small>
                     </div>
                     <div class="col-12 mt-3">
@@ -239,7 +248,7 @@
                                 @foreach (var comprobante in SolicitudEdicion.Comprobantes)
                                 {
                                     <div class="d-flex gap-2 align-items-start mb-2">
-                                        <ComprobanteDePagoItem EsParteDeSolicitud="true" Comprobante="comprobante" />
+                                        <ComprobanteDePagoItem EsParteDeSolicitud="true" Comprobante="comprobante" OnMuestraDetalle="() => VerComprobante(comprobante)" />
                                         @if (EsRendicionObservada)
                                         {
                                             <button type="button" class="btn btn-outline-primary btn-sm" @onclick="() => EditarComprobante(comprobante)">Editar</button>
@@ -325,6 +334,24 @@
         set
         {
             SolicitudEdicion.MonedaOriginal = value == 0 ? null : Monedas.FirstOrDefault(m => m.IdMoneda == value);
+            _ = RecalcularTipoCambio();
+        }
+    }
+
+    private List<CajaChica> CajasChicasConCiclosActivos => CiclosActivos
+        .Select(c => c.CajaChica)
+        .Where(cc => cc != null)
+        .GroupBy(cc => cc.IdFondo)
+        .Select(g => g.First())
+        .ToList();
+
+    private int CajaChicaSeleccionadaId
+    {
+        get => SolicitudEdicion.Ciclo?.CajaChica?.IdFondo ?? 0;
+        set
+        {
+            var cicloAsociado = CiclosActivos.FirstOrDefault(c => c.CajaChica?.IdFondo == value);
+            SolicitudEdicion.Ciclo = cicloAsociado;
             _ = RecalcularTipoCambio();
         }
     }
@@ -715,7 +742,7 @@
     {
         SolicitudEdicion = new SolicitudGasto
         {
-            FechaSolicitud = DateTime.Today,
+            FechaSolicitud = DateTime.Now,
             Estado = "PENDIENTE",
             Solicitante = EmpleadoActual,
             Destinatario = EmpleadoActual?.JefeDirecto,
@@ -830,5 +857,11 @@
         {
             Navigation.NavigateTo("/Mis Solicitudes De Gasto");
         }
+    }
+
+    private void VerComprobante(ComprobantePago comprobante)
+    {
+        if (comprobante == null) return;
+        Navigation.NavigateTo($"/Comprobantes de Pago/Detalle/{comprobante.IdComprobante}");
     }
 }
