@@ -25,20 +25,31 @@ public class SolicitudGastoWS {
         int minute = cal.get(Calendar.MINUTE);
         int timeInMinutes = hour * 60 + minute;
 
-        boolean esLaboral = dayOfWeek != Calendar.SATURDAY && dayOfWeek != Calendar.SUNDAY;
-        boolean enHorario = timeInMinutes >= 8 * 60 && timeInMinutes < 18 * 60;
-        boolean habilitado = esLaboral && enHorario;
+        boolean enVentana;
+        if (dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY) {
+            enVentana = false;
+        } else if (dayOfWeek == Calendar.MONDAY) {
+            enVentana = timeInMinutes >= 8 * 60;
+        } else if (dayOfWeek == Calendar.FRIDAY) {
+            enVentana = timeInMinutes < 18 * 60;
+        } else {
+            enVentana = true;
+        }
 
         String mensaje;
-        if (!esLaboral) {
-            mensaje = "Las solicitudes solo pueden registrarse de lunes a viernes.";
-        } else if (!enHorario) {
-            mensaje = "Las solicitudes solo pueden registrarse de 8:00 AM a 6:00 PM.";
+        if (!enVentana) {
+            if (dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY) {
+                mensaje = "Las solicitudes solo pueden registrarse de lunes a viernes.";
+            } else if (dayOfWeek == Calendar.MONDAY) {
+                mensaje = "Las solicitudes se habilitan desde el lunes a las 8:00 AM.";
+            } else {
+                mensaje = "Las solicitudes cierran el viernes a las 6:00 PM.";
+            }
         } else {
             mensaje = "Horario habilitado para registro de solicitudes.";
         }
 
-        return Response.ok(Map.of("habilitado", habilitado, "mensaje", mensaje)).build();
+        return Response.ok(Map.of("habilitado", enVentana, "mensaje", mensaje)).build();
     }
 
     @GET

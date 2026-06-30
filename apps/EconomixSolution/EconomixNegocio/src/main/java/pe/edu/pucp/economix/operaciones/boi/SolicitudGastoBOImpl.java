@@ -217,20 +217,21 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
 
     public void validarHorarioLaboral() throws Exception {
         Calendar cal = Calendar.getInstance();
+        int dayOfWeek = cal.get(Calendar.DAY_OF_WEEK);
         int hour = cal.get(Calendar.HOUR_OF_DAY);
         int minute = cal.get(Calendar.MINUTE);
-        int dayOfWeek = cal.get(Calendar.DAY_OF_WEEK);
+        int timeInMinutes = hour * 60 + minute;
 
         if (dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY) {
-            throw new Exception("No se pueden registrar solicitudes fuera de dias laborales (lunes a viernes).");
+            throw new Exception("No se pueden registrar solicitudes los fines de semana.");
         }
 
-        int timeInMinutes = hour * 60 + minute;
-        int startMinutes = 8 * 60;      // 08:00
-        int endMinutes = 18 * 60;       // 18:00
+        if (dayOfWeek == Calendar.MONDAY && timeInMinutes < 8 * 60) {
+            throw new Exception("Las solicitudes se habilitan desde el lunes a las 8:00 AM.");
+        }
 
-        if (timeInMinutes < startMinutes || timeInMinutes >= endMinutes) {
-            throw new Exception("No se pueden registrar solicitudes fuera del horario laboral (8:00 AM - 6:00 PM).");
+        if (dayOfWeek == Calendar.FRIDAY && timeInMinutes >= 18 * 60) {
+            throw new Exception("Las solicitudes cierran el viernes a las 6:00 PM.");
         }
     }
 
@@ -267,7 +268,7 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
     }
 
     public void validarMonto(SolicitudGasto solicitudGasto)throws Exception{
-        if(solicitudGasto.getMontoSolicitado() <= 0){
+        if(solicitudGasto.getMontoConvertido() <= 0){
             throw new Exception("El monto solicitado debe ser mayor que cero.");
         }
 
@@ -276,12 +277,12 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
         if(saldoDisponible < 0){
             throw new Exception("El ciclo no tiene saldo disponible.");
         }
-        if(solicitudGasto.getMontoSolicitado() > saldoDisponible){
+        if(solicitudGasto.getMontoConvertido() > saldoDisponible){
             throw new Exception("El monto solicitado no se puede otorgar. Fondos Insuficientes.");
         }
 
         double limiteMaximo = saldoDisponible * 0.50;
-        if(solicitudGasto.getMontoSolicitado() > limiteMaximo){
+        if(solicitudGasto.getMontoConvertido() > limiteMaximo){
             throw new Exception("El monto solicitado supera el limite del 50% del saldo disponible ("
                     + String.format("%.2f", limiteMaximo) + ").");
         }
