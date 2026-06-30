@@ -47,7 +47,7 @@
                 </div>
             }
             <div class="text-end mt-2">
-                <a href="/Solicitud/Detalle/@(SolicitudSeleccionada?.IdSolicitudGasto ?? 0)" class="btn btn-sm btn-outline-primary rounded-4">Ver solicitud</a>
+                <a href="@GetSolicitudUrl()" class="btn btn-sm btn-outline-primary rounded-4">Ver solicitud</a>
             </div>
         </div>
     }
@@ -198,6 +198,20 @@
         if (Comprobante != null)
         {
             Comprobante.Solicitud = null;
+        }
+    }
+
+    private string GetSolicitudUrl()
+    {
+        if (SolicitudSeleccionada == null) return string.Empty;
+        var user = UsuarioWS.GetCurrentUser();
+        if (user is Empleado emp && emp.RolFlujo == RolFlujo.EMPLEADO)
+        {
+            return $"/Mis Solicitudes De Gasto/Detalle/{SolicitudSeleccionada.IdSolicitudGasto}";
+        }
+        else
+        {
+            return $"/Solicitudes De Gasto?id={SolicitudSeleccionada.IdSolicitudGasto}";
         }
     }
 }

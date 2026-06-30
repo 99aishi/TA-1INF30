@@ -371,7 +371,7 @@
         && !EsAsociacion
         && !EsEvaluacion
         && Comprobante?.Estado != "OBSERVADO"
-        && UsuarioWS.GetCurrentUser() is Empleado;
+        && EsEmpleadoSimple;
 
     private bool PuedeEvaluar =>
         !EsCreacion
@@ -825,9 +825,8 @@
         get
         {
             if (RequiereAutorizacion) return true;
-            var rol = UsuarioWS.GetCurrentUser()?.Rol?.Titulo?.ToUpperInvariant();
-            if (rol == "EMPLEADO") return true;
-            return !EsEvaluacion;
+            if (EsEmpleadoSimple) return true;
+            return !EsEvaluacion && !PuedeEvaluar;
         }
     }
 
