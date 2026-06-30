@@ -456,15 +456,15 @@
                 return;
             }
 
-            if (string.IsNullOrEmpty(Transaccion.NumeroOperacionBancaria) && (Transaccion.MedioPago == "YAPE" || Transaccion.MedioPago == "PLIN" || Transaccion.MedioPago == "TRANSFERENCIA"))
-            {
-                _mensajeError = "Debe ingresar el N° de Operación para este medio de pago.";
-                return;
-            }
-
             if (string.IsNullOrEmpty(fechaInput))
             {
                 _mensajeError = "Debe seleccionar una fecha.";
+                return;
+            }
+
+            if (Transaccion.MedioPago == "TRANSFERENCIA" && cuentaDestinoId <= 0 && Transaccion.TipoTransaccion != "DEVOLUCION_SOBRANTE")
+            {
+                _mensajeError = "Debe seleccionar una cuenta destino para transferencias.";
                 return;
             }
 

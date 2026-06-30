@@ -7,6 +7,7 @@
 @inject IUsuarioWS UsuarioWS
 @inject IAreaWS AreaWS
 @inject IEmpleadoWS EmpleadoWS
+@inject IComprobantePagoWS ComprobantePagoWS
 
 <div class="h-100 d-flex flex-column">
     <div class="d-flex flex-row align-items-center mb-4">
@@ -46,7 +47,7 @@
                     <div class="card rounded-4 p-3 h-100 overflow-scroll">
                         @if (Cargando) { <p class="text-muted text-center mt-5">Cargando solicitudes...</p> }
                         else if (SolicitudesFiltradas.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ninguna solicitud coincide con los filtros" : "No hay solicitudes pendientes")</p> }
-                        else { @foreach (var s in SolicitudesFiltradas) { <SolicitudDeGastoRecibidaItem Solicitud="s" OnMuestraDetalle="() => MostrarDetalleSolicitud(s)"/> } }
+                        else { @foreach (var s in SolicitudesFiltradas) { <SolicitudDeGastoRecibidaItem Solicitud="s" Comprobantes="ObtenerComprobantes(s.IdSolicitudGasto)" OnMuestraDetalle="() => MostrarDetalleSolicitud(s)"/> } }
                     </div>
                 </div>
             
@@ -60,7 +61,7 @@
                     <div class="card rounded-4 p-3 h-100 overflow-scroll">
                         @if (Cargando) { <p class="text-muted text-center mt-5">Cargando solicitudes...</p> }
                         else if (SolicitudesFiltradas.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ninguna solicitud coincide con los filtros" : "No hay solicitudes pendientes")</p> }
-                        else { @foreach (var s in SolicitudesFiltradas) { <SolicitudDeGastoRecibidaItem Solicitud="s" OnMuestraDetalle="() => MostrarDetalleSolicitud(s)"/> } }
+                        else { @foreach (var s in SolicitudesFiltradas) { <SolicitudDeGastoRecibidaItem Solicitud="s" Comprobantes="ObtenerComprobantes(s.IdSolicitudGasto)" OnMuestraDetalle="() => MostrarDetalleSolicitud(s)"/> } }
                     </div>
                 </div>
             }
@@ -129,6 +130,13 @@
         Cargando = false;
     }
 
+    private List<ComprobantePago> Comprobantes { get; set; } = new();
+
+    private List<ComprobantePago> ObtenerComprobantes(int idSolicitud)
+    {
+        return Comprobantes.Where(c => c.Solicitud?.IdSolicitudGasto == idSolicitud).ToList();
+    }
+
     private async Task ListarSolicitudes()
     {
         ErrorMessage = string.Empty;
@@ -144,6 +152,8 @@
                 var idJefe = usuario.UsuarioID;
                 Solicitudes = await SolicitudGastoWS.listarPendientesJefeAsync(idJefe);
             }
+            var list = await ComprobantePagoWS.listarAsync();
+            Comprobantes = list != null ? new List<ComprobantePago>(list) : new List<ComprobantePago>();
         }
         catch (Exception ex) { ErrorMessage = ex.Message; }
     }

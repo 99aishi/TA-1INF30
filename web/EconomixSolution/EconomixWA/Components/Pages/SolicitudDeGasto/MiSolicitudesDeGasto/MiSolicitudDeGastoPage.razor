@@ -5,6 +5,7 @@
 @inject NavigationManager Navigation
 @inject ISolicitudGastoWS SolicitudGastoWS
 @inject IUsuarioWS UsuarioWS
+@inject IComprobantePagoWS ComprobantePagoWS
 
 <div class="h-100 d-flex flex-column">
     <div class="d-flex flex-row align-items-center mb-4">
@@ -42,7 +43,7 @@
                     <div class="card rounded-4 p-3 h-100 overflow-scroll">
                         @if (Cargando) { <p class="text-muted text-center mt-5">Cargando solicitudes...</p> }
                         else if (SolicitudesFiltradas.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ninguna solicitud coincide con los filtros" : "No tienes solicitudes de gasto")</p> }
-                        else { @foreach (var s in SolicitudesFiltradas) { <MiSolicitudDeGastoItem Solicitud="s" OnMuestraDetalle="() => MostrarDetalleSolicitud(s)"/> } }
+                        else { @foreach (var s in SolicitudesFiltradas) { <MiSolicitudDeGastoItem Solicitud="s" Comprobantes="ObtenerComprobantes(s.IdSolicitudGasto)" OnMuestraDetalle="() => MostrarDetalleSolicitud(s)"/> } }
                     </div>
                 </div>
 
@@ -56,7 +57,7 @@
                     <div class="card rounded-4 p-3 h-100 overflow-scroll">
                         @if (Cargando) { <p class="text-muted text-center mt-5">Cargando solicitudes...</p> }
                         else if (SolicitudesFiltradas.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ninguna solicitud coincide con los filtros" : "No tienes solicitudes de gasto")</p> }
-                        else { @foreach (var s in SolicitudesFiltradas) { <MiSolicitudDeGastoItem Solicitud="s" OnMuestraDetalle="() => MostrarDetalleSolicitud(s)"/> } }
+                        else { @foreach (var s in SolicitudesFiltradas) { <MiSolicitudDeGastoItem Solicitud="s" Comprobantes="ObtenerComprobantes(s.IdSolicitudGasto)" OnMuestraDetalle="() => MostrarDetalleSolicitud(s)"/> } }
                     </div>
                 </div>
             }
@@ -85,6 +86,21 @@
         || FiltroFechaInicio.HasValue
         || FiltroFechaFin.HasValue;
 
+    private int ObtenerPrioridadEstado(string estado)
+    {
+        return estado?.ToUpperInvariant() switch
+        {
+            "APROBADO" => 1,
+            "PENDIENTE" => 2,
+            "OBSERVADO" => 3,
+            "PAGADO" => 4,
+            "RENDIDO" => 5,
+            "RECHAZADO" => 6,
+            "ANULADO" => 7,
+            _ => 99
+        };
+    }
+
     private IEnumerable<SolicitudGasto> SolicitudesFiltradas => Solicitudes
         .Where(s => string.IsNullOrWhiteSpace(FiltroTexto)
             || (s.Solicitante?.Nombres.Contains(FiltroTexto, StringComparison.OrdinalIgnoreCase) ?? false)
@@ -94,7 +110,9 @@
         .Where(s => !FiltroMontoMax.HasValue || s.MontoSolicitado <= FiltroMontoMax.Value)
         .Where(s => FiltroEstado == "Todas" || s.Estado.Equals(FiltroEstado, StringComparison.OrdinalIgnoreCase))
         .Where(s => !FiltroFechaInicio.HasValue || s.FechaSolicitud.Date >= FiltroFechaInicio.Value.Date)
-        .Where(s => !FiltroFechaFin.HasValue || s.FechaSolicitud.Date <= FiltroFechaFin.Value.Date);
+        .Where(s => !FiltroFechaFin.HasValue || s.FechaSolicitud.Date <= FiltroFechaFin.Value.Date)
+        .OrderBy(s => ObtenerPrioridadEstado(s.Estado))
+        .ThenByDescending(s => s.FechaSolicitud);
 
     private void IrCrearSolicitud() => Navigation.NavigateTo("/Mis Solicitudes De Gasto/Crear");
     public void MostrarDetalleSolicitud(SolicitudGasto solicitud)
@@ -116,6 +134,13 @@
         Cargando = false;
     }
 
+    private List<ComprobantePago> Comprobantes { get; set; } = new();
+
+    private List<ComprobantePago> ObtenerComprobantes(int idSolicitud)
+    {
+        return Comprobantes.Where(c => c.Solicitud?.IdSolicitudGasto == idSolicitud).ToList();
+    }
+
     private async Task ListarSolicitudes()
     {
         ErrorMessage = string.Empty;
@@ -123,6 +148,8 @@
         {
             var idEmpleado = UsuarioWS.GetCurrentUserId();
             Solicitudes = await SolicitudGastoWS.listarPorSolicitanteAsync(idEmpleado);
+            var list = await ComprobantePagoWS.listarAsync();
+            Comprobantes = list != null ? new List<ComprobantePago>(list) : new List<ComprobantePago>();
         }
         catch (Exception ex) { ErrorMessage = ex.Message; }
     }
