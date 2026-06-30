@@ -39,36 +39,18 @@
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
-
-            @if (MostrarDetalle)
-            {
-                <div class="col-6 h-100 d-flex flex-column overflow-hidden">
-                    <div class="card rounded-4 p-3 h-100 overflow-scroll">
-                        @if (Cargando) { <p class="text-muted text-center mt-5">Cargando comprobantes...</p> }
-                        else if (ComprobantesFiltrados.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ningún comprobante coincide con los filtros" : "No tienes comprobantes registrados")</p> }
-                        else { @foreach (var cp in ComprobantesFiltrados) { <ComprobanteDePagoItem Comprobante="cp" OnMuestraDetalle="() => MostrarDetalleComprobante(cp)"/> } }
-                    </div>
+            <div class="col-12 h-100 d-flex flex-column overflow-hidden">
+                <div class="card rounded-4 p-3 h-100 overflow-scroll">
+                    @if (Cargando) { <p class="text-muted text-center mt-5">Cargando comprobantes...</p> }
+                    else if (ComprobantesFiltrados.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ningún comprobante coincide con los filtros" : "No tienes comprobantes registrados")</p> }
+                    else { @foreach (var cp in ComprobantesFiltrados) { <ComprobanteDePagoItem Comprobante="cp" OnMuestraDetalle="() => MostrarDetalleComprobante(cp)"/> } }
                 </div>
-                <div class="col-6 h-100">
-                    <ComprobanteDePagoDetalle IdComprobante="ComprobanteSeleccionado?.IdComprobante ?? 0" />
-                </div>
-            }
-            else
-            {
-                <div class="col-12 h-100 d-flex flex-column overflow-hidden">
-                    <div class="card rounded-4 p-3 h-100 overflow-scroll">
-                        @if (Cargando) { <p class="text-muted text-center mt-5">Cargando comprobantes...</p> }
-                        else if (ComprobantesFiltrados.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ningún comprobante coincide con los filtros" : "No tienes comprobantes registrados")</p> }
-                        else { @foreach (var cp in ComprobantesFiltrados) { <ComprobanteDePagoItem Comprobante="cp" OnMuestraDetalle="() => MostrarDetalleComprobante(cp)"/> } }
-                    </div>
-                </div>
-            }
+            </div>
         </div>
     </div>
 </div>
 
 @code {
-    private bool MostrarDetalle { get; set; } = false;
     private bool Cargando { get; set; } = true;
     private string ErrorMessage { get; set; } = string.Empty;
     private string FiltroTexto { get; set; } = string.Empty;
@@ -79,7 +61,6 @@
     private DateTime? FiltroFechaInicio { get; set; }
     private DateTime? FiltroFechaFin { get; set; }
     private List<ComprobantePago> Comprobantes { get; set; } = new();
-    private ComprobantePago? ComprobanteSeleccionado { get; set; }
 
     private bool HayFiltrosActivos =>
         !string.IsNullOrWhiteSpace(FiltroTexto)
@@ -103,15 +84,7 @@
 
     public void MostrarDetalleComprobante(ComprobantePago cp)
     {
-        ComprobanteSeleccionado = cp;
-        MostrarDetalle = true;
-    }
-
-    public async Task CerrarDetalleComprobante()
-    {
-        await ListarComprobantes();
-        MostrarDetalle = false;
-        ComprobanteSeleccionado = null;
+        Navigation.NavigateTo($"/Comprobantes de Pago/Detalle/{cp.IdComprobante}");
     }
 
     private void CrearComprobante() => Navigation.NavigateTo("/Comprobantes de Pago/Crear");

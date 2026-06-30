@@ -54,15 +54,40 @@
         </div>
         <div class="col-3 col-md-2">
             <label class="form-label small text-muted">Empleado</label>
-            <select class="form-select bg-light rounded-4"
-                    value="@FiltroEmpleadoId"
-                    @onchange="OnEmpleadoCambiado">
-                <option value="0">Todos</option>
-                @foreach (var e in Empleados)
+            <div class="position-relative">
+                <input type="text" class="form-control bg-light rounded-4" placeholder="Buscar..."
+                       value="@BusquedaEmpleado" @oninput="OnBusquedaEmpleadoCambiada"
+                       @onfocus="() => MostrarDropdown = BusquedaEmpleado.Length >= 2"
+                       @onblur="OnBlurEmpleado" />
+                @if (MostrarDropdown && ResultadosBusqueda.Any())
                 {
-                    <option value="@e.UsuarioID">@($"{e.Nombres} {e.ApellidoPaterno}")</option>
+                    <div class="position-absolute top-100 start-0 w-100 bg-white border rounded-4 shadow-sm z-3"
+                         style="max-height:200px;overflow-y:auto;z-index:1050;">
+                        @foreach (var emp in ResultadosBusqueda)
+                        {
+                            <div class="px-3 py-2 small cursor-pointer d-flex align-items-center"
+                                 @onmouseenter="() => _hoveredEmpId = emp.UsuarioID"
+                                 @onmouseleave="() => _hoveredEmpId = null"
+                                 @onmousedown="() => SeleccionarEmpleado(emp)"
+                                 style="@(_hoveredEmpId == emp.UsuarioID ? "background-color:#e9ecef;" : "")">
+                                <span>@emp.Nombres @emp.ApellidoPaterno</span>
+                            </div>
+                        }
+                    </div>
                 }
-            </select>
+            </div>
+            @if (EmpleadosSeleccionados.Any())
+            {
+                <div class="d-flex flex-wrap gap-1 mt-1">
+                    @foreach (var emp in EmpleadosSeleccionados)
+                    {
+                        <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill d-flex align-items-center gap-1" style="font-size:0.7rem;">
+                            @emp.Nombres @emp.ApellidoPaterno
+                            <button type="button" class="btn-close p-0" style="font-size:0.5rem;" @onclick="() => QuitarEmpleado(emp)"></button>
+                        </span>
+                    }
+                </div>
+            }
         </div>
         <div class="col-3 col-md-1">
             <label class="form-label small text-muted">Fecha inicio</label>
@@ -88,62 +113,37 @@
 </div>
 
 @code {
-    [Parameter]
-    public string FiltroTexto { get; set; } = string.Empty;
+    [Parameter] public string FiltroTexto { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> FiltroTextoChanged { get; set; }
+    [Parameter] public double? FiltroMontoMin { get; set; }
+    [Parameter] public EventCallback<double?> FiltroMontoMinChanged { get; set; }
+    [Parameter] public double? FiltroMontoMax { get; set; }
+    [Parameter] public EventCallback<double?> FiltroMontoMaxChanged { get; set; }
+    [Parameter] public string FiltroEstado { get; set; } = "Todas";
+    [Parameter] public EventCallback<string> FiltroEstadoChanged { get; set; }
+    [Parameter] public int FiltroAreaId { get; set; }
+    [Parameter] public EventCallback<int> FiltroAreaIdChanged { get; set; }
+    [Parameter] public List<Area> Areas { get; set; } = new();
+    [Parameter] public List<Empleado> Empleados { get; set; } = new();
+    [Parameter] public List<Empleado> EmpleadosSeleccionados { get; set; } = new();
+    [Parameter] public EventCallback<List<Empleado>> EmpleadosSeleccionadosChanged { get; set; }
+    [Parameter] public DateTime? FiltroFechaInicio { get; set; }
+    [Parameter] public EventCallback<DateTime?> FiltroFechaInicioChanged { get; set; }
+    [Parameter] public DateTime? FiltroFechaFin { get; set; }
+    [Parameter] public EventCallback<DateTime?> FiltroFechaFinChanged { get; set; }
+    [Parameter] public EventCallback OnLimpiar { get; set; }
 
-    [Parameter]
-    public EventCallback<string> FiltroTextoChanged { get; set; }
+    private string BusquedaEmpleado { get; set; } = string.Empty;
+    private bool MostrarDropdown { get; set; }
+    private int? _hoveredEmpId;
 
-    [Parameter]
-    public double? FiltroMontoMin { get; set; }
-
-    [Parameter]
-    public EventCallback<double?> FiltroMontoMinChanged { get; set; }
-
-    [Parameter]
-    public double? FiltroMontoMax { get; set; }
-
-    [Parameter]
-    public EventCallback<double?> FiltroMontoMaxChanged { get; set; }
-
-    [Parameter]
-    public string FiltroEstado { get; set; } = "Todas";
-
-    [Parameter]
-    public EventCallback<string> FiltroEstadoChanged { get; set; }
-
-    [Parameter]
-    public int FiltroAreaId { get; set; }
-
-    [Parameter]
-    public EventCallback<int> FiltroAreaIdChanged { get; set; }
-
-    [Parameter]
-    public int FiltroEmpleadoId { get; set; }
-
-    [Parameter]
-    public EventCallback<int> FiltroEmpleadoIdChanged { get; set; }
-
-    [Parameter]
-    public List<Area> Areas { get; set; } = new();
-
-    [Parameter]
-    public List<Empleado> Empleados { get; set; } = new();
-
-    [Parameter]
-    public DateTime? FiltroFechaInicio { get; set; }
-
-    [Parameter]
-    public EventCallback<DateTime?> FiltroFechaInicioChanged { get; set; }
-
-    [Parameter]
-    public DateTime? FiltroFechaFin { get; set; }
-
-    [Parameter]
-    public EventCallback<DateTime?> FiltroFechaFinChanged { get; set; }
-
-    [Parameter]
-    public EventCallback OnLimpiar { get; set; }
+    private IEnumerable<Empleado> ResultadosBusqueda =>
+        Empleados
+            .Where(e => !EmpleadosSeleccionados.Any(s => s.UsuarioID == e.UsuarioID))
+            .Where(e => (e.Nombres ?? "").Contains(BusquedaEmpleado, StringComparison.OrdinalIgnoreCase)
+                     || (e.ApellidoPaterno ?? "").Contains(BusquedaEmpleado, StringComparison.OrdinalIgnoreCase)
+                     || (e.ApellidoMaterno ?? "").Contains(BusquedaEmpleado, StringComparison.OrdinalIgnoreCase))
+            .Take(10);
 
     private async Task OnTextoCambiado(ChangeEventArgs e)
     {
@@ -153,19 +153,15 @@
 
     private async Task OnMontoMinCambiado(ChangeEventArgs e)
     {
-        if (double.TryParse(e.Value?.ToString(), out var val))
-            FiltroMontoMin = val;
-        else
-            FiltroMontoMin = null;
+        if (double.TryParse(e.Value?.ToString(), out var val)) FiltroMontoMin = val;
+        else FiltroMontoMin = null;
         await FiltroMontoMinChanged.InvokeAsync(FiltroMontoMin);
     }
 
     private async Task OnMontoMaxCambiado(ChangeEventArgs e)
     {
-        if (double.TryParse(e.Value?.ToString(), out var val))
-            FiltroMontoMax = val;
-        else
-            FiltroMontoMax = null;
+        if (double.TryParse(e.Value?.ToString(), out var val)) FiltroMontoMax = val;
+        else FiltroMontoMax = null;
         await FiltroMontoMaxChanged.InvokeAsync(FiltroMontoMax);
     }
 
@@ -181,27 +177,48 @@
         await FiltroAreaIdChanged.InvokeAsync(FiltroAreaId);
     }
 
-    private async Task OnEmpleadoCambiado(ChangeEventArgs e)
+    private async Task OnBusquedaEmpleadoCambiada(ChangeEventArgs e)
     {
-        FiltroEmpleadoId = int.TryParse(e.Value?.ToString(), out var val) ? val : 0;
-        await FiltroEmpleadoIdChanged.InvokeAsync(FiltroEmpleadoId);
+        BusquedaEmpleado = e.Value?.ToString() ?? string.Empty;
+        MostrarDropdown = BusquedaEmpleado.Length >= 2;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SeleccionarEmpleado(Empleado emp)
+    {
+        if (EmpleadosSeleccionados.All(e => e.UsuarioID != emp.UsuarioID))
+        {
+            EmpleadosSeleccionados = new List<Empleado>(EmpleadosSeleccionados) { emp };
+            await EmpleadosSeleccionadosChanged.InvokeAsync(EmpleadosSeleccionados);
+        }
+        BusquedaEmpleado = string.Empty;
+        MostrarDropdown = false;
+    }
+
+    private async Task QuitarEmpleado(Empleado emp)
+    {
+        EmpleadosSeleccionados = EmpleadosSeleccionados.Where(e => e.UsuarioID != emp.UsuarioID).ToList();
+        await EmpleadosSeleccionadosChanged.InvokeAsync(EmpleadosSeleccionados);
+    }
+
+    private async Task OnBlurEmpleado()
+    {
+        await Task.Delay(200);
+        MostrarDropdown = false;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task OnFechaInicioCambiada(ChangeEventArgs e)
     {
-        if (DateTime.TryParse(e.Value?.ToString(), out var val))
-            FiltroFechaInicio = val.Date;
-        else
-            FiltroFechaInicio = null;
+        if (DateTime.TryParse(e.Value?.ToString(), out var val)) FiltroFechaInicio = val.Date;
+        else FiltroFechaInicio = null;
         await FiltroFechaInicioChanged.InvokeAsync(FiltroFechaInicio);
     }
 
     private async Task OnFechaFinCambiada(ChangeEventArgs e)
     {
-        if (DateTime.TryParse(e.Value?.ToString(), out var val))
-            FiltroFechaFin = val.Date;
-        else
-            FiltroFechaFin = null;
+        if (DateTime.TryParse(e.Value?.ToString(), out var val)) FiltroFechaFin = val.Date;
+        else FiltroFechaFin = null;
         await FiltroFechaFinChanged.InvokeAsync(FiltroFechaFin);
     }
 
@@ -222,8 +239,8 @@
         FiltroAreaId = 0;
         await FiltroAreaIdChanged.InvokeAsync(0);
 
-        FiltroEmpleadoId = 0;
-        await FiltroEmpleadoIdChanged.InvokeAsync(0);
+        EmpleadosSeleccionados = new();
+        await EmpleadosSeleccionadosChanged.InvokeAsync(EmpleadosSeleccionados);
 
         FiltroFechaInicio = null;
         await FiltroFechaInicioChanged.InvokeAsync(null);

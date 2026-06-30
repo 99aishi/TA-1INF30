@@ -17,7 +17,7 @@
         </div>
         <LiveClock />
         <div class="flex-grow-1 text-end">
-            @if (!EsAdministrador)
+            @if (EsEmpleado)
             {
                 <button type="button" class="btn btn-primary" @onclick="IrAgregarComprobante">
                     + Agregar Comprobante
@@ -50,30 +50,13 @@
 
     <div class="d-flex flex-column flex-fill overflow-hidden">
         <div class="row flex-fill mt-3 mb-3 overflow-hidden d-flex">
-            
-            @if(MostrarDetalle)
-            {
-                <div class="col-6 h-100 d-flex flex-column overflow-hidden">
-                    <div class="card rounded-4 p-3 h-100 overflow-scroll">
-                        @if (Cargando) { <p class="text-muted text-center mt-5">Cargando comprobantes...</p> }
-                        else if (ComprobantesFiltrados.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ningún comprobante coincide con los filtros" : "No se encontraron comprobantes")</p> }
-                        else { @foreach (var cp in ComprobantesFiltrados) { <ComprobanteDePagoItem Comprobante="cp" OnMuestraDetalle="() => MostrarDetalleComprobante(cp)"/> } }
-                    </div>
+            <div class="col-12 h-100 d-flex flex-column overflow-hidden">
+                <div class="card rounded-4 p-3 h-100 overflow-scroll">
+                    @if (Cargando) { <p class="text-muted text-center mt-5">Cargando comprobantes...</p> }
+                    else if (ComprobantesFiltrados.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ningún comprobante coincide con los filtros" : "No se encontraron comprobantes")</p> }
+                    else { @foreach (var cp in ComprobantesFiltrados) { <ComprobanteDePagoItem Comprobante="cp" OnMuestraDetalle="() => MostrarDetalleComprobante(cp)"/> } }
                 </div>
-                <div class="col-6 h-100">
-                    <ComprobanteDePagoDetalle IdComprobante="ComprobanteSeleccionado?.IdComprobante ?? 0" />
-                </div>
-            }
-            else
-            {
-                <div class="col-12 h-100 d-flex flex-column overflow-hidden">
-                    <div class="card rounded-4 p-3 h-100 overflow-scroll">
-                        @if (Cargando) { <p class="text-muted text-center mt-5">Cargando comprobantes...</p> }
-                        else if (ComprobantesFiltrados.Count() == 0) { <p class="text-muted text-center mt-5">@(HayFiltrosActivos ? "Ningún comprobante coincide con los filtros" : "No se encontraron comprobantes")</p> }
-                        else { @foreach (var cp in ComprobantesFiltrados) { <ComprobanteDePagoItem Comprobante="cp" OnMuestraDetalle="() => MostrarDetalleComprobante(cp)"/> } }
-                    </div>
-                </div>
-            }
+            </div>
         </div>
     </div>
 </div>
@@ -94,8 +77,8 @@
     private List<Empleado> Empleados { get; set; } = new();
     private List<Area> AreasSeleccionadas { get; set; } = new();
     private List<Empleado> EmpleadosSeleccionados { get; set; } = new();
-    private ComprobantePago? ComprobanteSeleccionado { get; set; }
     private bool EsAdministrador { get; set; }
+    private bool EsEmpleado { get; set; }
     private bool MostrarArea { get; set; }
     private bool MostrarEmpleado { get; set; }
 
@@ -126,17 +109,9 @@
 
     public void MostrarDetalleComprobante(ComprobantePago cp)
     {
-        ComprobanteSeleccionado = cp;
-        MostrarDetalle = true;
+        Navigation.NavigateTo($"/Comprobantes de Pago/Detalle/{cp.IdComprobante}");
     }
 
-    public async Task CerrarDetalleComprobante()
-    {
-        await ListarComprobantes();
-        MostrarDetalle = false;
-        ComprobanteSeleccionado = null;
-    }
-    
     private void IrAgregarComprobante()
     {
         Navigation.NavigateTo("/Comprobantes de Pago/Crear");
@@ -146,8 +121,9 @@
     {
         var user = UsuarioWS.GetCurrentUser();
         EsAdministrador = user is Administrador;
+        EsEmpleado = user is Empleado e && e.RolFlujo == RolFlujo.EMPLEADO;
         MostrarArea = user is Administrador;
-        MostrarEmpleado = user is not Empleado || (user is Empleado emp && emp.RolFlujo != RolFlujo.EMPLEADO);
+        MostrarEmpleado = user is not Empleado || (user is Empleado e2 && e2.RolFlujo != RolFlujo.EMPLEADO);
         Cargando = true;
         if (MostrarArea || MostrarEmpleado)
         {

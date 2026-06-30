@@ -33,53 +33,54 @@
                 </span>
             }
         </div>
+
         <div class="col-4 mt-3">
             <label for="RUC" class="form-label small text-muted">RUC</label>    
-            @if (RequiereAutorizacion)
+            @if (RequiereAutorizacion || SoloLectura)
             {
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.RucProveedor" disabled>
             }
             else
             {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RucProveedor" placeholder="RUC" maxlength="11" disabled="@RequiereAutorizacion">
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RucProveedor" placeholder="RUC" maxlength="11" disabled="@(RequiereAutorizacion || SoloLectura)">
             }
         </div>
         <div class="col-4 mt-3">
             <label for="RazonSocial" class="form-label small text-muted">Razón Social</label>    
-            @if (RequiereAutorizacion)
+            @if (RequiereAutorizacion || SoloLectura)
             {
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.RazonSocial" disabled>
             }
             else
             {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RazonSocial" placeholder="Razón Social" disabled="@RequiereAutorizacion">
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RazonSocial" placeholder="Razón Social" disabled="@(RequiereAutorizacion || SoloLectura)">
             }
         </div>
         <div class="col-4 mt-3">
             <label for="NumeroSerial" class="form-label small text-muted">Número Serial</label>    
-            @if (RequiereAutorizacion)
+            @if (RequiereAutorizacion || SoloLectura)
             {
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.NumeroSerial" disabled>
             }
             else
             {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.NumeroSerial" placeholder="Número Serial" disabled="@RequiereAutorizacion">
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.NumeroSerial" placeholder="Número Serial" disabled="@(RequiereAutorizacion || SoloLectura)">
             }
         </div>
         <div class="col-2 mt-3">
             <label for="FechaDeEmision" class="form-label small text-muted">Fecha de Emisión</label>    
-            @if (RequiereAutorizacion)
+            @if (RequiereAutorizacion || SoloLectura)
             {
                 <input type="date" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.FechaEmision?.ToString("yyyy-MM-dd")" disabled>
             }
             else
             {
-                <input type="date" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.FechaEmision" disabled="@RequiereAutorizacion">
+                <input type="date" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.FechaEmision" disabled="@(RequiereAutorizacion || SoloLectura)">
             }
         </div>
         <div class="col-2 mt-3">
             <label for="TipoDocumento" class="form-label small text-muted">Tipo de Documento</label>    
-            @if (RequiereAutorizacion)
+            @if (RequiereAutorizacion || SoloLectura)
             {
                 <select class="form-select form-select-lg rounded-4 bg-light" disabled>
                     <option selected value="@Comprobante?.TipoDocumento">@Comprobante?.TipoDocumento</option>
@@ -104,7 +105,7 @@
         </div>
         <div class="col-2 mt-3">
             <label for="Total" class="form-label small text-muted">Total</label>
-            @if (RequiereAutorizacion)
+            @if (RequiereAutorizacion || SoloLectura)
             {
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(SimboloMoneda) @Comprobante?.MontoTotal.ToString("N2")" disabled>
             }
@@ -134,7 +135,7 @@
             }
             else
             {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Comprobante?.Moneda?.CodigoISO ?? "PEN")" disabled>
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@CodigoIsoComprobante" disabled>
             }
         </div>
         @if (Comprobante?.Solicitud == null || Comprobante.Solicitud.IdSolicitudGasto == 0)
@@ -236,7 +237,33 @@
 
     <div class="d-flex justify-content-end gap-3 mt-3">
         <div class="d-flex flex-wrap-nowrap justify-content-end gap-3 mt-4">
-            @if (EsCreacion || EsAsociacion)
+            @if (SoloLectura)
+            {
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando"
+                        @onclick="MostrarItemsComprobante">
+                    @(Procesando ? "Procesando..." : "Volver")
+                </button>
+            }
+            else if (PuedeEvaluar)
+            {
+                <button type="button" class="btn btn-outline-success" disabled="@Procesando"
+                        @onclick="Aprobar">
+                    @(Procesando ? "Procesando..." : "Aprobar")
+                </button>
+                <button type="button" class="btn btn-outline-warning" disabled="@Procesando"
+                        @onclick="Observar">
+                    @(Procesando ? "Procesando..." : "Observar")
+                </button>
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando"
+                        @onclick="MostrarItemsComprobante">
+                    @(Procesando ? "Procesando..." : "Volver")
+                </button>
+                <button type="button" class="btn btn-outline-danger" disabled="@Procesando"
+                        @onclick="Rechazar">
+                    @(Procesando ? "Procesando..." : "Rechazar")
+                </button>
+            }
+            else if (EsCreacion || EsAsociacion)
             {
                 <button type="button" class="btn btn-outline-primary" disabled="@Procesando"
                         @onclick="GuardarComprobante">
@@ -315,16 +342,65 @@
     [Parameter]
     public EventCallback OnEvaluado { get; set; }
 
-    private string SimboloMoneda => Comprobante?.Moneda?.Simbolo ?? "S/.";
+    private string SimboloMoneda
+    {
+        get
+        {
+            if (Comprobante?.Moneda == null) return "S/.";
+            var m = Monedas.FirstOrDefault(x => x.IdMoneda == Comprobante.Moneda.IdMoneda);
+            return !string.IsNullOrEmpty(m?.Simbolo) ? m.Simbolo : (Comprobante.Moneda.Simbolo ?? "S/.");
+        }
+    }
+
+    private string CodigoIsoComprobante
+    {
+        get
+        {
+            if (Comprobante?.Moneda == null) return "PEN";
+            var m = Monedas.FirstOrDefault(x => x.IdMoneda == Comprobante.Moneda.IdMoneda);
+            return !string.IsNullOrEmpty(m?.CodigoISO) ? m.CodigoISO : (Comprobante.Moneda.CodigoISO ?? "PEN");
+        }
+    }
     private string ErrorMessage { get; set; } = string.Empty;
     private bool MostrarModalSolicitud { get; set; }
     private string MotivoSolicitud { get; set; } = string.Empty;
     private bool Solicitando { get; set; }
     private bool Procesando { get; set; } = false;
+    private bool SoloLectura =>
+        !EsCreacion
+        && !EsAsociacion
+        && !EsEvaluacion
+        && Comprobante?.Estado != "OBSERVADO"
+        && UsuarioWS.GetCurrentUser() is Empleado;
+
+    private bool PuedeEvaluar =>
+        !EsCreacion
+        && !EsAsociacion
+        && !EsEvaluacion
+        && Comprobante?.Estado == "POR_REVISAR"
+        && !EsEmpleadoSimple;
+
+    private bool EsEmpleadoSimple
+    {
+        get
+        {
+            var u = UsuarioWS.GetCurrentUser();
+            return u is Empleado emp && emp.RolFlujo == RolFlujo.EMPLEADO;
+        }
+    }
+
+    private string GetSolicitudUrl()
+    {
+        var id = Comprobante?.Solicitud?.IdSolicitudGasto ?? 0;
+        return UsuarioWS.GetCurrentUser() is Empleado
+            ? $"/Mis Solicitudes De Gasto/Detalle/{id}"
+            : $"/Solicitudes De Gasto/Detalle/{id}";
+    }
 
     public void Volver()
     {
-        Navigation.NavigateTo("/Comprobantes de Pago");
+        Navigation.NavigateTo(UsuarioWS.GetCurrentUser() is Empleado
+            ? "/Mis Comprobantes de Pago" : "/Comprobantes de Pago");
     }
 
     private async Task MostrarItemsComprobante()
@@ -333,7 +409,8 @@
         Procesando = true;
         try
         {
-            Navigation.NavigateTo("/Comprobantes de Pago");
+            Navigation.NavigateTo(UsuarioWS.GetCurrentUser() is Empleado
+                ? "/Mis Comprobantes de Pago" : "/Comprobantes de Pago");
         }
         finally
         {

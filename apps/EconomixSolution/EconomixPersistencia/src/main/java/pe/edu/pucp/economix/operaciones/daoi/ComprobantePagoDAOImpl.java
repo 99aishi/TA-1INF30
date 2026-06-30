@@ -166,7 +166,7 @@ public class ComprobantePagoDAOImpl implements IComprobantePagoDAO {
 
         int idMoneda = rs.getInt(prefijo + "id_moneda_original");
         if (!rs.wasNull() && idMoneda > 0) {
-            Moneda moneda = getOrCreate(cache, Moneda.class, idMoneda, () -> new Moneda());
+            Moneda moneda = new Moneda();
             moneda.setIdMoneda(idMoneda);
             sg.setMonedaOriginal(moneda);
         }
