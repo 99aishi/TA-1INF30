@@ -1,133 +1,186 @@
 @rendermode InteractiveServer
 
-<div class="card rounded-4 p-3 mb-3">
-    <div class="row g-2 align-items-end">
-        <div class="col-12 col-md-2">
-            <label class="form-label small text-muted">Proveedor / Empl.</label>
-            <input type="text"
-                   class="form-control bg-light rounded-4"
-                   placeholder="Razón social"
-                   value="@FiltroTexto"
-                   @oninput="OnTextoCambiado" />
+<div class="card rounded-4 p-2 mb-3 shadow-sm border-0 bg-white">
+    <div class="d-flex flex-wrap align-items-end gap-1">
+        <div style="flex: 2 1 140px; min-width: 120px;">
+            <label class="form-label small text-muted mb-1 ms-1">Proveedor</label>
+            <input type="text" class="form-control form-control-sm bg-light border-0 rounded-3 px-2 py-1" style="font-size: 0.85rem;" placeholder="Buscar proveedor..."
+                   value="@FiltroTexto" @oninput="OnTextoCambiado" />
         </div>
-        <div class="col-4 col-md-1">
-            <label class="form-label small text-muted">Tipo</label>
-            <select class="form-select bg-light rounded-4"
-                    value="@FiltroTipo"
-                    @onchange="OnTipoCambiado">
+        <div style="flex: 1 1 80px; min-width: 75px;">
+            <label class="form-label small text-muted mb-1 ms-1">Estado</label>
+            <select class="form-select form-select-sm bg-light border-0 rounded-3 py-1" style="font-size: 0.85rem;" value="@FiltroEstado" @onchange="OnEstadoCambiado">
+                <option value="Todas">Todas</option>
+                <option value="POR_REVISAR">P. rev</option>
+                <option value="APROBADO">Aprob.</option>
+                <option value="OBSERVADO">Obs.</option>
+                <option value="ANULADO">Anul.</option>
+            </select>
+        </div>
+        <div style="flex: 1 1 80px; min-width: 75px;">
+            <label class="form-label small text-muted mb-1 ms-1">Tipo</label>
+            <select class="form-select form-select-sm bg-light border-0 rounded-3 py-1" style="font-size: 0.85rem;" value="@FiltroTipo" @onchange="OnTipoCambiado">
                 <option value="Todos">Todos</option>
                 <option value="FACTURA">Fact.</option>
                 <option value="BOLETA">Bolet.</option>
             </select>
         </div>
-        <div class="col-4 col-md-1">
-            <label class="form-label small text-muted">Estado</label>
-            <select class="form-select bg-light rounded-4"
-                    value="@FiltroEstado"
-                    @onchange="OnEstadoCambiado">
-                <option value="Todas">Todas</option>
-                <option value="PorRevisar">P. revisar</option>
-                <option value="Aprobado">Aprob.</option>
-                <option value="Rechazado">Rechaz.</option>
-            </select>
+        <div style="flex: 1 1 65px; min-width: 60px;">
+            <label class="form-label small text-muted mb-1 ms-1">Mín</label>
+            <input type="number" step="0.01" class="form-control form-control-sm bg-light border-0 rounded-3 px-2 py-1" style="font-size: 0.85rem;" placeholder="0"
+                   value="@FiltroMontoMin" @oninput="OnMontoMinCambiado" />
         </div>
-        <div class="col-4 col-md-1">
-            <label class="form-label small text-muted">Monto mín.</label>
-            <input type="number"
-                   step="0.01"
-                   class="form-control bg-light rounded-4"
-                   placeholder="0.00"
-                   value="@FiltroMontoMin"
-                   @oninput="OnMontoMinCambiado" />
+        <div style="flex: 1 1 65px; min-width: 60px;">
+            <label class="form-label small text-muted mb-1 ms-1">Máx</label>
+            <input type="number" step="0.01" class="form-control form-control-sm bg-light border-0 rounded-3 px-2 py-1" style="font-size: 0.85rem;" placeholder="0"
+                   value="@FiltroMontoMax" @oninput="OnMontoMaxCambiado" />
         </div>
-        <div class="col-4 col-md-1">
-            <label class="form-label small text-muted">Monto máx.</label>
-            <input type="number"
-                   step="0.01"
-                   class="form-control bg-light rounded-4"
-                   placeholder="0.00"
-                   value="@FiltroMontoMax"
-                   @oninput="OnMontoMaxCambiado" />
+        <div style="flex: 1.2 1 100px; min-width: 90px;">
+            <label class="form-label small text-muted mb-1 ms-1">Inicio</label>
+            <input type="date" class="form-control form-control-sm bg-light border-0 rounded-3 px-2 py-1" style="font-size: 0.85rem;"
+                   value="@FiltroFechaInicio?.ToString("yyyy-MM-dd")" @onchange="OnFechaInicioCambiada" />
         </div>
-        <div class="col-4 col-md-2">
-            <label class="form-label small text-muted">Fecha inicio</label>
-            <input type="date"
-                   class="form-control bg-light rounded-4"
-                   value="@FiltroFechaInicio?.ToString("yyyy-MM-dd")"
-                   @onchange="OnFechaInicioCambiada" />
+        <div style="flex: 1.2 1 100px; min-width: 90px;">
+            <label class="form-label small text-muted mb-1 ms-1">Fin</label>
+            <input type="date" class="form-control form-control-sm bg-light border-0 rounded-3 px-2 py-1" style="font-size: 0.85rem;"
+                   value="@FiltroFechaFin?.ToString("yyyy-MM-dd")" @onchange="OnFechaFinCambiada" />
         </div>
-        <div class="col-4 col-md-2">
-            <label class="form-label small text-muted">Fecha fin</label>
-            <input type="date"
-                   class="form-control bg-light rounded-4"
-                   value="@FiltroFechaFin?.ToString("yyyy-MM-dd")"
-                   @onchange="OnFechaFinCambiada" />
-        </div>
-        <div class="col-4 col-md-2 d-grid">
-            <label class="form-label small text-muted">&nbsp;</label>
-            <button type="button" class="btn btn-outline-secondary rounded-4" @onclick="Limpiar">
-                Limpiar
-            </button>
+        @if (MostrarArea)
+        {
+            <div style="flex: 1.5 1 110px; min-width: 100px;">
+                <label class="form-label small text-muted mb-1 ms-1">Área</label>
+                <select class="form-select form-select-sm bg-light border-0 rounded-3 py-1" style="font-size: 0.85rem;" value="0" @onchange="OnAreaSeleccionada">
+                    <option value="0">Seleccione...</option>
+                    @foreach (var a in Areas.Where(x => !AreasSeleccionadas.Any(s => s.AreaID == x.AreaID)))
+                    {
+                        <option value="@a.AreaID">@a.Nombre</option>
+                    }
+                </select>
+                @if (AreasSeleccionadas.Any())
+                {
+                    <div class="d-flex flex-wrap gap-1 mt-1">
+                        @foreach (var area in AreasSeleccionadas)
+                        {
+                            <span class="badge bg-success-subtle text-success-emphasis rounded-pill d-flex align-items-center gap-1" style="font-size:0.65rem; padding: 2px 6px;">
+                                @area.Nombre
+                                <button type="button" class="btn-close p-0" style="font-size:0.45rem;" @onclick="() => QuitarArea(area)"></button>
+                            </span>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        @if (MostrarEmpleado)
+        {
+            <div style="flex: 2 1 130px; min-width: 110px;">
+                <label class="form-label small text-muted mb-1 ms-1">Empleado</label>
+                <div class="position-relative">
+                    <input type="text" class="form-control form-control-sm bg-light border-0 rounded-3 px-2 py-1" style="font-size: 0.85rem;" placeholder="Buscar..."
+                           value="@BusquedaEmpleado" @oninput="OnBusquedaEmpleadoCambiada"
+                           @onfocus="() => MostrarDropdown = BusquedaEmpleado.Length >= 2"
+                           @onblur="OnBlurEmpleado" />
+                    @if (MostrarDropdown && ResultadosBusqueda.Any())
+                    {
+                        <div class="position-absolute top-100 start-0 w-100 bg-white border rounded-3 shadow-sm z-3"
+                             style="max-height:150px;overflow-y:auto;z-index:1050;">
+                            @foreach (var emp in ResultadosBusqueda)
+                            {
+                                <div class="px-2 py-1 small cursor-pointer d-flex align-items-center"
+                                     @onmouseenter="() => _hoveredEmpId = emp.UsuarioID"
+                                     @onmouseleave="() => _hoveredEmpId = null"
+                                     @onmousedown="() => SeleccionarEmpleado(emp)"
+                                     style="@(_hoveredEmpId == emp.UsuarioID ? "background-color:#e9ecef;" : "")">
+                                    <span>@emp.Nombres @emp.ApellidoPaterno</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                @if (EmpleadosSeleccionados.Any())
+                {
+                    <div class="d-flex flex-wrap gap-1 mt-1">
+                        @foreach (var emp in EmpleadosSeleccionados)
+                        {
+                            <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill d-flex align-items-center gap-1" style="font-size:0.65rem; padding: 2px 6px;">
+                                @emp.Nombres @emp.ApellidoPaterno
+                                <button type="button" class="btn-close p-0" style="font-size:0.45rem;" @onclick="() => QuitarEmpleado(emp)"></button>
+                            </span>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        <div style="flex: 0 0 auto;">
+            <button type="button" class="btn btn-sm btn-outline-secondary rounded-3 px-3 py-1" style="font-size: 0.85rem;" @onclick="Limpiar">Limpiar</button>
         </div>
     </div>
 </div>
 
 @code {
-    [Parameter]
-    public string FiltroTexto { get; set; } = string.Empty;
+    [Parameter] public string FiltroTexto { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> FiltroTextoChanged { get; set; }
+    [Parameter] public string FiltroTipo { get; set; } = "Todos";
+    [Parameter] public EventCallback<string> FiltroTipoChanged { get; set; }
+    [Parameter] public string FiltroEstado { get; set; } = "Todas";
+    [Parameter] public EventCallback<string> FiltroEstadoChanged { get; set; }
+    [Parameter] public double? FiltroMontoMin { get; set; }
+    [Parameter] public EventCallback<double?> FiltroMontoMinChanged { get; set; }
+    [Parameter] public double? FiltroMontoMax { get; set; }
+    [Parameter] public EventCallback<double?> FiltroMontoMaxChanged { get; set; }
+    [Parameter] public DateTime? FiltroFechaInicio { get; set; }
+    [Parameter] public EventCallback<DateTime?> FiltroFechaInicioChanged { get; set; }
+    [Parameter] public DateTime? FiltroFechaFin { get; set; }
+    [Parameter] public EventCallback<DateTime?> FiltroFechaFinChanged { get; set; }
 
-    [Parameter]
-    public EventCallback<string> FiltroTextoChanged { get; set; }
+    [Parameter] public bool MostrarArea { get; set; }
+    [Parameter] public bool MostrarEmpleado { get; set; }
 
-    [Parameter]
-    public string FiltroTipo { get; set; } = "Todos";
+    [Parameter] public List<Area> Areas { get; set; } = new();
+    [Parameter] public List<Area> AreasSeleccionadas { get; set; } = new();
+    [Parameter] public EventCallback<List<Area>> AreasSeleccionadasChanged { get; set; }
 
-    [Parameter]
-    public EventCallback<string> FiltroTipoChanged { get; set; }
+    [Parameter] public List<Empleado> Empleados { get; set; } = new();
+    [Parameter] public List<Empleado> EmpleadosSeleccionados { get; set; } = new();
+    [Parameter] public EventCallback<List<Empleado>> EmpleadosSeleccionadosChanged { get; set; }
 
-    [Parameter]
-    public string FiltroEstado { get; set; } = "Todas";
+    [Parameter] public EventCallback OnLimpiar { get; set; }
 
-    [Parameter]
-    public EventCallback<string> FiltroEstadoChanged { get; set; }
+    private string BusquedaEmpleado { get; set; } = string.Empty;
+    private bool MostrarDropdown { get; set; }
+    private int? _hoveredEmpId;
 
-    [Parameter]
-    public double? FiltroMontoMin { get; set; }
+    private IEnumerable<Empleado> ResultadosBusqueda =>
+        Empleados
+            .Where(e => !EmpleadosSeleccionados.Any(s => s.UsuarioID == e.UsuarioID))
+            .Where(e => (e.Nombres ?? "").Contains(BusquedaEmpleado, StringComparison.OrdinalIgnoreCase)
+                     || (e.ApellidoPaterno ?? "").Contains(BusquedaEmpleado, StringComparison.OrdinalIgnoreCase)
+                     || (e.ApellidoMaterno ?? "").Contains(BusquedaEmpleado, StringComparison.OrdinalIgnoreCase))
+            .Take(10);
 
-    [Parameter]
-    public EventCallback<double?> FiltroMontoMinChanged { get; set; }
-
-    [Parameter]
-    public double? FiltroMontoMax { get; set; }
-
-    [Parameter]
-    public EventCallback<double?> FiltroMontoMaxChanged { get; set; }
-
-    [Parameter]
-    public DateTime? FiltroFechaInicio { get; set; }
-
-    [Parameter]
-    public EventCallback<DateTime?> FiltroFechaInicioChanged { get; set; }
-
-    [Parameter]
-    public DateTime? FiltroFechaFin { get; set; }
-
-    [Parameter]
-    public EventCallback<DateTime?> FiltroFechaFinChanged { get; set; }
-
-    [Parameter]
-    public EventCallback OnLimpiar { get; set; }
+    private string GetColumnClass(string field)
+    {
+        bool admin = MostrarArea && MostrarEmpleado;
+        bool jefe = !MostrarArea && MostrarEmpleado;
+        return field switch
+        {
+            "proveedor" => "col-2",
+            "estado" => admin || jefe ? "col-1" : "col-2",
+            "tipo" => admin || jefe ? "col-1" : "col-2",
+            "montoMin" => "col-1",
+            "montoMax" => "col-1",
+            "fechaInicio" => "col-1",
+            "fechaFin" => "col-1",
+            "area" => "col-2",
+            "empleado" => admin ? "col-1" : jefe ? "col-3" : "d-none",
+            "limpiar" => admin || jefe ? "col-1" : "col-2",
+            _ => "col-1"
+        };
+    }
 
     private async Task OnTextoCambiado(ChangeEventArgs e)
     {
         FiltroTexto = e.Value?.ToString() ?? string.Empty;
         await FiltroTextoChanged.InvokeAsync(FiltroTexto);
-    }
-
-    private async Task OnTipoCambiado(ChangeEventArgs e)
-    {
-        FiltroTipo = e.Value?.ToString() ?? "Todos";
-        await FiltroTipoChanged.InvokeAsync(FiltroTipo);
     }
 
     private async Task OnEstadoCambiado(ChangeEventArgs e)
@@ -136,40 +189,89 @@
         await FiltroEstadoChanged.InvokeAsync(FiltroEstado);
     }
 
+    private async Task OnTipoCambiado(ChangeEventArgs e)
+    {
+        FiltroTipo = e.Value?.ToString() ?? "Todos";
+        await FiltroTipoChanged.InvokeAsync(FiltroTipo);
+    }
+
     private async Task OnMontoMinCambiado(ChangeEventArgs e)
     {
-        if (double.TryParse(e.Value?.ToString(), out var val))
-            FiltroMontoMin = val;
-        else
-            FiltroMontoMin = null;
+        if (double.TryParse(e.Value?.ToString(), out var val)) FiltroMontoMin = val;
+        else FiltroMontoMin = null;
         await FiltroMontoMinChanged.InvokeAsync(FiltroMontoMin);
     }
 
     private async Task OnMontoMaxCambiado(ChangeEventArgs e)
     {
-        if (double.TryParse(e.Value?.ToString(), out var val))
-            FiltroMontoMax = val;
-        else
-            FiltroMontoMax = null;
+        if (double.TryParse(e.Value?.ToString(), out var val)) FiltroMontoMax = val;
+        else FiltroMontoMax = null;
         await FiltroMontoMaxChanged.InvokeAsync(FiltroMontoMax);
     }
 
     private async Task OnFechaInicioCambiada(ChangeEventArgs e)
     {
-        if (DateTime.TryParse(e.Value?.ToString(), out var val))
-            FiltroFechaInicio = val.Date;
-        else
-            FiltroFechaInicio = null;
+        if (DateTime.TryParse(e.Value?.ToString(), out var val)) FiltroFechaInicio = val.Date;
+        else FiltroFechaInicio = null;
         await FiltroFechaInicioChanged.InvokeAsync(FiltroFechaInicio);
     }
 
     private async Task OnFechaFinCambiada(ChangeEventArgs e)
     {
-        if (DateTime.TryParse(e.Value?.ToString(), out var val))
-            FiltroFechaFin = val.Date;
-        else
-            FiltroFechaFin = null;
+        if (DateTime.TryParse(e.Value?.ToString(), out var val)) FiltroFechaFin = val.Date;
+        else FiltroFechaFin = null;
         await FiltroFechaFinChanged.InvokeAsync(FiltroFechaFin);
+    }
+
+    private async Task OnAreaSeleccionada(ChangeEventArgs e)
+    {
+        var areaId = int.TryParse(e.Value?.ToString(), out var val) ? val : 0;
+        if (areaId > 0)
+        {
+            var area = Areas.FirstOrDefault(a => a.AreaID == areaId);
+            if (area != null && AreasSeleccionadas.All(a => a.AreaID != areaId))
+            {
+                AreasSeleccionadas = new List<Area>(AreasSeleccionadas) { area };
+                await AreasSeleccionadasChanged.InvokeAsync(AreasSeleccionadas);
+            }
+        }
+    }
+
+    private async Task QuitarArea(Area area)
+    {
+        AreasSeleccionadas = AreasSeleccionadas.Where(a => a.AreaID != area.AreaID).ToList();
+        await AreasSeleccionadasChanged.InvokeAsync(AreasSeleccionadas);
+    }
+
+    private async Task OnBusquedaEmpleadoCambiada(ChangeEventArgs e)
+    {
+        BusquedaEmpleado = e.Value?.ToString() ?? string.Empty;
+        MostrarDropdown = BusquedaEmpleado.Length >= 2;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SeleccionarEmpleado(Empleado emp)
+    {
+        if (EmpleadosSeleccionados.All(e => e.UsuarioID != emp.UsuarioID))
+        {
+            EmpleadosSeleccionados = new List<Empleado>(EmpleadosSeleccionados) { emp };
+            await EmpleadosSeleccionadosChanged.InvokeAsync(EmpleadosSeleccionados);
+        }
+        BusquedaEmpleado = string.Empty;
+        MostrarDropdown = false;
+    }
+
+    private async Task QuitarEmpleado(Empleado emp)
+    {
+        EmpleadosSeleccionados = EmpleadosSeleccionados.Where(e => e.UsuarioID != emp.UsuarioID).ToList();
+        await EmpleadosSeleccionadosChanged.InvokeAsync(EmpleadosSeleccionados);
+    }
+
+    private async Task OnBlurEmpleado()
+    {
+        await Task.Delay(200);
+        MostrarDropdown = false;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task Limpiar()
@@ -194,6 +296,12 @@
 
         FiltroFechaFin = null;
         await FiltroFechaFinChanged.InvokeAsync(null);
+
+        AreasSeleccionadas = new();
+        await AreasSeleccionadasChanged.InvokeAsync(AreasSeleccionadas);
+
+        EmpleadosSeleccionados = new();
+        await EmpleadosSeleccionadosChanged.InvokeAsync(EmpleadosSeleccionados);
 
         await OnLimpiar.InvokeAsync();
     }

@@ -86,19 +86,15 @@ Acción Automática: Para asegurar que la caja chica no se quede sin liquidez re
 
 Ejecución Flexible: El Jefe de Tesorería debe ejecutar esta reposición y registrar su código de operación en el sistema. Puede realizar esta transferencia interbancaria durante el fin de semana pasado o los lunes antes de las 8:00 AM para garantizar que la cuenta tenga dinero real al iniciar la semana.
 
-### Auto-Cálculo de Totales al Cerrar Ciclo (SP Layer)
+### Auto-Cálculo de Totales al Cerrar Ciclo (Capa de Negocio - BO)
 
-Cuando el sistema cierra un ciclo de caja chica (estado `CERRADO` o `LIQUIDADO`), el stored procedure `pa_modificar_ciclo_caja` ejecuta automáticamente:
+Cuando el sistema cierra un ciclo de caja chica (estado `CERRADO` o `LIQUIDADO`), la capa de negocio en Java (`CicloCajaBOImpl.java`) ejecuta automáticamente dentro de una transacción de base de datos (`DBManager`):
 
-1. **Recalcular `totalGastado`**: Suma todos los `monto_solicitado` de solicitudes en estado `APROBADO` del ciclo.
-2. **Crear rendición automática** (si no existe previamente):
-   - `totalDeclarado` = suma de `monto_total` de comprobantes no anulados del ciclo.
-   - `totalAprobado` = mismo valor del `totalGastado` calculado.
-   - `saldoFinal` = `saldoInicial - totalAprobado`.
-   - `estado` = `EN_ESPERA`, `fechaPresentacion` = fecha actual.
-3. **Vincular FK**: El `id_rendicion` del ciclo se actualiza con la nueva rendición.
-
-Todas las lecturas (`pa_buscar_ciclo_caja_por_id`, listados) devuelven valores calculados en vivo mediante subconsultas, no valores almacenados estáticos. Esto garantiza que la UI siempre muestre los totales correctos independientemente de modificaciones manuales en la BD.
+1. **Recalcular `totalGastado`**: Llama a `calcularTotalGastado(...)` para sumar todos los `monto_solicitado` de las solicitudes aprobadas/pagadas del ciclo.
+2. **Marcar solicitudes como `RENDIDO`**: Modifica el estado de las solicitudes aprobadas/pagadas a `RENDIDO` en la base de datos.
+3. **Generar transacciones de cierre**: Compara el monto desembolsado frente a los comprobantes aprobados, generando una transacción de `DEVOLUCION_SOBRANTE` (si el empleado gastó menos) o `REEMBOLSO_DEFICIT` (si el empleado gastó más y requiere reembolso).
+4. **Generar rendición automática**: Llama a `rendicionDAO.generarRendicionDeCicloSP(...)` para insertar la rendición en estado `EN_ESPERA` con el cálculo de `totalDeclarado` (suma de comprobantes) y `saldoFinal`.
+5. **Transaccionalidad atómica**: Todo el proceso se ejecuta encapsulado en un bloque transaccional (`iniciarTransaccion` / `confirmarTransaccion` / `cancelarTransaccion`) para garantizar que ante cualquier error se reviertan todas las operaciones.
 
 ### Evento automático de cierre semanal (viernes 23:00)
 
@@ -141,11 +137,11 @@ Escenario: Se apertura el ciclo de la semana y se genera la transacción pendien
 
 Control del Sistema: Aunque el sistema muestra virtualmente un saldo inicial equivalente al techo de la caja chica en la interfaz para no detener la operación, las transacciones de desembolso reales de la semana comenzarán a rebotar en el banco. El sistema mostrará una etiqueta visual de advertencia ("Fondo sin Respaldo Líquido") en el panel de control de tesorería hasta que la transacción de reposición pendiente cambie a estado EJECUTADA.
 
-UP 3: Evasión del Límite del 40% mediante Fraccionamiento de Vales ("Pitufeo")
+UP 3: Límite del 50% por Solicitud de Gasto
 
-Escenario: Un empleado necesita S/ 400 de una caja chica que tiene S/ 500 de saldo disponible (Supera el límite del $40\% = \text{S/ } 200$). Para evadir la regla, el empleado registra de forma consecutiva tres solicitudes de S/ 130 con minutos de diferencia.
+Escenario: Un empleado necesita S/ 300 de una caja chica que tiene S/ 500 de saldo disponible (Supera el límite del $50\% = \text{S/ } 250$).
 
-Control del Sistema: El backend de la aplicación debe validar que la suma de solicitudes en estado PENDIENTE o APROBADO de un mismo empleado en un lapso de 24 horas no supere acumuladamente el $40\%$ del saldo disponible de la caja chica al inicio de ese día. Si el acumulado supera el límite, el sistema bloquea el guardado de la nueva solicitud.
+Control del Sistema: El backend de la aplicación valida que el monto solicitado en cada solicitud de gasto individual no exceda el $50\%$ del saldo disponible actual en el ciclo de la caja chica. No se aplica ninguna restricción de acumulados ni bloqueos por fraccionamiento de vales de las últimas 24 horas.
 
 UP 4: Intentos de Sobregiro en la Ventana de Excepción
 

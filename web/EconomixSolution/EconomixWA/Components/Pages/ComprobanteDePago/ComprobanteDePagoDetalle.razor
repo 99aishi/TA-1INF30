@@ -2,13 +2,15 @@
 @page "/Comprobantes de Pago/Evaluar/{IdComprobante:int}"
 @page "/Comprobantes de Pago/Crear"
 @page "/Comprobantes de Pago/Asociar/{IdSolicitud:int}"
+@attribute [Authorize(Roles = "Administrador, Jefe, Empleado, Tesoreria")]
+@using Microsoft.AspNetCore.WebUtilities
 @inject NavigationManager Navigation
 @inject IComprobantePagoWS ComprobantePagoWS
 
 <div class="d-flex flex-column h-100 mb-3 overflow-hidden">
     <div class="row h-100 overflow-scroll">
         <div class="col-4 h-100">
-            <ComprobanteDePagoSustento EsCreacion="EsCreacion" EsEvaluacion="EsEvaluacion" EsAsociacion="EsAsociacion" RequiereAutorizacion="RequiereAutorizacion" IdSolicitudPasada="IdSolicitud" />
+            <ComprobanteDePagoSustento EsCreacion="EsCreacion" EsEvaluacion="EsEvaluacion" EsAsociacion="EsAsociacion" RequiereAutorizacion="RequiereAutorizacion" IdSolicitudPasada="IdSolicitud" Comprobante="Comprobante" />
         </div>
         <div class="col-8 h-100">
             <ComprobanteDePagoDatos EsCreacion="EsCreacion" EsEvaluacion="EsEvaluacion" EsAsociacion="EsAsociacion"
@@ -46,10 +48,12 @@
             Comprobante = await ComprobantePagoWS.obtenerPorIdAsync(IdComprobante);
             RequiereAutorizacion = DeterminarSiRequiereAutorizacion();
         }
-        else if (IdSolicitud > 0 && (EsCreacion || EsAsociacion))
+        else if (EsCreacion || EsAsociacion)
         {
-            Comprobante = new ComprobantePago { 
-                Solicitud = new SolicitudGasto { IdSolicitudGasto = IdSolicitud }
+            Comprobante = new ComprobantePago 
+            { 
+                Solicitud = IdSolicitud > 0 ? new SolicitudGasto { IdSolicitudGasto = IdSolicitud } : null,
+                Moneda = new Moneda { IdMoneda = 1 }
             };
         }
     }

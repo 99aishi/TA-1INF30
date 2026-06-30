@@ -1,4 +1,4 @@
-﻿@using EconomixWS.UsuarioWS
+@using EconomixWS.UsuarioWS
 @inherits LayoutComponentBase
 @inject IUsuarioWS UsuarioWS
 @inject NavigationManager Navigation
@@ -30,7 +30,7 @@ else if (isAuthenticated)
         </div>
 
         <main class="flex-fill d-flex flex-column overflow-hidden">
-            <article class="content h-100">
+            <article class="content flex-fill d-flex flex-column overflow-hidden">
                 @Body
             </article>
         </main>
@@ -44,7 +44,7 @@ else
 {
     <div class="page d-flex flex-column vh-100 overflow-hidden">
         <main class="flex-fill d-flex flex-column overflow-hidden">
-            <article class="content h-100">
+            <article class="content flex-fill d-flex flex-column overflow-hidden">
                 @Body
             </article>
         </main>

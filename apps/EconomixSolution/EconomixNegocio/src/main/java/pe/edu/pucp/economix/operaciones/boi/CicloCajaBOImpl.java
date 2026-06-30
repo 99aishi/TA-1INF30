@@ -5,14 +5,17 @@ import pe.edu.pucp.economix.operaciones.idao.ICicloCajaChicaDAO;
 import pe.edu.pucp.economix.operaciones.idao.IComprobantePagoDAO;
 import pe.edu.pucp.economix.operaciones.idao.ISolicitudGastoDAO;
 import pe.edu.pucp.economix.operaciones.idao.ITransaccionDAO;
+import pe.edu.pucp.economix.operaciones.idao.IRendicionDAO;
 import pe.edu.pucp.economix.operaciones.daoi.CicloCajaChicaDAOImpl;
 import pe.edu.pucp.economix.operaciones.daoi.ComprobantePagoDAOImpl;
 import pe.edu.pucp.economix.operaciones.daoi.SolicitudGastoDAOImpl;
 import pe.edu.pucp.economix.operaciones.daoi.TransaccionDAOImpl;
+import pe.edu.pucp.economix.operaciones.daoi.RendicionDAOImpl;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
 import pe.edu.pucp.economix.operaciones.model.ComprobantePago;
 import pe.edu.pucp.economix.operaciones.model.SolicitudGasto;
 import pe.edu.pucp.economix.operaciones.model.Transaccion;
+import pe.edu.pucp.economix.operaciones.model.Rendicion;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoComprobante;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoCicloCaja;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoSolicitudGasto;
@@ -26,7 +29,9 @@ import pe.edu.pucp.economix.tesoreria.daoi.CuentaBancariaDAOImpl;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
 import pe.edu.pucp.economix.tesoreria.model.CuentaBancaria;
 import pe.edu.pucp.economix.tesoreria.model.Moneda;
+import pe.edu.pucp.economix.config.DBManager;
 
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
@@ -37,6 +42,7 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
     private final ITransaccionDAO transaccionDAO;
     private final ICajaChicaDAO cajaChicaDAO;
     private final ICuentaBancariaDAO cuentaBancariaDAO;
+    private final IRendicionDAO rendicionDAO;
     public CicloCajaBOImpl(){
 
         cicloCajaChicaDAO= new CicloCajaChicaDAOImpl();
@@ -45,6 +51,7 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
         transaccionDAO=new TransaccionDAOImpl();
         cajaChicaDAO=new CajaChicaDAOImpl();
         cuentaBancariaDAO=new CuentaBancariaDAOImpl();
+        rendicionDAO=new RendicionDAOImpl();
     }
 
     private void validarIdUsuarioAccion(int idUsuarioAccion) throws Exception {
@@ -159,8 +166,6 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
             throw new Exception("El ciclo ya está cerrado o liquidado.");
         }
 
-        calcularTotalGastado(ciclo, idUsuarioAccion);
-
         CajaChica cajaChica = ciclo.getCajaChica();
         if (cajaChica == null) throw new Exception("El ciclo no tiene caja chica asignada.");
 
@@ -169,34 +174,65 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
             throw new Exception("La caja chica no tiene cuenta bancaria asignada.");
         }
 
-        // Calcular monto consumido real a partir de comprobantes aprobados
-        double totalComprobantesAprobados = 0;
-        List<SolicitudGasto> solicitudes = solicitudGastoDAO.listarPorCiclo(idCicloCaja);
-        for (SolicitudGasto s : solicitudes) {
-            if (s.getEstado() == EstadoSolicitudGasto.APROBADO || s.getEstado() == EstadoSolicitudGasto.PAGADO || s.getEstado() == EstadoSolicitudGasto.RENDIDO) {
-                List<ComprobantePago> comprobantes = comprobantePagoDAO.listarPorSolicitud(s.getIdSolicitudGasto());
-                for (ComprobantePago c : comprobantes) {
-                    if (c.getEstado() == EstadoComprobante.APROBADO) {
-                        totalComprobantesAprobados += c.getTotal();
+        DBManager.getDBManager().iniciarTransaccion();
+        try {
+            calcularTotalGastado(ciclo, idUsuarioAccion);
+
+            // Calcular monto consumido real a partir de comprobantes aprobados
+            double totalComprobantesAprobados = 0;
+            List<SolicitudGasto> solicitudes = solicitudGastoDAO.listarPorCiclo(idCicloCaja);
+            for (SolicitudGasto s : solicitudes) {
+                if (s.getEstado() == EstadoSolicitudGasto.APROBADO || s.getEstado() == EstadoSolicitudGasto.PAGADO || s.getEstado() == EstadoSolicitudGasto.RENDIDO) {
+                    List<ComprobantePago> comprobantes = comprobantePagoDAO.listarPorSolicitud(s.getIdSolicitudGasto());
+                    for (ComprobantePago c : comprobantes) {
+                        if (c.getEstado() == EstadoComprobante.APROBADO) {
+                            totalComprobantesAprobados += c.getTotal();
+                        }
                     }
                 }
             }
+
+            double totalDesembolsado = ciclo.getTotalGastado(); // aprobado
+            double saldoFinal = totalDesembolsado - totalComprobantesAprobados;
+
+            if (saldoFinal > 0) {
+                // El empleado gastó menos de lo desembolsado -> devolución de sobrante
+                generarTransaccionCierre(TipoTransaccion.DEVOLUCION_SOBRANTE, saldoFinal, cuentaArea, null, cajaChica.getMoneda(), idUsuarioAccion);
+            } else if (saldoFinal < 0) {
+                // El empleado gastó más de lo desembolsado -> reembolso por déficit
+                generarTransaccionCierre(TipoTransaccion.REEMBOLSO_DEFICIT, Math.abs(saldoFinal), cuentaArea, null, cajaChica.getMoneda(), idUsuarioAccion);
+            }
+
+            // Marcar todas las solicitudes del ciclo como RENDIDO (Cerradas/Liquidadas)
+            for (SolicitudGasto s : solicitudes) {
+                if (s.getEstado() == EstadoSolicitudGasto.APROBADO || s.getEstado() == EstadoSolicitudGasto.PAGADO) {
+                    s.setEstado(EstadoSolicitudGasto.RENDIDO);
+                    solicitudGastoDAO.modificar(s, idUsuarioAccion);
+                }
+            }
+
+            // Generar automáticamente el registro de Rendición en BD
+            int idRendicion = rendicionDAO.generarRendicionDeCicloSP(idCicloCaja, idUsuarioAccion);
+            if (idRendicion > 0) {
+                Rendicion rend = new Rendicion();
+                rend.setIdRendicion(idRendicion);
+                ciclo.setRendicion(rend);
+            }
+
+            ciclo.setEstado(EstadoCicloCaja.CERRADO);
+            ciclo.setFechaCierre(new Date());
+            int result = cicloCajaChicaDAO.modificar(ciclo, idUsuarioAccion);
+
+            DBManager.getDBManager().confirmarTransaccion();
+            return result;
+        } catch (Exception ex) {
+            try {
+                DBManager.getDBManager().cancelarTransaccion();
+            } catch (SQLException rollbackEx) {
+                System.err.println("Error al hacer rollback: " + rollbackEx.getMessage());
+            }
+            throw ex;
         }
-
-        double totalDesembolsado = ciclo.getTotalGastado(); // aprobado
-        double saldoFinal = totalDesembolsado - totalComprobantesAprobados;
-
-        if (saldoFinal > 0) {
-            // El empleado gastó menos de lo desembolsado -> devolución de sobrante
-            generarTransaccionCierre(TipoTransaccion.DEVOLUCION_SOBRANTE, saldoFinal, cuentaArea, null, cajaChica.getMoneda(), idUsuarioAccion);
-        } else if (saldoFinal < 0) {
-            // El empleado gastó más de lo desembolsado -> reembolso por déficit
-            generarTransaccionCierre(TipoTransaccion.REEMBOLSO_DEFICIT, Math.abs(saldoFinal), cuentaArea, null, cajaChica.getMoneda(), idUsuarioAccion);
-        }
-
-        ciclo.setEstado(EstadoCicloCaja.CERRADO);
-        ciclo.setFechaCierre(new Date());
-        return cicloCajaChicaDAO.modificar(ciclo, idUsuarioAccion);
     }
 
 

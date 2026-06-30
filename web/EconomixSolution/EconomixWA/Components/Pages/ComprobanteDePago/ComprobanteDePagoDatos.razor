@@ -4,42 +4,25 @@
 @inject IUsuarioWS UsuarioWS
 @inject ITransaccionWS TransaccionWS
 @inject ISolicitudGastoWS SolicitudGastoWS
+@inject IMonedaWS MonedaWS
+@inject ITipoCambioWS TipoCambioWS
 
-<div class="card p-3 h-100 rounded-4 d-flex justify-content-between flex-column">
+<div class="card p-3 h-100 rounded-4 d-flex justify-content-between flex-column mb-3">
     
     <div class="row">
-        <div class="col-12 d-flex justify-content-between align-items-center mb-2">
-            <p class="h5 mb-0">Datos extraidos</p> 
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <p class="h5 mb-0">Datos extraidos</p> 
+                @if (Comprobante != null && Comprobante.Estado != "POR_REVISAR" && !EsCreacion && !EsAsociacion)
+                {
+                    <span class="badge @ObtenerEstadoBadgeClase(Comprobante.Estado) rounded-pill px-2">@Comprobante.Estado</span>
+                }
+            </div>
             @if (RequiereAutorizacion)
             {
                 <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill" style="font-size: 0.95rem;">
                     <i class="bi bi-lock-fill me-1"></i> Solo lectura: ciclo @Comprobante?.Solicitud?.Ciclo?.Estado
                 </span>
-            }
-        </div>
-        <div class="col-4 mt-3">
-            <label for="TipoDocumento" class="form-label small text-muted">Tipo de Documento</label>    
-            @if (RequiereAutorizacion)
-            {
-                <select class="form-select rounded-4 bg-light" disabled>
-                    <option selected value="@Comprobante?.TipoDocumento">@Comprobante?.TipoDocumento</option>
-                </select>
-            }
-            else
-            {
-                <select class="form-select rounded-4 bg-light" @bind="Comprobante.TipoDocumento">
-                    <option value="">Seleccione...</option>
-                    @if (EsEvaluacion)
-                    {
-                        <option value="@Comprobante?.TipoDocumento">@Comprobante?.TipoDocumento</option>
-                    }
-                    else
-                    {
-                        <option value="FACTURA">Factura</option>
-                        <option value="BOLETA">Boleta</option>
-                        <option value="DJ_EXCEPCIONAL">DJ Excepcional</option>
-                    }
-                </select>
             }
         </div>
         <div class="col-4 mt-3">
@@ -50,7 +33,7 @@
             }
             else
             {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RucProveedor" placeholder="RUC" disabled="@RequiereAutorizacion">
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.RucProveedor" placeholder="RUC" maxlength="11" disabled="@RequiereAutorizacion">
             }
         </div>
         <div class="col-4 mt-3">
@@ -75,7 +58,7 @@
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.NumeroSerial" placeholder="Número Serial" disabled="@RequiereAutorizacion">
             }
         </div>
-        <div class="col-4 mt-3">
+        <div class="col-2 mt-3">
             <label for="FechaDeEmision" class="form-label small text-muted">Fecha de Emisión</label>    
             @if (RequiereAutorizacion)
             {
@@ -86,7 +69,32 @@
                 <input type="date" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.FechaEmision" disabled="@RequiereAutorizacion">
             }
         </div>
-        <div class="col-4 mt-3">
+        <div class="col-2 mt-3">
+            <label for="TipoDocumento" class="form-label small text-muted">Tipo de Documento</label>    
+            @if (RequiereAutorizacion)
+            {
+                <select class="form-select form-select-lg rounded-4 bg-light" disabled>
+                    <option selected value="@Comprobante?.TipoDocumento">@Comprobante?.TipoDocumento</option>
+                </select>
+            }
+            else
+            {
+                <select class="form-select form-select-lg rounded-4 bg-light" @bind="Comprobante.TipoDocumento">
+                    <option value="">Seleccione...</option>
+                    @if (EsEvaluacion)
+                    {
+                        <option value="@Comprobante?.TipoDocumento">@Comprobante?.TipoDocumento</option>
+                    }
+                    else
+                    {
+                        <option value="FACTURA">Factura</option>
+                        <option value="BOLETA">Boleta</option>
+                        <option value="DJ_EXCEPCIONAL">DJ Excepcional</option>
+                    }
+                </select>
+            }
+        </div>
+        <div class="col-2 mt-3">
             <label for="Total" class="form-label small text-muted">Total</label>
             @if (RequiereAutorizacion)
             {
@@ -100,14 +108,71 @@
                 }
                 else
                 {
-                    <input type="number" step="0.01" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.MontoTotal" placeholder="0.00">
+                    <input type="number" step="0.01" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante.MontoTotal" @oninput="OnTotalInput" placeholder="0.00">
                 }
             }
         </div>
-        <div class="col-4 mt-3">
+        <div class="col-2 mt-3">
             <label for="Moneda" class="form-label small text-muted">Moneda</label>
-            <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@SimboloMoneda" disabled>
+            @if (EsCreacion || EsAsociacion)
+            {
+                <select class="form-select form-select-lg rounded-4 bg-light" value="@IdMonedaSeleccionada" @onchange="OnMonedaChanged">
+                    <option value="0">Seleccione...</option>
+                    @foreach (var moneda in Monedas)
+                    {
+                        <option value="@moneda.IdMoneda">@moneda.CodigoISO (@moneda.Simbolo)</option>
+                    }
+                </select>
+            }
+            else
+            {
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Comprobante?.Moneda?.CodigoISO ?? "PEN")" disabled>
+            }
         </div>
+        @if (Comprobante?.Solicitud == null || Comprobante.Solicitud.IdSolicitudGasto == 0)
+        {
+            <div class="col-2 mt-3">
+                <label class="form-label small text-muted">Tipo de Cambio</label>
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="0.0000" disabled="true">
+            </div>
+            <div class="col-2 mt-3">
+                <label class="form-label small text-muted">Monto Convertido</label>
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="0.00" disabled="true">
+            </div>
+        }
+        else if (RequiereTipoCambio)
+        {
+            <div class="col-2 mt-3">
+                <label class="form-label small text-muted">Tipo de Cambio</label>
+                @if (TipoCambioNoEncontrado)
+                {
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light text-danger fw-bold border-danger" value="No registrado" disabled="true">
+                    @if (!RequiereAutorizacion)
+                    {
+                        <small class="text-danger">Por favor, registre el tipo de cambio.</small>
+                    }
+                }
+                else
+                {
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Comprobante.TipoCambio.ToString("N4"))" disabled="true">
+                }
+            </div>
+            <div class="col-2 mt-3">
+                <label class="form-label small text-muted">Monto Convertido (@(Comprobante?.Solicitud?.MonedaOriginal?.Simbolo ?? "$"))</label>
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(TipoCambioNoEncontrado ? "-" : Comprobante.MontoConvertido.ToString("N2"))" disabled="true">
+            </div>
+        }
+        else
+        {
+            <div class="col-2 mt-3">
+                <label class="form-label small text-muted">Tipo de Cambio</label>
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="1.0000" disabled="true">
+            </div>
+            <div class="col-2 mt-3">
+                <label class="form-label small text-muted">Monto Convertido (@(Comprobante?.Solicitud?.MonedaOriginal?.Simbolo ?? "$"))</label>
+                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Comprobante?.MontoTotal.ToString("N2"))" disabled="true">
+            </div>
+        }
         @if (!RequiereAutorizacion && (EsCreacion || EsAsociacion) && Comprobante?.IdComprobante > 0)
         {
             <div class="col-4 mt-3">
@@ -115,40 +180,9 @@
                 <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="CP-@Comprobante.IdComprobante" disabled>
             </div>
         }
-        <div class="col-4 mt-3" style="margin-top: 30px;">
-            <label class="form-label small text-muted">Estado</label>
-            @if (RequiereAutorizacion)
-            {
-                <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill" style="font-size: 1rem;">
-                    <i class="bi bi-lock-fill me-1"></i> @Comprobante?.Estado
-                </span>
-            }
-            else
-            {
-                if (EsEvaluacion)
-                {
-                    <span class="badge bg-success-subtle text-success rounded-pill" style="font-size: 1rem;">
-                        Validado
-                    </span>
-                }
-                else
-                {
-                    <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill" style="font-size: 1rem;">
-                        En edición
-                    </span>
-                }
-            }
-        </div>
         <div class="col-12 mt-3">
             <label for="Comentario" class="form-label small text-muted">Comentario</label>    
-            @if (RequiereAutorizacion)
-            {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@Comprobante?.Comentario" disabled>
-            }
-            else
-            {
-                <input type="text" class="form-control form-control-lg rounded-4 bg-light" @bind="Comprobante.Comentario" placeholder="Por Evaluar" disabled="@EsEvaluacion">
-            }
+            <textarea class="form-control form-control-lg rounded-4 bg-light" rows="4" @bind="Comprobante.Comentario" placeholder="Por Evaluar" disabled="@ComentarioDeshabilitado"></textarea>
         </div>
     </div>
 
@@ -272,7 +306,7 @@
     [Parameter]
     public EventCallback OnEvaluado { get; set; }
 
-    private string SimboloMoneda = "S/.";
+    private string SimboloMoneda => Comprobante?.Moneda?.Simbolo ?? "S/.";
     private string ErrorMessage { get; set; } = string.Empty;
     private bool MostrarModalSolicitud { get; set; }
     private string MotivoSolicitud { get; set; } = string.Empty;
@@ -336,6 +370,19 @@
                     ErrorMessage = "Debe seleccionar el tipo de documento.";
                     return;
                 }
+                if (Comprobante.TipoDocumento == "FACTURA" || Comprobante.TipoDocumento == "BOLETA")
+                {
+                    if (string.IsNullOrWhiteSpace(Comprobante.RucProveedor))
+                    {
+                        ErrorMessage = "El RUC del proveedor es obligatorio.";
+                        return;
+                    }
+                    if (Comprobante.RucProveedor.Length != 11 || !EsSoloNumeros(Comprobante.RucProveedor))
+                    {
+                        ErrorMessage = "El RUC del proveedor debe tener exactamente 11 dígitos numéricos.";
+                        return;
+                    }
+                }
                 if (Comprobante.MontoTotal <= 0)
                 {
                     ErrorMessage = "El monto total debe ser mayor que 0.";
@@ -347,9 +394,26 @@
                     return;
                 }
 
-                Comprobante.Estado = "EN_EDICION";
+                if (Comprobante.FechaEmision == null)
+                {
+                    Comprobante.FechaEmision = DateTime.Today;
+                }
+                Comprobante.Estado = "POR_REVISAR";
                 Comprobante.FechaCreacion = DateTime.Today;
                 Comprobante.FechaCreacionString = DateTime.Today.ToString("yyyy-MM-dd");
+
+                if (Comprobante.TipoDocumento == "DJ_EXCEPCIONAL")
+                {
+                    Comprobante.Subtotal = 0;
+                    Comprobante.Igv = 0;
+                    Comprobante.Total = Comprobante.MontoTotal;
+                }
+                else
+                {
+                    Comprobante.Subtotal = Math.Round(Comprobante.MontoTotal / 1.18, 2);
+                    Comprobante.Igv = Math.Round(Comprobante.MontoTotal - Comprobante.Subtotal, 2);
+                    Comprobante.Total = Comprobante.MontoTotal;
+                }
 
                 if (Comprobante.IdComprobante > 0)
                 {
@@ -390,7 +454,7 @@
             ErrorMessage = string.Empty;
 
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, false, "Rechazado", idUsuarioAccion);
+            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, false, Comprobante.Comentario ?? "Rechazado", idUsuarioAccion);
             await OnEvaluado.InvokeAsync();
             Volver();
         }
@@ -414,7 +478,7 @@
             ErrorMessage = string.Empty;
 
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, false, "Observado", idUsuarioAccion);
+            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, false, Comprobante.Comentario ?? "Observado", idUsuarioAccion);
             await OnEvaluado.InvokeAsync();
             Volver();
         }
@@ -466,7 +530,7 @@
             ErrorMessage = string.Empty;
 
             var idUsuarioAccion = UsuarioWS.GetCurrentUserId();
-            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, true, string.Empty, idUsuarioAccion);
+            await ComprobantePagoWS.evaluarAsync(Comprobante.IdComprobante, true, Comprobante.Comentario ?? string.Empty, idUsuarioAccion);
             await OnEvaluado.InvokeAsync();
             Volver();
         }
@@ -478,5 +542,219 @@
         {
             Procesando = false;
         }
+    }
+
+    private List<Moneda> Monedas { get; set; } = new();
+    private bool TipoCambioNoEncontrado = false;
+    private int _ultimoIdSolicitud = 0;
+    private int _ultimoIdMoneda = 0;
+    private DateTime? _ultimoFechaEmision = null;
+
+    private bool RequiereTipoCambio => Comprobante?.Solicitud?.MonedaOriginal != null && 
+                                       Comprobante?.Moneda != null && 
+                                       Comprobante.Moneda.IdMoneda != Comprobante.Solicitud.MonedaOriginal.IdMoneda;
+
+    private async Task RecalcularTipoCambioComprobante()
+    {
+        if (Comprobante == null || Comprobante.Moneda == null || Comprobante.Solicitud == null || Comprobante.Solicitud.IdSolicitudGasto == 0)
+        {
+            if (Comprobante != null) Comprobante.TipoCambio = 0.0;
+            RecalcularMontoConvertido();
+            return;
+        }
+
+        if (Comprobante.Solicitud.MonedaOriginal == null)
+        {
+            try
+            {
+                var fullSolicitud = await SolicitudGastoWS.obtenerPorIdAsync(Comprobante.Solicitud.IdSolicitudGasto);
+                if (fullSolicitud != null)
+                {
+                    Comprobante.Solicitud = fullSolicitud;
+                }
+            }
+            catch
+            {
+                // Ignorar error al precargar
+            }
+        }
+
+        if (Comprobante.Solicitud.MonedaOriginal == null)
+        {
+            Comprobante.TipoCambio = 0.0;
+            RecalcularMontoConvertido();
+            return;
+        }
+
+        TipoCambioNoEncontrado = false;
+
+        if (Comprobante.Moneda.IdMoneda == Comprobante.Solicitud.MonedaOriginal.IdMoneda)
+        {
+            Comprobante.TipoCambio = 1.0;
+            RecalcularMontoConvertido();
+            return;
+        }
+
+        try
+        {
+            var tc = await TipoCambioWS.buscarPorMonedasYFechaAsync(
+                Comprobante.Moneda.IdMoneda, 
+                Comprobante.Solicitud.MonedaOriginal.IdMoneda, 
+                Comprobante.FechaEmision ?? DateTime.Today
+            );
+
+            if (tc != null)
+            {
+                Comprobante.TipoCambio = tc.Valor;
+                TipoCambioNoEncontrado = false;
+            }
+            else
+            {
+                Comprobante.TipoCambio = 0.0;
+                TipoCambioNoEncontrado = true;
+            }
+        }
+        catch
+        {
+            Comprobante.TipoCambio = 0.0;
+            TipoCambioNoEncontrado = true;
+        }
+        RecalcularMontoConvertido();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            Monedas = await MonedaWS.listarAsync();
+            if (Comprobante != null && Comprobante.Moneda == null && Monedas.Any())
+            {
+                Comprobante.Moneda = Monedas.FirstOrDefault();
+            }
+
+            if (Comprobante != null)
+            {
+                int currentIdSolicitud = Comprobante.Solicitud?.IdSolicitudGasto ?? 0;
+                int currentIdMoneda = Comprobante.Moneda?.IdMoneda ?? 0;
+                DateTime? currentFechaEmision = Comprobante.FechaEmision;
+
+                if (currentIdSolicitud != _ultimoIdSolicitud || 
+                    currentIdMoneda != _ultimoIdMoneda || 
+                    currentFechaEmision != _ultimoFechaEmision)
+                {
+                    _ultimoIdSolicitud = currentIdSolicitud;
+                    _ultimoIdMoneda = currentIdMoneda;
+                    _ultimoFechaEmision = currentFechaEmision;
+
+                    await RecalcularTipoCambioComprobante();
+                }
+            }
+        }
+        catch
+        {
+            Monedas = new();
+        }
+    }
+
+    private int IdMonedaSeleccionada
+    {
+        get => Comprobante?.Moneda?.IdMoneda ?? 0;
+        set
+        {
+            if (Comprobante != null)
+            {
+                if (Comprobante.Moneda == null)
+                {
+                    Comprobante.Moneda = new Moneda();
+                }
+                Comprobante.Moneda.IdMoneda = value;
+                var selected = Monedas.FirstOrDefault(m => m.IdMoneda == value);
+                if (selected != null)
+                {
+                    Comprobante.Moneda.Simbolo = selected.Simbolo;
+                    Comprobante.Moneda.CodigoISO = selected.CodigoISO;
+                }
+                _ = RecalcularTipoCambioComprobante();
+            }
+        }
+    }
+
+    private async Task OnMonedaChanged(ChangeEventArgs e)
+    {
+        if (Comprobante != null && int.TryParse(e.Value?.ToString(), out int val))
+        {
+            if (Comprobante.Moneda == null)
+            {
+                Comprobante.Moneda = new Moneda();
+            }
+            Comprobante.Moneda.IdMoneda = val;
+            var selected = Monedas.FirstOrDefault(m => m.IdMoneda == val);
+            if (selected != null)
+            {
+                Comprobante.Moneda.Simbolo = selected.Simbolo;
+                Comprobante.Moneda.CodigoISO = selected.CodigoISO;
+            }
+            await RecalcularTipoCambioComprobante();
+        }
+    }
+
+    private void OnTotalInput(ChangeEventArgs e)
+    {
+        if (Comprobante != null && double.TryParse(e.Value?.ToString(), out double val))
+        {
+            Comprobante.MontoTotal = val;
+            RecalcularMontoConvertido();
+        }
+    }
+
+    private void OnTipoCambioInput(ChangeEventArgs e)
+    {
+        if (Comprobante != null && double.TryParse(e.Value?.ToString(), out double val))
+        {
+            Comprobante.TipoCambio = val;
+            RecalcularMontoConvertido();
+        }
+    }
+
+    private void RecalcularMontoConvertido()
+    {
+        if (Comprobante != null)
+        {
+            Comprobante.MontoConvertido = Comprobante.MontoTotal * Comprobante.TipoCambio;
+        }
+    }
+
+    private bool EsSoloNumeros(string val)
+    {
+        if (string.IsNullOrEmpty(val)) return false;
+        foreach (char c in val)
+        {
+            if (c < '0' || c > '9') return false;
+        }
+        return true;
+    }
+
+    private bool ComentarioDeshabilitado
+    {
+        get
+        {
+            if (RequiereAutorizacion) return true;
+            var rol = UsuarioWS.GetCurrentUser()?.Rol?.Titulo?.ToUpperInvariant();
+            if (rol == "EMPLEADO") return true;
+            return !EsEvaluacion;
+        }
+    }
+
+    private string ObtenerEstadoBadgeClase(string? estado)
+    {
+        if (string.IsNullOrEmpty(estado)) return "bg-secondary-subtle text-secondary";
+        return estado.ToUpperInvariant() switch
+        {
+            "APROBADO" or "VALIDADO" => "bg-success-subtle text-success",
+            "RECHAZADO" or "ANULADO" => "bg-danger-subtle text-danger",
+            "OBSERVADO" => "bg-warning-subtle text-warning-emphasis",
+            "POR_REVISAR" => "bg-info-subtle text-info-emphasis",
+            _ => "bg-secondary-subtle text-secondary"
+        };
     }
 }

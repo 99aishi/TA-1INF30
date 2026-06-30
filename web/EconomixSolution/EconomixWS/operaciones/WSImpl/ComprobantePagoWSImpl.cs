@@ -74,8 +74,9 @@ public class ComprobantePagoWSImpl : IComprobantePagoWS
                 return new List<ComprobantePago>();
             return JsonSerializer.Deserialize<List<ComprobantePago>>(json, _jsonOptions) ?? new List<ComprobantePago>();
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"Error en listarAsync: {ex.Message}\n{ex.StackTrace}");
             return new List<ComprobantePago>();
         }
     }

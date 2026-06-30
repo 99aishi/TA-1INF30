@@ -212,12 +212,11 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
             throw new Exception("La fecha de la solicitud no esta dentro del Ciclo Caja Chica indicado");
         }
 
-        validarHorarioLaboral(fecha);
+        validarHorarioLaboral();
     }
 
-    public void validarHorarioLaboral(Date fecha) throws Exception {
+    public void validarHorarioLaboral() throws Exception {
         Calendar cal = Calendar.getInstance();
-        cal.setTime(fecha);
         int hour = cal.get(Calendar.HOUR_OF_DAY);
         int minute = cal.get(Calendar.MINUTE);
         int dayOfWeek = cal.get(Calendar.DAY_OF_WEEK);
@@ -286,8 +285,6 @@ public class SolicitudGastoBOImpl implements ISolicitudGastoBO {
             throw new Exception("El monto solicitado supera el limite del 50% del saldo disponible ("
                     + String.format("%.2f", limiteMaximo) + ").");
         }
-
-        verificarLimiteAcumulado(solicitudGasto, saldoDisponible);
     }
 
     private void verificarLimiteAcumulado(SolicitudGasto solicitudGasto,
