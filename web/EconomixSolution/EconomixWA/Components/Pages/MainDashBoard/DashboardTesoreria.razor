@@ -63,7 +63,7 @@
 <CicloCajaSearchBar @bind-FiltroNombre="FiltroNombre"
                     @bind-AreasSeleccionadas="AreasSeleccionadasBusqueda"
                     @bind-FiltroCuentaBancariaId="FiltroCuentaBancariaId"
-                    @bind-FiltroEstado="FiltroEstado"
+                    @bind-EstadosSeleccionados="EstadosSeleccionados"
                     @bind-FiltroFechaDesde="FiltroFechaDesde"
                     @bind-FiltroFechaHasta="FiltroFechaHasta"
                     Areas="Areas"
@@ -120,7 +120,7 @@
     private string FiltroNombre { get; set; } = string.Empty;
     private List<Area> AreasSeleccionadasBusqueda { get; set; } = new();
     private int FiltroCuentaBancariaId { get; set; }
-    private string FiltroEstado { get; set; } = "Todos";
+    private List<string> EstadosSeleccionados { get; set; } = new();
     private DateTime? FiltroFechaDesde { get; set; }
     private DateTime? FiltroFechaHasta { get; set; }
 
@@ -130,6 +130,7 @@
             .Where(c => !AreasSeleccionadasBusqueda.Any()
                 || AreasSeleccionadasBusqueda.Any(a =>
                     c.CajaChicaId > 0 && _areaIdByCajaChicaId.TryGetValue(c.CajaChicaId, out var areaId) && areaId == a.AreaID))
+            .Where(c => !EstadosSeleccionados.Any() || EstadosSeleccionados.Any(e => e == c.Estado))
             .ToList();
 
     protected override async Task OnInitializedAsync()
