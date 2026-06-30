@@ -1,7 +1,9 @@
 @using EconomixWS.UsuarioWS
+@using Microsoft.AspNetCore.Components.Authorization
 @inherits LayoutComponentBase
 @inject IUsuarioWS UsuarioWS
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
 
 @if (isLoading)
 {
@@ -70,7 +72,8 @@ else
         currentUrl = uri.AbsolutePath;
         isLoginPage = currentUrl == "/";
         
-        isAuthenticated =  UsuarioWS.IsAuthenticated();
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        isAuthenticated = authState.User?.Identity?.IsAuthenticated ?? false;
         
         if (isAuthenticated)
         {

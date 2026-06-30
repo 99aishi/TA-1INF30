@@ -7,9 +7,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using EconomixModel.Model;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Components.Authorization;
 
 public class LoginException : Exception
 {
@@ -24,14 +22,14 @@ public class LoginException : Exception
 public class UsuarioWS : IUsuarioWS
 {
     private readonly HttpClient _httpClient;
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly AuthenticationStateProvider _authStateProvider;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public UsuarioWS(HttpClient httpClient, IHttpContextAccessor httpContextAccessor, JsonSerializerOptions jsonOptions)
+    public UsuarioWS(HttpClient httpClient, AuthenticationStateProvider authStateProvider, JsonSerializerOptions jsonOptions)
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(_httpClient.BaseAddress + "UsuarioWS/");
-        _httpContextAccessor = httpContextAccessor;
+        _authStateProvider = authStateProvider;
         _jsonOptions = jsonOptions;
     }
 
@@ -101,13 +99,14 @@ public class UsuarioWS : IUsuarioWS
 
     public bool IsAuthenticated()
     {
-        var user = _httpContextAccessor.HttpContext?.User;
-        return user?.Identity?.IsAuthenticated ?? false;
+        var authState = _authStateProvider.GetAuthenticationStateAsync().GetAwaiter().GetResult();
+        return authState.User?.Identity?.IsAuthenticated ?? false;
     }
 
     public Usuario? GetCurrentUser()
     {
-        var user = _httpContextAccessor.HttpContext?.User;
+        var authState = _authStateProvider.GetAuthenticationStateAsync().GetAwaiter().GetResult();
+        var user = authState.User;
         if (user?.Identity?.IsAuthenticated != true)
             return null;
 
@@ -163,7 +162,8 @@ public class UsuarioWS : IUsuarioWS
 
     public int GetCurrentUserId()
     {
-        var user = _httpContextAccessor.HttpContext?.User;
+        var authState = _authStateProvider.GetAuthenticationStateAsync().GetAwaiter().GetResult();
+        var user = authState.User;
         if (user?.Identity?.IsAuthenticated != true)
             throw new UnauthorizedAccessException("No hay una sesión activa.");
 
@@ -175,9 +175,6 @@ public class UsuarioWS : IUsuarioWS
 
     public void Logout()
     {
-        _httpContextAccessor.HttpContext!
-            .SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme)
-            .GetAwaiter()
-            .GetResult();
+        throw new NotSupportedException("Use navegación a /auth/logout en lugar de este método.");
     }
 }
