@@ -7,6 +7,7 @@
 @inject IEmpleadoWS EmpleadoWS
 @inject ISolicitudGastoWS SolicitudGastoWS
 @inject IUsuarioWS UsuarioWS
+@inject NavigationManager Navigation
 
 <div class="h-100 d-flex flex-column">
     <div class="d-flex flex-row align-items-center mb-4">
@@ -113,6 +114,20 @@
         try { Empleados = await EmpleadoWS.listarAsync(); } catch { Empleados = new List<Empleado>(); }
 
         await ListarRendiciones();
+
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("rendicionId", out var rendicionIdValue) 
+            && int.TryParse(rendicionIdValue, out var rendicionId) 
+            && rendicionId > 0)
+        {
+            var found = Rendiciones.FirstOrDefault(r => r.IdRendicion == rendicionId);
+            if (found != null)
+            {
+                SeleccionarRendicion(found);
+            }
+        }
+
         Cargando = false;
     }
 

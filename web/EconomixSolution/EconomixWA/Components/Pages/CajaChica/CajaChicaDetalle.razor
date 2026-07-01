@@ -4,6 +4,7 @@
 @inject IMonedaWS MonedaWS
 @inject IAreaWS AreaWS
 @inject IUsuarioWS UsuarioWS
+@inject IJSRuntime JS
 
 <div class="d-flex flex-column h-100 mb-3">
     <div class="card rounded-4 h-100 d-flex flex-column overflow-hidden">
@@ -222,12 +223,26 @@
 
     private async Task CerrarDetalle()
     {
-        await OnCerrarDetalle.InvokeAsync();
+        if (OnCerrarDetalle.HasDelegate)
+        {
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("history.back");
+        }
     }
 
     private async Task VolverAlPanel()
     {
-        await OnCerrarDetalle.InvokeAsync();
+        if (OnCerrarDetalle.HasDelegate)
+        {
+            await OnCerrarDetalle.InvokeAsync();
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("history.back");
+        }
     }
 
     private bool Validar()

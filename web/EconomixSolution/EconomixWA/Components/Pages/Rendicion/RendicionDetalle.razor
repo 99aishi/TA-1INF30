@@ -3,6 +3,7 @@
 @inject ISolicitudGastoWS SolicitudGastoWS
 @inject IUsuarioWS UsuarioWS
 @inject IComprobantePagoWS ComprobantePagoWS
+@inject IJSRuntime JS
 
 <div class="card rounded-4 h-100 p-3 d-flex flex-column overflow-hidden">
     <div class="d-flex gap-3 align-items-center mb-2">
@@ -206,6 +207,9 @@
             {
                 <div class="card rounded-4 p-3 mb-3 border-warning">
                     <p class="h5 mb-3">Acciones de Tesoreria</p>
+                    <div class="alert alert-info py-2 px-3 mb-2 rounded-4 small d-flex align-items-center gap-2">
+                        <span><strong>Control de Comprobantes:</strong> @AprobadosComprobantesCount de @TotalComprobantesCount comprobantes aprobados.</span>
+                    </div>
                     <div class="mb-2">
                         <label class="form-label small text-muted">Comentario (requerido para observar/denegar)</label>
                         <textarea class="form-control" rows="2" @bind="ComentarioAccion"></textarea>
@@ -281,6 +285,9 @@
         _ => "bg-light text-dark"
     };
 
+    private int TotalComprobantesCount => ComprobantesPorSolicitud.Values.Sum(list => list.Count);
+    private int AprobadosComprobantesCount => ComprobantesPorSolicitud.Values.Sum(list => list.Count(c => c.Estado == "APROBADO"));
+
     protected override async Task OnParametersSetAsync()
     {
         if (Rendicion != null)
@@ -303,6 +310,22 @@
             try
             {
                 Solicitudes = await SolicitudGastoWS.listarPorCicloAsync(Rendicion.CicloCajaChica.IdCicloCaja);
+                ComprobantesPorSolicitud.Clear();
+                if (Solicitudes != null)
+                {
+                    foreach (var s in Solicitudes)
+                    {
+                        try
+                        {
+                            var comprobantes = await ComprobantePagoWS.listarPorSolicitudAsync(s.IdSolicitudGasto);
+                            ComprobantesPorSolicitud[s.IdSolicitudGasto] = comprobantes ?? new List<ComprobantePago>();
+                        }
+                        catch
+                        {
+                            ComprobantesPorSolicitud[s.IdSolicitudGasto] = new List<ComprobantePago>();
+                        }
+                    }
+                }
             }
             catch
             {
@@ -417,7 +440,14 @@
         Procesando = true;
         try
         {
-            await OnCerrarDetalle.InvokeAsync();
+            if (OnCerrarDetalle.HasDelegate)
+            {
+                await OnCerrarDetalle.InvokeAsync();
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("history.back");
+            }
         }
         finally
         {

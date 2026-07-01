@@ -30,20 +30,20 @@
 
         <div class="col-1 text-end">
             <small class="text-muted">MONTO TOTAL</small>
-            <p class="fw-bold mb-0">@(CajaChica?.Moneda?.Simbolo ?? "S/") @MontoTotal.ToString("N2")</p>
+            <p class="fw-bold mb-0">@SimboloMoneda @MontoTotal.ToString("N2")</p>
         </div>
 
         <div class="col-1">
             <small class="text-muted">GASTADO</small>
             <p class="text-danger fw-bold mb-0">
-                @(CajaChica?.Moneda?.Simbolo ?? "S/") @Gastado.ToString("N2")
+                @SimboloMoneda @Gastado.ToString("N2")
             </p>
         </div>
 
         <div class="col-1">
             <small class="text-muted">DISPONIBLE</small>
             <p class="@(Disponible <= 500 ? "text-danger" : "text-success") fw-bold mb-0">
-                @(CajaChica?.Moneda?.Simbolo ?? "S/") @Disponible.ToString("N2")
+                @SimboloMoneda @Disponible.ToString("N2")
             </p>
         </div>
 
@@ -73,6 +73,9 @@
 @code {
     [Parameter]
     public CajaChica? CajaChica { get; set; }
+
+    [Parameter]
+    public string SimboloMoneda { get; set; } = "S/";
 
     [Parameter]
     public List<CuentaBancaria> CuentasBancarias { get; set; } = new();

@@ -136,12 +136,14 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
 
         SolicitudGasto soli = solicitudGastoDAO.buscarPorId(comprobante.getSolicitud().getIdSolicitudGasto());
         boolean esGastoExcepcional = soli.getMontoSolicitado() <= 50;
+        boolean esDeclaracionJurada = (comprobante.getTipoDocumento() == pe.edu.pucp.economix.operaciones.model.enums.TipoComprobante.DJ_EXCEPCIONAL);
+        boolean esExcepcional = esGastoExcepcional || esDeclaracionJurada;
 
         // 2. Validación de números adaptada
-        validarNumeros(comprobante, esGastoExcepcional);
+        validarNumeros(comprobante, esExcepcional);
 
         // 3. Validaciones estrictamente fiscales
-        if(!esGastoExcepcional){
+        if(!esExcepcional){
             validarDocumento(comprobante);
             validarProveedor(comprobante);
         }

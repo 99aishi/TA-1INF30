@@ -13,6 +13,7 @@
 @inject IRendicionWS RendicionWS
 @inject IComprobantePagoWS ComprobantePagoWS
 @inject ICuentaBancariaWS CuentaBancariaWS
+@inject IJSRuntime JS
 @using EconomixWA.Components.Pages.ComprobanteDePago
 
 <div class="d-flex flex-column h-100 mb-3 overflow-hidden">
@@ -855,7 +856,7 @@
         }
         else
         {
-            Navigation.NavigateTo("/Mis Solicitudes De Gasto");
+            await JS.InvokeVoidAsync("history.back");
         }
     }
 

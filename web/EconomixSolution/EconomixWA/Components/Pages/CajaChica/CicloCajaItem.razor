@@ -60,7 +60,7 @@
     [Parameter]
     public EventCallback OnMuestraDetalle { get; set; }
 
-    private string SimboloMoneda => Ciclo?.CajaChica?.Moneda?.Simbolo ?? "S/";
+    private string SimboloMoneda => !string.IsNullOrWhiteSpace(Ciclo?.CajaChica?.Moneda?.Simbolo) ? Ciclo.CajaChica.Moneda.Simbolo : "S/";
 
     private double MontoTecho => Ciclo?.CajaChica?.MontoTecho ?? 0;
 

@@ -73,7 +73,7 @@
     [Parameter]
     public EventCallback OnVer { get; set; }
 
-    private string MonedaSimbolo => CajaChica?.Moneda?.Simbolo ?? "S/";
+    private string MonedaSimbolo => !string.IsNullOrWhiteSpace(CajaChica?.Moneda?.Simbolo) ? CajaChica.Moneda.Simbolo : "S/";
 
     private double MontoTecho => CajaChica?.MontoTecho ?? 0;
 
