@@ -1,14 +1,12 @@
 @inject NavigationManager Navigation
 @inject IRendicionWS RendicionWS
-@inject ISolicitudGastoWS SolicitudGastoWS
 @inject IUsuarioWS UsuarioWS
-@inject IComprobantePagoWS ComprobantePagoWS
 @inject IJSRuntime JS
 
 <div class="card rounded-4 h-100 p-3 d-flex flex-column overflow-hidden">
-    <div class="d-flex gap-3 align-items-center mb-2">
+    <div class="p-3 pb-2 d-flex gap-4 align-items-center">
         <p class="h3 mb-0">Rendicion REN-@(Rendicion?.IdRendicion > 0 ? Rendicion.IdRendicion : "-")</p>
-        <span class="badge @EstadoClase rounded-pill">@(Rendicion?.Estado ?? "-")</span>
+        <span class="badge @EstadoClase rounded-pill px-2">@(Rendicion?.Estado ?? "-")</span>
     </div>
     <hr class="my-0" />
 
@@ -34,7 +32,7 @@
                 </div>
                 <div class="col-6">
                     <label class="form-label small text-muted">Fecha de aprobacion</label>
-                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Rendicion.FechaAprobacion?.ToString("dd/MM/yyyy") ?? "-")" disabled="true">
+                    <input type="text" class="form-control form-control-lg rounded-4 bg-light" value="@(Rendicion.FechaAprobacion?.ToString("dd/MM/yyyy") ?? DateTime.Now.ToString("dd/MM/yyyy"))" disabled="true">
                 </div>
                 <div class="col-12 mt-2">
                     <label class="form-label small text-muted">Caja Chica / Ciclo</label>
@@ -76,156 +74,12 @@
                 </div>
             }
 
-            <div class="card rounded-4 p-3 mb-3">
-                <p class="h5 mb-3">Solicitudes del Ciclo</p>
-                @if (Solicitudes == null || !Solicitudes.Any())
-                {
-                    <p class="text-muted text-center">Cargando solicitudes...</p>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Solicitud</th>
-                                    <th>Solicitante</th>
-                                    <th>Monto</th>
-                                    <th>Estado</th>
-                                    <th>Comprobantes</th>
-                                    <th>Total Comp.</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var s in Solicitudes)
-                                {
-                                    <tr class="cursor-pointer" @onclick="() => AlternarSolicitud(s)">
-                                        <td>SG-@s.IdSolicitudGasto</td>
-                                        <td>@(s.Solicitante != null ? $"{s.Solicitante.Nombres} {s.Solicitante.ApellidoPaterno}" : "-")</td>
-                                        <td>@(s.MonedaOriginal?.Simbolo ?? "S/") @s.MontoSolicitado.ToString("N2")</td>
-                                        <td><span class="badge @EstadoSolicitudClase(s.Estado)">@s.Estado</span></td>
-                                        <td>@(s.Comprobantes?.Count ?? 0)</td>
-                                        <td>@(s.MonedaOriginal?.Simbolo ?? "S/") @((s.Comprobantes?.Sum(c => c.MontoTotal) ?? 0).ToString("N2"))</td>
-                                    </tr>
-                                    @if (SolicitudesExpandidas.Contains(s.IdSolicitudGasto))
-                                    {
-                                        <tr>
-                                            <td colspan="6" class="bg-light p-3 border-top-0">
-                                                <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-                                                    <span class="text-muted small"><strong>Monto Solicitado:</strong> @(s.MonedaOriginal?.Simbolo ?? "S/") @s.MontoSolicitado.ToString("N2")</span>
-                                                    @if (ComprobantesPorSolicitud.ContainsKey(s.IdSolicitudGasto))
-                                                    {
-                                                        <span class="text-muted small"><strong>Total Declarado (Comprobantes):</strong> @(s.MonedaOriginal?.Simbolo ?? "S/") @(ComprobantesPorSolicitud[s.IdSolicitudGasto].Sum(c => c.MontoTotal).ToString("N2"))</span>
-                                                        <span class="text-muted small"><strong>Total Aprobado:</strong> @(s.MonedaOriginal?.Simbolo ?? "S/") @(ComprobantesPorSolicitud[s.IdSolicitudGasto].Where(c => c.Estado == "APROBADO").Sum(c => c.MontoTotal).ToString("N2"))</span>
-                                                    }
-                                                </div>
-                                                @if (!ComprobantesPorSolicitud.ContainsKey(s.IdSolicitudGasto))
-                                                {
-                                                    <p class="text-muted small text-center mb-0">Cargando comprobantes...</p>
-                                                }
-                                                else if (!ComprobantesPorSolicitud[s.IdSolicitudGasto].Any())
-                                                {
-                                                    <p class="text-muted small mb-0">No hay comprobantes cargados para esta solicitud.</p>
-                                                }
-                                                else
-                                                {
-                                                    <table class="table table-sm table-bordered bg-white mb-0 small">
-                                                        <thead>
-                                                            <tr class="table-secondary">
-                                                                <th>Tipo</th>
-                                                                <th>RUC / Razón Social</th>
-                                                                <th>Nro. Serie</th>
-                                                                <th>Fecha Emisión</th>
-                                                                <th>Total</th>
-                                                                <th>Estado</th>
-                                                                @if (MostrarAccionesTesoreria)
-                                                                {
-                                                                    <th class="text-center" style="width: 150px;">Acciones</th>
-                                                                }
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @foreach (var c in ComprobantesPorSolicitud[s.IdSolicitudGasto])
-                                                            {
-                                                                <tr>
-                                                                    <td>@c.TipoDocumento</td>
-                                                                    <td>
-                                                                        <div>@c.RucProveedor</div>
-                                                                        <div class="text-muted font-monospace" style="font-size: 0.75rem;">@c.RazonSocial</div>
-                                                                    </td>
-                                                                    <td>@c.NumeroSerial</td>
-                                                                    <td>@c.FechaEmision?.ToString("dd/MM/yyyy")</td>
-                                                                    <td>@(c.Moneda?.Simbolo ?? "S/") @c.MontoTotal.ToString("N2")</td>
-                                                                    <td>
-                                                                        <span class="badge @ObtenerEstadoComprobanteClase(c.Estado)">@c.Estado</span>
-                                                                    </td>
-                                                                    @if (MostrarAccionesTesoreria)
-                                                                    {
-                                                                        <td class="text-center">
-                                                                            @if (c.Estado == "POR_REVISAR")
-                                                                            {
-                                                                                @if (IdComprobanteObservando == c.IdComprobante)
-                                                                                {
-                                                                                    <div class="d-flex flex-column gap-1">
-                                                                                        <input type="text" class="form-control form-control-xs" style="font-size: 0.75rem;" placeholder="Obs..." @bind="ComentarioComprobante" />
-                                                                                        <div class="d-flex gap-1 justify-content-center">
-                                                                                            <button type="button" class="btn btn-success btn-xs py-0" style="font-size: 0.7rem;" @onclick="() => ConfirmarObservacionComprobante(c, s)" @onclick:stopPropagation>✔</button>
-                                                                                            <button type="button" class="btn btn-secondary btn-xs py-0" style="font-size: 0.7rem;" @onclick="() => IdComprobanteObservando = 0" @onclick:stopPropagation>✖</button>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                }
-                                                                                else
-                                                                                {
-                                                                                    <div class="d-flex gap-1 justify-content-center">
-                                                                                        <button type="button" class="btn btn-outline-success btn-xs px-2 py-0" style="font-size: 0.7rem;" @onclick="() => ValidarComprobante(c, s)" @onclick:stopPropagation>Aceptar</button>
-                                                                                        <button type="button" class="btn btn-outline-danger btn-xs px-2 py-0" style="font-size: 0.7rem;" @onclick="() => ObservarComprobante(c, s)" @onclick:stopPropagation>Observar</button>
-                                                                                    </div>
-                                                                                }
-                                                                            }
-                                                                            else
-                                                                            {
-                                                                                <span class="text-muted small">Evaluado</span>
-                                                                            }
-                                                                        </td>
-                                                                    }
-                                                                </tr>
-                                                            }
-                                                        </tbody>
-                                                    </table>
-                                                }
-                                            </td>
-                                        </tr>
-                                    }
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
-
-            @if (MostrarAccionesTesoreria)
+            @if (MostrarAcciones)
             {
-                <div class="card rounded-4 p-3 mb-3 border-warning">
-                    <p class="h5 mb-3">Acciones de Tesoreria</p>
-                    <div class="alert alert-info py-2 px-3 mb-2 rounded-4 small d-flex align-items-center gap-2">
-                        <span><strong>Control de Comprobantes:</strong> @AprobadosComprobantesCount de @TotalComprobantesCount comprobantes aprobados.</span>
-                    </div>
+                <div class="card rounded-4 p-3 mb-3">
+                    <p class="h5 mb-3">Comentario</p>
                     <div class="mb-2">
-                        <label class="form-label small text-muted">Comentario (requerido para observar/denegar)</label>
-                        <textarea class="form-control" rows="2" @bind="ComentarioAccion"></textarea>
-                    </div>
-                    <div class="d-flex gap-2 flex-wrap">
-                        @if (EsEnEspera)
-                        {
-                            <button type="button" class="btn btn-outline-info" @onclick="Observar" disabled="@Procesando">Observar</button>
-                            <button type="button" class="btn btn-outline-success" @onclick="Aceptar" disabled="@Procesando">Aceptar</button>
-                            <button type="button" class="btn btn-outline-danger" @onclick="Denegar" disabled="@Procesando">Denegar</button>
-                        }
-                        else if (EsObservado)
-                        {
-                            <button type="button" class="btn btn-outline-success" @onclick="Aceptar" disabled="@Procesando">Aceptar</button>
-                            <button type="button" class="btn btn-outline-danger" @onclick="Denegar" disabled="@Procesando">Denegar</button>
-                        }
+                        <textarea class="form-control rounded-4 bg-light" rows="2" placeholder="Ingrese un comentario..." @bind="ComentarioAccion"></textarea>
                     </div>
                 </div>
             }
@@ -233,7 +87,21 @@
     </div>
 
     <hr class="my-0" />
-    <div class="p-3 d-flex justify-content-end gap-3">
+    <div class="p-3 d-flex flex-wrap-nowrap justify-content-end gap-3">
+        @if (MostrarAcciones)
+        {
+            @if (EsEnEspera)
+            {
+                <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="Observar">Observar</button>
+                <button type="button" class="btn btn-outline-success" disabled="@Procesando" @onclick="Aceptar">Aceptar</button>
+                <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="Denegar">Denegar</button>
+            }
+            else if (EsObservado)
+            {
+                <button type="button" class="btn btn-outline-success" disabled="@Procesando" @onclick="Aceptar">Aceptar</button>
+                <button type="button" class="btn btn-outline-danger" disabled="@Procesando" @onclick="Denegar">Denegar</button>
+            }
+        }
         <button type="button" class="btn btn-outline-info" disabled="@Procesando" @onclick="CerrarDetalle">Cerrar</button>
     </div>
 </div>
@@ -248,18 +116,12 @@
     private string ErrorMessage { get; set; } = string.Empty;
     private string ComentarioAccion { get; set; } = string.Empty;
     private bool Procesando { get; set; } = false;
-    private List<SolicitudGasto> Solicitudes { get; set; } = new();
-
-    private HashSet<int> SolicitudesExpandidas { get; set; } = new();
-    private Dictionary<int, List<ComprobantePago>> ComprobantesPorSolicitud { get; set; } = new();
-    private int IdComprobanteObservando { get; set; } = 0;
-    private string ComentarioComprobante { get; set; } = string.Empty;
 
     private string? RolUsuario { get; set; }
     private bool EsTesoreria => RolUsuario is "Tesorero" or "Tesoreria" or "Tesorero y Finanzas";
     private bool EsEnEspera => Rendicion?.Estado?.Equals("EN_ESPERA", StringComparison.OrdinalIgnoreCase) == true;
     private bool EsObservado => Rendicion?.Estado?.Equals("OBSERVADO", StringComparison.OrdinalIgnoreCase) == true;
-    private bool MostrarAccionesTesoreria => EsTesoreria && (EsEnEspera || EsObservado);
+    private bool MostrarAcciones => EsTesoreria && (EsEnEspera || EsObservado);
 
     private string SimboloMoneda => Rendicion?.CicloCajaChica?.CajaChica?.Moneda?.Simbolo ?? "S/";
     private double TotalAsignado => Rendicion?.CicloCajaChica?.CajaChica?.MontoTecho ?? 0;
@@ -285,153 +147,19 @@
         _ => "bg-light text-dark"
     };
 
-    private int TotalComprobantesCount => ComprobantesPorSolicitud.Values.Sum(list => list.Count);
-    private int AprobadosComprobantesCount => ComprobantesPorSolicitud.Values.Sum(list => list.Count(c => c.Estado == "APROBADO"));
-
-    protected override async Task OnParametersSetAsync()
+    protected override Task OnParametersSetAsync()
     {
         if (Rendicion != null)
         {
             ComentarioAccion = string.Empty;
             ErrorMessage = string.Empty;
-            await CargarSolicitudes();
         }
+        return Task.CompletedTask;
     }
 
     protected override void OnInitialized()
     {
         RolUsuario = UsuarioWS.GetCurrentUser()?.Rol?.Titulo;
-    }
-
-    private async Task CargarSolicitudes()
-    {
-        if (Rendicion?.CicloCajaChica?.IdCicloCaja > 0)
-        {
-            try
-            {
-                Solicitudes = await SolicitudGastoWS.listarPorCicloAsync(Rendicion.CicloCajaChica.IdCicloCaja);
-                ComprobantesPorSolicitud.Clear();
-                if (Solicitudes != null)
-                {
-                    foreach (var s in Solicitudes)
-                    {
-                        try
-                        {
-                            var comprobantes = await ComprobantePagoWS.listarPorSolicitudAsync(s.IdSolicitudGasto);
-                            ComprobantesPorSolicitud[s.IdSolicitudGasto] = comprobantes ?? new List<ComprobantePago>();
-                        }
-                        catch
-                        {
-                            ComprobantesPorSolicitud[s.IdSolicitudGasto] = new List<ComprobantePago>();
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                Solicitudes = new List<SolicitudGasto>();
-            }
-        }
-    }
-
-    private string EstadoSolicitudClase(string? estado) => estado?.ToUpperInvariant() switch
-    {
-        "PENDIENTE" => "bg-warning-subtle text-warning-emphasis",
-        "APROBADO" => "bg-success-subtle text-success-emphasis",
-        "PAGADO" => "bg-primary-subtle text-primary-emphasis",
-        "RENDIDO" => "bg-info-subtle text-info-emphasis",
-        "RECHAZADO" => "bg-danger-subtle text-danger-emphasis",
-        "OBSERVADO" => "bg-info-subtle text-info-emphasis",
-        _ => "bg-light text-dark"
-    };
-
-    private async Task AlternarSolicitud(SolicitudGasto s)
-    {
-        int id = s.IdSolicitudGasto;
-        if (SolicitudesExpandidas.Contains(id))
-        {
-            SolicitudesExpandidas.Remove(id);
-        }
-        else
-        {
-            SolicitudesExpandidas.Add(id);
-            if (!ComprobantesPorSolicitud.ContainsKey(id))
-            {
-                try
-                {
-                    var comprobantes = await ComprobantePagoWS.listarPorSolicitudAsync(id);
-                    ComprobantesPorSolicitud[id] = comprobantes ?? new List<ComprobantePago>();
-                }
-                catch
-                {
-                    ComprobantesPorSolicitud[id] = new List<ComprobantePago>();
-                }
-            }
-        }
-    }
-
-    private string ObtenerEstadoComprobanteClase(string? estado) => estado?.ToUpperInvariant() switch
-    {
-        "POR_REVISAR" => "bg-warning-subtle text-warning-emphasis",
-        "APROBADO" => "bg-success-subtle text-success-emphasis",
-        "OBSERVADO" => "bg-danger-subtle text-danger-emphasis",
-        "ANULADO" => "bg-secondary-subtle text-secondary-emphasis",
-        _ => "bg-light text-dark"
-    };
-
-    private async Task ValidarComprobante(ComprobantePago c, SolicitudGasto s)
-    {
-        if (Procesando) return;
-        Procesando = true;
-        try
-        {
-            var idUsuario = UsuarioWS.GetCurrentUserId();
-            await ComprobantePagoWS.evaluarAsync(c.IdComprobante, true, "", idUsuario);
-            c.Estado = "APROBADO";
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
-        finally
-        {
-            Procesando = false;
-        }
-    }
-
-    private void ObservarComprobante(ComprobantePago c, SolicitudGasto s)
-    {
-        IdComprobanteObservando = c.IdComprobante;
-        ComentarioComprobante = string.Empty;
-    }
-
-    private async Task ConfirmarObservacionComprobante(ComprobantePago c, SolicitudGasto s)
-    {
-        if (Procesando) return;
-        if (string.IsNullOrWhiteSpace(ComentarioComprobante))
-        {
-            ErrorMessage = "Debe escribir una observación para el comprobante.";
-            return;
-        }
-        Procesando = true;
-        try
-        {
-            var idUsuario = UsuarioWS.GetCurrentUserId();
-            await ComprobantePagoWS.evaluarAsync(c.IdComprobante, false, ComentarioComprobante, idUsuario);
-            c.Estado = "OBSERVADO";
-            IdComprobanteObservando = 0;
-            ComentarioComprobante = string.Empty;
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
-        finally
-        {
-            Procesando = false;
-        }
     }
 
     private async Task CerrarDetalle()

@@ -165,6 +165,12 @@ public class RendicionDAOImpl implements IRendicionDAO{
             if (!rs.wasNull() && idMoneda > 0) {
                 pe.edu.pucp.economix.tesoreria.model.Moneda moneda = getOrCreate(cache, pe.edu.pucp.economix.tesoreria.model.Moneda.class, idMoneda, () -> new pe.edu.pucp.economix.tesoreria.model.Moneda());
                 moneda.setIdMoneda(idMoneda);
+                String simbolo = rs.getString("ccj_moneda_simbolo");
+                if (simbolo != null) moneda.setSimbolo(simbolo);
+                String nombreMoneda = rs.getString("ccj_moneda_nombre");
+                if (nombreMoneda != null) moneda.setNombre(nombreMoneda);
+                String codigoIso = rs.getString("ccj_moneda_codigo_iso");
+                if (codigoIso != null) moneda.setCodigoISO(codigoIso);
                 cc.setMoneda(moneda);
             }
             ciclo.setCajaChica(cc);
