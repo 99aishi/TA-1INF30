@@ -77,8 +77,8 @@
                 @foreach (var ciclo in CiclosFiltrados)
                 {
                     var c = ciclo;
-                    <CajaChicaItem Titulo="@c.Area"
-                                   Subtitulo="@c.Responsable"
+                    <CajaChicaItem Titulo="@c.CajaChicaNombre"
+                                   Subtitulo="@($"{c.Area} · {c.Responsable}")"
                                    PorcentajeUso="@c.PorcentajeUso"
                                    MontoTotal="@c.MontoTotal"
                                    Gastado="@c.Gastado"
@@ -217,6 +217,7 @@
                 {
                     IdCicloCaja = c.IdCicloCaja,
                     CajaChicaId = c.CajaChica?.IdFondo ?? 0,
+                    CajaChicaNombre = c.CajaChica?.Nombre ?? "Caja Chica",
                     Area = areaNombre,
                     Responsable = responsableNombre,
                     Estado = c.Estado,
@@ -260,6 +261,7 @@
     {
         public int IdCicloCaja { get; set; }
         public int CajaChicaId { get; set; }
+        public string CajaChicaNombre { get; set; } = string.Empty;
         public string Area { get; set; } = string.Empty;
         public string Responsable { get; set; } = string.Empty;
         public string Estado { get; set; } = string.Empty;

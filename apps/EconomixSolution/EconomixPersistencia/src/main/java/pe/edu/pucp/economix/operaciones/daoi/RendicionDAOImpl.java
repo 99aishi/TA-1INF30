@@ -115,7 +115,6 @@ public class RendicionDAOImpl implements IRendicionDAO{
 
         CicloCajaChica ciclo = mapearCicloCajaChicaBasico(rs, "cc_", cache);
         if (ciclo != null) {
-            ciclo.setRendicion(rendicion);
             rendicion.setCicloCajaChica(ciclo);
         }
 

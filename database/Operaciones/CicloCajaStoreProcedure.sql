@@ -292,7 +292,7 @@ BEGIN
             GROUP BY sg2.id_ciclo_caja
         ) vtg2 ON vtg2.id_ciclo_caja = occ2.id_ciclo_caja
     ) vsf ON vsf.id_ciclo_caja = occ.id_ciclo_caja
-    WHERE occ.estado_ciclo = 'ABIERTO'
+    WHERE occ.estado_ciclo IN ('ABIERTO', 'EN_EVALUACION')
     ORDER BY occ.id_ciclo_caja DESC;
 END$$
 
@@ -356,7 +356,7 @@ BEGIN
             GROUP BY sg2.id_ciclo_caja
         ) vtg2 ON vtg2.id_ciclo_caja = occ2.id_ciclo_caja
     ) vsf ON vsf.id_ciclo_caja = occ.id_ciclo_caja
-    ORDER BY FIELD(occ.estado_ciclo, 'ABIERTO', 'EN_EXCEPCION', 'CERRADO', 'LIQUIDADO'), occ.id_ciclo_caja DESC;
+    ORDER BY FIELD(occ.estado_ciclo, 'ABIERTO', 'EN_EVALUACION', 'EN_EXCEPCION', 'CERRADO', 'LIQUIDADO'), occ.id_ciclo_caja DESC;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_listar_ciclos_activos $$
@@ -419,7 +419,7 @@ BEGIN
             GROUP BY sg2.id_ciclo_caja
         ) vtg2 ON vtg2.id_ciclo_caja = occ2.id_ciclo_caja
     ) vsf ON vsf.id_ciclo_caja = occ.id_ciclo_caja
-    WHERE occ.estado_ciclo = 'ABIERTO'
+    WHERE occ.estado_ciclo IN ('ABIERTO', 'EN_EVALUACION')
     ORDER BY occ.fecha_apertura DESC;
 END$$
 

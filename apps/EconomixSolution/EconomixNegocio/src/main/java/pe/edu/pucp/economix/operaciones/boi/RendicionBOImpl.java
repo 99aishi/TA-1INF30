@@ -209,7 +209,72 @@ public class RendicionBOImpl implements IRendicionBO {
         if (rendicion.getEstado() != EstadoRendicion.EN_ESPERA && rendicion.getEstado() != EstadoRendicion.OBSERVADO) {
             throw new Exception("Solo se puede aceptar una rendicion en estado EN_ESPERA u OBSERVADO.");
         }
-        rendicionDAO.cambiarEstadoRendicion(idRendicion, "ACEPTADO", null, idUsuarioAccion);
+
+        pe.edu.pucp.economix.config.DBManager.getDBManager().iniciarTransaccion();
+        try {
+            // Recalcular y guardar totales antes de aceptar
+            double totalAprobado = calcularTotalAprobado(rendicion);
+            double totalDeclarado = calcularTotalDeclaradoValidado(rendicion.getCicloCajaChica());
+            rendicion.setTotalAprobado(totalAprobado);
+            rendicion.setTotalDeclarado(totalDeclarado);
+            double saldoInicial = 0;
+            CicloCajaChica ciclo = cicloCajaChicaDAO.buscarPorId(rendicion.getCicloCajaChica().getIdCicloCaja());
+            if (ciclo != null) {
+                saldoInicial = ciclo.getSaldoInicial();
+            }
+            rendicion.setSaldoFinal(saldoInicial - totalAprobado);
+            rendicionDAO.modificar(rendicion, idUsuarioAccion);
+
+            // Cambiar el estado a ACEPTADO (esto también cambia el ciclo a LIQUIDADO por SP)
+            rendicionDAO.cambiarEstadoRendicion(idRendicion, "ACEPTADO", null, idUsuarioAccion);
+
+            // Generar transacción de reposición automática
+            if (ciclo != null && ciclo.getCajaChica() != null) {
+                pe.edu.pucp.economix.operaciones.model.Transaccion trans = new pe.edu.pucp.economix.operaciones.model.Transaccion();
+                trans.setTipoTransaccion(pe.edu.pucp.economix.operaciones.model.enums.TipoTransaccion.REPOSICION_FONDO);
+                trans.setFecha(new Date());
+                trans.setMonto(totalAprobado);
+                trans.setNumeroOperacionBancaria("REP-" + idRendicion);
+                trans.setMedioPago(pe.edu.pucp.economix.operaciones.model.enums.MedioPago.TRANSFERENCIA);
+                trans.setCuentaDestino(ciclo.getCajaChica().getCuentaBancaria());
+                trans.setMoneda(ciclo.getCajaChica().getMoneda());
+                trans.setEstadoTransaccion(pe.edu.pucp.economix.operaciones.model.enums.EstadoTransaccion.COMPLETADA);
+                
+                pe.edu.pucp.economix.operaciones.idao.ITransaccionDAO transDAO = new pe.edu.pucp.economix.operaciones.daoi.TransaccionDAOImpl();
+                transDAO.insertar(trans, idUsuarioAccion);
+
+                // Generar un nuevo ciclo de caja chica automáticamente
+                try {
+                    pe.edu.pucp.economix.operaciones.model.CicloCajaChica nuevoCiclo = new pe.edu.pucp.economix.operaciones.model.CicloCajaChica();
+                    nuevoCiclo.setCajaChica(ciclo.getCajaChica());
+                    nuevoCiclo.setNumeroSemana(ciclo.getNumeroSemana() + 1);
+                    nuevoCiclo.setFechaApertura(new Date());
+                    
+                    // fechaCierre as 7 days from now (matching the typical weekly cycle)
+                    java.util.Calendar cal = java.util.Calendar.getInstance();
+                    cal.setTime(new Date());
+                    cal.add(java.util.Calendar.DAY_OF_YEAR, 7);
+                    nuevoCiclo.setFechaCierre(cal.getTime());
+                    
+                    nuevoCiclo.setSaldoInicial(ciclo.getCajaChica().getMontoTecho());
+                    nuevoCiclo.setTotalGastado(0.0);
+                    nuevoCiclo.setEstado(pe.edu.pucp.economix.operaciones.model.enums.EstadoCicloCaja.ABIERTO);
+                    
+                    cicloCajaChicaDAO.insertarEnTransaccion(nuevoCiclo, idUsuarioAccion);
+                } catch (Exception e) {
+                    System.out.println("Error al auto-generar nuevo ciclo de caja chica: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            pe.edu.pucp.economix.config.DBManager.getDBManager().confirmarTransaccion();
+        } catch (Exception ex) {
+            try {
+                pe.edu.pucp.economix.config.DBManager.getDBManager().cancelarTransaccion();
+            } catch (Exception rollbackEx) {
+                System.err.println("Error al hacer rollback en aceptarRendicion: " + rollbackEx.getMessage());
+            }
+            throw ex;
+        }
     }
 
     @Override

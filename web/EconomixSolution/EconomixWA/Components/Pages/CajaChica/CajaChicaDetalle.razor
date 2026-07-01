@@ -32,18 +32,24 @@
                 <div class="col-12 col-md-6 mt-3">
                     <label class="form-label small text-muted">Nombre</label>
                     <input type="text" class="form-control form-control-lg rounded-4 bg-light"
-                           placeholder="Nombre de la caja chica" @bind="CajaChica!.Nombre">
+                           placeholder="Nombre de la caja chica" @bind="CajaChica!.Nombre" disabled="@EsSoloLectura">
                 </div>
                 <div class="col-12 col-md-6 mt-3">
                     <label class="form-label small text-muted">Monto Techo</label>
-                    <input type="number" step="0.01" min="0"
-                           class="form-control form-control-lg rounded-4 bg-light"
-                           placeholder="0.00" @bind="CajaChica!.MontoTecho">
+                    <div class="input-group">
+                        @if (CajaChica?.Moneda != null)
+                        {
+                            <span class="input-group-text bg-light rounded-start-4 border-0">@CajaChica.Moneda.Simbolo</span>
+                        }
+                        <input type="number" step="0.01" min="0"
+                               class="form-control form-control-lg rounded-end-4 bg-light border-0"
+                               placeholder="0.00" @bind="CajaChica!.MontoTecho" disabled="@EsSoloLectura">
+                    </div>
                 </div>
                 <div class="col-12 col-md-6 mt-3">
                     <label class="form-label small text-muted">Área</label>
                     <select class="form-select form-select-lg rounded-4 bg-light"
-                            @bind="AreaSeleccionadaId">
+                            @bind="AreaSeleccionadaId" disabled="@EsSoloLectura">
                         <option value="0">Seleccione área</option>
                         @foreach (var area in Areas)
                         {
@@ -55,7 +61,7 @@
                     <label class="form-label small text-muted">Cuenta bancaria</label>
                     <select class="form-select form-select-lg rounded-4 bg-light"
                             @bind="CuentaBancariaSeleccionadaId"
-                            disabled="@(AreaSeleccionadaId <= 0)">
+                            disabled="@(AreaSeleccionadaId <= 0 || EsSoloLectura)">
                         <option value="0">@(AreaSeleccionadaId <= 0 ? "Seleccione un área primero" : "Seleccione cuenta")</option>
                         @foreach (var cuenta in CuentasBancariasFiltradas)
                         {
@@ -72,7 +78,13 @@
         </div>
         <hr class="my-0" />
         <div class="p-3 d-flex flex-wrap-nowrap justify-content-end gap-3">
-            @if (EsCreacion)
+            @if (EsSoloLectura)
+            {
+                <button type="button" class="btn btn-outline-info" @onclick="CerrarDetalle">
+                    Cerrar
+                </button>
+            }
+            else if (EsCreacion)
             {
                 <button type="button" class="btn btn-outline-primary" disabled="@Procesando" @onclick="InsertarCajaChica">
                     @(Procesando ? "Procesando..." : "Registrar")
@@ -122,6 +134,8 @@
     private List<Moneda> Monedas { get; set; } = new();
     private List<CuentaBancaria> CuentasBancarias { get; set; } = new();
     private List<Area> Areas { get; set; } = new();
+    private string? RolUsuario { get; set; }
+    private bool EsSoloLectura => RolUsuario == "Tesoreria";
 
     private int AreaSeleccionadaId { get; set; }
 
@@ -163,6 +177,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        RolUsuario = UsuarioWS.GetCurrentUser()?.Rol?.Titulo;
         await CargarCatalogos();
         InicializarDesdeParametro();
     }
@@ -184,8 +199,22 @@
         CajaChica ??= new CajaChica { Estado = "ACTIVO", Moneda = new Moneda() };
         EsCreacion = CajaChica.IdFondo <= 0;
 
-        if (CajaChica.CuentaBancaria?.AreaAdministradora != null)
+        if (CajaChica.CuentaBancaria != null && CuentasBancarias.Any())
+        {
+            var fullCuenta = CuentasBancarias.FirstOrDefault(cb => cb.IdCuenta == CajaChica.CuentaBancaria.IdCuenta);
+            if (fullCuenta != null)
+            {
+                CajaChica.CuentaBancaria = fullCuenta;
+                if (fullCuenta.AreaAdministradora != null)
+                {
+                    AreaSeleccionadaId = fullCuenta.AreaAdministradora.AreaID;
+                }
+            }
+        }
+        else if (CajaChica.CuentaBancaria?.AreaAdministradora != null)
+        {
             AreaSeleccionadaId = CajaChica.CuentaBancaria.AreaAdministradora.AreaID;
+        }
 
         if (CajaChica.Moneda == null)
             CajaChica.Moneda = new Moneda();

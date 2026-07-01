@@ -274,7 +274,7 @@ CREATE TABLE IF NOT EXISTS ope_rendicion (
 
 CREATE TABLE IF NOT EXISTS ope_solicitud_gasto (
     id_solicitud_gasto INT NOT NULL AUTO_INCREMENT,
-    fecha_solicitud DATE NOT NULL,
+    fecha_solicitud DATETIME NOT NULL,
     monto_solicitado DECIMAL(12,2) NOT NULL,
     id_moneda_original INT NULL,
     tipo_cambio DECIMAL(10,4) DEFAULT 1.0000,
@@ -961,7 +961,7 @@ BEGIN
             GROUP BY sg2.id_ciclo_caja
         ) vtg2 ON vtg2.id_ciclo_caja = occ2.id_ciclo_caja
     ) vsf ON vsf.id_ciclo_caja = occ.id_ciclo_caja
-    WHERE occ.estado_ciclo = 'ABIERTO'
+    WHERE occ.estado_ciclo IN ('ABIERTO', 'EN_EVALUACION')
     ORDER BY occ.id_ciclo_caja DESC;
 END$$
 
@@ -999,7 +999,7 @@ BEGIN
     LEFT JOIN (
         SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
         FROM ope_solicitud_gasto sg
-        WHERE sg.estado_solicitud = 'APROBADO'
+        WHERE sg.estado_solicitud IN ('APROBADO', 'PAGADO', 'RENDIDO')
         GROUP BY sg.id_ciclo_caja
     ) vtg ON vtg.id_ciclo_caja = occ.id_ciclo_caja
     LEFT JOIN (
@@ -1012,7 +1012,7 @@ BEGIN
     LEFT JOIN (
         SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_aprobado
         FROM ope_solicitud_gasto sg
-        WHERE sg.estado_solicitud = 'APROBADO'
+        WHERE sg.estado_solicitud IN ('APROBADO', 'PAGADO', 'RENDIDO')
         GROUP BY sg.id_ciclo_caja
     ) vta ON vta.id_ciclo_caja = occ.id_ciclo_caja
     LEFT JOIN (
@@ -1021,11 +1021,11 @@ BEGIN
         LEFT JOIN (
             SELECT sg2.id_ciclo_caja, SUM(sg2.monto_solicitado) AS total_gastado
             FROM ope_solicitud_gasto sg2
-            WHERE sg2.estado_solicitud = 'APROBADO'
+            WHERE sg2.estado_solicitud IN ('APROBADO', 'PAGADO', 'RENDIDO')
             GROUP BY sg2.id_ciclo_caja
         ) vtg2 ON vtg2.id_ciclo_caja = occ2.id_ciclo_caja
     ) vsf ON vsf.id_ciclo_caja = occ.id_ciclo_caja
-    ORDER BY FIELD(occ.estado_ciclo, 'ABIERTO', 'EN_EXCEPCION', 'CERRADO', 'LIQUIDADO'), occ.id_ciclo_caja DESC;
+    ORDER BY FIELD(occ.estado_ciclo, 'ABIERTO', 'EN_EVALUACION', 'EN_EXCEPCION', 'CERRADO', 'LIQUIDADO'), occ.id_ciclo_caja DESC;
 END$$
 
 DROP PROCEDURE IF EXISTS pa_listar_ciclos_activos $$
@@ -2309,7 +2309,7 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS pa_insertar_solicitud_gasto $$
 CREATE PROCEDURE pa_insertar_solicitud_gasto(
     IN p_id_usuario_accion INT,
-    IN p_fecha_solicitud DATE,
+    IN p_fecha_solicitud DATETIME,
     IN p_monto_solicitado DECIMAL(12,2),
     IN p_id_moneda_original INT,
     IN p_tipo_cambio DECIMAL(10,4),
@@ -2370,7 +2370,7 @@ DROP PROCEDURE IF EXISTS pa_modificar_solicitud_gasto $$
 CREATE PROCEDURE pa_modificar_solicitud_gasto(
     IN p_id_usuario_accion INT,
     IN p_id_solicitud_gasto INT,
-    IN p_fecha_solicitud DATE,
+    IN p_fecha_solicitud DATETIME,
     IN p_monto_solicitado DECIMAL(12,2),
     IN p_id_moneda_original INT,
     IN p_tipo_cambio DECIMAL(10,4),

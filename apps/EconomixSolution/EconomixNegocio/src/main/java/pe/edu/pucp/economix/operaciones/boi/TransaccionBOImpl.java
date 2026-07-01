@@ -57,10 +57,9 @@ public class TransaccionBOImpl implements ITransaccionBO {
         if (result > 0 
                 && transaccion.getEstadoTransaccion() == EstadoTransaccion.COMPLETADA 
                 && transaccion.getTipoTransaccion() == TipoTransaccion.DESEMBOLSO 
-                && transaccion.getSolicitud() != null 
-                && transaccion.getSolicitud().getIdSolicitudGasto() > 0) {
+                && transaccion.getIdSolicitudGasto() > 0) {
             ISolicitudGastoDAO solicitudDAO = new SolicitudGastoDAOImpl();
-            SolicitudGasto solicitud = solicitudDAO.buscarPorId(transaccion.getSolicitud().getIdSolicitudGasto());
+            SolicitudGasto solicitud = solicitudDAO.buscarPorId(transaccion.getIdSolicitudGasto());
             if (solicitud != null) {
                 solicitud.setEstado(EstadoSolicitudGasto.PAGADO);
                 solicitudDAO.modificar(solicitud, idUsuarioAccion);

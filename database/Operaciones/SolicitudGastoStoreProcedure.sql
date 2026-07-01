@@ -4,7 +4,7 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS pa_insertar_solicitud_gasto $$
 CREATE PROCEDURE pa_insertar_solicitud_gasto(
     IN p_id_usuario_accion INT,
-    IN p_fecha_solicitud DATE,
+    IN p_fecha_solicitud DATETIME,
     IN p_monto_solicitado DECIMAL(12,2),
     IN p_id_moneda_original INT,
     IN p_tipo_cambio DECIMAL(10,4),
@@ -65,7 +65,7 @@ DROP PROCEDURE IF EXISTS pa_modificar_solicitud_gasto $$
 CREATE PROCEDURE pa_modificar_solicitud_gasto(
     IN p_id_usuario_accion INT,
     IN p_id_solicitud_gasto INT,
-    IN p_fecha_solicitud DATE,
+    IN p_fecha_solicitud DATETIME,
     IN p_monto_solicitado DECIMAL(12,2),
     IN p_id_moneda_original INT,
     IN p_tipo_cambio DECIMAL(10,4),

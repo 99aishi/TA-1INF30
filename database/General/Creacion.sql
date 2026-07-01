@@ -258,7 +258,7 @@ CREATE TABLE IF NOT EXISTS ope_rendicion (
 
 CREATE TABLE IF NOT EXISTS ope_solicitud_gasto (
     id_solicitud_gasto INT NOT NULL AUTO_INCREMENT,
-    fecha_solicitud DATE NOT NULL,
+    fecha_solicitud DATETIME NOT NULL,
     monto_solicitado DECIMAL(12,2) NOT NULL,
     id_moneda_original INT NULL,
     tipo_cambio DECIMAL(10,4) DEFAULT 1.0000,

@@ -164,7 +164,15 @@ public class CicloCajaChicaDAOImpl implements ICicloCajaChicaDAO {
         ciclo.setFechaCierre(rs.getTimestamp("fecha_cierre"));
         ciclo.setSaldoInicial(rs.getDouble("monto_saldo_inicial"));
         ciclo.setTotalGastado(rs.getDouble("monto_total_gastado"));
-        ciclo.setEstado(EstadoCicloCaja.valueOf(rs.getString("estado_ciclo")));
+        String estStr = rs.getString("estado_ciclo");
+        if (estStr != null) {
+            estStr = estStr.toUpperCase().replace("Á","A").replace("É","E").replace("Í","I").replace("Ó","O").replace("Ú","U").trim();
+            try {
+                ciclo.setEstado(EstadoCicloCaja.valueOf(estStr));
+            } catch (Exception e) {
+                ciclo.setEstado(EstadoCicloCaja.ABIERTO);
+            }
+        }
 
         CajaChica ccj = mapearCajaChica(rs, "ccj_", cache);
         if (ccj != null) {
@@ -173,7 +181,6 @@ public class CicloCajaChicaDAOImpl implements ICicloCajaChicaDAO {
 
         Rendicion ren = mapearRendicion(rs, "ren_", cache);
         if (ren != null) {
-            ren.setCicloCajaChica(ciclo);
             ciclo.setRendicion(ren);
         }
 

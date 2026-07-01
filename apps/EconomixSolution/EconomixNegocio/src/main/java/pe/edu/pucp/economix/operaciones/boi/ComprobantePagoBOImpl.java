@@ -53,7 +53,6 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         DBManager.getDBManager().iniciarTransaccion();
         try {
             int id = comprobantePagoDAO.insertar(comprobante, idUsuarioAccion);
-            actualizarDevolucionSobrante(comprobante.getSolicitud().getIdSolicitudGasto(), idUsuarioAccion);
             DBManager.getDBManager().confirmarTransaccion();
             return id;
         } catch (Exception ex) {
@@ -73,7 +72,6 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         DBManager.getDBManager().iniciarTransaccion();
         try {
             int r = comprobantePagoDAO.modificar(comprobante, idUsuarioAccion);
-            actualizarDevolucionSobrante(comprobante.getSolicitud().getIdSolicitudGasto(), idUsuarioAccion);
             DBManager.getDBManager().confirmarTransaccion();
             return r;
         } catch (Exception ex) {
@@ -93,9 +91,6 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         try {
             ComprobantePago comprobante = comprobantePagoDAO.buscarPorId(id);
             int r = comprobantePagoDAO.eliminar(id, idUsuarioAccion);
-            if (comprobante != null && comprobante.getSolicitud() != null) {
-                actualizarDevolucionSobrante(comprobante.getSolicitud().getIdSolicitudGasto(), idUsuarioAccion);
-            }
             DBManager.getDBManager().confirmarTransaccion();
             return r;
         } catch (Exception ex) {
@@ -170,12 +165,14 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
             }
         }
 
-
+        // Se permite que la suma exceda la solicitud para generar una transaccion de REEMBOLSO_DEFICIT
+        /*
         double montoDisponible = soli.getMontoSolicitado() - montoComprobantes;
         if (comprobante.getTotal() > montoDisponible) {
             throw new Exception("El total del comprobante (" + String.format("%.2f", comprobante.getTotal())
                     + ") excede el monto disponible de la solicitud (" + String.format("%.2f", montoDisponible) + ").");
         }
+        */
     }
 
 
@@ -304,9 +301,20 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
             comprobante.setEstado(EstadoComprobante.OBSERVADO);
         }
 
-        // La observación se almacena en el nombre del archivo comprobante como comentario temporal
-        // o se ignora si no hay campo. Se deja para extensión futura.
-        return comprobantePagoDAO.modificar(comprobante, idUsuarioAccion);
+        DBManager.getDBManager().iniciarTransaccion();
+        try {
+            int r = comprobantePagoDAO.modificar(comprobante, idUsuarioAccion);
+            actualizarDevolucionSobrante(comprobante.getSolicitud().getIdSolicitudGasto(), idUsuarioAccion);
+            DBManager.getDBManager().confirmarTransaccion();
+            return r;
+        } catch (Exception ex) {
+            try {
+                DBManager.getDBManager().cancelarTransaccion();
+            } catch (Exception rollbackEx) {
+                System.err.println("Error al hacer rollback en evaluar comprobante: " + rollbackEx.getMessage());
+            }
+            throw ex;
+        }
     }
 
     private void actualizarDevolucionSobrante(int idSolicitudGasto, int idUsuarioAccion) throws Exception {
@@ -316,33 +324,39 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
         List<ComprobantePago> comprobantes = comprobantePagoDAO.listarPorSolicitud(idSolicitudGasto);
         double sumaComprobantes = 0;
         int countComprobantes = 0;
-        for (ComprobantePago cp : comprobantes) {
-            if (cp.getEstado() != EstadoComprobante.ANULADO) {
-                sumaComprobantes += cp.getTotal();
-                countComprobantes++;
+        if (comprobantes != null) {
+            for (ComprobantePago cp : comprobantes) {
+                if (cp.getEstado() != EstadoComprobante.ANULADO) {
+                    sumaComprobantes += cp.getTotal();
+                    countComprobantes++;
+                }
             }
         }
 
         ITransaccionDAO transaccionDAO = new TransaccionDAOImpl();
         List<Transaccion> transacciones = transaccionDAO.listarTodas();
         Transaccion devolucion = null;
+        Transaccion deficit = null;
         for (Transaccion t : transacciones) {
-            if (t.getIdSolicitudGasto() == idSolicitudGasto 
-                && t.getTipoTransaccion() == TipoTransaccion.DEVOLUCION_SOBRANTE
-                && t.getEstadoTransaccion() != EstadoTransaccion.ANULADA) {
-                devolucion = t;
-                break;
+            if (t.getIdSolicitudGasto() == idSolicitudGasto && t.getEstadoTransaccion() != EstadoTransaccion.ANULADA) {
+                if (t.getTipoTransaccion() == TipoTransaccion.DEVOLUCION_SOBRANTE) {
+                    devolucion = t;
+                } else if (t.getTipoTransaccion() == TipoTransaccion.REEMBOLSO_DEFICIT) {
+                    deficit = t;
+                }
             }
         }
 
         double montoSolicitado = soli.getMontoSolicitado();
-        double sobrante = montoSolicitado - sumaComprobantes;
+        double diferencia = montoSolicitado - sumaComprobantes; // positivo es sobrante, negativo es deficit
 
-        if (countComprobantes > 0 && sobrante > 0) {
+        if (countComprobantes > 0 && diferencia > 0) {
+            // Caso 1: Sobrante (El empleado gastó menos, debe devolver vuelto a la caja chica)
+            // Empleado -> Caja Chica (cuentaDestino)
             if (devolucion == null) {
                 devolucion = new Transaccion();
                 devolucion.setTipoTransaccion(TipoTransaccion.DEVOLUCION_SOBRANTE);
-                devolucion.setMonto(sobrante);
+                devolucion.setMonto(diferencia);
                 devolucion.setBeneficiario(soli.getSolicitante());
                 devolucion.setEstadoTransaccion(EstadoTransaccion.REGISTRADA);
                 devolucion.setIdSolicitudGasto(idSolicitudGasto);
@@ -357,16 +371,55 @@ public class ComprobantePagoBOImpl implements IComprobantePagoBO {
                         devolucion.setCuentaDestino(ccCompleta.getCuentaBancaria());
                     }
                 }
-                
                 transaccionDAO.insertar(devolucion, idUsuarioAccion);
             } else {
-                devolucion.setMonto(sobrante);
+                devolucion.setMonto(diferencia);
                 devolucion.setEstadoTransaccion(EstadoTransaccion.REGISTRADA);
                 transaccionDAO.modificar(devolucion, idUsuarioAccion);
             }
-        } else {
+            // Eliminar deficit si existiera
+            if (deficit != null) {
+                transaccionDAO.eliminar(deficit.getIdTransaccion(), idUsuarioAccion);
+            }
+        } else if (countComprobantes > 0 && diferencia < 0) {
+            // Caso 2: Deficit (El empleado gastó más, la caja chica le debe reembolsar)
+            // Caja Chica (cuentaOrigen) -> Empleado
+            double montoDeficit = Math.abs(diferencia);
+            if (deficit == null) {
+                deficit = new Transaccion();
+                deficit.setTipoTransaccion(TipoTransaccion.REEMBOLSO_DEFICIT);
+                deficit.setMonto(montoDeficit);
+                deficit.setBeneficiario(soli.getSolicitante());
+                deficit.setEstadoTransaccion(EstadoTransaccion.REGISTRADA);
+                deficit.setIdSolicitudGasto(idSolicitudGasto);
+                deficit.setMoneda(soli.getMonedaOriginal());
+                deficit.setFecha(new Date());
+                
+                if (soli.getCiclo() != null && soli.getCiclo().getCajaChica() != null) {
+                    int idCajaChica = soli.getCiclo().getCajaChica().getIdFondo();
+                    ICajaChicaDAO cajaChicaDAO = new CajaChicaDAOImpl();
+                    CajaChica ccCompleta = cajaChicaDAO.buscarPorId(idCajaChica);
+                    if (ccCompleta != null) {
+                        deficit.setCuentaOrigen(ccCompleta.getCuentaBancaria());
+                    }
+                }
+                transaccionDAO.insertar(deficit, idUsuarioAccion);
+            } else {
+                deficit.setMonto(montoDeficit);
+                deficit.setEstadoTransaccion(EstadoTransaccion.REGISTRADA);
+                transaccionDAO.modificar(deficit, idUsuarioAccion);
+            }
+            // Eliminar sobrante si existiera
             if (devolucion != null) {
                 transaccionDAO.eliminar(devolucion.getIdTransaccion(), idUsuarioAccion);
+            }
+        } else {
+            // Caso 3: Es igual o no hay comprobantes
+            if (devolucion != null) {
+                transaccionDAO.eliminar(devolucion.getIdTransaccion(), idUsuarioAccion);
+            }
+            if (deficit != null) {
+                transaccionDAO.eliminar(deficit.getIdTransaccion(), idUsuarioAccion);
             }
         }
     }

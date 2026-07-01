@@ -248,8 +248,14 @@ public class SolicitudGastoDAOImpl implements ISolicitudGastoDAO {
         ciclo.setSaldoInicial(rs.getDouble(prefijo + "monto_saldo_inicial"));
         ciclo.setTotalGastado(rs.getDouble(prefijo + "monto_total_gastado"));
         String estadoCiclo = rs.getString(prefijo + "estado_ciclo");
-        if(estadoCiclo != null)
-            ciclo.setEstado(EstadoCicloCaja.valueOf(estadoCiclo));
+        if(estadoCiclo != null) {
+            estadoCiclo = estadoCiclo.toUpperCase().replace("Á","A").replace("É","E").replace("Í","I").replace("Ó","O").replace("Ú","U").trim();
+            try {
+                ciclo.setEstado(EstadoCicloCaja.valueOf(estadoCiclo));
+            } catch (Exception e) {
+                ciclo.setEstado(EstadoCicloCaja.ABIERTO);
+            }
+        }
 
         int idCajaChica = rs.getInt(prefijo + "id_caja_chica");
         if (!rs.wasNull() && idCajaChica > 0) {

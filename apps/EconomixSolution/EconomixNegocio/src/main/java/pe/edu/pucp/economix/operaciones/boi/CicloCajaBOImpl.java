@@ -94,22 +94,56 @@ public class CicloCajaBOImpl implements ICicloCajaBO {
         return cicloCajaChicaDAO.eliminar(id, idUsuarioAccion);
     }
 
+    private void cargarDetalles(CicloCajaChica ciclo) {
+        if (ciclo == null) return;
+        try {
+            List<SolicitudGasto> solicitudes = solicitudGastoDAO.listarPorCiclo(ciclo.getIdCicloCaja());
+            if (solicitudes != null) {
+                for (SolicitudGasto s : solicitudes) {
+                    try {
+                        List<ComprobantePago> comprobantes = comprobantePagoDAO.listarPorSolicitud(s.getIdSolicitudGasto());
+                        s.setComprobantes(comprobantes);
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                }
+                ciclo.setSolicitudesDeGasto(solicitudes);
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
     @Override
     public CicloCajaChica buscarPorId(int id) throws Exception {
         if(id<=0){
             throw new Exception("Debe ingresar el ID del ciclo.");
         }
-        return cicloCajaChicaDAO.buscarPorId(id);
+        CicloCajaChica ciclo = cicloCajaChicaDAO.buscarPorId(id);
+        cargarDetalles(ciclo);
+        return ciclo;
     }
 
     @Override
     public List<CicloCajaChica> listarTodas() throws Exception {
-        return cicloCajaChicaDAO.listarTodas();
+        List<CicloCajaChica> ciclos = cicloCajaChicaDAO.listarTodas();
+        if (ciclos != null) {
+            for (CicloCajaChica c : ciclos) {
+                cargarDetalles(c);
+            }
+        }
+        return ciclos;
     }
 
     @Override
     public List<CicloCajaChica> listarActivos() throws Exception {
-        return cicloCajaChicaDAO.listarActivos();
+        List<CicloCajaChica> ciclos = cicloCajaChicaDAO.listarActivos();
+        if (ciclos != null) {
+            for (CicloCajaChica c : ciclos) {
+                cargarDetalles(c);
+            }
+        }
+        return ciclos;
     }
 
     public void validar (CicloCajaChica ciclo, boolean esModificacion) throws Exception{
