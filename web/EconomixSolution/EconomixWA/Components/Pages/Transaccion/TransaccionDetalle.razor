@@ -260,18 +260,6 @@
         var usuario = UsuarioWS.GetCurrentUser();
         EsJefe = usuario is Empleado emp && (emp.RolFlujo == RolFlujo.JEFE_AREA || emp.Area?.Jefe?.UsuarioID == emp.UsuarioID);
 
-        if (usuario != null)
-        {
-            try
-            {
-                CuentasBancarias = await CuentaBancariaWS.listarPorEmpleadoAsync(usuario.UsuarioID);
-            }
-            catch
-            {
-                CuentasBancarias = new();
-            }
-        }
-
         DeterminarModo();
     }
 
@@ -279,6 +267,24 @@
     {
         DeterminarModo();
         await CargarCuentaOrigen();
+        await CargarCuentasDestino();
+    }
+
+    private async Task CargarCuentasDestino()
+    {
+        if (Transaccion?.Beneficiario?.UsuarioID > 0)
+        {
+            try
+            {
+                CuentasBancarias = await CuentaBancariaWS.listarPorEmpleadoAsync(Transaccion.Beneficiario.UsuarioID);
+                return;
+            }
+            catch
+            {
+                // silent fallback
+            }
+        }
+        CuentasBancarias = new();
     }
 
     private async Task CargarCuentaOrigen()
@@ -474,6 +480,8 @@
             {
                 Transaccion.CuentaDestino = CuentasBancarias.FirstOrDefault(c => c.IdCuenta == cuentaDestinoId);
             }
+
+            Transaccion.CuentaOrigen = _cuentaOrigen;
 
             Transaccion.EstadoTransaccion = "COMPLETADA";
 
