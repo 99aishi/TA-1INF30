@@ -16,6 +16,7 @@ import pe.edu.pucp.economix.operaciones.model.enums.EstadoCicloCaja;
 import pe.edu.pucp.economix.operaciones.model.enums.EstadoRendicion;
 import pe.edu.pucp.economix.operaciones.model.Rendicion;
 import pe.edu.pucp.economix.tesoreria.model.CajaChica;
+import pe.edu.pucp.economix.tesoreria.model.EstadoFondo;
 
 public class RendicionDAOImpl implements IRendicionDAO{
     private ResultSet rs;
@@ -110,7 +111,14 @@ public class RendicionDAOImpl implements IRendicionDAO{
         rendicion.setTotalDeclarado(rs.getDouble("monto_total_declarado"));
         rendicion.setTotalAprobado(rs.getDouble("monto_total_aprobado"));
         rendicion.setSaldoFinal(rs.getDouble("monto_saldo_final"));
-        rendicion.setEstado(EstadoRendicion.valueOf(rs.getString("estado_rendicion")));
+        String estStr = rs.getString("estado_rendicion");
+        if (estStr != null) {
+            try {
+                rendicion.setEstado(EstadoRendicion.valueOf(estStr.toUpperCase().trim()));
+            } catch (Exception e) {
+                rendicion.setEstado(EstadoRendicion.EN_ESPERA);
+            }
+        }
         rendicion.setComentario(rs.getString("comentario"));
 
         CicloCajaChica ciclo = mapearCicloCajaChicaBasico(rs, "cc_", cache);
@@ -139,14 +147,27 @@ public class RendicionDAOImpl implements IRendicionDAO{
         if (!rs.wasNull() && idCajaChica > 0) {
             CajaChica cc = getOrCreate(cache, CajaChica.class, idCajaChica, () -> new CajaChica());
             cc.setIdFondo(idCajaChica);
+            cc.setNombre(rs.getString("ccj_nombre_fondo"));
+            cc.setMontoTecho(rs.getDouble("ccj_monto_techo"));
+            String estadoFondo = rs.getString("ccj_estado_fondo");
+            if (estadoFondo != null) {
+                try {
+                    cc.setEstado(EstadoFondo.valueOf(estadoFondo));
+                } catch (Exception e) {}
+            }
+            int idCuentaBancaria = rs.getInt("ccj_id_cuenta_bancaria");
+            if (!rs.wasNull() && idCuentaBancaria > 0) {
+                pe.edu.pucp.economix.tesoreria.model.CuentaBancaria cb = getOrCreate(cache, pe.edu.pucp.economix.tesoreria.model.CuentaBancaria.class, idCuentaBancaria, () -> new pe.edu.pucp.economix.tesoreria.model.CuentaBancaria());
+                cb.setIdCuenta(idCuentaBancaria);
+                cc.setCuentaBancaria(cb);
+            }
+            int idMoneda = rs.getInt("ccj_id_moneda");
+            if (!rs.wasNull() && idMoneda > 0) {
+                pe.edu.pucp.economix.tesoreria.model.Moneda moneda = getOrCreate(cache, pe.edu.pucp.economix.tesoreria.model.Moneda.class, idMoneda, () -> new pe.edu.pucp.economix.tesoreria.model.Moneda());
+                moneda.setIdMoneda(idMoneda);
+                cc.setMoneda(moneda);
+            }
             ciclo.setCajaChica(cc);
-        }
-
-        int idRendicion = rs.getInt(prefijo + "id_rendicion");
-        if (!rs.wasNull() && idRendicion > 0) {
-            Rendicion ren = getOrCreate(cache, Rendicion.class, idRendicion, () -> new Rendicion());
-            ren.setIdRendicion(idRendicion);
-            ciclo.setRendicion(ren);
         }
 
         return ciclo;

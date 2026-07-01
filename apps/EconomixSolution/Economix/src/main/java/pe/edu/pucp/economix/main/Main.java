@@ -1,9 +1,11 @@
 package pe.edu.pucp.economix.main;
 
 import pe.edu.pucp.economix.operaciones.boi.CicloCajaBOImpl;
+import pe.edu.pucp.economix.operaciones.boi.RendicionBOImpl;
 import pe.edu.pucp.economix.operaciones.boi.SolicitudGastoBOImpl;
 import pe.edu.pucp.economix.operaciones.boi.TransaccionBOImpl;
 import pe.edu.pucp.economix.operaciones.ibo.ICicloCajaBO;
+import pe.edu.pucp.economix.operaciones.ibo.IRendicionBO;
 import pe.edu.pucp.economix.operaciones.ibo.ISolicitudGastoBO;
 import pe.edu.pucp.economix.operaciones.ibo.ITransaccionBO;
 import pe.edu.pucp.economix.operaciones.model.CicloCajaChica;
@@ -34,5 +36,7 @@ public class Main {
 
         ITransaccionBO transaccionBO = new TransaccionBOImpl();
         List<Transaccion> transacciones = transaccionBO.listarPorJefe(2);
+        IRendicionBO rendicionBO = new RendicionBOImpl();
+        rendicionBO.listarTodas();
     }
 }

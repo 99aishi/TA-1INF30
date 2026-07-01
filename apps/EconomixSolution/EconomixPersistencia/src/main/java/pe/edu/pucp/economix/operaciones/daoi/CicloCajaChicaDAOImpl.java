@@ -226,8 +226,13 @@ public class CicloCajaChicaDAOImpl implements ICicloCajaChicaDAO {
         ren.setTotalAprobado(rs.getDouble(prefijo + "monto_total_aprobado"));
         ren.setSaldoFinal(rs.getDouble(prefijo + "monto_saldo_final"));
         String estadoRendicion = rs.getString(prefijo + "estado_rendicion");
-        if(estadoRendicion != null)
-            ren.setEstado(EstadoRendicion.valueOf(estadoRendicion));
+        if (estadoRendicion != null) {
+            try {
+                ren.setEstado(EstadoRendicion.valueOf(estadoRendicion.toUpperCase().trim()));
+            } catch (Exception e) {
+                ren.setEstado(EstadoRendicion.EN_ESPERA);
+            }
+        }
         ren.setComentario(rs.getString(prefijo + "comentario"));
         return ren;
     }

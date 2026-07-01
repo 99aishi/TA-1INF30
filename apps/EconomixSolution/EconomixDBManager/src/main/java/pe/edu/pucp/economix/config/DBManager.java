@@ -137,6 +137,9 @@ public class DBManager {
     // EJECUCIÓN DE PROCEDIMIENTOS
     // ==========================================
     public int ejecutarProcedimiento(String nombreProcedimiento, Map<String, Object> parametrosEntrada, Map<String, Object> parametrosSalida) throws SQLException {
+        if (conexionTransaccional.get() != null) {
+            return ejecutarProcedimientoTransaccion(nombreProcedimiento, parametrosEntrada, parametrosSalida);
+        }
         int resultado = 0;
         // La conexión se maneja dentro de este bloque localmente y se cerrará automáticamente al terminar
         try (Connection con = getConnection();

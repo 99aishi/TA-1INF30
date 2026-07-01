@@ -1974,9 +1974,16 @@ BEGIN
         COALESCE(vtg.total_gastado, cc.monto_total_gastado) AS cc_monto_total_gastado,
         cc.estado_ciclo AS cc_estado_ciclo,
         cc.id_caja_chica AS cc_id_caja_chica,
-        cc.id_rendicion AS cc_id_rendicion
+        cc.id_rendicion AS cc_id_rendicion,
+        cj.monto_techo AS ccj_monto_techo,
+        cj.id_cuenta_bancaria AS ccj_id_cuenta_bancaria,
+        cj.id_moneda AS ccj_id_moneda,
+        f.nombre_fondo AS ccj_nombre_fondo,
+        f.estado_fondo AS ccj_estado_fondo
     FROM ope_rendicion r
     LEFT JOIN ope_ciclo_caja cc ON r.id_ciclo_caja = cc.id_ciclo_caja
+    LEFT JOIN tes_caja_chica cj ON cc.id_caja_chica = cj.id_fondo
+    LEFT JOIN tes_fondo f ON cj.id_fondo = f.id_fondo
     LEFT JOIN (
         SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
         FROM ope_solicitud_gasto sg
@@ -2030,9 +2037,16 @@ BEGIN
         COALESCE(vtg.total_gastado, cc.monto_total_gastado) AS cc_monto_total_gastado,
         cc.estado_ciclo AS cc_estado_ciclo,
         cc.id_caja_chica AS cc_id_caja_chica,
-        cc.id_rendicion AS cc_id_rendicion
+        cc.id_rendicion AS cc_id_rendicion,
+        cj.monto_techo AS ccj_monto_techo,
+        cj.id_cuenta_bancaria AS ccj_id_cuenta_bancaria,
+        cj.id_moneda AS ccj_id_moneda,
+        f.nombre_fondo AS ccj_nombre_fondo,
+        f.estado_fondo AS ccj_estado_fondo
     FROM ope_rendicion r
     LEFT JOIN ope_ciclo_caja cc ON r.id_ciclo_caja = cc.id_ciclo_caja
+    LEFT JOIN tes_caja_chica cj ON cc.id_caja_chica = cj.id_fondo
+    LEFT JOIN tes_fondo f ON cj.id_fondo = f.id_fondo
     LEFT JOIN (
         SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
         FROM ope_solicitud_gasto sg
@@ -2086,9 +2100,16 @@ BEGIN
         COALESCE(vtg.total_gastado, cc.monto_total_gastado) AS cc_monto_total_gastado,
         cc.estado_ciclo AS cc_estado_ciclo,
         cc.id_caja_chica AS cc_id_caja_chica,
-        cc.id_rendicion AS cc_id_rendicion
+        cc.id_rendicion AS cc_id_rendicion,
+        cj.monto_techo AS ccj_monto_techo,
+        cj.id_cuenta_bancaria AS ccj_id_cuenta_bancaria,
+        cj.id_moneda AS ccj_id_moneda,
+        f.nombre_fondo AS ccj_nombre_fondo,
+        f.estado_fondo AS ccj_estado_fondo
     FROM ope_rendicion r
     LEFT JOIN ope_ciclo_caja cc ON r.id_ciclo_caja = cc.id_ciclo_caja
+    LEFT JOIN tes_caja_chica cj ON cc.id_caja_chica = cj.id_fondo
+    LEFT JOIN tes_fondo f ON cj.id_fondo = f.id_fondo
     LEFT JOIN (
         SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
         FROM ope_solicitud_gasto sg
@@ -2145,10 +2166,16 @@ BEGIN
         COALESCE(vtg.total_gastado, cc.monto_total_gastado) AS cc_monto_total_gastado,
         cc.estado_ciclo AS cc_estado_ciclo,
         cc.id_caja_chica AS cc_id_caja_chica,
-        cc.id_rendicion AS cc_id_rendicion
+        cc.id_rendicion AS cc_id_rendicion,
+        cj.monto_techo AS ccj_monto_techo,
+        cj.id_cuenta_bancaria AS ccj_id_cuenta_bancaria,
+        cj.id_moneda AS ccj_id_moneda,
+        f.nombre_fondo AS ccj_nombre_fondo,
+        f.estado_fondo AS ccj_estado_fondo
     FROM ope_rendicion r
     LEFT JOIN ope_ciclo_caja cc ON r.id_ciclo_caja = cc.id_ciclo_caja
     LEFT JOIN tes_caja_chica cj ON cc.id_caja_chica = cj.id_fondo
+    LEFT JOIN tes_fondo f ON cj.id_fondo = f.id_fondo
     LEFT JOIN tes_cuenta_bancaria cb ON cj.id_cuenta_bancaria = cb.id_cuenta
     LEFT JOIN (
         SELECT sg.id_ciclo_caja, SUM(sg.monto_solicitado) AS total_gastado
